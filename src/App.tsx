@@ -1,39 +1,33 @@
 import React, { useState, useEffect } from 'react';
+import { observer } from 'mobx-react-lite';
 import { MenuBar } from './components/MenuBar';
 import FolderList from './components/FolderList';
 import { savePickedFolder, loadRecentFolders } from './db';
 import { useContent } from './contexts/ContentContext';
+import { Project } from './classes/Project';
 
-const App: React.FC = () => {
-  const [sceneFolders, setSceneFolders] = useState<FileSystemDirectoryHandle[]>([]);
+const App: React.FC = observer(() => {
+  const [project] = useState(() => new Project(null)); // MobX observable Project
   const [recentFolders, setRecentFolders] = useState<FileSystemDirectoryHandle[]>([]);
-  
+
   const { contentArea, rootFolder, setRootFolder } = useContent();
 
-  const onProjectOpened = async(handle: FileSystemDirectoryHandle) => {    
-    console.log("Opened Project", handle?.name)
-
-    const folders: FileSystemDirectoryHandle[] = [];
-    const scenes:FileSystemDirectoryHandle = await handle.getDirectoryHandle("SCENES");
-    for await (const entry of scenes.values()) {
-      if (entry.kind === 'directory') folders.push(entry);
-    }
-
-    setSceneFolders(folders);
-    //console.log(sceneFolders);    
-  }
+  // Open a folder and load it into the Project
+  const openProjectFolder = async (handle: FileSystemDirectoryHandle) => {
+    setRootFolder(handle);
+    project.setRootDirHandle(handle);
+    await savePickedFolder(handle);
+    await project.loadScenes();
+  };
 
   const handleOpenFolder = async () => {
     try {
       const handle = await (window as any).showDirectoryPicker();
-      setRootFolder(handle);
-      await savePickedFolder(handle);
+      await openProjectFolder(handle);
 
       // refresh recent folders
       const recent = await loadRecentFolders();
       setRecentFolders(recent);
-
-      await onProjectOpened(handle);
     } catch (err) {
       console.error(err);
     }
@@ -45,19 +39,16 @@ const App: React.FC = () => {
       permission = await handle.requestPermission({ mode: 'readwrite' });
     }
     if (permission === 'granted') {
-      setRootFolder(handle);
-      await savePickedFolder(handle);
-      await onProjectOpened(handle);
+      await openProjectFolder(handle);
     }
   };
 
+  // On app load, open last recent project if available
   useEffect(() => {
     const init = async () => {
-      // Load recent folders on app start
       const recent = await loadRecentFolders();
       setRecentFolders(recent);
 
-      // Automatically open the last opened folder if available
       if (recent.length > 0) {
         const lastFolder = recent[recent.length - 1];
         let permission = await lastFolder.queryPermission({ mode: 'readwrite' });
@@ -65,8 +56,7 @@ const App: React.FC = () => {
           permission = await lastFolder.requestPermission({ mode: 'readwrite' });
         }
         if (permission === 'granted') {
-          setRootFolder(lastFolder);
-          await onProjectOpened(lastFolder);
+          await openProjectFolder(lastFolder);
         }
       }
     };
@@ -82,19 +72,13 @@ const App: React.FC = () => {
         onOpenRecent={handleOpenRecent}
       />
       <div style={{ display: 'flex', height: 'calc(100vh - 56px)' }}>
-        {
-        <FolderList folders={sceneFolders} currentFolderName={rootFolder?.name}/>
-        }        
+        <FolderList folders={project.scenes.map(s => s.folder)} currentFolderName={rootFolder?.name} />
         <div className="flex-grow-1 p-3">
-          {
-          // Selected Content area          
-          }
           {contentArea}
         </div>
       </div>
     </div>
   );
-};
+});
 
 export default App;
-

@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+// ShotStripPreview.tsx
+import React, { useEffect, useState } from 'react';
+import { observer } from 'mobx-react-lite';
 import { Shot } from '../classes/Shot';
 import { LocalImage } from '../classes/LocalImage';
 
@@ -11,7 +13,7 @@ interface Props {
 const DEFAULT_IMAGE_URL =
   'https://cdn.pixabay.com/photo/2021/05/09/06/07/dog-6240043_1280.jpg';
 
-const ShotStripPreview: React.FC<Props> = ({ shot, isSelected, onClick }) => {
+const ShotStripPreview: React.FC<Props> = observer(({ shot, isSelected, onClick }) => {
   const [imageUrl, setImageUrl] = useState<string>(DEFAULT_IMAGE_URL);
 
   useEffect(() => {
@@ -21,9 +23,7 @@ const ShotStripPreview: React.FC<Props> = ({ shot, isSelected, onClick }) => {
       if (shot.srcImage) {
         try {
           const url = await shot.srcImage.getUrlObject();
-          if (!canceled && url) {
-            setImageUrl(url);
-          }
+          if (!canceled && url) setImageUrl(url);
         } catch (err) {
           console.error('Failed to load srcImage URL:', err);
           if (!canceled) setImageUrl(DEFAULT_IMAGE_URL);
@@ -63,7 +63,7 @@ const ShotStripPreview: React.FC<Props> = ({ shot, isSelected, onClick }) => {
         }}
       />
 
-      {/* Shot name overlay at bottom left */}
+      {/* Shot name overlay */}
       <div
         className="position-absolute text-white px-1"
         style={{
@@ -78,6 +78,6 @@ const ShotStripPreview: React.FC<Props> = ({ shot, isSelected, onClick }) => {
       </div>
     </div>
   );
-};
+});
 
 export default ShotStripPreview;

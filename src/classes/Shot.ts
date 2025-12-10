@@ -1,6 +1,8 @@
+// Shot.ts
 import { Scene } from './Scene';
 import { LocalJson } from './LocalJson';
 import { LocalImage } from './LocalImage';
+import { makeAutoObservable } from "mobx";
 
 export class Shot {
   folder: FileSystemDirectoryHandle;
@@ -12,6 +14,7 @@ export class Shot {
   constructor(folder: FileSystemDirectoryHandle, scene: Scene) {
     this.folder = folder;
     this.scene = scene;
+    makeAutoObservable(this);
   }
 
   async load(): Promise<void> {
@@ -42,6 +45,17 @@ export class Shot {
       this.shotJson = null;
       this.images = [];
       this.srcImage = null;
+    }
+  }
+  
+  /** MobX action to safely set srcImage */
+  setSrcImage(image: LocalImage | null) {
+    this.srcImage = image;
+
+    // Update And save Json Data
+    if (this.shotJson?.data) {
+      this.shotJson.data.srcImage = image?.handle.name;
+      this.shotJson.save();
     }
   }
 }

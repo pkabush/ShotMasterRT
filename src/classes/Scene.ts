@@ -1,5 +1,7 @@
+// Scene.ts
 import { LocalJson } from './LocalJson';
 import { Shot } from './Shot';
+import { makeAutoObservable } from "mobx";
 
 export class Scene {
   folder: FileSystemDirectoryHandle;
@@ -8,6 +10,7 @@ export class Scene {
 
   constructor(folder: FileSystemDirectoryHandle) {
     this.folder = folder;
+    makeAutoObservable(this);
   }
 
   async load(): Promise<void> {

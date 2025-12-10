@@ -1,5 +1,5 @@
-// ShotInfoCard.tsx
-import React, { useState } from 'react';
+import React from 'react';
+import { observer } from 'mobx-react-lite';
 import { Shot } from '../classes/Shot';
 import EditableJsonTextField from './EditableJsonTextField';
 import MediaGallery from './MediaGallery';
@@ -10,20 +10,11 @@ interface Props {
   shot: Shot;
 }
 
-const ShotInfoCard: React.FC<Props> = ({ shot }) => {
-  // simple state to trigger re-render when srcImage changes
-  const [, setRerender] = useState(0);
-
+const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
   if (!shot.shotJson) return <div>Loading shot info...</div>;
 
   const itemHeight = 200;
   const files = shot.images ?? [];
-
-  const handlePick = (localImage: any) => {
-    shot.srcImage = localImage;
-    console.log('Picked image:', localImage);
-    setRerender((r) => r + 1); 
-  };
 
   return (
     <div className="card mb-2">
@@ -45,14 +36,8 @@ const ShotInfoCard: React.FC<Props> = ({ shot }) => {
               height={itemHeight}
               topRightExtra={
                 <>
-                  <SimpleButton
-                    onClick={() => handlePick(localImage)}
-                    label="Pick"
-                  />
-                  <SimpleButton
-                    onClick={() => console.log('Delete clicked!', localImage)}
-                    label="Delete"
-                  />
+                  <SimpleButton onClick={() => shot.setSrcImage(localImage)} label="Pick" />
+                  <SimpleButton onClick={() => console.log('Delete clicked!', localImage)} label="Delete" />
                 </>
               }
             />
@@ -61,6 +46,6 @@ const ShotInfoCard: React.FC<Props> = ({ shot }) => {
       </div>
     </div>
   );
-};
+});
 
 export default ShotInfoCard;
