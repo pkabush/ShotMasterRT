@@ -35,16 +35,15 @@ export class Scene {
     }
   }
 
-    /** Remove a tag by path from sceneJson.data.tags */
   removeTag(path: string) {
-    if (!this.sceneJson || !this.sceneJson.data?.tags) return;
+    if (!this.sceneJson?.data?.tags) return;
 
-    runInAction(() => {
-      this.sceneJson.data.tags = this.sceneJson.data.tags.filter(
-        (tag: string) => tag !== path
-      );
-    });
+    // Directly mutate the observable array
+    this.sceneJson.data.tags = this.sceneJson.data.tags.filter(
+      (tag: string) => tag !== path
+    );
+
+    this.sceneJson.save();
   }
-
 
 }
