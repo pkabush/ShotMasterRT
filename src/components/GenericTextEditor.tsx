@@ -1,27 +1,33 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import CollapsibleContainer from './CollapsibleContainer'; // adjust path
 
 export interface GenericTextEditorProps {
   label: string;
   initialText: string;
   onSave: (newValue: string) => void;
+  fitHeight?: boolean;
 }
 
 const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
   label,
   initialText,
-  onSave
+  onSave,
+  fitHeight = false,
 }) => {
   const [text, setText] = useState(initialText);
   const [originalText, setOriginalText] = useState(initialText);
   const [autoSave, setAutoSave] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Refresh when initialText changes
   useEffect(() => {
     setText(initialText);
     setOriginalText(initialText);
-  }, [initialText]);
+    if (fitHeight && textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }, [initialText, fitHeight]);
 
   const hasChanges = text !== originalText;
 
@@ -32,7 +38,6 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
     setSaving(false);
   };
 
-  // Auto-save with debounce
   useEffect(() => {
     if (!autoSave) return;
     const timeout = setTimeout(() => {
@@ -41,52 +46,44 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
     return () => clearTimeout(timeout);
   }, [text, autoSave, hasChanges]);
 
-  return (
-    <div className="d-flex flex-column gap-2 border p-2 rounded">
-      {/* Header row: Collapse button + Label + Save/Autosave */}
-      <div className="d-flex align-items-center justify-content-between">
-        <div className="d-flex align-items-center gap-2">
-          <button
-            className="btn btn-sm btn-outline-secondary"
-            onClick={() => setCollapsed(!collapsed)}
-          >
-            {collapsed ? '▶' : '▼'}
-          </button>
-          <span className="fw-bold">{label}</span>
-        </div>
+  useEffect(() => {
+    if (fitHeight && textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }, [text, fitHeight]);
 
-        {!collapsed && (
-          <div className="d-flex align-items-center gap-2">
-            <button
-              className="btn btn-primary btn-sm"
-              disabled={saving || !hasChanges}
-              onClick={handleSave}
-            >
-              {saving ? 'Saving...' : hasChanges ? 'Save*' : 'Save'}
-            </button>
+  const headerExtra = (
+    <div className="d-flex align-items-center gap-2">
+      <button
+        className="btn btn-primary btn-sm"
+        disabled={saving || !hasChanges}
+        onClick={handleSave}
+      >
+        {saving ? 'Saving...' : hasChanges ? 'Save*' : 'Save'}
+      </button>
 
-            <label className="d-flex align-items-center gap-1 mb-0">
-              <input
-                type="checkbox"
-                checked={autoSave}
-                onChange={(e) => setAutoSave(e.target.checked)}
-              />
-              Auto-save
-            </label>
-          </div>
-        )}
-      </div>
-
-      {/* Textarea */}
-      {!collapsed && (
-        <textarea
-          className="form-control"
-          style={{ height: '300px', fontFamily: 'monospace' }}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
+      <label className="d-flex align-items-center gap-1 mb-0">
+        <input
+          type="checkbox"
+          checked={autoSave}
+          onChange={(e) => setAutoSave(e.target.checked)}
         />
-      )}
+        Auto-save
+      </label>
     </div>
+  );
+
+  return (
+    <CollapsibleContainer label={label} headerExtra={headerExtra}>
+      <textarea
+        ref={textareaRef}
+        className="form-control"
+        style={{ fontFamily: 'monospace', overflow: 'hidden' }}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+      />
+    </CollapsibleContainer>
   );
 };
 

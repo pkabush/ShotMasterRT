@@ -1,25 +1,25 @@
 import { LocalJson } from './LocalJson';
+import { Shot } from './Shot';
 
 export class Scene {
   folder: FileSystemDirectoryHandle;
   sceneJson: LocalJson | null = null;
-  shots: FileSystemDirectoryHandle[] = [];
+  shots: Shot[] = [];
 
   constructor(folder: FileSystemDirectoryHandle) {
     this.folder = folder;
   }
 
-  // Load sceneinfo.json and shots
   async load(): Promise<void> {
     try {
-      // Load sceneinfo.json
       this.sceneJson = await LocalJson.create(this.folder, 'sceneinfo.json');
 
-      // Load subfolders (shots)
       this.shots = [];
       for await (const [name, handle] of this.folder.entries()) {
         if (handle.kind === 'directory') {
-          this.shots.push(handle);
+          const shot = new Shot(handle, this);
+          await shot.load(); // load shotinfo.json
+          this.shots.push(shot);
         }
       }
     } catch (err) {
