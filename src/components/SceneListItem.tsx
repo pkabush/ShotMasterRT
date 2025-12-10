@@ -1,42 +1,28 @@
+// SceneListItem.tsx
 import React from 'react';
 import { useContent } from '../contexts/ContentContext';
-import TabsContainer from './TabsContaier';
-import EditableJsonTextField from './EditableJsonTextField';
+import TabsContainer from './TabsContainer';
 import { Scene } from '../classes/Scene';
 import ShotsInfoStrip from './ShotsInfoStrip';
+import SceneInfoCard from './SceneInfoCard';
 
 type Props = {
-  folder: FileSystemDirectoryHandle;
+  scene: Scene;
 };
 
-const SceneListItem: React.FC<Props> = ({ folder }) => {
+const SceneListItem: React.FC<Props> = ({ scene }) => {
   const { setContentArea } = useContent();
-  const [scene, setScene] = React.useState<Scene | null>(null);
-
-  React.useEffect(() => {
-    const load = async () => {
-      const s = new Scene(folder);
-      await s.load();
-      setScene(s);
-      //console.log('Loaded scene', s);
-    };
-    load();
-  }, [folder]);
 
   const handleClick = () => {
     if (!scene || !scene.sceneJson) return;
 
     setContentArea(
       <div>
-        <h2>{folder.name}</h2>
+        <h2>{scene.folder.name}</h2>
         <TabsContainer
           tabs={{
-            Scene: (
-              <div>
-                <EditableJsonTextField localJson={scene.sceneJson} field="script" />
-              </div>
-            ),
-            Shots: scene && <ShotsInfoStrip scene={scene} />,
+            Scene: <SceneInfoCard scene={scene} />,
+            Shots: <ShotsInfoStrip scene={scene} />,
           }}
         />
       </div>
@@ -50,10 +36,10 @@ const SceneListItem: React.FC<Props> = ({ folder }) => {
       onClick={handleClick}
     >
       {/* Scene name */}
-      <span>{folder.name}</span>
+      <span>{scene.folder.name}</span>
 
       {/* Shots count */}
-      <span>{scene?.shots.length ?? 0}</span>
+      <span>{scene.shots.length}</span>
     </li>
   );
 };

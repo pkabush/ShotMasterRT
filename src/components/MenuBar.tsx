@@ -1,8 +1,10 @@
+// MenuBar.tsx
 import React from 'react';
 import { Navbar, Nav, Container } from 'react-bootstrap';
 import { MenuColumn } from './MenuColumn';
 import type { SubmenuItemProps } from './SubmenuItem';
 import { useContent } from '../contexts/ContentContext';
+import { ArtbookView } from "./ArtbookView";
 
 import TextField from './TextField';
 
@@ -11,10 +13,10 @@ interface MenuBarProps {
   onOpenFolder: () => void;
   recentFolders: FileSystemDirectoryHandle[];
   onOpenRecent: (handle: FileSystemDirectoryHandle) => void;
-
+  project: Project;
 }
 
-export const MenuBar: React.FC<MenuBarProps> = ({ onOpenFolder, recentFolders, onOpenRecent }) => {
+export const MenuBar: React.FC<MenuBarProps> = ({ onOpenFolder, recentFolders, onOpenRecent,project}) => {
   const { setContentArea, rootFolder } = useContent();
   
   const fileMenuItems: Omit<SubmenuItemProps, 'parentKey'>[] = [
@@ -57,9 +59,16 @@ export const MenuBar: React.FC<MenuBarProps> = ({ onOpenFolder, recentFolders, o
           <MenuColumn title="Settings" onClick={() => {
             setContentArea(<div>Settings</div>);
           }}/>
-          <MenuColumn title="Artbook" onClick={() => {
-            setContentArea(<div>Artbook</div>);
-          }}/>
+          <MenuColumn
+            title="Artbook"
+            onClick={() => {
+              if (!project.artbook) {
+                setContentArea(<div>No Artbook found.</div>);
+                return;
+              }
+              setContentArea(<ArtbookView artbook={project.artbook} />);
+            }}
+          />
         </Nav>
       </Container>
     </Navbar>

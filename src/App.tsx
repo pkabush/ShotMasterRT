@@ -17,7 +17,7 @@ const App: React.FC = observer(() => {
     setRootFolder(handle);
     project.setRootDirHandle(handle);
     await savePickedFolder(handle);
-    await project.loadScenes();
+    await project.load();
   };
 
   const handleOpenFolder = async () => {
@@ -70,9 +70,10 @@ const App: React.FC = observer(() => {
         onOpenFolder={handleOpenFolder}
         recentFolders={recentFolders}
         onOpenRecent={handleOpenRecent}
+        project={project}   
       />
       <div style={{ display: 'flex', height: 'calc(100vh - 56px)' }}>
-        <FolderList folders={project.scenes.map(s => s.folder)} currentFolderName={rootFolder?.name} />
+        <FolderList project={project} />
         <div className="flex-grow-1 p-3">
           {contentArea}
         </div>
