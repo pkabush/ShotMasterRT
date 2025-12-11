@@ -1,8 +1,8 @@
-// FolderList.tsx
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import SceneListItem from './SceneListItem.tsx';
 import { Project } from '../classes/Project';
+import SimpleButton from './SimpleButton';
 
 type FolderListProps = {
   project: Project | null;
@@ -11,8 +11,13 @@ type FolderListProps = {
 const FolderList: React.FC<FolderListProps> = observer(({ project }) => {
   if (!project) return <div>No Project Opened</div>;
 
+  const handleAddScene = async () => {
+    const sceneName = prompt("Enter new scene name");
+    if (!sceneName) return;
 
-  const folders = project.scenes.map(scene => scene.folder);
+    await project.createScene(sceneName);
+  };
+
   const currentFolderName = project.rootDirHandle?.name || 'No Project Opened';
 
   return (
@@ -25,8 +30,13 @@ const FolderList: React.FC<FolderListProps> = observer(({ project }) => {
         flexDirection: 'column',
       }}
     >
-      <h5 style={{ flexShrink: 0 }}>{currentFolderName}</h5>
+      {/* Project Name */}
+      <h5 style={{ flexShrink: 0, marginBottom: 8 }}>{currentFolderName}</h5>
 
+      {/* Add Scene Button */}
+      <SimpleButton label="+ Add Scene" onClick={handleAddScene} className="mb-2" />
+
+      {/* Scene List */}
       <ul
         className="list-unstyled"
         style={{

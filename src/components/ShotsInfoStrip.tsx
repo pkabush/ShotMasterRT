@@ -2,21 +2,33 @@
 import React, { useState, useEffect } from 'react';
 import { Scene } from '../classes/Scene';
 import { Shot } from '../classes/Shot';
+import { observer } from 'mobx-react-lite';
 import ShotStripPreview from './ShotStripPreview';
 import ResizableContainer from './ResizableContainer';
 import ShotInfoCard from './ShotInfoCard'; // Import the new ShotInfoCard
+import SimpleButton from './SimpleButton';
 
 interface Props {
   scene: Scene;
 }
 
-const ShotsInfoStrip: React.FC<Props> = ({ scene }) => {
+const ShotsInfoStrip: React.FC<Props> = observer(({ scene }) => {
   const [selectedShot, setSelectedShot] = useState<Shot | null>(null);
 
   // Reset selected shot when scene changes
   useEffect(() => {
     setSelectedShot(null);
   }, [scene]);
+
+  const handleAddShot = async () => {
+    const shotName = prompt("Enter new shot name:");
+    if (!shotName) return;
+
+    const newShot = await scene.createShot(shotName);
+    if (newShot) {
+      setSelectedShot(newShot); // optionally select the new shot
+    }
+  };
 
   return (
     <div className="d-flex flex-column gap-3">
@@ -31,6 +43,10 @@ const ShotsInfoStrip: React.FC<Props> = ({ scene }) => {
               onClick={setSelectedShot}
             />
           ))}
+
+          <div className="mt-2">
+            <SimpleButton label="+ Add Shot" onClick={handleAddShot} />
+          </div>
         </div>
       </ResizableContainer>
 
@@ -38,6 +54,6 @@ const ShotsInfoStrip: React.FC<Props> = ({ scene }) => {
       {selectedShot && <ShotInfoCard shot={selectedShot} />}
     </div>
   );
-};
+});
 
 export default ShotsInfoStrip;

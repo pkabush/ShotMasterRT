@@ -10,17 +10,23 @@ export class LocalJson {
     makeAutoObservable(this);      // <-- make this instance observable
   }
 
-  static async create(folderHandle: FileSystemDirectoryHandle, filename: string): Promise<LocalJson> {
+  static async create(
+    folderHandle: FileSystemDirectoryHandle, 
+    filename: string, 
+    defaultData: Record<string, any> = {}
+  ): Promise<LocalJson> {
     try {
       const fileHandle = await folderHandle.getFileHandle(filename, { create: true });
       const file = await fileHandle.getFile();
       const text = await file.text();
-      const data = text.trim() === '' ? {} : JSON.parse(text);
+      const data = text.trim() === '' 
+        ? { ...defaultData } 
+        : { ...defaultData, ...JSON.parse(text) };
       return new LocalJson(fileHandle, data);
     } catch (err) {
       console.error('Error loading JSON:', err);
       const fileHandle = await folderHandle.getFileHandle(filename, { create: true });
-      return new LocalJson(fileHandle, {});
+      return new LocalJson(fileHandle,  { ...defaultData} );
     }
   }
 

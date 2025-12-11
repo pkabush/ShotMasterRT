@@ -1,5 +1,5 @@
-// SceneListItem.tsx
 import React from 'react';
+import { observer } from 'mobx-react-lite'; // <-- import observer
 import { useContent } from '../contexts/ContentContext';
 import TabsContainer from './TabsContainer';
 import { Scene } from '../classes/Scene';
@@ -10,7 +10,8 @@ type Props = {
   scene: Scene;
 };
 
-const SceneListItem: React.FC<Props> = ({ scene }) => {
+// Wrap component in observer
+const SceneListItem: React.FC<Props> = observer(({ scene }) => {
   const { setContentArea } = useContent();
 
   const handleClick = () => {
@@ -38,10 +39,12 @@ const SceneListItem: React.FC<Props> = ({ scene }) => {
       {/* Scene name */}
       <span>{scene.folder.name}</span>
 
-      {/* Shots count */}
-      <span>{scene.shots.length}</span>
+      {/* Shots count: finished / total, light grey */}
+      <span className="text-muted">
+        {scene.finishedShotsNum} / {scene.shots.length}        
+      </span>
     </li>
   );
-};
+});
 
 export default SceneListItem;

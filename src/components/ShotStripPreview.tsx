@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Shot } from '../classes/Shot';
 import { LocalImage } from '../classes/LocalImage';
+import SimpleToggle from './SimpleToggle';
 
 interface Props {
   shot: Shot;
@@ -76,6 +77,29 @@ const ShotStripPreview: React.FC<Props> = observer(({ shot, isSelected, onClick 
       >
         {shot.folder.name}
       </div>
+
+
+      {/* Finished toggle overlay */}
+      <div
+        className="position-absolute"
+        style={{
+          top: 2,
+          right: 2,
+        }}
+        onClick={(e) => e.stopPropagation()} // prevent parent onClick
+      >
+        <SimpleToggle
+          label="Finished"
+          value={!!shot.shotJson?.data?.finished}
+          useIndicator
+          onToggle={(state) => {
+            if (shot.shotJson) {
+              shot.shotJson.updateField('finished', state);
+            }
+          }}
+        />
+      </div>
+
     </div>
   );
 });

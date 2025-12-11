@@ -5,7 +5,9 @@ import { MenuColumn } from './MenuColumn';
 import type { SubmenuItemProps } from './SubmenuItem';
 import { useContent } from '../contexts/ContentContext';
 import { ArtbookView } from "./ArtbookView";
-
+import { SettingsView } from "./SettingsView";
+import { Project } from '../classes/Project';
+import { ScriptView } from "./ScriptView";
 import TextField from './TextField';
 
 
@@ -17,7 +19,7 @@ interface MenuBarProps {
 }
 
 export const MenuBar: React.FC<MenuBarProps> = ({ onOpenFolder, recentFolders, onOpenRecent,project}) => {
-  const { setContentArea, rootFolder } = useContent();
+  const { setContentArea } = useContent();
   
   const fileMenuItems: Omit<SubmenuItemProps, 'parentKey'>[] = [
     { name: 'Open', onClick: onOpenFolder },
@@ -45,19 +47,10 @@ export const MenuBar: React.FC<MenuBarProps> = ({ onOpenFolder, recentFolders, o
           <MenuColumn title="Edit" items={editMenuItems} />
           <MenuColumn title="Help" items={helpMenuItems} />
           <MenuColumn title="Script" onClick={async () => {
-            if (!rootFolder) return;
-            try {
-                  // Try to get script.txt; if it doesn't exist, create it
-                  const scriptFileHandle = await rootFolder.getFileHandle("script.txt", { create: true });
-                  // Set the TextField with the file handle
-                  setContentArea(<TextField fileHandle={scriptFileHandle} />);
-                } catch (err) {
-                  console.error("Failed to open or create script.txt:", err);
-                  setContentArea(<div>Error opening script.txt</div>);
-                }
+            setContentArea(<ScriptView project={project} />);
           }}/>
           <MenuColumn title="Settings" onClick={() => {
-            setContentArea(<div>Settings</div>);
+            setContentArea(<SettingsView project={project}/>);
           }}/>
           <MenuColumn
             title="Artbook"

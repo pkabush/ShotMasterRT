@@ -4,7 +4,8 @@ import CollapsibleContainer from './CollapsibleContainer'; // adjust path
 export interface GenericTextEditorProps {
   label: string;
   initialText: string;
-  onSave: (newValue: string) => void;
+  onSave?: (newValue: string) => void;  // optional
+  onEdit?: (newValue: string) => void;  // optional
   fitHeight?: boolean;
 }
 
@@ -12,6 +13,7 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
   label,
   initialText,
   onSave,
+  onEdit,
   fitHeight = false,
 }) => {
   const [text, setText] = useState(initialText);
@@ -20,6 +22,7 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
   const [saving, setSaving] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Update local state if initialText changes
   useEffect(() => {
     setText(initialText);
     setOriginalText(initialText);
@@ -31,21 +34,27 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
 
   const hasChanges = text !== originalText;
 
+  const handleChange = (newText: string) => {
+    setText(newText);
+    if (onEdit) onEdit(newText); // call optional onEdit
+  };
+
   const handleSave = async () => {
+    if (!onSave) return;
     setSaving(true);
     await onSave(text);
     setOriginalText(text);
     setSaving(false);
   };
 
+  // Auto-save
   useEffect(() => {
-    if (!autoSave) return;
-    const timeout = setTimeout(() => {
-      if (hasChanges) handleSave();
-    }, 1000);
+    if (!autoSave || !hasChanges) return;
+    const timeout = setTimeout(() => handleSave(), 1000);
     return () => clearTimeout(timeout);
   }, [text, autoSave, hasChanges]);
 
+  // Adjust height for fitHeight
   useEffect(() => {
     if (fitHeight && textareaRef.current) {
       textareaRef.current.style.height = 'auto';
@@ -57,7 +66,7 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
     <div className="d-flex align-items-center gap-2">
       <button
         className="btn btn-primary btn-sm"
-        disabled={saving || !hasChanges}
+        disabled={saving || !hasChanges || !onSave}
         onClick={handleSave}
       >
         {saving ? 'Saving...' : hasChanges ? 'Save*' : 'Save'}
@@ -79,9 +88,13 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
       <textarea
         ref={textareaRef}
         className="form-control"
-        style={{ fontFamily: 'monospace', overflow: 'hidden' }}
+        style={{
+          fontFamily: "monospace",
+          overflowY: "auto", // enable vertical scroll
+          maxHeight: "800px", // max height
+        }}
         value={text}
-        onChange={(e) => setText(e.target.value)}
+        onChange={(e) => handleChange(e.target.value)}
       />
     </CollapsibleContainer>
   );

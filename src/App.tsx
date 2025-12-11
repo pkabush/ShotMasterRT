@@ -2,32 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { MenuBar } from './components/MenuBar';
 import FolderList from './components/FolderList';
-import { savePickedFolder, loadRecentFolders } from './db';
+//import { savePickedFolder, loadRecentFolders } from './db';
 import { useContent } from './contexts/ContentContext';
 import { Project } from './classes/Project';
 
 const App: React.FC = observer(() => {
   const [project] = useState(() => new Project(null)); // MobX observable Project
-  const [recentFolders, setRecentFolders] = useState<FileSystemDirectoryHandle[]>([]);
 
-  const { contentArea, rootFolder, setRootFolder } = useContent();
-
-  // Open a folder and load it into the Project
-  const openProjectFolder = async (handle: FileSystemDirectoryHandle) => {
-    setRootFolder(handle);
-    project.setRootDirHandle(handle);
-    await savePickedFolder(handle);
-    await project.load();
-  };
+  const { contentArea } = useContent();
 
   const handleOpenFolder = async () => {
     try {
       const handle = await (window as any).showDirectoryPicker();
-      await openProjectFolder(handle);
-
-      // refresh recent folders
-      const recent = await loadRecentFolders();
-      setRecentFolders(recent);
+      await project.loadFromFolder(handle);
     } catch (err) {
       console.error(err);
     }
@@ -39,24 +26,24 @@ const App: React.FC = observer(() => {
       permission = await handle.requestPermission({ mode: 'readwrite' });
     }
     if (permission === 'granted') {
-      await openProjectFolder(handle);
+      await project.loadFromFolder(handle);
     }
   };
 
   // On app load, open last recent project if available
   useEffect(() => {
     const init = async () => {
-      const recent = await loadRecentFolders();
-      setRecentFolders(recent);
-
-      if (recent.length > 0) {
-        const lastFolder = recent[recent.length - 1];
+      // Load DB
+      await project.loadDB();
+      // Open Recent Folder on Load
+      if (project.userSettingsDB.data.lastOpenedFolder) {
+        const lastFolder = project.userSettingsDB.data.lastOpenedFolder;
         let permission = await lastFolder.queryPermission({ mode: 'readwrite' });
         if (permission !== 'granted') {
           permission = await lastFolder.requestPermission({ mode: 'readwrite' });
         }
         if (permission === 'granted') {
-          await openProjectFolder(lastFolder);
+          await project.loadFromFolder(lastFolder);
         }
       }
     };
@@ -68,7 +55,7 @@ const App: React.FC = observer(() => {
     <div style={{ minHeight: '100vh' }}>
       <MenuBar
         onOpenFolder={handleOpenFolder}
-        recentFolders={recentFolders}
+        recentFolders={project.userSettingsDB.data.recentFolders}
         onOpenRecent={handleOpenRecent}
         project={project}   
       />

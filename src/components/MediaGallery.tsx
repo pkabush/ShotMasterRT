@@ -6,6 +6,7 @@ interface Props {
   children: React.ReactNode;
   defaultCollapsed?: boolean;
   className?: string;
+  headerExtra?: React.ReactNode; // <-- new prop
 }
 
 const MediaGallery: React.FC<Props> = ({
@@ -13,12 +14,14 @@ const MediaGallery: React.FC<Props> = ({
   children,
   defaultCollapsed = false,
   className = '',
+  headerExtra, // receive the prop
 }) => {
   return (
     <CollapsibleContainer
       label={label}
       defaultCollapsed={defaultCollapsed}
       className={className}
+      headerExtra={headerExtra} // pass it down
     >
       <div className="d-flex flex-wrap gap-2">
         {children}

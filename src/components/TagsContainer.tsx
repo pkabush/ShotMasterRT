@@ -56,8 +56,6 @@ const TagsContainer: React.FC<TagsContainerProps> = observer(({ scene }) => {
           <SimpleDropDownMenu label="+ Add Tag" direction="down">
             {buildDropdownFromArtbook(artbook.data)}
           </SimpleDropDownMenu>
-
-          <SimpleButton onClick={() => addTag()} label="+ Add Tag" />
           <SimpleButton
             onClick={() => console.log(scene.project?.artbook)}
             label="Log"

@@ -2,14 +2,15 @@
 import { Scene } from './Scene';
 import { LocalJson } from './LocalJson';
 import { LocalImage } from './LocalImage';
-import { makeAutoObservable } from "mobx";
+import { makeAutoObservable, runInAction } from "mobx";
 
 export class Shot {
   folder: FileSystemDirectoryHandle;
   scene: Scene;
   shotJson: LocalJson | null = null;
-  images: LocalImage[] = []; // array of LocalImage
+  images: LocalImage[] = [];
   srcImage: LocalImage | null = null;
+  resultsFolder: FileSystemDirectoryHandle | null = null; // <--- store results folder
 
   constructor(folder: FileSystemDirectoryHandle, scene: Scene) {
     this.folder = folder;
@@ -24,10 +25,11 @@ export class Shot {
       this.images = [];
       this.srcImage = null;
 
+      // Try to get or create results folder
       try {
-        const resultsFolder = await this.folder.getDirectoryHandle('results', { create: false });
+        this.resultsFolder = await this.folder.getDirectoryHandle('results', { create: true });
 
-        for await (const [name, handle] of resultsFolder.entries()) {
+        for await (const [name, handle] of this.resultsFolder.entries()) {
           if (handle.kind === 'file') {
             const localImage = new LocalImage(handle);
             this.images.push(localImage);
@@ -37,25 +39,56 @@ export class Shot {
             }
           }
         }
-      } catch {
-        this.images = [];
+      } catch (err) {
+        console.warn('No results folder found or failed to read:', err);
+        this.resultsFolder = null;
       }
     } catch (err) {
       console.error('Error loading shot:', this.folder.name, err);
       this.shotJson = null;
       this.images = [];
       this.srcImage = null;
+      this.resultsFolder = null;
     }
   }
-  
-  /** MobX action to safely set srcImage */
+
   setSrcImage(image: LocalImage | null) {
     this.srcImage = image;
 
-    // Update And save Json Data
     if (this.shotJson?.data) {
       this.shotJson.data.srcImage = image?.handle.name;
       this.shotJson.save();
+    }
+  }
+
+  async delete(): Promise<void> {
+    if (!this.scene?.folder) {
+      console.error("Cannot delete shot: scene folder not set");
+      return;
+    }
+
+    try {
+      await this.scene.folder.removeEntry(this.folder.name, { recursive: true });
+
+      runInAction(() => {
+        this.scene.shots = this.scene.shots.filter(s => s !== this);
+      });
+    } catch (err) {
+      console.error("Failed to delete shot:", err);
+    }
+  }
+
+  addImage(image: LocalImage) {
+    this.images.push(image);
+  }
+
+  removeImage(image: LocalImage) {
+    // Remove from array
+    this.images = this.images.filter(i => i !== image);
+
+    // If it was the source image, clear it
+    if (this.srcImage === image) {
+      this.setSrcImage(null);
     }
   }
 }
