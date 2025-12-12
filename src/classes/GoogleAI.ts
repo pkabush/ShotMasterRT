@@ -99,7 +99,9 @@ export class GoogleAI {
       console.log("GEMINI RES", response);
 
       // Iterate response parts
-      for (const part of response.candidates[0].content.parts) {
+      const candidates = response?.candidates ?? [];
+      const parts = candidates[0]?.content?.parts ?? [];
+      for (const part of parts) {
         if (part.inlineData) {
           const base64 = part.inlineData.data;
           const mime = part.inlineData.mimeType || "image/png";

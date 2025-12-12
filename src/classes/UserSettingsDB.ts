@@ -1,6 +1,7 @@
 // classes/UserSettingsDB.ts
 import { openDB } from "idb";
-import { makeAutoObservable, runInAction ,toJS} from "mobx";
+import type {IDBPDatabase} from "idb";
+import { makeAutoObservable, runInAction, toJS } from "mobx";
 
 export interface UserSettings {
   id: "settings";
@@ -13,7 +14,8 @@ const DB_NAME = "ShotMasterRE";
 const STORE = "settings";
 
 export class UserSettingsDB {
-  private db: ReturnType<typeof openDB> | null = null;
+  // Store the resolved DB instance, not a promise
+  private db: IDBPDatabase<UserSettings> | null = null;
 
   data: UserSettings = {
     id: "settings",
@@ -23,15 +25,15 @@ export class UserSettingsDB {
   };
 
   constructor() {
-    // Make `data` observable so changes to recentFolders, lastOpenedFolder, api_keys trigger MobX reactions
+    // Make `data` observable for MobX reactions
     makeAutoObservable(this.data);
-    //makeAutoObservable(this.data, {}, { deep: true });
   }
 
-  private async getDB() {
+  // Get or open the IndexedDB database
+  private async getDB(): Promise<IDBPDatabase<UserSettings>> {
     if (this.db) return this.db;
 
-    this.db = await openDB(DB_NAME, 1, {
+    this.db = await openDB<UserSettings>(DB_NAME, 1, {
       upgrade(db) {
         if (!db.objectStoreNames.contains(STORE)) {
           db.createObjectStore(STORE, { keyPath: "id" });
@@ -42,7 +44,8 @@ export class UserSettingsDB {
     return this.db;
   }
 
-  async load() {
+  // Load stored settings into `data`
+  async load(): Promise<UserSettings> {
     const db = await this.getDB();
     const stored = await db.get(STORE, "settings");
 
@@ -56,17 +59,16 @@ export class UserSettingsDB {
     return this.data;
   }
 
-  async save() {
+  // Save current `data` into IndexedDB
+  async save(): Promise<void> {
     const db = await this.getDB();
-    // Convert observables to plain objects for IDB
-    const plainData = toJS(this.data);
+    const plainData = toJS(this.data); // convert observables to plain objects
     await db.put(STORE, plainData);
   }
 
-  async update(mutator: (data: UserSettings) => void) {
-    runInAction(() => {
-      mutator(this.data);
-    });
+  // Update data using a mutator function and save
+  async update(mutator: (data: UserSettings) => void): Promise<void> {
+    runInAction(() => mutator(this.data));
     await this.save();
   }
 }

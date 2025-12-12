@@ -75,7 +75,7 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
                   if (text && (text.startsWith("http://") || text.startsWith("https://"))) {
                     console.log("Importing URL from clipboard:", text);
 
-                    const localImage = await LocalImage.fromUrl(text, shot.resultsFolder);
+                    const localImage = await LocalImage.fromUrl(text, shot.resultsFolder as FileSystemDirectoryHandle);
                     shot.addImage(localImage);
 
 
@@ -105,7 +105,7 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
                       if (!window.confirm("Delete this image?")) return;
 
                       try {
-                        await localImage.delete(shot.resultsFolder); // remove file
+                        await localImage.delete(shot.resultsFolder as FileSystemDirectoryHandle); // remove file
                         shot.removeImage(localImage);                // update mobx list
                       } catch (err) {
                         console.error("Failed to delete image:", err);

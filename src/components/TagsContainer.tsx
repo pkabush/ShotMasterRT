@@ -21,7 +21,7 @@ const TagsContainer: React.FC<TagsContainerProps> = observer(({ scene }) => {
   const addTag = (path: string) => {
     runInAction(() => {
       tags.push(path);
-      scene.sceneJson.save();
+      scene.sceneJson!.save();
     });
   };
 
@@ -67,7 +67,7 @@ const TagsContainer: React.FC<TagsContainerProps> = observer(({ scene }) => {
     >
       {tags.length ? (
         <ul className="list-group list-group-flush">
-          {tags.map((tagPath, index) => {
+          {tags.map((tagPath:string, index:number) => {
             const art = artbook.getTag(tagPath);
             if (!art) return null;
             return (

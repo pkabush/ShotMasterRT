@@ -46,7 +46,8 @@ export class ChatGPT {
           content: [{ type: "input_text", text: input }]
         });
       }
-
+      
+      if(images) console.log(images);
       // Add images as user messages
       /*
       if (images && images.length > 0) {

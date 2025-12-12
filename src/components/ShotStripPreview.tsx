@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Shot } from '../classes/Shot';
-import { LocalImage } from '../classes/LocalImage';
+//import { LocalImage } from '../classes/LocalImage';
 import SimpleToggle from './SimpleToggle';
 
 interface Props {

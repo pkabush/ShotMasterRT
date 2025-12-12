@@ -4,7 +4,7 @@ import { Shot } from './Shot';
 import { makeAutoObservable, runInAction } from "mobx";
 import { Project } from './Project';
 import { toJS } from "mobx";
-import { GoogleAI } from './GoogleAI';
+//import { GoogleAI } from './GoogleAI';
 import {ChatGPT} from './ChatGPT';
 import { Art } from "./Art";
 
@@ -25,9 +25,9 @@ export class Scene {
       this.sceneJson = await LocalJson.create(this.folder, 'sceneinfo.json', {tags:[],shotsjson:"",script:""});
 
       this.shots = [];
-      for await (const [name, handle] of this.folder.entries()) {
+      for await (const handle of this.folder.values()) {      
         if (handle.kind === 'directory') {
-          const shot = new Shot(handle, this);
+          const shot = new Shot(handle as FileSystemDirectoryHandle, this);
           await shot.load(); // load shotinfo.json
           this.shots.push(shot);
         }
@@ -207,7 +207,7 @@ ${scriptText}
   }
 
   get tags(): Art[] {
-    return this.getTags();
-  }
+  return this.getTags();
+}
 
 }

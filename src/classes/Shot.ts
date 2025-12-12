@@ -4,7 +4,7 @@ import { LocalJson } from './LocalJson';
 import { LocalImage } from './LocalImage';
 import { makeAutoObservable, runInAction } from "mobx";
 import { GoogleAI } from './GoogleAI'; 
-import { Art } from "./Art";
+//import { Art } from "./Art";
 
 export class Shot {
   folder: FileSystemDirectoryHandle;
@@ -33,7 +33,7 @@ export class Shot {
 
         for await (const [name, handle] of this.resultsFolder.entries()) {
           if (handle.kind === 'file') {
-            const localImage = new LocalImage(handle);
+            const localImage = new LocalImage(handle as FileSystemFileHandle);
             this.images.push(localImage);
 
             if (this.shotJson.data?.srcImage && name === this.shotJson.data.srcImage) {
@@ -122,14 +122,20 @@ export class Shot {
     try {
       const result = await GoogleAI.img2img(prompt || "",images);
 
-      if (result?.base64Obj) {
-        const localImage = await LocalImage.fromBase64(
-          result.base64Obj,
-          this.resultsFolder,
-          `${result?.id}.png`
-        );
-        this.addImage(localImage);
-      }
+    if (result && result.base64Obj?.rawBase64) {
+      // Now we know result.base64Obj exists and rawBase64 is a string
+      const localImage = await LocalImage.fromBase64(
+        {
+          rawBase64: result.base64Obj.rawBase64,
+          mime: result.base64Obj.mime
+        },
+        this.resultsFolder,
+        `${result.id}.png`
+      );
+      this.addImage(localImage);
+    } else {
+      console.warn("No valid image returned from GoogleAI.img2img");
+    }
 
 
     } catch (err) {
@@ -137,6 +143,5 @@ export class Shot {
       return null;
     }
   }
-
 
 }

@@ -65,7 +65,7 @@ export class Project {
 
       const loadedScenes: Scene[] = [];
 
-      for await (const entry of scenesFolder.values()) {
+      for await (const entry of (scenesFolder as any).values()) {
         if (entry.kind === "directory") {
           const scene = new Scene(entry, this);
           await scene.load();

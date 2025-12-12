@@ -8,7 +8,7 @@ import { ArtbookView } from "./ArtbookView";
 import { SettingsView } from "./SettingsView";
 import { Project } from '../classes/Project';
 import { ScriptView } from "./ScriptView";
-import TextField from './TextField';
+//import TextField from './TextField';
 
 
 interface MenuBarProps {

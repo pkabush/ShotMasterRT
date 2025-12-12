@@ -37,13 +37,12 @@ export class Artbook {
           const arts: Art[] = [];
 
           for await (const imgEntry of itemHandle.values()) {
-            if (
-              imgEntry.kind === "file" &&
-              imgEntry.name.match(/\.(png|jpg|jpeg|webp|gif)$/i)
-            ) {
-              const path = `${typeName}/${itemName}/${imgEntry.name}`;
-              arts.push(new Art(imgEntry, itemHandle, path,this));
-            }
+            if (imgEntry.kind !== "file") continue; // skip non-files
+            if (!imgEntry.name.match(/\.(png|jpg|jpeg|webp|gif)$/i)) continue;
+
+            const fileHandle = imgEntry as FileSystemFileHandle; // now typed correctly
+            const path = `${typeName}/${itemName}/${fileHandle.name}`;
+            arts.push(new Art(fileHandle, itemHandle, path, this));
           }
 
           items[itemName] = arts;
