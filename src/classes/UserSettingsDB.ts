@@ -25,6 +25,7 @@ export class UserSettingsDB {
   constructor() {
     // Make `data` observable so changes to recentFolders, lastOpenedFolder, api_keys trigger MobX reactions
     makeAutoObservable(this.data);
+    //makeAutoObservable(this.data, {}, { deep: true });
   }
 
   private async getDB() {

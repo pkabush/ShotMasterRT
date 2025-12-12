@@ -4,6 +4,8 @@ import { Artbook } from "./Artbook";
 import { UserSettingsDB } from "./UserSettingsDB";
 import { makeAutoObservable, runInAction } from "mobx";
 import { Script } from "./Script";
+import { GoogleAI } from "./GoogleAI";
+import { ChatGPT } from "./ChatGPT";
 
 
 export class Project {
@@ -130,7 +132,13 @@ export class Project {
 
   async loadDB() {
     await this.userSettingsDB.load();
-  }
+        // Init API Key Getter
+    GoogleAI.getApiKey = () => {return this.userSettingsDB.data.api_keys.Google_API_KEY || null;};
+    GoogleAI.setApiKey = async (key: string) => { await this.userSettingsDB.update(data => { data.api_keys.Google_API_KEY = key; });}
+    ChatGPT.getApiKey = () => {return this.userSettingsDB.data.api_keys.GPT_API_KEY || null; };
+    ChatGPT.setApiKey = async (key: string) => {await this.userSettingsDB.update(data => {data.api_keys.GPT_API_KEY = key;  });  };
+
+    }
 
   async createScene(sceneName: string) {
     if (!this.rootDirHandle) {

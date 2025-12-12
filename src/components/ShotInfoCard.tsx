@@ -32,20 +32,22 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
         <div className="d-flex align-items-center justify-content-between mb-2">
           <strong>{shot.folder.name}</strong>
           <div className="d-flex gap-2">
+            <SimpleToggle
+              label="Finished"
+              value={!!shot.shotJson.data?.finished} // <-- controlled from JSON
+              onToggle={(state) => {
+                if (shot.shotJson) {
+                  shot.shotJson.updateField('finished', state);
+                }
+              }}
+            />
+
             <SimpleButton onClick={() => console.log(shot)} label="Log Shot" />
             <SimpleButton onClick={handleDelete} label="Delete Shot" className="btn-outline-danger" />
           </div>
         </div>
 
-        <SimpleToggle
-          label="Finished"
-          value={!!shot.shotJson.data?.finished} // <-- controlled from JSON
-          onToggle={(state) => {
-            if (shot.shotJson) {
-              shot.shotJson.updateField('finished', state);
-            }
-          }}
-        />
+
 
 
         <EditableJsonTextField localJson={shot.shotJson} field="prompt" fitHeight />
@@ -55,6 +57,15 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
         <MediaGallery 
           label="Shot Results"
           headerExtra={
+            <>
+
+            <SimpleButton
+              label="Generate"
+              onClick={async () => {
+                console.log("Generate Image");
+              }}
+            />
+
             <SimpleButton
               label="Import URL"
               onClick={async () => {
@@ -76,6 +87,8 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
                 }
               }}
             />
+
+          </>          
           }
         >
           {files.map((localImage, index) => (

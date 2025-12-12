@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
-import CollapsibleContainer from './CollapsibleContainer'; // adjust path
+import CollapsibleContainer from './CollapsibleContainer';
 
 export interface GenericTextEditorProps {
   label: string;
   initialText: string;
-  onSave?: (newValue: string) => void;  // optional
-  onEdit?: (newValue: string) => void;  // optional
+  onSave?: (newValue: string) => void;
+  onEdit?: (newValue: string) => void;
   fitHeight?: boolean;
+  headerExtra?: React.ReactNode; // new optional prop
 }
 
 const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
@@ -15,6 +16,7 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
   onSave,
   onEdit,
   fitHeight = false,
+  headerExtra, // accept optional header extra
 }) => {
   const [text, setText] = useState(initialText);
   const [originalText, setOriginalText] = useState(initialText);
@@ -22,7 +24,6 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
   const [saving, setSaving] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Update local state if initialText changes
   useEffect(() => {
     setText(initialText);
     setOriginalText(initialText);
@@ -36,7 +37,7 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
 
   const handleChange = (newText: string) => {
     setText(newText);
-    if (onEdit) onEdit(newText); // call optional onEdit
+    if (onEdit) onEdit(newText);
   };
 
   const handleSave = async () => {
@@ -47,14 +48,12 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
     setSaving(false);
   };
 
-  // Auto-save
   useEffect(() => {
     if (!autoSave || !hasChanges) return;
     const timeout = setTimeout(() => handleSave(), 1000);
     return () => clearTimeout(timeout);
   }, [text, autoSave, hasChanges]);
 
-  // Adjust height for fitHeight
   useEffect(() => {
     if (fitHeight && textareaRef.current) {
       textareaRef.current.style.height = 'auto';
@@ -62,8 +61,10 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
     }
   }, [text, fitHeight]);
 
-  const headerExtra = (
+  // Merge default controls with optional headerExtra
+  const defaultHeaderExtra = (
     <div className="d-flex align-items-center gap-2">
+      {headerExtra && <>{headerExtra}</>}
       <button
         className="btn btn-primary btn-sm"
         disabled={saving || !hasChanges || !onSave}
@@ -79,19 +80,19 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
           onChange={(e) => setAutoSave(e.target.checked)}
         />
         Auto-save
-      </label>
+      </label>      
     </div>
   );
 
   return (
-    <CollapsibleContainer label={label} headerExtra={headerExtra}>
+    <CollapsibleContainer label={label} headerExtra={defaultHeaderExtra}>
       <textarea
         ref={textareaRef}
         className="form-control"
         style={{
           fontFamily: "monospace",
-          overflowY: "auto", // enable vertical scroll
-          maxHeight: "800px", // max height
+          overflowY: "auto",
+          maxHeight: "800px",
         }}
         value={text}
         onChange={(e) => handleChange(e.target.value)}

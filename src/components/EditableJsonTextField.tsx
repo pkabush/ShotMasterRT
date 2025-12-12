@@ -1,39 +1,34 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { observer } from 'mobx-react-lite';
 import GenericTextEditor from './GenericTextEditor';
 import { LocalJson } from '../classes/LocalJson';
 
 interface EditableJsonTextFieldProps {
   localJson: LocalJson;
   field: string;
-  fitHeight?: boolean; // new prop
+  fitHeight?: boolean;
+  headerExtra?: React.ReactNode; // new optional prop
 }
 
-const EditableJsonTextField: React.FC<EditableJsonTextFieldProps> = ({
+const EditableJsonTextField: React.FC<EditableJsonTextFieldProps> = observer(({
   localJson,
   field,
   fitHeight = false,
+  headerExtra,
 }) => {
-  const [value, setValue] = useState(localJson.data[field] ?? '');
-
-  // Update when localJson.data[field] changes
-  useEffect(() => {
-    setValue(localJson.data[field] ?? '');
-  }, [localJson, field]);
-
   const handleSave = async (newValue: string) => {
-    setValue(newValue);
-    localJson.data[field] = newValue;
-    await localJson.save();
+    await localJson.updateField(field, newValue); // MobX reactive update
   };
 
   return (
     <GenericTextEditor
       label={field}
-      initialText={value}
+      initialText={localJson.data[field] ?? ''}
       onSave={handleSave}
-      fitHeight={fitHeight} // forward prop
+      fitHeight={fitHeight}
+      headerExtra={headerExtra} // pass it down
     />
   );
-};
+});
 
 export default EditableJsonTextField;
