@@ -62,7 +62,8 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
             <SimpleButton
               label="Generate"
               onClick={async () => {
-                console.log("Generate Image");
+                //console.log("Generate Image");
+                shot.GenerateImage();
               }}
             />
 

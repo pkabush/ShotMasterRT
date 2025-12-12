@@ -6,6 +6,7 @@ import { Project } from './Project';
 import { toJS } from "mobx";
 import { GoogleAI } from './GoogleAI';
 import {ChatGPT} from './ChatGPT';
+import { Art } from "./Art";
 
 export class Scene {
   folder: FileSystemDirectoryHandle;
@@ -191,6 +192,22 @@ ${scriptText}
 
   log(){
     console.log(toJS(this));    
+  }
+
+  getTags(): Art[] {
+    if (!this.sceneJson?.data?.tags || !this.project?.artbook) return [];
+
+    const arts: Art[] = [];
+
+    for (const tagPath of this.sceneJson.data.tags) {
+      const art = this.project.artbook.getTag(tagPath);
+      if (art) arts.push(art);
+    }
+    return arts;
+  }
+
+  get tags(): Art[] {
+    return this.getTags();
   }
 
 }

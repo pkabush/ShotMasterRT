@@ -3,6 +3,8 @@ import { Scene } from './Scene';
 import { LocalJson } from './LocalJson';
 import { LocalImage } from './LocalImage';
 import { makeAutoObservable, runInAction } from "mobx";
+import { GoogleAI } from './GoogleAI'; 
+import { Art } from "./Art";
 
 export class Shot {
   folder: FileSystemDirectoryHandle;
@@ -80,6 +82,7 @@ export class Shot {
 
   addImage(image: LocalImage) {
     this.images.push(image);
+    if (!this.srcImage) {this.setSrcImage(image);}
   }
 
   removeImage(image: LocalImage) {
@@ -91,4 +94,49 @@ export class Shot {
       this.setSrcImage(null);
     }
   }
+
+  async GenerateImage() {
+    if (!this.resultsFolder) {
+      console.warn("Results folder not set. Attempting to create one...");
+      try {
+        this.resultsFolder = await this.folder.getDirectoryHandle('results', { create: true });
+      } catch (err) {
+        console.error("Failed to create results folder:", err);
+        return;
+      }
+    }
+
+    // add input images
+    const images: { rawBase64: string; mime: string }[] = [];
+    for (const art of this.scene.getTags()) {
+      try {
+        const base64Obj = await art.image.getBase64(); // uses cached Base64 if available
+        images.push(base64Obj);
+      } catch (err) {
+        console.warn("Failed to load tag image:", art.path, err);
+      }
+    }
+
+    const prompt = this.shotJson?.data.prompt;
+
+    try {
+      const result = await GoogleAI.img2img(prompt || "",images);
+
+      if (result?.base64Obj) {
+        const localImage = await LocalImage.fromBase64(
+          result.base64Obj,
+          this.resultsFolder,
+          `${result?.id}.png`
+        );
+        this.addImage(localImage);
+      }
+
+
+    } catch (err) {
+      console.error("GenerateImage failed:", err);
+      return null;
+    }
+  }
+
+
 }

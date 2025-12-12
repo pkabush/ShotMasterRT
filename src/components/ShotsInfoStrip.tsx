@@ -31,7 +31,7 @@ const ShotsInfoStrip: React.FC<Props> = observer(({ scene }) => {
   };
 
   return (
-    <div className="d-flex flex-column gap-3">
+    <div className="d-flex flex-column gap-3">      
       {/* Resizable strip for shot previews */}
       <ResizableContainer initialHeight={200}>
         <div className="d-flex overflow-auto gap-2 h-100">
@@ -49,6 +49,15 @@ const ShotsInfoStrip: React.FC<Props> = observer(({ scene }) => {
           </div>
         </div>
       </ResizableContainer>
+
+      {/* Buttons */}
+      <div>      
+        <SimpleButton onClick={() => {
+          for (const shot of scene.shots){
+            if (!shot.srcImage) shot.GenerateImage();
+          }
+        }} label="Generate ALL" />
+      </div>
 
       {/* Show info card for the selected shot */}
       {selectedShot && <ShotInfoCard shot={selectedShot} />}
