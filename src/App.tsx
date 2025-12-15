@@ -2,15 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { observer } from 'mobx-react-lite';
 import { MenuBar } from './components/MenuBar';
 import FolderList from './components/FolderList';
-//import { savePickedFolder, loadRecentFolders } from './db';
-import { useContent } from './contexts/ContentContext';
 import { Project } from './classes/Project';
 import { ContentView } from "./components/ContentView";
 
 const App: React.FC = observer(() => {
   const [project] = useState(() => new Project(null)); // MobX observable Project
-
-  const { contentArea } = useContent();
 
   const handleOpenFolder = async () => {
     try {
