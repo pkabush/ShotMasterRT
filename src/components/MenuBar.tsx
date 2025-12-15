@@ -3,11 +3,7 @@ import React from 'react';
 import { Navbar, Nav, Container } from 'react-bootstrap';
 import { MenuColumn } from './MenuColumn';
 import type { SubmenuItemProps } from './SubmenuItem';
-import { useContent } from '../contexts/ContentContext';
-import { ArtbookView } from "./ArtbookView";
-import { SettingsView } from "./SettingsView";
 import { Project } from '../classes/Project';
-import { ScriptView } from "./ScriptView";
 //import TextField from './TextField';
 
 
@@ -19,8 +15,7 @@ interface MenuBarProps {
 }
 
 export const MenuBar: React.FC<MenuBarProps> = ({ onOpenFolder, recentFolders, onOpenRecent,project}) => {
-  const { setContentArea } = useContent();
-  
+
   const fileMenuItems: Omit<SubmenuItemProps, 'parentKey'>[] = [
     { name: 'Open', onClick: onOpenFolder },
     {
@@ -46,21 +41,17 @@ export const MenuBar: React.FC<MenuBarProps> = ({ onOpenFolder, recentFolders, o
           <MenuColumn title="File" items={fileMenuItems} />
           <MenuColumn title="Edit" items={editMenuItems} />
           <MenuColumn title="Help" items={helpMenuItems} />
-          <MenuColumn title="Script" onClick={async () => {
-            setContentArea(<ScriptView project={project} />);
-          }}/>
-          <MenuColumn title="Settings" onClick={() => {
-            setContentArea(<SettingsView project={project}/>);
-          }}/>
+          <MenuColumn
+            title="Settings"
+            onClick={() => project.setView({ type: "settings" })}
+          />
+          <MenuColumn
+            title="Script"
+            onClick={() => project.setView({ type: "script" })}
+          />
           <MenuColumn
             title="Artbook"
-            onClick={() => {
-              if (!project.artbook) {
-                setContentArea(<div>No Artbook found.</div>);
-                return;
-              }
-              setContentArea(<ArtbookView artbook={project.artbook} />);
-            }}
+            onClick={() => project.setView({ type: "artbook" })}
           />
         </Nav>
       </Container>

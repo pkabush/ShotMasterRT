@@ -1,10 +1,6 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite'; // <-- import observer
-import { useContent } from '../contexts/ContentContext';
-import TabsContainer from './TabsContainer';
 import { Scene } from '../classes/Scene';
-import ShotsInfoStrip from './ShotsInfoStrip';
-import SceneInfoCard from './SceneInfoCard';
 
 type Props = {
   scene: Scene;
@@ -12,22 +8,9 @@ type Props = {
 
 // Wrap component in observer
 const SceneListItem: React.FC<Props> = observer(({ scene }) => {
-  const { setContentArea } = useContent();
-
   const handleClick = () => {
     if (!scene || !scene.sceneJson) return;
-
-    setContentArea(
-      <div>
-        <h2>{scene.folder.name}</h2>
-        <TabsContainer
-          tabs={{
-            Scene: <SceneInfoCard scene={scene} />,
-            Shots: <ShotsInfoStrip scene={scene} />,
-          }}
-        />
-      </div>
-    );
+    scene.project?.setView({ type: "scene" }, scene);
   };
 
   return (

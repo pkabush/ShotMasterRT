@@ -2,6 +2,7 @@ import React from "react";
 import { observer } from "mobx-react-lite";
 import { Project } from "../classes/Project";
 import { StringEditField } from "./StringEditField";
+import SimpleButton from "./SimpleButton";
 
 interface SettingsViewProps {
   project: Project;
@@ -31,6 +32,8 @@ export const SettingsView: React.FC<SettingsViewProps> = observer(({ project }) 
           await userSettingsDB.update(data => { data.api_keys.Google_API_KEY = newValue; });
         }}
       />
+
+      <SimpleButton onClick={ ()=> {project.log()}} label="LOG" />
     </div>
   );
 });

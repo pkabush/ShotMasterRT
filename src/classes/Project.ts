@@ -2,10 +2,18 @@
 import { Scene } from "./Scene";
 import { Artbook } from "./Artbook";
 import { UserSettingsDB } from "./UserSettingsDB";
-import { makeAutoObservable, runInAction } from "mobx";
+import { makeAutoObservable, runInAction,toJS } from "mobx";
 import { Script } from "./Script";
 import { GoogleAI } from "./GoogleAI";
 import { ChatGPT } from "./ChatGPT";
+import { LocalJson } from './LocalJson';
+
+export type ProjectView =
+  | { type: "none" }
+  | { type: "settings" }
+  | { type: "script" }
+  | { type: "artbook" }
+  | { type: "scene" };
 
 
 export class Project {
@@ -14,6 +22,9 @@ export class Project {
   artbook: Artbook | null = null;
   script: Script | null = null;         // <--- Added
   userSettingsDB = new UserSettingsDB();
+  projinfo: LocalJson | null = null;
+  currentView: ProjectView = { type: "none" };
+  selectedScene: Scene | null = null;
 
   constructor(rootDirHandle: FileSystemDirectoryHandle | null = null) {
     this.rootDirHandle = rootDirHandle;
@@ -47,6 +58,8 @@ export class Project {
       }
 
       await this.userSettingsDB.save();
+
+      this.projinfo = await LocalJson.create(this.rootDirHandle as FileSystemDirectoryHandle, 'projinfo.json');
     });
 
     // Load all project content
@@ -178,6 +191,15 @@ export class Project {
       console.error("Failed to create scene:", err);
       return null;
     }
+  }
+
+  log() {
+    console.log(toJS(this));
+  }
+  
+  setView(view: ProjectView, scene: Scene | null = null) {
+    this.currentView = view;
+    this.selectedScene = scene;
   }
 }
 

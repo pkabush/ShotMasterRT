@@ -5,6 +5,7 @@ import FolderList from './components/FolderList';
 //import { savePickedFolder, loadRecentFolders } from './db';
 import { useContent } from './contexts/ContentContext';
 import { Project } from './classes/Project';
+import { ContentView } from "./components/ContentView";
 
 const App: React.FC = observer(() => {
   const [project] = useState(() => new Project(null)); // MobX observable Project
@@ -62,7 +63,8 @@ const App: React.FC = observer(() => {
       <div style={{ display: 'flex', height: 'calc(100vh - 56px)' }}>
         <FolderList project={project} />
         <div className="flex-grow-1 p-3">
-          {contentArea}
+          {/*contentArea*/}
+          <ContentView project={project} />
         </div>
       </div>
     </div>
