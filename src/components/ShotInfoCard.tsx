@@ -42,7 +42,7 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
               }}
             />
 
-            <SimpleButton onClick={() => console.log(shot)} label="Log Shot" />
+            <SimpleButton onClick={() => {shot.log()}} label="Log Shot" />
             <SimpleButton onClick={handleDelete} label="Delete Shot" className="btn-outline-danger" />
           </div>
         </div>

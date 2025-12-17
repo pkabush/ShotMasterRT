@@ -6,23 +6,14 @@ export class MissingApiKeyError extends Error {}
 export class InvalidApiKeyError extends Error {}
 
 export class GoogleAI {
-  private static client: GoogleSDK | null = null;
-
   // Functions to get/set API key dynamically
   public static getApiKey: (() => string | null) | null = null;
   public static setApiKey: ((key: string) => void) | null = null;
 
   private static getGenAI() {
-    if (!this.client) {
-      const key = this.getApiKey?.() || "";
-      if (!key) throw new MissingApiKeyError("No Google API key set");
-      this.client = new GoogleSDK({ apiKey: key });
-    }
-    return this.client;
-  }
-
-  public static resetClient() {
-    this.client = null;
+    const key = this.getApiKey?.() || "";
+    if (!key) throw new MissingApiKeyError("No Google API key set");
+    return new GoogleSDK({ apiKey: key });
   }
 
   public static async txt2txt(prompt: string) {
@@ -123,7 +114,6 @@ export class GoogleAI {
     const userKey = window.prompt("Your Google API key is missing or invalid. Please enter a valid key:");
     if (userKey) {
       this.setApiKey?.(userKey);
-      this.resetClient();
     } else {
       console.warn("User did not provide a valid API key.");
     }

@@ -2,7 +2,7 @@
 import { Scene } from './Scene';
 import { LocalJson } from './LocalJson';
 import { LocalImage } from './LocalImage';
-import { makeAutoObservable, runInAction } from "mobx";
+import { makeAutoObservable, runInAction,toJS } from "mobx";
 import { GoogleAI } from './GoogleAI'; 
 //import { Art } from "./Art";
 
@@ -82,6 +82,7 @@ export class Shot {
 
   addImage(image: LocalImage) {
     this.images.push(image);
+    console.log("SRC",this.srcImage);
     if (!this.srcImage) {this.setSrcImage(image);}
   }
 
@@ -143,5 +144,7 @@ export class Shot {
       return null;
     }
   }
+
+  log() {console.log(toJS(this));}
 
 }

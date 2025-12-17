@@ -5,23 +5,14 @@ export class MissingApiKeyError extends Error {}
 export class InvalidApiKeyError extends Error {}
 
 export class ChatGPT {
-  private static client: OpenAI | null = null;
-
   // Functions to get/set API key dynamically
   public static getApiKey: (() => string | null) | null = null;
   public static setApiKey: ((key: string) => void) | null = null;
 
   private static getClient() {
-    if (!this.client) {
-        const key = this.getApiKey?.() || "";
-        if (!key) throw new MissingApiKeyError("No OpenAI API key set");
-        this.client = new OpenAI({ apiKey: key, dangerouslyAllowBrowser: true });
-    }
-    return this.client;
-  }
-
-  public static resetClient() {
-    this.client = null;
+    const key = this.getApiKey?.() || "";
+    if (!key) throw new MissingApiKeyError("No OpenAI API key set");
+    return new OpenAI({ apiKey: key, dangerouslyAllowBrowser: true });
   }
 
   public static async txt2txt(
@@ -81,7 +72,6 @@ export class ChatGPT {
         const userKey = window.prompt("Your OpenAI API key is missing or invalid. Please enter a valid key:");
         if (userKey) {
           this.setApiKey?.(userKey);
-          this.resetClient();
         } else {
           console.warn("User did not provide a valid API key.");
         }
