@@ -1,5 +1,5 @@
 // ShotInfoCard.tsx
-import React, {useState} from 'react';
+import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { Shot } from '../classes/Shot';
 import EditableJsonTextField from './EditableJsonTextField';
@@ -79,7 +79,6 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
                 }
               }}
             />
-
           </>          
           }
         >
@@ -120,7 +119,9 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
           <ImageEditWindow
             localImage={shot.selected_art}
             initialText="Notes for this image"
-            //onTextSave={(text) => saveNotes(image, text)}
+            onImageGenerated={async (result) => {              
+              await shot.saveGoogleResultImage(result,true);            
+            }}
             onClose={() => {
               shot.selectArt()
             }}

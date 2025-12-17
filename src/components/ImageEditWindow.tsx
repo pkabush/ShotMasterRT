@@ -1,88 +1,121 @@
-import React, { useEffect, useState } from 'react';
-import Split from 'react-split';
-import { LocalImage } from '../classes/LocalImage';
-import GenericTextEditor from './GenericTextEditor';
+import React, { useEffect, useState } from "react";
+import { Group, Panel, Separator } from "react-resizable-panels";
+import { LocalImage } from "../classes/LocalImage";
+import LoadingButton from "./LoadingButton";
+import { GoogleAI } from "../classes/GoogleAI";
 
 interface ImageEditWindowProps {
   localImage: LocalImage;
   initialText?: string;
-  onTextSave?: (text: string) => void;
+  onImageGenerated?: (result: any) => void;
   onClose?: () => void;
 }
 
 const ImageEditWindow: React.FC<ImageEditWindowProps> = ({
   localImage,
-  initialText = '',
-  onTextSave,
+  initialText = "",
+  onImageGenerated,
   onClose,
 }) => {
   const [url, setUrl] = useState<string | null>(null);
+  const [text, setText] = useState(initialText);
+  const [generating, setGenerating] = useState(false);
 
   useEffect(() => {
     let mounted = true;
-    localImage.getUrlObject().then(objUrl => {
+    localImage.getUrlObject().then((objUrl) => {
       if (mounted) setUrl(objUrl);
     });
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [localImage]);
 
-  // Custom gutter element for react-split
-  const gutter = (index: number, direction: 'horizontal' | 'vertical') => {
-    const gutterEl = document.createElement('div');
-    gutterEl.style.backgroundColor = '#8f8f8fff'; // Bootstrap primary
-    gutterEl.style.opacity = '0.5';
-    gutterEl.style.width = '10px';
-
-    gutterEl.style.cursor = direction === 'horizontal' ? 'ew-resize' : 'ns-resize';
-    return gutterEl;
+  const handleGenerate = async () => {
+    setGenerating(true);
+    try {
+      const result = await GoogleAI.img2img(text || "", [
+        await localImage.getBase64(),
+      ]);
+      if (onImageGenerated) onImageGenerated(result);
+    } catch (err) {
+      console.error("GenerateImage failed:", err);
+    } finally {
+      setGenerating(false);
+    }
   };
 
   return (
-    <div className="border d-flex flex-column" style={{ height: '700px' }}>
-      <Split
-        sizes={[40, 60]}
-        minSize={100}
-        gutterSize={10} // thicker gutter
-        direction="horizontal"
-        style={{ display: 'flex', height: '100%', width: '100%' }}
-        gutter={gutter}
-      >
-        {/* LEFT — image */}
-        <div className="d-flex align-items-center justify-content-center overflow-hidden">
-          {url ? (
-            <img
-              src={url}
-              alt="Preview"
-              className="img-fluid"
-              style={{ objectFit: 'contain', maxHeight: '100%', maxWidth: '100%' }}
-            />
-          ) : (
-            <div>Loading image…</div>
-          )}
-        </div>
-
-        {/* RIGHT — header + editor */}
-        <div className="d-flex flex-column h-100 p-3">
-          {/* Header */}
-          <div className="d-flex justify-content-end mb-2">
-            {onClose && (
-              <button type="button" className="btn btn-danger btn-sm" onClick={onClose}>
-                ✕
-              </button>
+    <div className="border d-flex flex-column" style={{ height: "700px" }}>
+      <Group orientation="horizontal"  style={{ height: "100%" }}>
+        {/* Left panel — image */}
+        <Panel defaultSize={500} minSize={10} >
+          <div
+            className="d-flex align-items-center justify-content-center overflow-hidden"
+            style={{ height: "100%" }}
+          >
+            {url ? (
+              <img
+                src={url}
+                alt="Preview"
+                className="img-fluid"
+                style={{
+                  objectFit: "contain",
+                  maxHeight: "100%",
+                  maxWidth: "100%",
+                }}
+              />
+            ) : (
+              <div>Loading image…</div>
             )}
           </div>
+        </Panel>
 
-          {/* Editor */}
-          <div className="flex-grow-1 overflow-hidden">
-            <GenericTextEditor
-              label="Image Notes"
-              initialText={initialText}
-              onSave={onTextSave}
-              fitHeight
-            />
+        {/* Split / drag handle */}
+        <Separator
+          style={{
+            cursor: "ew-resize",
+            backgroundColor: "#8f8f8fff",
+            width: "10px",
+          }}
+        />
+
+        {/* Right panel — settings */}
+        <Panel minSize={10}>
+          <div className="d-flex flex-column h-100 p-3"  style={{ height: "100%" }}>
+            <div className="d-flex justify-content-end mb-2">
+              {onClose && (
+                <button
+                  type="button"
+                  onClick={onClose}
+                  style={{ cursor: "pointer" }}
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            <div className="flex-grow-1 d-flex flex-column">
+              <textarea
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder="Edit This Image:"
+                style={{
+                  flexGrow: 1,
+                  resize: "none",
+                  padding: "8px",
+                  fontSize: "14px",
+                }}
+              />
+              <LoadingButton
+                onClick={handleGenerate}
+                label="Generate"
+                is_loading={generating}
+              />
+            </div>
           </div>
-        </div>
-      </Split>
+        </Panel>
+      </Group>
     </div>
   );
 };

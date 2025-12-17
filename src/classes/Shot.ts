@@ -35,7 +35,7 @@ export class Shot {
 
         for await (const [name, handle] of this.resultsFolder.entries()) {
           if (handle.kind === 'file') {
-            const localImage = new LocalImage(handle as FileSystemFileHandle);
+            const localImage = new LocalImage(handle as FileSystemFileHandle,this.resultsFolder);
             this.images.push(localImage);
 
             if (this.shotJson.data?.srcImage && name === this.shotJson.data.srcImage) {
@@ -128,23 +128,8 @@ export class Shot {
 
     try {
       const result = await GoogleAI.img2img(prompt || "",images);
-
-    if (result && result.base64Obj?.rawBase64) {
-      // Now we know result.base64Obj exists and rawBase64 is a string
-      const localImage = await LocalImage.fromBase64(
-        {
-          rawBase64: result.base64Obj.rawBase64,
-          mime: result.base64Obj.mime
-        },
-        this.resultsFolder,
-        `${result.id}.png`
-      );
-      this.addImage(localImage);
-    } else {
-      console.warn("No valid image returned from GoogleAI.img2img");
-    }
-
-
+      const localImage:LocalImage|null = await GoogleAI.saveResultImage(result,this.resultsFolder);
+      if (localImage) this.addImage(localImage);
     } catch (err) {
       console.error("GenerateImage failed:", err);
     } finally {
@@ -152,12 +137,20 @@ export class Shot {
       this.is_generating = false; // start generating
     });
     }
-  }
+  }  
 
   log() {console.log(toJS(this));}
 
   selectArt(art : LocalImage|null = null) {
     runInAction(() => { this.selected_art = art; });
+  }
+
+  async saveGoogleResultImage(result:any,select:boolean = false){
+      const localImage:LocalImage|null = await GoogleAI.saveResultImage(result,this.resultsFolder as FileSystemDirectoryHandle);
+      if (localImage) {
+        this.addImage(localImage);      
+        if(select) this.selectArt(localImage);
+      }      
   }
 
 }

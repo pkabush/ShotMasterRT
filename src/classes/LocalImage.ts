@@ -1,11 +1,13 @@
 // LocalImage.ts
 export class LocalImage {
   handle: FileSystemFileHandle;
+  parent: FileSystemDirectoryHandle;
   urlObject: string | null = null;
   base64Data: { rawBase64: string; mime: string } | null = null; // cache for Base64 + MIME
 
-  constructor(handle: FileSystemFileHandle) {
+  constructor(handle: FileSystemFileHandle,parent: FileSystemDirectoryHandle) {
     this.handle = handle;
+    this.parent = parent;
   }
 
   // Returns the object URL, creating it if needed
@@ -51,7 +53,7 @@ export class LocalImage {
       await writable.close();
 
       // Return new LocalImage instance
-      return new LocalImage(fileHandle);
+      return new LocalImage(fileHandle,folder);
     } catch (err) {
       console.error('Failed to create LocalImage from URL:', err);
       throw err;
@@ -119,7 +121,7 @@ export class LocalImage {
       await writable.close();
 
       // Return LocalImage with cached base64Data
-      const image = new LocalImage(fileHandle);
+      const image = new LocalImage(fileHandle,folder);
       image.base64Data = base64Obj; // cache
       return image;
     } catch (err) {

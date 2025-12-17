@@ -7,7 +7,6 @@ import { ArtbookView } from "./ArtbookView";
 import TabsContainer from "./TabsContainer";
 import SceneInfoCard from "./SceneInfoCard";
 import ShotsInfoStrip from "./ShotsInfoStrip";
-import ImageEditWindow from "./ImageEditWindow";
 
 interface ContentViewProps {
   project: Project;

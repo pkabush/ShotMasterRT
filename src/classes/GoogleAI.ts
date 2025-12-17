@@ -1,5 +1,6 @@
 // classes/GoogleGenAI.ts
 import { GoogleGenAI as GoogleSDK } from "@google/genai";
+import { LocalImage } from "./LocalImage";
 
 // Custom error types for clarity
 export class MissingApiKeyError extends Error {}
@@ -116,6 +117,23 @@ export class GoogleAI {
       this.setApiKey?.(userKey);
     } else {
       console.warn("User did not provide a valid API key.");
+    }
+  }
+
+  public static async saveResultImage(result:any, folder:FileSystemDirectoryHandle){
+    if (result && result.base64Obj?.rawBase64) {
+      const localImage = await LocalImage.fromBase64(
+        {
+          rawBase64: result.base64Obj.rawBase64,
+          mime: result.base64Obj.mime
+        },
+        folder,
+        `${result.id}.png`
+      );
+      return localImage;
+    } else {
+      console.warn("No valid image returned from GoogleAI.img2img");
+      return null;
     }
   }
 }

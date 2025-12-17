@@ -21,7 +21,7 @@ export class Art {
   ) {
     this.handle = handle;
     this.folder = folder;
-    this.image = new LocalImage(handle);
+    this.image = new LocalImage(handle,this.folder);
     this.path = path;
     this.artbook = artbook;
     makeAutoObservable(this); // make artInfo observable
