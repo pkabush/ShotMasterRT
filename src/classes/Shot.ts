@@ -14,6 +14,7 @@ export class Shot {
   srcImage: LocalImage | null = null;
   resultsFolder: FileSystemDirectoryHandle | null = null; // <--- store results folder
   is_generating = false;
+  selected_art:LocalImage | null = null;
 
   constructor(folder: FileSystemDirectoryHandle, scene: Scene) {
     this.folder = folder;
@@ -154,5 +155,9 @@ export class Shot {
   }
 
   log() {console.log(toJS(this));}
+
+  selectArt(art : LocalImage|null = null) {
+    runInAction(() => { this.selected_art = art; });
+  }
 
 }
