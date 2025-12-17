@@ -4,6 +4,7 @@ import { Scene } from "../classes/Scene";
 import EditableJsonTextField from "./EditableJsonTextField";
 import TagsContainer from "./TagsContainer";
 import SimpleButton from "./SimpleButton";
+import LoadingButton from './LoadingButton';
 
 interface Props {
   scene: Scene;
@@ -36,7 +37,7 @@ const SceneInfoCard: React.FC<Props> = observer(({ scene }) => { // <--- observe
         <SimpleButton onClick={() => scene.log()} label="LOG" />
       </div>
       <EditableJsonTextField localJson={scene.sceneJson} field="script" fitHeight headerExtra={
-        <SimpleButton onClick={handleSplitIntoShotsAI} label="Split Into Shots GPT" />
+        <LoadingButton onClick={handleSplitIntoShotsAI} className="btn-outline-success" label="Split Into Shots GPT" is_loading={scene.is_generating_shotsjson}/>
       }/>
       {/*<SimpleButton onClick={handleSplitIntoShotsAI} label="Split Into Shots" />*/}
       <EditableJsonTextField localJson={scene.sceneJson} field="shotsjson" fitHeight headerExtra={

@@ -1,5 +1,5 @@
 // Artbook.ts
-import { makeAutoObservable, runInAction } from "mobx";
+import { makeAutoObservable, runInAction,toJS } from "mobx";
 import { Art } from "./Art";
 import { Project } from "./Project";
 
@@ -77,4 +77,23 @@ export class Artbook {
     const art = item.find(a => a.handle.name === fileName);
     return art || null;
   }
+
+  log() {
+    console.log(toJS(this));
+  }
+
+  getJson(): Record<string, Record<string, string[]>> {
+    const result: Record<string, Record<string, string[]>> = {};
+
+    for (const [typeName, items] of Object.entries(this.data)) {
+      result[typeName] = {};
+
+      for (const [itemName, arts] of Object.entries(items)) {
+        result[typeName][itemName] = arts.map(art => art.handle.name);
+      }
+    }
+
+    return result;
+  }
+
 }

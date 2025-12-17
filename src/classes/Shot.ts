@@ -13,6 +13,7 @@ export class Shot {
   images: LocalImage[] = [];
   srcImage: LocalImage | null = null;
   resultsFolder: FileSystemDirectoryHandle | null = null; // <--- store results folder
+  is_generating = false;
 
   constructor(folder: FileSystemDirectoryHandle, scene: Scene) {
     this.folder = folder;
@@ -82,7 +83,7 @@ export class Shot {
 
   addImage(image: LocalImage) {
     this.images.push(image);
-    console.log("SRC",this.srcImage);
+    //console.log("SRC",this.srcImage);
     if (!this.srcImage) {this.setSrcImage(image);}
   }
 
@@ -106,6 +107,10 @@ export class Shot {
         return;
       }
     }
+
+    runInAction(() => {
+      this.is_generating = true; // start generating
+    });
 
     // add input images
     const images: { rawBase64: string; mime: string }[] = [];
@@ -141,7 +146,10 @@ export class Shot {
 
     } catch (err) {
       console.error("GenerateImage failed:", err);
-      return null;
+    } finally {
+    runInAction(() => {
+      this.is_generating = false; // start generating
+    });
     }
   }
 

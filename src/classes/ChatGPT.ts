@@ -4,6 +4,14 @@ import OpenAI from "openai";
 export class MissingApiKeyError extends Error {}
 export class InvalidApiKeyError extends Error {}
 
+export const models = [ 
+    "gpt-4o-mini",
+    "gpt-5.1",
+    "gpt-5-mini",
+    "gpt-5-nano",
+    "gpt-5",
+  ]
+
 export class ChatGPT {
   // Functions to get/set API key dynamically
   public static getApiKey: (() => string | null) | null = null;
@@ -18,7 +26,8 @@ export class ChatGPT {
   public static async txt2txt(
     input?: string,
     system_msg?: string,
-    images?: { handle: File }[]
+    model: string = "gpt-4o-mini",  // default value
+    images?: { handle: File }[]    
   ) {
     try {
       const client = this.getClient();
@@ -53,7 +62,7 @@ export class ChatGPT {
      */
 
       const payload = {
-        model: "gpt-4o-mini",
+        model: model,
         input: messages
       }
 

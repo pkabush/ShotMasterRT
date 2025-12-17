@@ -3,6 +3,10 @@ import { observer } from "mobx-react-lite";
 import { Project } from "../classes/Project";
 import { StringEditField } from "./StringEditField";
 import SimpleButton from "./SimpleButton";
+import EditableJsonTextField from './EditableJsonTextField';
+import TabsContainer from "./TabsContainer";
+import SimpleDropdown from './SimpleDropdown';
+import * as GPT from "../classes/ChatGPT.ts";
 
 interface SettingsViewProps {
   project: Project;
@@ -12,10 +16,20 @@ export const SettingsView: React.FC<SettingsViewProps> = observer(({ project }) 
   const { userSettingsDB } = project;
 
   if (!userSettingsDB) return null;
+  
+  const tabs = project.projinfo
+    ? {
+        "Разбив на Шоты": (<EditableJsonTextField localJson={project.projinfo} field="split_shot_prompt" fitHeight/>),
+        "Генерация Тэгов": (<EditableJsonTextField localJson={project.projinfo} field="generate_tags_prompt" fitHeight/>),
+      }
+    : {};
+
+  
 
   return (
-    <div style={{ maxWidth: 400, padding: 20 }}>
+    <div style={{ padding: 20 }}>
       <h3>API Keys</h3>
+      <SimpleButton onClick={ ()=> {project.log()}} label="LOG Project" />  
 
       <StringEditField
         label="GPT API Key"
@@ -32,8 +46,21 @@ export const SettingsView: React.FC<SettingsViewProps> = observer(({ project }) 
           await userSettingsDB.update(data => { data.api_keys.Google_API_KEY = newValue; });
         }}
       />
+      
+    <div>
+      <SimpleDropdown
+        items={GPT.models}
+        currentItem={project.projinfo?.data.gpt_model}
+        onPicked={(val)=>{ project.projinfo?.updateField("gpt_model",val); }}
+      />
+    </div>
 
-      <SimpleButton onClick={ ()=> {project.log()}} label="LOG" />
+
+      {/* Tabs */}
+      <h2>Prompts</h2>
+      {Object.keys(tabs).length > 0 && <TabsContainer tabs={tabs} />}
+
+
     </div>
   );
 });

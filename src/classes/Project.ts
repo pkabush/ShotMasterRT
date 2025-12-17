@@ -15,6 +15,32 @@ export type ProjectView =
   | { type: "artbook" }
   | { type: "scene" };
 
+const default_projinfo = {
+  "gpt_model":"gpt-4o-mini",
+  "describe_prompt" : "Хорошо Опиши этого персонажа как промпт для генерации картинки. ",
+  "generate_tags_prompt" : `
+  Опираясь на сценарий (SCRIPT) и шоты из этого сценария(SHOTS JSON) сделай список какие из референсных картинок из REFS DICTIONARY стоит использовать в этой сцене.
+
+  в ответе предоставь список, где путь к каждой картинке с новой строки, без дополнительных комментариев в таком виде:
+  ENV/ROOM1/Night.png
+  CHAR/VICTOR/Portrait.png
+
+
+  `,
+  "split_shot_prompt" : `
+разбей эту сцену из моего сценария на шоты, сгенерируй промпты для нейросети для генерации видео и предоставь в виде json, в ответе предоставь толкьо json в следующем формате:
+{
+  "SHOT_010" : 
+    {
+    "prompt" : "подробный промпт для нейросети генератора видео", 
+    "camera" : "focal length, shot type", 
+    "action_description" : "описания действия которое происходит для аниматора", 
+    },
+
+}`
+}
+
+
 
 export class Project {
   rootDirHandle: FileSystemDirectoryHandle | null = null;
@@ -59,7 +85,7 @@ export class Project {
 
       await this.userSettingsDB.save();
 
-      this.projinfo = await LocalJson.create(this.rootDirHandle as FileSystemDirectoryHandle, 'projinfo.json');
+      this.projinfo = await LocalJson.create(this.rootDirHandle as FileSystemDirectoryHandle, 'projinfo.json',default_projinfo );
     });
 
     // Load all project content

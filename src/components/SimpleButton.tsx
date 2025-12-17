@@ -3,7 +3,7 @@ import React from 'react';
 
 interface Props {
   onClick: () => void; // function to call on click
-  label?: string;       // optional button label
+  label?: React.ReactNode;  // <-- allow string or JSX
   className?: string;   // optional extra classes
 }
 

@@ -13,6 +13,8 @@ export class Scene {
   sceneJson: LocalJson | null = null;
   shots: Shot[] = [];
   project: Project | null = null; // <--- new pointer to parent project
+  is_generating_shotsjson = false;
+  is_generating_tags = false;
 
  constructor(folder: FileSystemDirectoryHandle, project: Project | null = null) {
     this.folder = folder;
@@ -110,24 +112,16 @@ export class Scene {
   async generateShotsJson(): Promise<string | null> {
     if (!this.sceneJson?.data?.script) return null;
 
+    runInAction(() => { this.is_generating_shotsjson = true; });
+
     const scriptText = this.sceneJson.data.script;
 
     const prompt = `
-разбей эту сцену из моего сценария на шоты, сгенерируй промпты для нейросети для генерации видео и предоставь в виде json, в ответе предоставь толкьо json в следующем формате:
-{
-  "SHOT_010" : 
-    {
-    "prompt" : "подробный промпт для нейросети генератора видео", 
-    "camera" : "focal length, shot type", 
-    "action_description" : "описания действия которое происходит для аниматора", 
-    },
+${this.project?.projinfo?.data?.split_shot_prompt }
 
-}   
-
-СЦЕНА:
+SCRIPT:
 ${scriptText}
 `;
-
 
     const system_msg =  "You are a helpful assistant. " +
             "Always respond using ONLY valid JSON. " +
@@ -135,17 +129,17 @@ ${scriptText}
             "Do not wrap the JSON in backticks. " +
             "The entire response must be a valid JSON object." 
 
-
   try {
-    // Call ChatGPT with prompt + system message
-    const res = await ChatGPT.txt2txt(prompt, system_msg);
-    // txt2txt returns string | null
-    return res;
-  } catch (err) {
-    console.error("Error generating shots JSON:", err);
-    return null;
-  }
-
+      // Call ChatGPT with prompt + system message
+      const res = await ChatGPT.txt2txt(prompt, system_msg,this.project?.projinfo?.data.gpt_model);
+      // txt2txt returns string | null
+      return res;
+    } catch (err) {
+      console.error("Error generating shots JSON:", err);
+      return null;
+    } finally {
+      runInAction(() => { this.is_generating_shotsjson = false; });
+    }
   }
 
   // Scene.ts
@@ -186,7 +180,7 @@ ${scriptText}
 
       } catch (err) {
         console.error(`Error creating shot ${shotKey}:`, err);
-      }
+      } 
     }
   }
 
@@ -208,6 +202,63 @@ ${scriptText}
 
   get tags(): Art[] {
   return this.getTags();
-}
+  }
+
+  async generateTags() {
+
+    runInAction(() => { this.is_generating_tags = true; });
+
+    const prompt = `
+${this.project?.projinfo?.data?.generate_tags_prompt}
+
+SCRIPT:
+${this.sceneJson?.data.script}
+
+SHOTS JSON:
+${this.sceneJson?.data.shotsjson}
+
+REFS DICTIONARY:
+${JSON.stringify(this.project?.artbook?.getJson(), null, 2)}
+
+`;
+
+    const system_msg =  "You are a helpful assistant. " +
+      "Do not write explanations. "
+   
+    try {
+      const res = await ChatGPT.txt2txt(prompt, system_msg, this.project?.projinfo?.data.gpt_model);
+      //console.log(res);
+
+      for (const tag_str of res?.split("\n") || []) {
+        const trimmedTag = tag_str.trim();   // <-- remove leading/trailing whitespace
+        if (!trimmedTag) continue;           // skip empty lines
+        console.log("Adding Tag: ", trimmedTag);
+        this.addTag(trimmedTag);
+      }
+        
+        return res;
+      } catch (err) {
+        console.error("Error generating tags:", err);
+        return null;
+      } finally {
+        runInAction(() => { this.is_generating_tags = false; });
+      }   
+
+  }
+
+  addTag(tag_str: string) {
+    runInAction(() => {
+      //console.log(tag_str, this.sceneJson?.data.tags);
+
+      if (!this.sceneJson?.data.tags.includes(tag_str)) {
+        if (this.project?.artbook?.getTag(tag_str)) {
+          this.sceneJson?.data.tags.push(tag_str);
+          this.sceneJson?.save();
+        } else {
+          console.log("Tag not found: ", tag_str);
+        }
+      }
+    });
+  }
 
 }

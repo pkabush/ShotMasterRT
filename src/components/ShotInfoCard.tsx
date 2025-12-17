@@ -8,6 +8,7 @@ import MediaGalleryImage from './MediaGalleryImage';
 import SimpleButton from './SimpleButton';
 import SimpleToggle from './SimpleToggle';
 import { LocalImage } from '../classes/LocalImage';
+import LoadingButton from './LoadingButton';
 
 interface Props {
   shot: Shot;
@@ -59,13 +60,7 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
           headerExtra={
             <>
 
-            <SimpleButton
-              label="Generate"
-              onClick={async () => {
-                //console.log("Generate Image");
-                shot.GenerateImage();
-              }}
-            />
+            <LoadingButton label="Generate" className="btn-outline-success" onClick={async () => {shot.GenerateImage();}} is_loading={shot.is_generating}  />
 
             <SimpleButton
               label="Import URL"

@@ -6,7 +6,8 @@ import SimpleButton from "./SimpleButton";
 import TagListItem from "./TagListItem";
 import SimpleDropDownMenu from "./SimpleDropDownMenu";
 import ArtDropdownItem from "./ArtDropdownItem";
-import { runInAction } from "mobx";
+//import { runInAction } from "mobx";
+import LoadingButton from './LoadingButton';
 
 interface TagsContainerProps {
   scene: Scene;
@@ -18,12 +19,7 @@ const TagsContainer: React.FC<TagsContainerProps> = observer(({ scene }) => {
   const tags = scene.sceneJson.data.tags;
   const artbook = scene.project?.artbook;
 
-  const addTag = (path: string) => {
-    runInAction(() => {
-      tags.push(path);
-      scene.sceneJson!.save();
-    });
-  };
+  const addTag = (path: string) => { scene.addTag(path); };
 
   if (!artbook) return null;
 
@@ -56,10 +52,12 @@ const TagsContainer: React.FC<TagsContainerProps> = observer(({ scene }) => {
           <SimpleDropDownMenu label="+ Add Tag" direction="down">
             {buildDropdownFromArtbook(artbook.data)}
           </SimpleDropDownMenu>
+          <LoadingButton onClick={()=>{scene.generateTags()}} className="btn-outline-success" label="Generate Tags" is_loading={scene.is_generating_tags}/>
           <SimpleButton
-            onClick={() => console.log(scene.project?.artbook)}
+            onClick={() => scene.project?.artbook?.log()}
             label="Log"
           />
+
 
 
         </div>
