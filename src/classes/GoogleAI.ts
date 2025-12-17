@@ -46,14 +46,7 @@ export class GoogleAI {
       // Detect missing or invalid API key
       const message = err?.message || "";
       if (message.includes("API key not valid") || message.includes("API_KEY_INVALID") || err instanceof MissingApiKeyError) {
-        const userKey = window.prompt("Your Google API key is missing or invalid. Please enter a valid key:");
-        if (userKey) {
-          this.setApiKey?.(userKey);
-          this.resetClient();
-        } else {
-          console.warn("User did not provide a valid API key.");
-        }
-        // Do NOT retry — just return null
+        this.showKeyPromptWindow()
         return null;
       }
 
@@ -115,8 +108,24 @@ export class GoogleAI {
       // If no image returned, fallback
       return null;
     } catch (err: any) {
+      // Detect missing or invalid API key
+      const message = err?.message || "";
+      if (message.includes("API key not valid") || message.includes("API_KEY_INVALID") || err instanceof MissingApiKeyError) {
+        this.showKeyPromptWindow()
+        return null;
+      }
       console.error("img2img error", err);
       throw err;
+    }
+  }
+
+  private static showKeyPromptWindow() {
+    const userKey = window.prompt("Your Google API key is missing or invalid. Please enter a valid key:");
+    if (userKey) {
+      this.setApiKey?.(userKey);
+      this.resetClient();
+    } else {
+      console.warn("User did not provide a valid API key.");
     }
   }
 }
