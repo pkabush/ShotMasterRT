@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import Split from 'react-split';
 import { LocalImage } from '../classes/LocalImage';
 import GenericTextEditor from './GenericTextEditor';
 
@@ -19,30 +20,41 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = ({
 
   useEffect(() => {
     let mounted = true;
-
-    const loadImage = async () => {
-      const objectUrl = await localImage.getUrlObject();
-      if (mounted) setUrl(objectUrl);
-    };
-
-    loadImage();
-
-    return () => {
-      mounted = false;
-    };
+    localImage.getUrlObject().then(objUrl => {
+      if (mounted) setUrl(objUrl);
+    });
+    return () => { mounted = false; };
   }, [localImage]);
 
+  // Custom gutter element for react-split
+  const gutter = (index: number, direction: 'horizontal' | 'vertical') => {
+    const gutterEl = document.createElement('div');
+    gutterEl.style.backgroundColor = '#8f8f8fff'; // Bootstrap primary
+    gutterEl.style.opacity = '0.5';
+    gutterEl.style.width = '10px';
+
+    gutterEl.style.cursor = direction === 'horizontal' ? 'ew-resize' : 'ns-resize';
+    return gutterEl;
+  };
+
   return (
-    <div className="border rounded p-3">
-      <div className="d-flex gap-3" style={{ minHeight: '400px' }}>
+    <div className="border d-flex flex-column" style={{ height: '700px' }}>
+      <Split
+        sizes={[40, 60]}
+        minSize={100}
+        gutterSize={10} // thicker gutter
+        direction="horizontal"
+        style={{ display: 'flex', height: '100%', width: '100%' }}
+        gutter={gutter}
+      >
         {/* LEFT — image */}
-        <div className="flex-grow-1 border rounded d-flex align-items-center justify-content-center">
+        <div className="d-flex align-items-center justify-content-center overflow-hidden">
           {url ? (
             <img
               src={url}
               alt="Preview"
               className="img-fluid"
-              style={{ objectFit: 'contain' }}
+              style={{ objectFit: 'contain', maxHeight: '100%', maxWidth: '100%' }}
             />
           ) : (
             <div>Loading image…</div>
@@ -50,23 +62,18 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = ({
         </div>
 
         {/* RIGHT — header + editor */}
-        <div className="flex-grow-1 d-flex flex-column">
-          {/* HEADER ROW */}
+        <div className="d-flex flex-column h-100 p-3">
+          {/* Header */}
           <div className="d-flex justify-content-end mb-2">
             {onClose && (
-              <button
-                type="button"
-                className="btn btn-danger btn-sm"
-                onClick={onClose}
-                aria-label="Close"
-              >
+              <button type="button" className="btn btn-danger btn-sm" onClick={onClose}>
                 ✕
               </button>
             )}
           </div>
 
-          {/* EDITOR ROW */}
-          <div className="flex-grow-1">
+          {/* Editor */}
+          <div className="flex-grow-1 overflow-hidden">
             <GenericTextEditor
               label="Image Notes"
               initialText={initialText}
@@ -75,7 +82,7 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = ({
             />
           </div>
         </div>
-      </div>
+      </Split>
     </div>
   );
 };

@@ -16,8 +16,6 @@ interface Props {
 }
 
 const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
-  const [openArt, setOpenArt] = useState<LocalImage | null>(null);
-
   if (!shot.shotJson) return <div>Loading shot info...</div>;
 
   const itemHeight = 200;
@@ -90,10 +88,8 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
               key={index}
               localImage={localImage}
               height={itemHeight}
-              onClick={()=>{
-                // pick Local Image On Click
-                console.log(localImage);
-                setOpenArt(localImage);
+              onClick={()=>{                 
+                shot.selectArt(localImage);
               }}
               topRightExtra={
                 <>
@@ -120,12 +116,14 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
         </MediaGallery>
 
         {/* Selected ArtInfoCard below thumbnails */}
-        {openArt  && (
+        {shot.selected_art  && (
           <ImageEditWindow
-            localImage={openArt}
+            localImage={shot.selected_art}
             initialText="Notes for this image"
             //onTextSave={(text) => saveNotes(image, text)}
-            onClose={() => setOpenArt(null)}
+            onClose={() => {
+              shot.selectArt()
+            }}
           />
         )}
 
