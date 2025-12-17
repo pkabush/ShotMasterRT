@@ -7,12 +7,14 @@ import { ArtbookView } from "./ArtbookView";
 import TabsContainer from "./TabsContainer";
 import SceneInfoCard from "./SceneInfoCard";
 import ShotsInfoStrip from "./ShotsInfoStrip";
+import ImageEditWindow from "./ImageEditWindow";
 
 interface ContentViewProps {
   project: Project;
 }
 
-export const ContentView: React.FC<ContentViewProps> = observer(({ project }) => {
+export const ContentView: React.FC<ContentViewProps> = observer(({ project }) => {  
+  
   switch (project.currentView.type) {
     case "settings":
       return <SettingsView project={project} />;

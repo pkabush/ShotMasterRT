@@ -4,10 +4,11 @@ import { LocalImage } from '../classes/LocalImage';
 interface Props {
   localImage: LocalImage;
   height?: number;
-  topRightExtra?: React.ReactNode; // extra content in top-right corner
+  topRightExtra?: React.ReactNode;
+  onClick?: () => void;
 }
 
-const MediaGalleryImage: React.FC<Props> = ({ localImage, height = 150, topRightExtra }) => {
+const MediaGalleryImage: React.FC<Props> = ({ localImage, height = 150, topRightExtra,onClick }) => {
   const [url, setUrl] = useState<string | null>(null);
   const [hovered, setHovered] = useState(false);
 
@@ -52,6 +53,7 @@ const MediaGalleryImage: React.FC<Props> = ({ localImage, height = 150, topRight
         src={url}
         alt="Media"
         className="img-fluid"
+        onClick={onClick}
         style={{
           height: `${height}px`,
           width: 'auto',

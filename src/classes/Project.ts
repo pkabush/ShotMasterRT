@@ -41,7 +41,6 @@ const default_projinfo = {
 }
 
 
-
 export class Project {
   rootDirHandle: FileSystemDirectoryHandle | null = null;
   scenes: Scene[] = [];

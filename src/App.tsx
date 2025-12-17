@@ -55,12 +55,21 @@ const App: React.FC = observer(() => {
         recentFolders={project.userSettingsDB.data.recentFolders}
         onOpenRecent={handleOpenRecent}
         project={project}   
-      />
-      <div style={{ display: 'flex', height: 'calc(100vh - 56px)' }}>
+      />    
+      {/* Main layout */}
+      <div
+        className="d-flex"
+        style={{ height: 'calc(100vh - 56px)', overflow: 'hidden' }}
+      >
+        {/* Sidebar */}
         <FolderList project={project} />
-        <div className="flex-grow-1 p-3">
-          {/*contentArea*/}
-          <ContentView project={project} />
+
+        {/* Content column */}
+        <div className="flex-grow-1 d-flex flex-column overflow-hidden">
+          {/* Scrollable content */}
+          <div className="flex-grow-1 overflow-auto p-3">
+            <ContentView project={project} />
+          </div>
         </div>
       </div>
     </div>

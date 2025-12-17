@@ -1,5 +1,5 @@
 // ShotInfoCard.tsx
-import React from 'react';
+import React, {useState} from 'react';
 import { observer } from 'mobx-react-lite';
 import { Shot } from '../classes/Shot';
 import EditableJsonTextField from './EditableJsonTextField';
@@ -9,12 +9,15 @@ import SimpleButton from './SimpleButton';
 import SimpleToggle from './SimpleToggle';
 import { LocalImage } from '../classes/LocalImage';
 import LoadingButton from './LoadingButton';
+import ImageEditWindow from './ImageEditWindow';
 
 interface Props {
   shot: Shot;
 }
 
 const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
+  const [openArt, setOpenArt] = useState<LocalImage | null>(null);
+
   if (!shot.shotJson) return <div>Loading shot info...</div>;
 
   const itemHeight = 200;
@@ -48,9 +51,6 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
           </div>
         </div>
 
-
-
-
         <EditableJsonTextField localJson={shot.shotJson} field="prompt" fitHeight />
         <EditableJsonTextField localJson={shot.shotJson} field="camera" fitHeight />
         <EditableJsonTextField localJson={shot.shotJson} field="action_description" fitHeight />
@@ -59,7 +59,6 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
           label="Shot Results"
           headerExtra={
             <>
-
             <LoadingButton label="Generate" className="btn-outline-success" onClick={async () => {shot.GenerateImage();}} is_loading={shot.is_generating}  />
 
             <SimpleButton
@@ -72,7 +71,6 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
 
                     const localImage = await LocalImage.fromUrl(text, shot.resultsFolder as FileSystemDirectoryHandle);
                     shot.addImage(localImage);
-
 
                   } else {
                     alert("Clipboard does not contain a valid URL.");
@@ -92,6 +90,11 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
               key={index}
               localImage={localImage}
               height={itemHeight}
+              onClick={()=>{
+                // pick Local Image On Click
+                console.log(localImage);
+                setOpenArt(localImage);
+              }}
               topRightExtra={
                 <>
                   <SimpleButton onClick={() => shot.setSrcImage(localImage)} label="Pick" />
@@ -115,6 +118,17 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
             />
           ))}
         </MediaGallery>
+
+        {/* Selected ArtInfoCard below thumbnails */}
+        {openArt  && (
+          <ImageEditWindow
+            localImage={openArt}
+            initialText="Notes for this image"
+            //onTextSave={(text) => saveNotes(image, text)}
+            onClose={() => setOpenArt(null)}
+          />
+        )}
+
       </div>
     </div>
   );
