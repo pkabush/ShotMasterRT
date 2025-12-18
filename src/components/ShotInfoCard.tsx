@@ -10,6 +10,7 @@ import SimpleToggle from './SimpleToggle';
 import { LocalImage } from '../classes/LocalImage';
 import LoadingButton from './LoadingButton';
 import ImageEditWindow from './ImageEditWindow';
+import TagsToggleList from "./TagsToggleList";
 
 interface Props {
   shot: Shot;
@@ -52,6 +53,8 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
         <EditableJsonTextField localJson={shot.shotJson} field="prompt" fitHeight />
         <EditableJsonTextField localJson={shot.shotJson} field="camera" fitHeight />
         <EditableJsonTextField localJson={shot.shotJson} field="action_description" fitHeight />
+        <TagsToggleList shot={shot} />
+
 
         <MediaGallery 
           label="Shot Results"

@@ -113,9 +113,13 @@ export class Shot {
       this.is_generating = true; // start generating
     });
 
-    // add input images
+    // add input images, skipping any skipped tags
+    const skipped = this.getSkippedTags();
     const images: { rawBase64: string; mime: string }[] = [];
+
     for (const art of this.scene.getTags()) {
+      if (skipped.includes(art.path)) continue; // skip this tag
+
       try {
         const base64Obj = await art.image.getBase64(); // uses cached Base64 if available
         images.push(base64Obj);
@@ -152,5 +156,35 @@ export class Shot {
         if(select) this.selectArt(localImage);
       }      
   }
+
+  getSkippedTags(): string[] {
+    return this.shotJson?.data?.skippedTags || [];
+  }
+
+  setTagSkipped(tag_path: string, status: boolean) {
+    if (!this.shotJson?.data) return;
+
+    // ensure skippedTags is initialized
+    if (!Array.isArray(this.shotJson.data.skippedTags)) {
+      this.shotJson.data.skippedTags = [];
+    }
+
+    runInAction(() => {
+      const tags = this.shotJson!.data!.skippedTags;
+
+      if (status) {
+        if (!tags.includes(tag_path)) {
+          tags.push(tag_path);
+        }
+      } else {
+        this.shotJson!.data!.skippedTags = tags.filter((t: string) => t !== tag_path);
+      }
+    });
+
+    // persist to JSON after mutation
+    this.shotJson.save();
+  }
+
+  
 
 }

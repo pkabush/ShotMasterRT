@@ -69,6 +69,7 @@ export class GoogleAI {
 
       const payload = {
         model: "gemini-2.5-flash-image",
+        //model: "gemini-3-pro-image-preview",
         contents,
         config: {
           imageConfig: {
