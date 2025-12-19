@@ -15,6 +15,7 @@ export class Scene {
   project: Project | null = null; // <--- new pointer to parent project
   is_generating_shotsjson = false;
   is_generating_tags = false;
+  is_generating_all_shot_images = false;
 
  constructor(folder: FileSystemDirectoryHandle, project: Project | null = null) {
     this.folder = folder;
@@ -258,6 +259,22 @@ ${JSON.stringify(this.project?.artbook?.getJson(), null, 2)}
           console.log("Tag not found: ", tag_str);
         }
       }
+    });
+  }
+
+  async generateAllShotImages() {
+    runInAction(() => {
+      this.is_generating_all_shot_images = true;
+    });
+
+    const tasks = this.shots
+      .filter(shot => !shot.srcImage)
+      .map(shot => shot.GenerateImage());
+
+    await Promise.all(tasks);
+
+    runInAction(() => {
+      this.is_generating_all_shot_images = false;
     });
   }
 

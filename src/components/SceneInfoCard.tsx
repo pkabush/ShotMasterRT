@@ -44,6 +44,7 @@ const SceneInfoCard: React.FC<Props> = observer(({ scene }) => { // <--- observe
         <SimpleButton onClick={handleCreateShots} label="Create Shots" />
       }/>
       <TagsContainer scene={scene} />
+      <div style={{ height: "500px" }}></div>
     </div>
   );
 });

@@ -7,6 +7,7 @@ import ShotStripPreview from './ShotStripPreview';
 import ResizableContainer from './ResizableContainer';
 import ShotInfoCard from './ShotInfoCard'; // Import the new ShotInfoCard
 import SimpleButton from './SimpleButton';
+import LoadingButton from './LoadingButton';
 
 interface Props {
   scene: Scene;
@@ -52,11 +53,8 @@ const ShotsInfoStrip: React.FC<Props> = observer(({ scene }) => {
 
       {/* Buttons */}
       <div>      
-        <SimpleButton onClick={() => {
-          for (const shot of scene.shots){
-            if (!shot.srcImage) shot.GenerateImage();
-          }
-        }} label="Generate ALL" />
+        <LoadingButton onClick={() => {scene.generateAllShotImages()}} label="Generate ALL" is_loading={scene.is_generating_all_shot_images} />
+        <SimpleButton label="+ Add Shot" onClick={handleAddShot} />
       </div>
 
       {/* Show info card for the selected shot */}

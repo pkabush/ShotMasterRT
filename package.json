@@ -11,6 +11,7 @@
   },
   "dependencies": {
     "@google/genai": "^1.33.0",
+    "@radix-ui/react-dropdown-menu": "^2.1.16",
     "bootstrap": "^5.3.8",
     "idb": "^8.0.3",
     "mobx": "^6.15.0",
