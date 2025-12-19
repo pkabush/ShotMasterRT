@@ -1,0 +1,39 @@
+/* Main trigger */
+.dropdown-trigger {
+  background-color: #3b82f6; /* blue-500 */
+  color: rgba(255, 255, 255, 0.806);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.dropdown-trigger:hover {
+  background-color: #2563eb; /* blue-600 */
+}
+
+/* Dropdown content */
+.dropdown-content {
+  min-width: 200px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  background-color: rgba(56, 56, 56, 1);
+  border: 1px solid #e5e7eb; /* gray-200 */
+  border-radius: 6px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Submenu triggers */
+.submenu-trigger {
+  display: flex;
+  padding-left: 15px;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+  border-radius: 4px;
+  min-height:30px;
+  transition: background-color 0.2s;
+}
+
+.submenu-trigger:hover {
+  background-color: rgba(36, 36, 36, 1);
+}
