@@ -8,6 +8,16 @@ import { toJS } from "mobx";
 import {ChatGPT} from './ChatGPT';
 import { Art } from "./Art";
 
+const default_sceneInfoJson = {
+  tags:[],
+  shotsjson:"",
+  script:"",
+  split_shot_prompt:{
+    preset: "split_shots",
+  }
+}
+
+
 export class Scene {
   folder: FileSystemDirectoryHandle;
   sceneJson: LocalJson | null = null;
@@ -25,7 +35,7 @@ export class Scene {
 
   async load(): Promise<void> {
     try {
-      this.sceneJson = await LocalJson.create(this.folder, 'sceneinfo.json', {tags:[],shotsjson:"",script:""});
+      this.sceneJson = await LocalJson.create(this.folder, 'sceneinfo.json', default_sceneInfoJson);
 
       this.shots = [];
       for await (const handle of this.folder.values()) {      

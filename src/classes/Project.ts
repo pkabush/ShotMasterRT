@@ -37,7 +37,19 @@ const default_projinfo = {
     "action_description" : "описания действия которое происходит для аниматора", 
     },
 
-}`
+}`,
+  prompt_presets : {
+    split_shots: {
+      model: "gpt-4o",
+      prompt: "Split Shots ",
+      system_command: "You are a shot splitter "
+      },
+    generate_tags: {
+      model: "gpt-4o",
+      prompt: "Generate Tags ",
+      system_command: "You are a tagger "
+    }
+  }
 }
 
 

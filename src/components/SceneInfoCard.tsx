@@ -5,6 +5,7 @@ import EditableJsonTextField from "./EditableJsonTextField";
 import TagsContainer from "./TagsContainer";
 import SimpleButton from "./SimpleButton";
 import LoadingButton from './LoadingButton';
+import PromptEditButton from "./PromptExitButton";
 
 interface Props {
   scene: Scene;
@@ -35,11 +36,25 @@ const SceneInfoCard: React.FC<Props> = observer(({ scene }) => { // <--- observe
       <div style={{ marginBottom: "10px" }}>
         <SimpleButton onClick={handleDelete} label="Delete Scene" className="btn-outline-danger" />
         <SimpleButton onClick={() => scene.log()} label="LOG" />
+
       </div>
-      <EditableJsonTextField localJson={scene.sceneJson} field="script" fitHeight headerExtra={
-        <LoadingButton onClick={handleSplitIntoShotsAI} className="btn-outline-success" label="Split Into Shots GPT" is_loading={scene.is_generating_shotsjson}/>
-      }/>
-      {/*<SimpleButton onClick={handleSplitIntoShotsAI} label="Split Into Shots" />*/}
+      <LoadingButton onClick={handleSplitIntoShotsAI} className="btn-outline-success" label="Split Into Shots GPT" is_loading={scene.is_generating_shotsjson}/>
+      
+      <PromptEditButton
+        initialData={{...scene.project?.projinfo?.data.prompt_presets[scene.sceneJson?.data.split_shot_prompt.preset],...scene.sceneJson?.data.split_shot_prompt   }}
+        onClick={(data) => {
+          console.log('Prompt submitted:', data);
+          scene.log();
+        }}
+        onChange={(data) => {
+          console.log('Settings changed:', data);      
+          scene.sceneJson?.updateField("split_shot_prompt", data,false);    
+        }}
+      />
+
+
+
+      <EditableJsonTextField localJson={scene.sceneJson} field="script" fitHeight />
       <EditableJsonTextField localJson={scene.sceneJson} field="shotsjson" fitHeight headerExtra={
         <SimpleButton onClick={handleCreateShots} label="Create Shots" />
       }/>

@@ -4,7 +4,6 @@ import CollapsibleContainer from "./CollapsibleContainer";
 import { Scene } from "../classes/Scene";
 import SimpleButton from "./SimpleButton";
 import TagListItem from "./TagListItem";
-import SimpleDropDownMenu from "./SimpleDropDownMenu";
 import ArtDropdownItem from "./ArtDropdownItem";
 //import { runInAction } from "mobx";
 import LoadingButton from './LoadingButton';

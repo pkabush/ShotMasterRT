@@ -46,10 +46,10 @@ export class LocalJson {
     }
   }
 
-  async updateField(field: string, value: any): Promise<void> {
+  async updateField(field: string, value: any, save:boolean = true): Promise<void> {
     runInAction(() => {
       this.data[field] = value; // now observable
     });
-    await this.save();
+    if (save) await this.save();
   }
 }
