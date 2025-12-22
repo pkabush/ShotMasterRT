@@ -42,12 +42,12 @@ const default_projinfo = {
     split_shots: {
       model: "gpt-4o",
       prompt: "Split Shots ",
-      system_command: "You are a shot splitter "
+      system_message: "You are a shot splitter "
       },
     generate_tags: {
       model: "gpt-4o",
       prompt: "Generate Tags ",
-      system_command: "You are a tagger "
+      system_message: "You are a tagger "
     }
   }
 }
@@ -61,7 +61,7 @@ export class Project {
   userSettingsDB = new UserSettingsDB();
   projinfo: LocalJson | null = null;
   currentView: ProjectView = { type: "none" };
-  selectedScene: Scene | null = null;
+  selectedScene: Scene | null = null;  
 
   constructor(rootDirHandle: FileSystemDirectoryHandle | null = null) {
     this.rootDirHandle = rootDirHandle;
@@ -237,6 +237,19 @@ export class Project {
   setView(view: ProjectView, scene: Scene | null = null) {
     this.currentView = view;
     this.selectedScene = scene;
+  }
+    
+  get promptPresets() {
+    if (!this.projinfo) return {};
+    return this.projinfo.data.prompt_presets;
+  }
+
+  savePromptPreset(data:any){
+    runInAction(() => {
+      if(!this.projinfo) return;
+      this.projinfo.data.prompt_presets[data.preset] = data;
+      this.projinfo?.save();
+    })
   }
 }
 

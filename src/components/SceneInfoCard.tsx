@@ -40,17 +40,19 @@ const SceneInfoCard: React.FC<Props> = observer(({ scene }) => { // <--- observe
       </div>
       <LoadingButton onClick={handleSplitIntoShotsAI} className="btn-outline-success" label="Split Into Shots GPT" is_loading={scene.is_generating_shotsjson}/>
       
+
+      {/*
       <PromptEditButton
         initialData={{...scene.project?.projinfo?.data.prompt_presets[scene.sceneJson?.data.split_shot_prompt.preset],...scene.sceneJson?.data.split_shot_prompt   }}
         onClick={(data) => {
           console.log('Prompt submitted:', data);
           scene.log();
         }}
-        onChange={(data) => {
-          console.log('Settings changed:', data);      
-          scene.sceneJson?.updateField("split_shot_prompt", data,false);    
-        }}
+        onChange={(data) => { scene.sceneJson?.updateField("split_shot_prompt", data,false); }}
+        onSave={(data) => { scene.sceneJson?.save(); }}
       />
+      */}
+      <PromptEditButton initialPrompt={scene.split_shots_prompt}/>
 
 
 

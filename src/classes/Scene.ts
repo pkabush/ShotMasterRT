@@ -7,12 +7,13 @@ import { toJS } from "mobx";
 //import { GoogleAI } from './GoogleAI';
 import {ChatGPT} from './ChatGPT';
 import { Art } from "./Art";
+import Prompt from './Prompt';
 
 const default_sceneInfoJson = {
   tags:[],
   shotsjson:"",
   script:"",
-  split_shot_prompt:{
+  split_shots_prompt:{
     preset: "split_shots",
   }
 }
@@ -22,12 +23,13 @@ export class Scene {
   folder: FileSystemDirectoryHandle;
   sceneJson: LocalJson | null = null;
   shots: Shot[] = [];
-  project: Project | null = null; // <--- new pointer to parent project
+  project: Project; // <--- new pointer to parent project
   is_generating_shotsjson = false;
   is_generating_tags = false;
-  is_generating_all_shot_images = false;
+  is_generating_all_shot_images = false;  
+  split_shots_prompt: Prompt|null = null;
 
- constructor(folder: FileSystemDirectoryHandle, project: Project | null = null) {
+ constructor(folder: FileSystemDirectoryHandle, project: Project) {
     this.folder = folder;
     this.project = project; // assign parent project
     makeAutoObservable(this);
@@ -36,6 +38,11 @@ export class Scene {
   async load(): Promise<void> {
     try {
       this.sceneJson = await LocalJson.create(this.folder, 'sceneinfo.json', default_sceneInfoJson);
+
+      // Load Prompts
+      this.split_shots_prompt = new Prompt(this.sceneJson.data.split_shots_prompt,this.project, ()=>{
+        this.sceneJson?.updateField("split_shots_prompt",this.split_shots_prompt?.data_changed)
+      });
 
       this.shots = [];
       for await (const handle of this.folder.values()) {      

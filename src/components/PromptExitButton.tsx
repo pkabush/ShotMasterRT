@@ -1,68 +1,56 @@
-import React, { useState, useEffect } from 'react';
+// PromptEditButton.tsx
+import React from 'react';
+import { observer } from 'mobx-react-lite';
 import SettingsButton from './SettingsButton';
-
-export interface PromptData {
-  model: string;
-  system_command: string;
-  prompt: string;
-}
+import Prompt from '../classes/Prompt';
 
 interface PromptEditButtonProps {
-  initialData?: PromptData;
-  onChange?: (data: PromptData) => void;
-  onClick: (data: PromptData) => void;
+  initialPrompt?: Prompt | null;
 }
 
-const PromptEditButton: React.FC<PromptEditButtonProps> = ({
-  initialData,
-  onChange,
-  onClick,
-}) => {
-  const models = ['gpt-4', 'gpt-3.5-turbo'];
+const models = ['gpt-4', 'gpt-3.5-turbo'];
 
-  const [model, setModel] = useState(initialData?.model || models[0]);
-  const [systemCommand, setSystemCommand] = useState(initialData?.system_command || '');
-  const [prompt, setPrompt] = useState(initialData?.prompt || '');
-
-  useEffect(() => {
-    if (initialData) {
-      setModel(initialData.model);
-      setSystemCommand(initialData.system_command);
-      setPrompt(initialData.prompt);
-    }
-  }, [initialData]);
-
-  const emitChange = (next: Partial<PromptData>) => {
-    const data: PromptData = { model, system_command: systemCommand, prompt, ...next };
-    onChange?.(data);
-  };
+const PromptEditButton: React.FC<PromptEditButtonProps> = observer(({ initialPrompt }) => {
+  if (!initialPrompt) return null;
 
   const handleClick = () => {
-    const data: PromptData = { model, system_command: systemCommand, prompt };
-    onClick(data);
+    console.log('PromptEditButton clicked');
   };
 
-  // Auto-resize helper
   const handleAutoResize = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    e.target.style.height = 'auto'; // reset height
-    e.target.style.height = e.target.scrollHeight + 'px'; // set to content height
+    e.target.style.height = 'auto';
+    e.target.style.height = e.target.scrollHeight + 'px';
   };
+
+  const presets = Object.keys(initialPrompt.project.promptPresets || {});
 
   return (
     <SettingsButton buttonLabel="PromptEdit" onClick={handleClick}>
       <div className="w-100">
-        <div className="fw-bold mb-2">PromptEdit</div>
+        <div className="fw-bold mb-2">Prompt Edit</div>
 
-        {/* Model dropdown */}
+        {/* Preset Dropdown */}
+        <div className="mb-2">
+          <label className="form-label mb-1">Preset</label>
+          <select
+            className="form-select form-select-sm"
+            value={initialPrompt.presetName}
+            onChange={(e) => initialPrompt.applyPreset(e.target.value)}
+          >
+            <option value="">-- None --</option>
+            {presets.map((p) => (
+              <option key={p} value={p}>{p}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Model Dropdown */}
         <div className="mb-2">
           <label className="form-label mb-1">Model</label>
           <select
             className="form-select form-select-sm"
-            value={model}
-            onChange={(e) => {
-              setModel(e.target.value);
-              emitChange({ model: e.target.value });
-            }}
+            value={initialPrompt.modelValue} // use getter
+            onChange={(e) => initialPrompt.setModel(e.target.value)}
           >
             {models.map((m) => (
               <option key={m} value={m}>{m}</option>
@@ -70,16 +58,15 @@ const PromptEditButton: React.FC<PromptEditButtonProps> = ({
           </select>
         </div>
 
-        {/* System command */}
+        {/* System Message */}
         <div className="mb-2">
-          <label className="form-label mb-1">System Command</label>
+          <label className="form-label mb-1">System Message</label>
           <textarea
             className="form-control form-control-sm"
             style={{ overflow: 'hidden' }}
-            value={systemCommand}
+            value={initialPrompt.systemMessageValue} // use getter
             onChange={(e) => {
-              setSystemCommand(e.target.value);
-              emitChange({ system_command: e.target.value });
+              initialPrompt.setSystemMessage(e.target.value);
               handleAutoResize(e);
             }}
             rows={1}
@@ -92,18 +79,29 @@ const PromptEditButton: React.FC<PromptEditButtonProps> = ({
           <textarea
             className="form-control form-control-sm"
             style={{ overflow: 'hidden' }}
-            value={prompt}
+            value={initialPrompt.promptValue} // use getter
             onChange={(e) => {
-              setPrompt(e.target.value);
-              emitChange({ prompt: e.target.value });
+              initialPrompt.setPrompt(e.target.value);
               handleAutoResize(e);
             }}
             rows={1}
           />
         </div>
+
+        {/* Save Buttons */}
+        <div className="d-flex gap-2 mt-2">
+          <button className="btn btn-sm btn-primary" onClick={() => initialPrompt.save()}>Save</button>
+          <button className="btn btn-sm btn-primary" onClick={() => initialPrompt.savePreset()}>Save Preset</button>
+          <button className="btn btn-sm btn-primary" onClick={() => {
+            const input = prompt("Enter new preset name:");
+            if (!input) return;
+            initialPrompt.savePreset(input);
+          }}>Save NEW Preset</button>
+          <button className="btn btn-sm btn-primary" onClick={() => initialPrompt.log()}>Log</button>
+        </div>
       </div>
     </SettingsButton>
   );
-};
+});
 
 export default PromptEditButton;
