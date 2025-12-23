@@ -26,8 +26,8 @@ export class ChatGPT {
   public static async txt2txt(
     input?: string,
     system_msg?: string,
-    model: string = "gpt-4o-mini",  // default value
-    images?: { handle: File }[]    
+    model: string = "gpt-4o-mini",  // default value    
+    images?: { handle: File }[] 
   ) {
     try {
       const client = this.getClient();

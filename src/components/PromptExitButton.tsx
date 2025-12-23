@@ -3,19 +3,17 @@ import React from 'react';
 import { observer } from 'mobx-react-lite';
 import SettingsButton from './SettingsButton';
 import Prompt from '../classes/Prompt';
+import { models } from '../classes/ChatGPT';
 
 interface PromptEditButtonProps {
   initialPrompt?: Prompt | null;
+  promptLabel?: string; 
 }
 
-const models = ['gpt-4', 'gpt-3.5-turbo'];
-
-const PromptEditButton: React.FC<PromptEditButtonProps> = observer(({ initialPrompt }) => {
+const PromptEditButton: React.FC<PromptEditButtonProps> = observer(({ initialPrompt, promptLabel = "Generate"  }) => {
   if (!initialPrompt) return null;
 
-  const handleClick = () => {
-    console.log('PromptEditButton clicked');
-  };
+  const handleClick = () => { initialPrompt.generate();};
 
   const handleAutoResize = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     e.target.style.height = 'auto';
@@ -25,42 +23,54 @@ const PromptEditButton: React.FC<PromptEditButtonProps> = observer(({ initialPro
   const presets = Object.keys(initialPrompt.project.promptPresets || {});
 
   return (
-    <SettingsButton buttonLabel="PromptEdit" onClick={handleClick}>
+    <div className='my-2'>
+    <SettingsButton buttonLabel={promptLabel} onClick={handleClick} isLoading={initialPrompt.isLoading}>
       <div className="w-100">
-        <div className="fw-bold mb-2">Prompt Edit</div>
 
         {/* Preset Dropdown */}
-        <div className="mb-2">
-          <label className="form-label mb-1">Preset</label>
+        <div className="d-flex mb-2">
+          <label className="form-label mb-1" style={{ width: 80 }}>Preset</label>
           <select
             className="form-select form-select-sm"
             value={initialPrompt.presetName}
             onChange={(e) => initialPrompt.applyPreset(e.target.value)}
+            style={{ width: 260 }}
           >
             <option value="">-- None --</option>
             {presets.map((p) => (
               <option key={p} value={p}>{p}</option>
             ))}
           </select>
+
+          <div className="d-flex gap-1 mx-2">
+            <button className="btn btn-sm btn-primary py-1" onClick={() => initialPrompt.savePreset()}>Save Preset</button>
+            <button className="btn btn-sm btn-primary py-1" onClick={() => {
+              const input = prompt("Enter new preset name:");
+              if (!input) return;
+              initialPrompt.savePreset(input);
+            }}>Save NEW Preset</button>
+
+            <button className="btn btn-sm btn-primary py-1" onClick={() => initialPrompt.save()}>Save</button>
+            <button className="btn btn-sm btn-primary py-1" onClick={() => initialPrompt.log()}>Log</button>
+          </div>
         </div>
 
         {/* Model Dropdown */}
-        <div className="mb-2">
-          <label className="form-label mb-1">Model</label>
+        <div className="d-flex mb-2">
+          <label className="form-label mb-1" style={{ width: 80 }}>Model</label>
           <select
             className="form-select form-select-sm"
             value={initialPrompt.modelValue} // use getter
             onChange={(e) => initialPrompt.setModel(e.target.value)}
+            style={{ width: 120 }}
           >
-            {models.map((m) => (
-              <option key={m} value={m}>{m}</option>
-            ))}
+            {models.map((m) => (<option key={m} value={m}>{m}</option>))}
           </select>
         </div>
 
         {/* System Message */}
-        <div className="mb-2">
-          <label className="form-label mb-1">System Message</label>
+        <div className="d-flex mb-2">
+          <label className="form-label mb-1" style={{ width: 80 }}>System</label>
           <textarea
             className="form-control form-control-sm"
             style={{ overflow: 'hidden' }}
@@ -74,8 +84,8 @@ const PromptEditButton: React.FC<PromptEditButtonProps> = observer(({ initialPro
         </div>
 
         {/* Prompt */}
-        <div className="mb-2">
-          <label className="form-label mb-1">Prompt</label>
+        <div className="d-flex mb-2">
+          <label className="form-label mb-1" style={{ width: 80 }}>Prompt</label>
           <textarea
             className="form-control form-control-sm"
             style={{ overflow: 'hidden' }}
@@ -88,19 +98,9 @@ const PromptEditButton: React.FC<PromptEditButtonProps> = observer(({ initialPro
           />
         </div>
 
-        {/* Save Buttons */}
-        <div className="d-flex gap-2 mt-2">
-          <button className="btn btn-sm btn-primary" onClick={() => initialPrompt.save()}>Save</button>
-          <button className="btn btn-sm btn-primary" onClick={() => initialPrompt.savePreset()}>Save Preset</button>
-          <button className="btn btn-sm btn-primary" onClick={() => {
-            const input = prompt("Enter new preset name:");
-            if (!input) return;
-            initialPrompt.savePreset(input);
-          }}>Save NEW Preset</button>
-          <button className="btn btn-sm btn-primary" onClick={() => initialPrompt.log()}>Log</button>
-        </div>
       </div>
     </SettingsButton>
+    </div>
   );
 });
 

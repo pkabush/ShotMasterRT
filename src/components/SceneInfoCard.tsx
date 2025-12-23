@@ -4,7 +4,6 @@ import { Scene } from "../classes/Scene";
 import EditableJsonTextField from "./EditableJsonTextField";
 import TagsContainer from "./TagsContainer";
 import SimpleButton from "./SimpleButton";
-import LoadingButton from './LoadingButton';
 import PromptEditButton from "./PromptExitButton";
 
 interface Props {
@@ -15,11 +14,6 @@ const SceneInfoCard: React.FC<Props> = observer(({ scene }) => { // <--- observe
   if (!scene.sceneJson) {
     return <div>No scene data available.</div>;
   }
-
-  const handleSplitIntoShotsAI = async () => {    
-    const shots_json = await scene.generateShotsJson();
-    await scene.sceneJson?.updateField("shotsjson", shots_json);
-  };
 
   const handleDelete = async () => {
     const confirmed = window.confirm(`Are you sure you want to delete scene "${scene.folder.name}"?`);
@@ -38,22 +32,9 @@ const SceneInfoCard: React.FC<Props> = observer(({ scene }) => { // <--- observe
         <SimpleButton onClick={() => scene.log()} label="LOG" />
 
       </div>
-      <LoadingButton onClick={handleSplitIntoShotsAI} className="btn-outline-success" label="Split Into Shots GPT" is_loading={scene.is_generating_shotsjson}/>
-      
-
-      {/*
-      <PromptEditButton
-        initialData={{...scene.project?.projinfo?.data.prompt_presets[scene.sceneJson?.data.split_shot_prompt.preset],...scene.sceneJson?.data.split_shot_prompt   }}
-        onClick={(data) => {
-          console.log('Prompt submitted:', data);
-          scene.log();
-        }}
-        onChange={(data) => { scene.sceneJson?.updateField("split_shot_prompt", data,false); }}
-        onSave={(data) => { scene.sceneJson?.save(); }}
-      />
-      */}
-      <PromptEditButton initialPrompt={scene.split_shots_prompt}/>
-
+    
+      {/*<LoadingButton onClick={handleSplitIntoShotsAI} className="btn-outline-success" label="Split Into Shots GPT" is_loading={scene.is_generating_shotsjson}/>*/}
+      <PromptEditButton initialPrompt={scene.split_shots_prompt} promptLabel="Split Into Shots"/>
 
 
       <EditableJsonTextField localJson={scene.sceneJson} field="script" fitHeight />

@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import SimpleButton from './SimpleButton';
+import LoadingSpinner from './Atomic/LoadingSpinner';
 
 interface SettingsButtonProps {
   children: React.ReactNode;
   onClick: () => void;
   buttonLabel?: React.ReactNode;
   className?: string;
+  isLoading?:boolean;
 }
 
 const SettingsButton: React.FC<SettingsButtonProps> = ({
@@ -13,31 +14,42 @@ const SettingsButton: React.FC<SettingsButtonProps> = ({
   onClick,
   buttonLabel = 'Action',
   className = '',
+  isLoading = false,
 }) => {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className={`w-100 ${className}`} style={{ display: 'inline-block' }}>
+    <div className={`w-100 ${className}`} style={{ 
+        display: 'inline-block' 
+      }}>
       {/* Unified button group */}
       <div className="btn-group" role="group">
-        <SimpleButton
-          onClick={onClick}
-          label={buttonLabel}
-          className={`${
-            open ? 'rounded-0' : 'rounded-end-0'
-          }`} // squared corners when open
-        />
         <button
-          className={`btn btn-sm btn-outline-secondary ${
-            open ? 'rounded-0' : 'rounded-start-0'
-          }`}
+          type="button"
+          className="btn btn-sm btn-outline-secondary"
+          onClick={onClick}
+          style={{
+            borderBottomLeftRadius: open ? 0 : undefined,
+          }}
+        >
+          {buttonLabel}
+        </button>
+
+      <LoadingSpinner isLoading={isLoading} asButton />
+
+        <button
+          className="btn btn-sm btn-outline-secondary"
           onClick={() => setOpen((v) => !v)}
           aria-label="Toggle settings"
           type="button"
+          style={{
+            borderBottomRightRadius: open ? 0 : undefined,
+          }}
         >
           ⚙️
         </button>
       </div>
+
 
       {/* Settings content */}
       {open && (
@@ -45,7 +57,9 @@ const SettingsButton: React.FC<SettingsButtonProps> = ({
           className="w-100 border p-2"
           style={{
             borderTopLeftRadius: 0,
-            borderTopRightRadius: 0,
+            borderTopRightRadius: 5,
+            borderBottomLeftRadius: 5,
+            borderBottomRightRadius: 5,
             backgroundColor: '#383838ff', // light yellow background
             marginTop: '0px',
           }}

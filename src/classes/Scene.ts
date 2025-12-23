@@ -18,7 +18,6 @@ const default_sceneInfoJson = {
   }
 }
 
-
 export class Scene {
   folder: FileSystemDirectoryHandle;
   sceneJson: LocalJson | null = null;
@@ -43,6 +42,13 @@ export class Scene {
       this.split_shots_prompt = new Prompt(this.sceneJson.data.split_shots_prompt,this.project, ()=>{
         this.sceneJson?.updateField("split_shots_prompt",this.split_shots_prompt?.data_changed)
       });
+      this.split_shots_prompt.modifyData = (data) => {
+        data.prompt += `\n\n\nSCRIPT:\n${this.sceneJson?.data?.script}`
+        return data;
+      }
+      this.split_shots_prompt.onGenerate = (res) => {
+        this.sceneJson?.updateField("shotsjson", res);
+      };
 
       this.shots = [];
       for await (const handle of this.folder.values()) {      

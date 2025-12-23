@@ -1,5 +1,6 @@
-import { makeAutoObservable, toJS } from "mobx";
+import { makeAutoObservable, toJS,runInAction } from "mobx";
 import { Project } from "./Project";
+import { ChatGPT } from "./ChatGPT";
 
 class Prompt {
   model: string | null = null;
@@ -7,7 +8,11 @@ class Prompt {
   system_message: string | null = null;
   presetName: string = ""; // store only the preset name
   project: Project;
+  isLoading: boolean = false;
   onSave: () => void = () => {};
+  modifyData: (data: any) => any = (data) => {return data};
+  onGenerate: (res: any) => void = ()=>{};
+
 
   constructor(data: any, project: Project, onSave?: () => void) {
     this.project = project;
@@ -24,17 +29,9 @@ class Prompt {
   }
 
   /** Action methods */
-  setModel(value: string) {
-    this.model = value;
-  }
-
-  setPrompt(value: string) {
-    this.prompt = value;
-  }
-
-  setSystemMessage(value: string) {
-    this.system_message = value;
-  }
+  setModel(value: string) { this.model = value; }
+  setPrompt(value: string) {this.prompt = value;}
+  setSystemMessage(value: string) { this.system_message = value; }
 
   /** Set the preset name */
   applyPreset(presetName: string) {
@@ -97,14 +94,8 @@ class Prompt {
   }
 
   /** Log current state */
-  log() {
-    console.log(toJS(this));
-  }
-
-  /** Trigger onSave callback */
-  save() {
-    this.onSave();
-  }
+  log() { console.log(toJS(this)); }
+  save() { this.onSave(); }
 
   /** Save current data as preset */
   savePreset(newName:string | null = null ) {
@@ -112,6 +103,25 @@ class Prompt {
     if (newName) _data.preset = newName;
     this.project.savePromptPreset(_data);    
     if (newName) this.applyPreset(newName);
+  }
+
+  async generate(){
+    runInAction(() => { this.isLoading = true; });
+    try {
+      let data: any = this.data;
+      data = this.modifyData(data);
+
+      console.log(data);
+      const res = await ChatGPT.txt2txt(data.prompt, data.system_message,data.model);
+
+      this.onGenerate(res);
+      return res;
+    } catch (err) {
+      console.error("Error generating:", err);
+      return null;
+    } finally {
+      runInAction(() => { this.isLoading = false; });
+    }
   }
 }
 

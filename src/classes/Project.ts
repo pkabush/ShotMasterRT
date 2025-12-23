@@ -41,8 +41,23 @@ const default_projinfo = {
   prompt_presets : {
     split_shots: {
       model: "gpt-4o",
-      prompt: "Split Shots ",
-      system_message: "You are a shot splitter "
+      prompt:  `
+разбей эту сцену из моего сценария на шоты, сгенерируй промпты для нейросети для генерации видео и предоставь в виде json, в ответе предоставь толкьо json в следующем формате:
+{
+  "SHOT_010" : 
+    {
+    "prompt" : "подробный промпт для нейросети генератора видео", 
+    "camera" : "focal length, shot type", 
+    "action_description" : "описания действия которое происходит для аниматора", 
+    },
+
+}`,
+      system_message: "You are a helpful assistant. " +
+            "Always respond using ONLY valid JSON. " +
+            "Do not write explanations. " +
+            "Do not wrap the JSON in backticks. " +
+            "The entire response must be a valid JSON object." ,
+            
       },
     generate_tags: {
       model: "gpt-4o",
