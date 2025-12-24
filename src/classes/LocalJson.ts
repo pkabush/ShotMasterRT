@@ -46,10 +46,50 @@ export class LocalJson {
     }
   }
 
-  async updateField(field: string, value: any, save:boolean = true): Promise<void> {
+  async updateField(fieldPath: string, value: any, save: boolean = true): Promise<void> {
     runInAction(() => {
-      this.data[field] = value; // now observable
+      const parts = fieldPath.split("/").filter(Boolean);
+
+      let current: any = this.data;
+
+      for (let i = 0; i < parts.length; i++) {
+        const key = parts[i];
+
+        // Last segment → assign value
+        if (i === parts.length - 1) {
+          current[key] = value;
+        } else {
+          // Create intermediate object if missing or not an object
+          if (
+            current[key] === undefined ||
+            current[key] === null ||
+            typeof current[key] !== "object"
+          ) {
+            current[key] = {};
+          }
+          current = current[key];
+        }
+      }
     });
+
     if (save) await this.save();
   }
+
+  getField(fieldPath: string): any {
+    const parts = fieldPath.split("/").filter(Boolean);
+
+    let current: any = this.data;
+
+    for (const key of parts) {
+      if (current == null || typeof current !== "object") {
+        return undefined;
+      }
+      current = current[key];
+    }
+
+    return current;
+  }
+
+
+
 }

@@ -1,0 +1,45 @@
+import React from "react";
+
+type SimpleSelectProps = {
+  value: string;
+  options: string[];
+  onChange?: (value: string) => void;
+  label?: string;
+  width?: number;
+  className?: string;
+};
+
+const SimpleSelect: React.FC<SimpleSelectProps> = ({
+  value,
+  options,
+  onChange,
+  label,
+  className = "",
+}) => {
+  return (
+    <div className="btn-group" role="group">
+      {label && (
+        <span className="btn btn-sm btn-outline-secondary disabled">
+          {label}
+        </span>
+      )}
+
+      <div className={`btn btn-sm btn-outline-secondary p-0 ${className}`}>
+        <select
+          className="form-select form-select-sm border-0 rounded-0"
+          value={value}
+          onChange={(e) => onChange?.(e.target.value)}
+
+        >
+          {options.map((opt) => (
+            <option key={opt} value={opt}>
+              {opt}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
+  );
+};
+
+export default SimpleSelect;

@@ -36,7 +36,7 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = ({
     try {
       const base64Obj = await localImage.getBase64(); // uses cached Base64 if available
 
-      const result = await GoogleAI.img2img(text || "", [
+      const result = await GoogleAI.img2img(text || "", "", [
         { rawBase64:base64Obj.rawBase64, mime:base64Obj.mime, description:""}
       ]);
       if (onImageGenerated) onImageGenerated(result);

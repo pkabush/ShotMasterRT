@@ -1,45 +1,30 @@
 import React, { useState } from 'react';
-import LoadingSpinner from './Atomic/LoadingSpinner';
 
 interface SettingsButtonProps {
-  children: React.ReactNode;
-  onClick: () => void;
-  buttonLabel?: React.ReactNode;
+  buttons: React.ReactNode;
+  content: React.ReactNode;
   className?: string;
-  isLoading?:boolean;
 }
 
 const SettingsButton: React.FC<SettingsButtonProps> = ({
-  children,
-  onClick,
-  buttonLabel = 'Action',
+  buttons,
+  content,
   className = '',
-  isLoading = false,
 }) => {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className={`w-100 ${className}`} style={{ 
-        display: 'inline-block' 
-      }}>
-      {/* Unified button group */}
+    <div
+      className={`w-100 ${className}`}
+      style={{ display: 'inline-block' }}
+    >
+      {/* Button group */}
       <div className="btn-group" role="group">
-        <button
-          type="button"
-          className="btn btn-sm btn-outline-secondary"
-          onClick={onClick}
-          style={{
-            borderBottomLeftRadius: open ? 0 : undefined,
-          }}
-        >
-          {buttonLabel}
-        </button>
-
-      <LoadingSpinner isLoading={isLoading} asButton />
+        {buttons}
 
         <button
           className="btn btn-sm btn-outline-secondary"
-          onClick={() => setOpen((v) => !v)}
+          onClick={() => setOpen(v => !v)}
           aria-label="Toggle settings"
           type="button"
           style={{
@@ -50,8 +35,7 @@ const SettingsButton: React.FC<SettingsButtonProps> = ({
         </button>
       </div>
 
-
-      {/* Settings content */}
+      {/* Expanded content */}
       {open && (
         <div
           className="w-100 border p-2"
@@ -60,11 +44,11 @@ const SettingsButton: React.FC<SettingsButtonProps> = ({
             borderTopRightRadius: 5,
             borderBottomLeftRadius: 5,
             borderBottomRightRadius: 5,
-            backgroundColor: '#383838ff', // light yellow background
-            marginTop: '0px',
+            backgroundColor: '#383838ff',
+            marginTop: 0,
           }}
         >
-          {children}
+          {content}
         </div>
       )}
     </div>

@@ -4,7 +4,10 @@ import { Scene } from "../classes/Scene";
 import EditableJsonTextField from "./EditableJsonTextField";
 import TagsContainer from "./TagsContainer";
 import SimpleButton from "./SimpleButton";
-import PromptEditButton from "./PromptExitButton";
+import SimpleSelect from "./Atomic/SimpleSelect";
+import LoadingSpinner from "./Atomic/LoadingSpinner";
+import {models} from "../classes/ChatGPT";
+import SettingsButton from "./SettingsButton";
 
 interface Props {
   scene: Scene;
@@ -34,7 +37,39 @@ const SceneInfoCard: React.FC<Props> = observer(({ scene }) => { // <--- observe
       </div>
     
       {/*<LoadingButton onClick={handleSplitIntoShotsAI} className="btn-outline-success" label="Split Into Shots GPT" is_loading={scene.is_generating_shotsjson}/>*/}
+      {/*
       <PromptEditButton initialPrompt={scene.split_shots_prompt} promptLabel="Split Into Shots"/>
+      */}
+      
+
+      <SettingsButton className="mb-2"
+        buttons={
+          <>
+            {/**Button */}
+            <button className="btn btn-sm btn-outline-success" onClick={async () => {
+              const res = await scene.generateShotsJson()
+              scene.sceneJson?.updateField("shotsjson", res);
+              }}> Split Into Shots </button>
+            {/**Model Selector */}
+            <SimpleSelect
+              value={scene.project.workflows.split_scene_into_shots.model}
+              options={models}
+              onChange={(val) => { scene.project.updateWorkflow("split_scene_into_shots","model",val); }}
+            />
+            {/**Loading Spinner */}
+            <LoadingSpinner isLoading={scene.is_generating_shotsjson} asButton />
+          </>
+        }
+        content={
+          <>
+            <EditableJsonTextField localJson={scene.sceneJson} field="split_prompt" fitHeight />
+            <EditableJsonTextField localJson={scene.project.projinfo} field="workflows/split_scene_into_shots/system_message" fitHeight />
+            <EditableJsonTextField localJson={scene.project.projinfo} field="workflows/split_scene_into_shots/prompt" fitHeight />
+          </>
+        }
+      />
+
+
 
 
       <EditableJsonTextField localJson={scene.sceneJson} field="script" fitHeight />

@@ -6,6 +6,11 @@ import { LocalImage } from "./LocalImage";
 export class MissingApiKeyError extends Error {}
 export class InvalidApiKeyError extends Error {}
 
+export const img_models = [ 
+    "gemini-2.5-flash-image",
+    "gemini-3-pro-image-preview"
+  ]
+
 export class GoogleAI {
   // Functions to get/set API key dynamically
   public static getApiKey: (() => string | null) | null = null;
@@ -50,6 +55,7 @@ export class GoogleAI {
   // ---------- img2img function ----------
   public static async img2img(
     prompt: string,
+    model: string = img_models[0],
     images?: { rawBase64: string; mime: string; description:string }[]
   ) {
     try {
@@ -67,7 +73,7 @@ export class GoogleAI {
       }
 
       const payload = {
-        model: "gemini-2.5-flash-image",
+        model: model,
         //model: "gemini-3-pro-image-preview",
         contents,
         config: {

@@ -38,21 +38,6 @@ export class Scene {
     try {
       this.sceneJson = await LocalJson.create(this.folder, 'sceneinfo.json', default_sceneInfoJson);
 
-      // Load Prompts
-      // Split Shots Prompt
-      this.split_shots_prompt = new Prompt(this.sceneJson.data.split_shots_prompt,this.project, ()=>{
-        this.sceneJson?.updateField("split_shots_prompt",this.split_shots_prompt?.data_local)
-      });
-      this.split_shots_prompt.modifyData = (data) => {
-        data.prompt += `\n\n\nSCRIPT:\n${this.sceneJson?.data?.script}`
-        return data;
-      }
-      this.split_shots_prompt.onGenerate = (res) => {
-        this.sceneJson?.updateField("shotsjson", res);
-      };
-
-
-
       this.shots = [];
       for await (const handle of this.folder.values()) {      
         if (handle.kind === 'directory') {
@@ -144,21 +129,19 @@ export class Scene {
     const scriptText = this.sceneJson.data.script;
 
     const prompt = `
-${this.project?.projinfo?.data?.split_shot_prompt }
+${this.project.workflows.split_scene_into_shots.prompt}
+
+${this.sceneJson.data.split_prompt}
 
 SCRIPT:
 ${scriptText}
 `;
 
-    const system_msg =  "You are a helpful assistant. " +
-            "Always respond using ONLY valid JSON. " +
-            "Do not write explanations. " +
-            "Do not wrap the JSON in backticks. " +
-            "The entire response must be a valid JSON object." 
+  const system_msg =  this.project.projinfo?.getField("workflows/split_scene_into_shots/system_message")
 
   try {
       // Call ChatGPT with prompt + system message
-      const res = await ChatGPT.txt2txt(prompt, system_msg,this.project?.projinfo?.data.gpt_model);
+      const res = await ChatGPT.txt2txt(prompt, system_msg,this.project?.projinfo?.getField("workflows/split_scene_into_shots/model"));
       // txt2txt returns string | null
       return res;
     } catch (err) {

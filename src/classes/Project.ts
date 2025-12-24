@@ -64,7 +64,32 @@ const default_projinfo = {
       prompt: "Generate Tags ",
       system_message: "You are a tagger "
     }
+  },
+  workflows :{
+    generate_shot_image : {
+      model:"gemini-2.5-flash-image",
+    },
+    split_scene_into_shots : {
+      model:"gpt-4o-mini",
+      prompt:  `
+разбей эту сцену из моего сценария на шоты, сгенерируй промпты для нейросети для генерации видео и предоставь в виде json, в ответе предоставь толкьо json в следующем формате:
+{
+  "SHOT_010" : 
+    {
+    "prompt" : "подробный промпт для нейросети генератора видео", 
+    "camera" : "focal length, shot type", 
+    "action_description" : "описания действия которое происходит для аниматора", 
+    },
+
+}`,
+      system_message: "You are a helpful assistant. " +
+            "Always respond using ONLY valid JSON. " +
+            "Do not write explanations. " +
+            "Do not wrap the JSON in backticks. " +
+            "The entire response must be a valid JSON object." ,
+    }
   }
+
 }
 
 
@@ -266,6 +291,19 @@ export class Project {
       this.projinfo?.save();
     })
   }
+
+  get workflows() {
+    return this.projinfo?.data.workflows;    
+  }
+
+  
+  updateWorkflow(workflow:string , key:string, value:string) {
+    runInAction(() => {
+      this.workflows[workflow][key] = value;
+      this.projinfo?.save();    })
+
+  }
+
 }
 
 

@@ -4,10 +4,10 @@ import GenericTextEditor from './GenericTextEditor';
 import { LocalJson } from '../classes/LocalJson';
 
 interface EditableJsonTextFieldProps {
-  localJson: LocalJson;
+  localJson: LocalJson | null;
   field: string;
   fitHeight?: boolean;
-  headerExtra?: React.ReactNode; // new optional prop
+  headerExtra?: React.ReactNode;
 }
 
 const EditableJsonTextField: React.FC<EditableJsonTextFieldProps> = observer(({
@@ -16,17 +16,19 @@ const EditableJsonTextField: React.FC<EditableJsonTextFieldProps> = observer(({
   fitHeight = false,
   headerExtra,
 }) => {
+  if (!localJson) return;
+
   const handleSave = async (newValue: string) => {
-    await localJson.updateField(field, newValue); // MobX reactive update
+    await localJson.updateField(field, newValue); // uses nested path support
   };
 
-  return (
+  return (    
     <GenericTextEditor
       label={field}
-      initialText={localJson.data[field] ?? ''}
+      initialText={localJson.getField(field) ?? ''} // <-- use getField instead of direct access
       onSave={handleSave}
       fitHeight={fitHeight}
-      headerExtra={headerExtra} // pass it down
+      headerExtra={headerExtra}
     />
   );
 });

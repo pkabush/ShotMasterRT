@@ -136,7 +136,7 @@ export class Shot {
     //if (image_paths.length > 0) { prompt += `\n\nИспользуй эти картинки как референсы:\n${image_paths.join("\n")}`; }
 
     try {
-      const result = await GoogleAI.img2img(prompt || "",images);
+      const result = await GoogleAI.img2img(prompt || "",this.scene.project.workflows.generate_shot_image.model,images);
       const localImage:LocalImage|null = await GoogleAI.saveResultImage(result,this.resultsFolder);
       if (localImage) this.addImage(localImage);
     } catch (err) {

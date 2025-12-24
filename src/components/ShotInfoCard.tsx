@@ -11,6 +11,9 @@ import { LocalImage } from '../classes/LocalImage';
 import LoadingButton from './LoadingButton';
 import ImageEditWindow from './ImageEditWindow';
 import TagsToggleList from "./TagsToggleList";
+import LoadingSpinner from './Atomic/LoadingSpinner';
+import SimpleSelect from './Atomic/SimpleSelect';
+import { img_models } from '../classes/GoogleAI';
 
 interface Props {
   shot: Shot;
@@ -50,6 +53,20 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
           </div>
         </div>
 
+        {/*GENERATE Image*/}
+        <div className="btn-group mb-2" role="group">
+          {/**Button */}
+          <button className="btn btn-sm btn-outline-success" onClick={async () => {shot.GenerateImage();}}> Generate Image </button>
+          {/**Model Selector */}
+          <SimpleSelect
+            value={shot.scene.project.workflows.generate_shot_image.model}
+            options={img_models}
+            onChange={(val) => { shot.scene.project.updateWorkflow("generate_shot_image","model",val); }}
+          />
+          {/**Loading Spinner */}
+          <LoadingSpinner isLoading={shot.is_generating} asButton />
+        </div>
+
         <EditableJsonTextField localJson={shot.shotJson} field="prompt" fitHeight />
         <EditableJsonTextField localJson={shot.shotJson} field="camera" fitHeight />
         <EditableJsonTextField localJson={shot.shotJson} field="action_description" fitHeight />
@@ -60,7 +77,9 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
           label="Shot Results"
           headerExtra={
             <>
+            {/*
             <LoadingButton label="Generate" className="btn-outline-success" onClick={async () => {shot.GenerateImage();}} is_loading={shot.is_generating}  />
+            */}
 
             <SimpleButton
               label="Import URL"
