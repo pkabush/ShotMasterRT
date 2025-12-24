@@ -49,7 +49,7 @@ const App: React.FC = observer(() => {
   }, []);
 
   return (
-    <div style={{ minHeight: '100vh' }}>
+    <div style={{ minHeight: '100vh'}}>
       <MenuBar
         onOpenFolder={handleOpenFolder}
         recentFolders={project.userSettingsDB.data.recentFolders}
@@ -61,7 +61,7 @@ const App: React.FC = observer(() => {
         className="d-flex"
         style={{ height: 'calc(100vh - 56px)', overflow: 'hidden' }}
       >
-        {/* Sidebar */}
+        {/* Sidebar */}        
         <FolderList project={project} />
 
         {/* Content column */}

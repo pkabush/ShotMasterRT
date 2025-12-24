@@ -23,7 +23,8 @@ const FolderList: React.FC<FolderListProps> = observer(({ project }) => {
   return (
     <div
       style={{
-        width: '200px',
+        width: '200px',    
+        minWidth: '200px'    ,
         borderRight: '1px solid #ced4da',
         padding: '10px',
         display: 'flex',

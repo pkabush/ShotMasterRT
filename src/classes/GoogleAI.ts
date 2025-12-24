@@ -50,7 +50,7 @@ export class GoogleAI {
   // ---------- img2img function ----------
   public static async img2img(
     prompt: string,
-    images?: { rawBase64: string; mime: string }[]
+    images?: { rawBase64: string; mime: string; description:string }[]
   ) {
     try {
       const genAI = this.getGenAI();
@@ -61,9 +61,8 @@ export class GoogleAI {
       if (images?.length) {
         for (const img of images) {
           if (!img?.rawBase64 || !img?.mime) continue;
-          contents.push({
-            inlineData: { data: img.rawBase64, mimeType: img.mime },
-          });
+          if (img.description) contents.push({text: img.description});
+          contents.push({inlineData: { data: img.rawBase64, mimeType: img.mime },});
         }
       }
 

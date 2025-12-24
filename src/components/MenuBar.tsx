@@ -34,7 +34,7 @@ export const MenuBar: React.FC<MenuBarProps> = ({ onOpenFolder, recentFolders, o
   const helpMenuItems: Omit<SubmenuItemProps, 'parentKey'>[] = [{ name: 'About' }];
 
   return (
-    <Navbar expand="lg">
+    <Navbar expand={true}>
       <Container fluid>
         <Navbar.Brand>ShotMasterRT</Navbar.Brand>
         <Nav className="me-auto" style={{ userSelect: 'none' }}>

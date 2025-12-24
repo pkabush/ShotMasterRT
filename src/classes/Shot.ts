@@ -115,20 +115,25 @@ export class Shot {
 
     // add input images, skipping any skipped tags
     const skipped = this.getSkippedTags();
-    const images: { rawBase64: string; mime: string }[] = [];
+    const images: { rawBase64: string; mime: string;description:string }[] = [];
 
+    //const image_paths = [];
     for (const art of this.scene.getTags()) {
       if (skipped.includes(art.path)) continue; // skip this tag
 
       try {
         const base64Obj = await art.image.getBase64(); // uses cached Base64 if available
-        images.push(base64Obj);
+        //images.push(base64Obj);
+        images.push({ rawBase64:base64Obj.rawBase64, mime:base64Obj.mime, description:art.path});
+
+        //image_paths.push(art.path);
       } catch (err) {
         console.warn("Failed to load tag image:", art.path, err);
       }
     }
-
-    const prompt = this.shotJson?.data.prompt;
+    
+    let prompt = this.shotJson?.data.prompt || "";
+    //if (image_paths.length > 0) { prompt += `\n\nИспользуй эти картинки как референсы:\n${image_paths.join("\n")}`; }
 
     try {
       const result = await GoogleAI.img2img(prompt || "",images);

@@ -3,12 +3,9 @@ import { Project } from "./Project";
 import { ChatGPT } from "./ChatGPT";
 
 class Prompt {
-  model: string | null = null;
-  prompt: string | null = null;
-  system_message: string | null = null;
-  presetName: string = ""; // store only the preset name
   project: Project;
   isLoading: boolean = false;
+  data_local: Record<string, string> = {};
   onSave: () => void = () => {};
   modifyData: (data: any) => any = (data) => {return data};
   onGenerate: (res: any) => void = ()=>{};
@@ -22,78 +19,23 @@ class Prompt {
     makeAutoObservable(this);
 
     // Initialize observables
-    this.model = data?.model ?? null;
-    this.prompt = data?.prompt ?? null;
-    this.system_message = data?.system_message ?? null;
-    this.presetName = data?.preset ?? "";
+    this.data_local = data;
   }
 
   /** Action methods */
-  setModel(value: string) { this.model = value; }
-  setPrompt(value: string) {this.prompt = value;}
-  setSystemMessage(value: string) { this.system_message = value; }
+  setModel(value: string) { this.data_local.model = value; }
+  setPrompt(value: string) {this.data_local.prompt = value;}
+  setSystemMessage(value: string) { this.data_local.system_message = value; }
+  setValue(key:string,value:string){ this.data_local[key] = value; }
 
   /** Set the preset name */
-  applyPreset(presetName: string) {
-    this.presetName = presetName;
-    this.model = null;
-    this.prompt = null;
-    this.system_message = null;
-  }
+  applyPreset(preset: string) {this.data_local = {preset:preset};}
 
-  /** Getters that return preset values if field is null */
-  get modelValue() {
-    if (this.model !== null) return this.model;
-    if (this.presetName) {
-      const preset = toJS(this.project.promptPresets[this.presetName]) || {};
-      return preset.model ?? "";
-    }
-    return "";
-  }
-
-  get promptValue() {
-    if (this.prompt !== null) return this.prompt;
-    if (this.presetName) {
-      const preset = toJS(this.project.promptPresets[this.presetName]) || {};
-      return preset.prompt ?? "";
-    }
-    return "";
-  }
-
-  get systemMessageValue() {
-    if (this.system_message !== null) return this.system_message;
-    if (this.presetName) {
-      const preset = toJS(this.project.promptPresets[this.presetName]) || {};
-      return preset.system_message ?? "";
-    }
-    return "";
-  }
-
-  /** Getter that returns the preset name + fields differing from the preset */
-  get data_changed() {
-    const result: any = { preset: this.presetName || undefined };
-
-    const preset = this.presetName ? toJS(this.project.promptPresets[this.presetName]) || {} : {};
-
-    if (this.model !== null && this.model !== preset.model) result.model = this.model;
-    if (this.prompt !== null && this.prompt !== preset.prompt) result.prompt = this.prompt;
-    if (this.system_message !== null && this.system_message !== preset.system_message)
-      result.system_message = this.system_message;
-
-    return result;
-  }
-
-  /** Returns all data, using preset fallback if fields are null */
   get data() {
-    return {
-      preset: this.presetName || undefined,
-      model: this.modelValue,
-      prompt: this.promptValue,
-      system_message: this.systemMessageValue,
-    };
+    const preset = toJS(this.project.promptPresets[this.data_local.preset]) || {};
+    return {...preset,...this.data_local };
   }
 
-  /** Log current state */
   log() { console.log(toJS(this)); }
   save() { this.onSave(); }
 
