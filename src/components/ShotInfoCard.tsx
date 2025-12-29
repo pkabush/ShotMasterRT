@@ -8,7 +8,7 @@ import MediaGalleryImage from './MediaGalleryImage';
 import SimpleButton from './SimpleButton';
 import SimpleToggle from './SimpleToggle';
 import { LocalImage } from '../classes/LocalImage';
-import LoadingButton from './LoadingButton';
+//import LoadingButton from './LoadingButton';
 import ImageEditWindow from './ImageEditWindow';
 import TagsToggleList from "./TagsToggleList";
 import LoadingSpinner from './Atomic/LoadingSpinner';
