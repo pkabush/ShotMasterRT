@@ -66,6 +66,17 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
           {/**Loading Spinner */}
           <LoadingSpinner isLoading={shot.is_generating} asButton />
         </div>
+          
+
+        {/* Pick shot type - crude implementation, fix later */}
+        <div className="shot_type-group mb-2" role="group">
+          <SimpleSelect
+              value={ shot.shotJson.getField("shot_type")||"shot_type"      }
+              options={["simple shot","actor shot"] }
+              onChange={(val) => { shot.shotJson?.updateField("shot_type",val) }}
+          />
+        </div>
+
 
         <EditableJsonTextField localJson={shot.shotJson} field="prompt" fitHeight />
         <EditableJsonTextField localJson={shot.shotJson} field="camera" fitHeight />
