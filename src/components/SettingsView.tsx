@@ -47,6 +47,23 @@ export const SettingsView: React.FC<SettingsViewProps> = observer(({ project }) 
         }}
       />
       
+      <StringEditField
+        label="Kling Acess Key"
+        value={userSettingsDB.data.api_keys.Kling_Acess_Key || ""}
+        onChange={async (newValue) => {
+          await userSettingsDB.update(data => { data.api_keys.Kling_Acess_Key = newValue; });
+        }}
+      />
+      <StringEditField
+        label="Kling Secret Key"
+        value={userSettingsDB.data.api_keys.Kling_Secret_Key || ""}
+        onChange={async (newValue) => {
+          await userSettingsDB.update(data => { data.api_keys.Kling_Secret_Key = newValue; });
+        }}
+      />
+
+
+
     <div>
       <SimpleDropdown
         items={GPT.models}

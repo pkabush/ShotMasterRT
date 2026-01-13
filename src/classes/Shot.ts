@@ -4,7 +4,9 @@ import { LocalJson } from './LocalJson';
 import { LocalImage } from './LocalImage';
 import { makeAutoObservable, runInAction,toJS } from "mobx";
 import { GoogleAI } from './GoogleAI'; 
+import { KlingAI } from './KlingAI';
 //import { Art } from "./Art";
+
 
 export class Shot {
   folder: FileSystemDirectoryHandle;
@@ -96,6 +98,16 @@ export class Shot {
     if (this.srcImage === image) {
       this.setSrcImage(null);
     }
+  }
+
+  async GenerateVideo() {
+    let prompt = this.shotJson?.data.prompt || "";
+
+    KlingAI.txt2video(prompt,{
+      accessKey: this.scene.project.userSettingsDB.data.api_keys.Kling_Acess_Key,
+      secretKey: this.scene.project.userSettingsDB.data.api_keys.Kling_Secret_Key
+    });
+
   }
 
   async GenerateImage() {

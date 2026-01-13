@@ -14,6 +14,7 @@ import TagsToggleList from "./TagsToggleList";
 import LoadingSpinner from './Atomic/LoadingSpinner';
 import SimpleSelect from './Atomic/SimpleSelect';
 import { img_models } from '../classes/GoogleAI';
+import { video_models } from '../classes/KlingAI';
 
 interface Props {
   shot: Shot;
@@ -53,21 +54,6 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
           </div>
         </div>
 
-        {/*GENERATE Image*/}
-        <div className="btn-group mb-2" role="group">
-          {/**Button */}
-          <button className="btn btn-sm btn-outline-success" onClick={async () => {shot.GenerateImage();}}> Generate Image </button>
-          {/**Model Selector */}
-          <SimpleSelect
-            value={shot.scene.project.workflows.generate_shot_image.model}
-            options={img_models}
-            onChange={(val) => { shot.scene.project.updateWorkflow("generate_shot_image","model",val); }}
-          />
-          {/**Loading Spinner */}
-          <LoadingSpinner isLoading={shot.is_generating} asButton />
-        </div>
-          
-
         {/* Pick shot type - crude implementation, fix later */}
         <div className="shot_type-group mb-2" role="group">
           <SimpleSelect
@@ -76,6 +62,41 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
               onChange={(val) => { shot.shotJson?.updateField("shot_type",val) }}
           />
         </div>
+
+        {/*GENERATE Image*/}
+        <div className="mb-0"> 
+          <div className="btn-group mb-2" role="group">
+            {/**Button */}
+            <button className="btn btn-sm btn-outline-success" onClick={async () => {shot.GenerateImage();}}> Generate Image </button>
+            {/**Model Selector */}
+            <SimpleSelect
+              value={shot.scene.project.workflows.generate_shot_image.model}
+              options={img_models}
+              onChange={(val) => { shot.scene.project.updateWorkflow("generate_shot_image","model",val); }}
+            />
+            {/**Loading Spinner */}
+            <LoadingSpinner isLoading={shot.is_generating} asButton />
+          </div>         
+        </div>
+
+        {/*GENERATE Viedeo*/}
+        <div className="btn-group mb-2" role="group">
+          {/**Button */}
+          <button className="btn btn-sm btn-outline-success" onClick={async () => {shot.GenerateVideo();}}> Generate Video</button>
+          {/**Model Selector */}
+            <SimpleSelect
+              value={shot.scene.project?.workflows?.generate_video_kling?.model || video_models[0]}
+              options={video_models}
+              onChange={(val) => { 
+                console.log(val)
+                //shot.scene.project.updateWorkflow("generate_shot_image","model",val); 
+              }}
+            />
+          {/**Loading Spinner */}
+          <LoadingSpinner isLoading={shot.is_generating} asButton />
+        </div>
+
+
 
 
         <EditableJsonTextField localJson={shot.shotJson} field="prompt" fitHeight />
