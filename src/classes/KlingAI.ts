@@ -63,7 +63,10 @@ export const video_models = [
 
 export class KlingAI {
   public static async txt2video(prompt: string, keys_dict: { accessKey: string, secretKey: string }) {
-    const url = "https://cors-anywhere.herokuapp.com/https://api-singapore.klingai.com/v1/videos/text2video";
+    //const url = "https://api-singapore.klingai.com/v1/videos/text2video";
+
+    const target = encodeURIComponent("https://api-singapore.klingai.com/v1/videos/text2video");
+    const loc_url = `http://localhost:4000/proxy/${target}`;
 
     const payload = {
       model_name: "kling-v1",
@@ -76,7 +79,7 @@ export class KlingAI {
     const token = await generateKlingToken(keys_dict.accessKey, keys_dict.secretKey);
     console.log("Kling Generate Video payload", {payload});
 
-    const response = await fetch(url, {
+    const response = await fetch(loc_url, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${token}`,
@@ -91,8 +94,55 @@ export class KlingAI {
     }
 
     const data = await response.json();
-    console.log("Kling Generate Video response",{response});
+    console.log("Kling Generate Video response",{data});
 
     return data;
   }
+
+  public static async getStatus(
+    task_id: string,
+    keys_dict: { accessKey: string; secretKey: string }
+  ) {
+
+    // 1️⃣ generate token
+    const token = await generateKlingToken(keys_dict.accessKey, keys_dict.secretKey);
+
+    // 2️⃣ build the Kling API URL for querying a task
+    const targetUrl = `https://api-singapore.klingai.com/v1/videos/text2video/${task_id}`;
+    const encodedTarget = encodeURIComponent(targetUrl);
+    const locUrl = `http://localhost:4000/proxy/${encodedTarget}`;
+
+    // 3️⃣ fetch
+    const response = await fetch(locUrl, {
+      method: "GET",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+
+    // 4️⃣ handle errors
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Task status request failed: ${errorText}`);
+    }
+
+    //console.log("Response",response)
+    const contentType = response.headers.get("content-type") || "";
+
+
+    // 5️⃣ return standardized dict
+    if (contentType.includes("application/json")) {
+      const data = await response.json();
+
+      return {
+        task_status: data?.data?.task_status || "unknown",
+        task_status_msg: data?.data?.task_status_msg || "",
+        video_url: data?.data?.task_result?.videos?.[0]?.url || null,
+      };
+    }
+  }
+
+
+
 }
