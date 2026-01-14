@@ -5,7 +5,6 @@ import { LocalImage } from './LocalImage';
 import { makeAutoObservable, runInAction,toJS } from "mobx";
 import { GoogleAI } from './GoogleAI'; 
 import { KlingAI } from './KlingAI';
-import { TmpFile } from './TmpFile';
 //import { Art } from "./Art";
 
 
@@ -102,26 +101,21 @@ export class Shot {
   }
 
   async GenerateVideo() {
-    let prompt = this.shotJson?.data.prompt || "";
+    //let prompt = this.shotJson?.data.prompt || "";
 
     /*KlingAI.txt2video(prompt,{
       accessKey: this.scene.project.userSettingsDB.data.api_keys.Kling_Acess_Key,
       secretKey: this.scene.project.userSettingsDB.data.api_keys.Kling_Secret_Key
     });*/
 
-    /*
+    
     const res = await KlingAI.getStatus("840169918770987091",{
       accessKey: this.scene.project.userSettingsDB.data.api_keys.Kling_Acess_Key,
       secretKey: this.scene.project.userSettingsDB.data.api_keys.Kling_Secret_Key
     });
-    */
+    
 
-    const handle = await this.folder.getFileHandle("shotinfo.json");
-    const file = await handle.getFile(); // <-- convert handle to File
-
-    const result = await TmpFile.uploadFile(file);
-    console.log(result);
-
+    return res;
 
   }
 
