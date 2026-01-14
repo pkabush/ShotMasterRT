@@ -2,10 +2,13 @@
 import { Scene } from './Scene';
 import { LocalJson } from './LocalJson';
 import { LocalImage } from './LocalImage';
-import { makeAutoObservable, runInAction,toJS } from "mobx";
-import { GoogleAI } from './GoogleAI'; 
+import { makeAutoObservable, runInAction, toJS } from "mobx";
+import { GoogleAI } from './GoogleAI';
 import { KlingAI } from './KlingAI';
+import { Task } from './Task';
 //import { Art } from "./Art";
+import { ai_providers } from './AI_providers';
+import { LocalVideo } from './LocalVideo';
 
 
 export class Shot {
@@ -13,10 +16,14 @@ export class Shot {
   scene: Scene;
   shotJson: LocalJson | null = null;
   images: LocalImage[] = [];
+  videos: LocalVideo[] = [];
   srcImage: LocalImage | null = null;
   resultsFolder: FileSystemDirectoryHandle | null = null; // <--- store results folder
+  genVideoFolder: FileSystemDirectoryHandle | null = null; // <--- store results folder
   is_generating = false;
-  selected_art:LocalImage | null = null;
+  selected_art: LocalImage | null = null;
+  tasks: Task[] = [];
+  is_submitting_video = false;
 
   constructor(folder: FileSystemDirectoryHandle, scene: Scene) {
     this.folder = folder;
@@ -37,7 +44,7 @@ export class Shot {
 
         for await (const [name, handle] of this.resultsFolder.entries()) {
           if (handle.kind === 'file') {
-            const localImage = new LocalImage(handle as FileSystemFileHandle,this.resultsFolder);
+            const localImage = new LocalImage(handle as FileSystemFileHandle, this.resultsFolder);
             this.images.push(localImage);
 
             if (this.shotJson.data?.srcImage && name === this.shotJson.data.srcImage) {
@@ -49,6 +56,33 @@ export class Shot {
         console.warn('No results folder found or failed to read:', err);
         this.resultsFolder = null;
       }
+
+      // Read Video Folder
+      try {
+        this.genVideoFolder = await this.folder.getDirectoryHandle('genVideo', { create: true });
+
+        for await (const [name, handle] of this.genVideoFolder.entries()) {
+          if (handle.kind === 'file') {            
+            const localVideo = new LocalVideo(handle as FileSystemFileHandle, this.genVideoFolder);
+            this.videos.push(localVideo);
+
+            //if (this.shotJson.data?.srcImage && name === this.shotJson.data.srcImage) {
+            //  this.srcImage = localImage;
+            //}
+          }
+        }
+
+
+      } catch (err) {
+        console.warn('No genVideo folder found or failed to read:', err);
+        this.genVideoFolder = null;
+      }
+
+
+
+      // Load Tasks      
+      this.loadTasks();
+
     } catch (err) {
       console.error('Error loading shot:', this.folder.name, err);
       this.shotJson = null;
@@ -56,6 +90,36 @@ export class Shot {
       this.srcImage = null;
       this.resultsFolder = null;
     }
+  }
+
+  loadTasks(): void {
+    const tasksData = this.shotJson?.getField("tasks");
+    runInAction(() => {
+      this.tasks = [];
+      if (!tasksData || typeof tasksData !== "object") return;
+      for (const taskId of Object.keys(tasksData)) {
+        this.tasks.push(new Task(this, taskId));
+      }
+    });
+  }
+
+  addTask(id: string, data?: any | null): Task {
+    const task = new Task(this, id);
+    runInAction(() => {
+      this.tasks.push(task);
+    });
+    task.update(data);
+    return task;
+  }
+
+  removeTask(task: Task) {
+    runInAction(() => {
+      this.tasks = this.tasks.filter(t => t !== task);
+    });
+
+    const tasks = this.shotJson?.getField("tasks") ?? {};
+    delete tasks[task.id as string];
+    this.shotJson?.updateField("tasks", tasks);
   }
 
   setSrcImage(image: LocalImage | null) {
@@ -87,8 +151,9 @@ export class Shot {
   addImage(image: LocalImage) {
     this.images.push(image);
     //console.log("SRC",this.srcImage);
-    if (!this.srcImage) {this.setSrcImage(image);}
+    if (!this.srcImage) { this.setSrcImage(image); }
   }
+ 
 
   removeImage(image: LocalImage) {
     // Remove from array
@@ -101,42 +166,48 @@ export class Shot {
   }
 
   async GenerateVideo() {
-    //let prompt = this.shotJson?.data.prompt || "";
-
-    /*KlingAI.txt2video(prompt,{
-      accessKey: this.scene.project.userSettingsDB.data.api_keys.Kling_Acess_Key,
-      secretKey: this.scene.project.userSettingsDB.data.api_keys.Kling_Secret_Key
-    });*/
-
-    
-    const res = await KlingAI.getStatus("840169918770987091",{
-      accessKey: this.scene.project.userSettingsDB.data.api_keys.Kling_Acess_Key,
-      secretKey: this.scene.project.userSettingsDB.data.api_keys.Kling_Secret_Key
+    runInAction(() => {
+      this.is_submitting_video = true;
     });
-    
 
-    return res;
+    let prompt = this.shotJson?.data.prompt || "";
 
+    try {
+      // Generate if we have src image
+      if( this.srcImage)
+      {
+        const img_raw = (await this.srcImage.getBase64()).rawBase64;
+        const task_info = await KlingAI.img2video({
+          image:img_raw , 
+          prompt,
+          model:this.scene.project.workflows.generate_video_kling.model,          
+        } ); 
+
+        const task = this.addTask(task_info.id, { provider: ai_providers.KLING ,workflow:task_info.workflow})
+        task.check_status();
+      }
+
+      //const task_info = await KlingAI.txt2video(prompt); 
+      //
+
+
+    } catch (err) {
+      console.error("Submitting Video Generation Failed:", err);
+    } finally {
+      runInAction(() => {
+        this.is_submitting_video = false;
+      });
+    }
   }
 
   async GenerateImage() {
-    if (!this.resultsFolder) {
-      console.warn("Results folder not set. Attempting to create one...");
-      try {
-        this.resultsFolder = await this.folder.getDirectoryHandle('results', { create: true });
-      } catch (err) {
-        console.error("Failed to create results folder:", err);
-        return;
-      }
-    }
-
     runInAction(() => {
       this.is_generating = true; // start generating
     });
 
     // add input images, skipping any skipped tags
     const skipped = this.getSkippedTags();
-    const images: { rawBase64: string; mime: string;description:string }[] = [];
+    const images: { rawBase64: string; mime: string; description: string }[] = [];
 
     //const image_paths = [];
     for (const art of this.scene.getTags()) {
@@ -145,42 +216,40 @@ export class Shot {
       try {
         const base64Obj = await art.image.getBase64(); // uses cached Base64 if available
         //images.push(base64Obj);
-        images.push({ rawBase64:base64Obj.rawBase64, mime:base64Obj.mime, description:art.path});
+        images.push({ rawBase64: base64Obj.rawBase64, mime: base64Obj.mime, description: art.path });
 
         //image_paths.push(art.path);
       } catch (err) {
         console.warn("Failed to load tag image:", art.path, err);
       }
     }
-    
+
     let prompt = this.shotJson?.data.prompt || "";
     //if (image_paths.length > 0) { prompt += `\n\nИспользуй эти картинки как референсы:\n${image_paths.join("\n")}`; }
 
     try {
-      const result = await GoogleAI.img2img(prompt || "",this.scene.project.workflows.generate_shot_image.model,images);
-      const localImage:LocalImage|null = await GoogleAI.saveResultImage(result,this.resultsFolder);
+      const result = await GoogleAI.img2img(prompt || "", this.scene.project.workflows.generate_shot_image.model, images);
+      const localImage: LocalImage | null = await GoogleAI.saveResultImage(result, this.resultsFolder as FileSystemDirectoryHandle);
       if (localImage) this.addImage(localImage);
     } catch (err) {
       console.error("GenerateImage failed:", err);
     } finally {
-    runInAction(() => {
-      this.is_generating = false; // start generating
-    });
+      runInAction(() => {
+        this.is_generating = false; // start generating
+      });
     }
-  }  
+  }
 
-  log() {console.log(toJS(this));}
-
-  selectArt(art : LocalImage|null = null) {
+  selectArt(art: LocalImage | null = null) {
     runInAction(() => { this.selected_art = art; });
   }
 
-  async saveGoogleResultImage(result:any,select:boolean = false){
-      const localImage:LocalImage|null = await GoogleAI.saveResultImage(result,this.resultsFolder as FileSystemDirectoryHandle);
-      if (localImage) {
-        this.addImage(localImage);      
-        if(select) this.selectArt(localImage);
-      }      
+  async saveGoogleResultImage(result: any, select: boolean = false) {
+    const localImage: LocalImage | null = await GoogleAI.saveResultImage(result, this.resultsFolder as FileSystemDirectoryHandle);
+    if (localImage) {
+      this.addImage(localImage);
+      if (select) this.selectArt(localImage);
+    }
   }
 
   getSkippedTags(): string[] {
@@ -211,6 +280,6 @@ export class Shot {
     this.shotJson.save();
   }
 
-  
+  log() { console.log(toJS(this)); }
 
 }

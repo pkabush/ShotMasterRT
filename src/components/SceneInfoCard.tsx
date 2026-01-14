@@ -42,6 +42,7 @@ const SceneInfoCard: React.FC<Props> = observer(({ scene }) => { // <--- observe
       */}
       
 
+      {/** GENERATE SHOTS JSON */}
       <SettingsButton className="mb-2"
         buttons={
           <>

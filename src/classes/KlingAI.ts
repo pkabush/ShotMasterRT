@@ -52,34 +52,39 @@ function base64url(input: ArrayBuffer | string): string {
   return btoa(binary).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
 }
 
-export const video_models = [
-  "kling-v1-6",
-  "kling-v2-master",
-  "kling-v2-1-master",
-  "kling-v2-5-turbo",
-  "kling-v2-6",
-  "kling-v1",
-];
+
 
 export class KlingAI {
-  public static async txt2video(prompt: string, keys_dict: { accessKey: string, secretKey: string }) {
-    //const url = "https://api-singapore.klingai.com/v1/videos/text2video";
+  // Function to dynamically provide keys, similar to ChatGPT.getApiKey
+  public static getKeysDict: (() => { accessKey: string; secretKey: string } | null) | null = null;
 
-    const target = encodeURIComponent("https://api-singapore.klingai.com/v1/videos/text2video");
-    const loc_url = `http://localhost:4000/proxy/${target}`;
+  public static videoModels = [
+    "kling-v1",
+    "kling-v1-5",
+    "kling-v1-6",
+    "kling-v2-master",
+    "kling-v2-1",
+    "kling-v2-1-master",
+    "kling-v2-5-turbo",
+    "kling-v2-6",
+    "kling-video-o1",
+  ];
 
-    const payload = {
-      model_name: "kling-v1",
-      mode: "pro",
-      duration: "5",
-      prompt,
-      cfg_scale: 0.5,
-    };
+  public static async getToken(): Promise<string> {
+    const keys_dict = this.getKeysDict?.();
+    if (!keys_dict) throw new Error("No Kling API keys provided or getKeysDict not set");
 
-    const token = await generateKlingToken(keys_dict.accessKey, keys_dict.secretKey);
-    console.log("Kling Generate Video payload", {payload});
+    return await generateKlingToken(keys_dict.accessKey, keys_dict.secretKey);
+  }
 
-    const response = await fetch(loc_url, {
+  private static async postToKling(targetUrl: string, payload: any) {
+    const encodedTarget = encodeURIComponent(targetUrl);
+    const locUrl = `http://localhost:4000/proxy/${encodedTarget}`;
+    const token = await this.getToken();
+
+    console.log(`Kling API request to ${targetUrl}:`, payload);
+
+    const response = await fetch(locUrl, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${token}`,
@@ -90,59 +95,101 @@ export class KlingAI {
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`Request failed: ${errorText}`);
+      throw new Error(`Kling API request failed: ${errorText}`);
     }
 
     const data = await response.json();
-    console.log("Kling Generate Video response",{data});
-
+    console.log(`Kling API response from ${targetUrl}:`, data);
     return data;
   }
 
-  public static async getStatus(
-    task_id: string,
-    keys_dict: { accessKey: string; secretKey: string }
-  ) {
+  // ================= TXT2VIDEO =================
+  public static async txt2video(prompt: string, model: string = "kling-v1") {
+    const payload = { model_name: model, mode: "std", duration: "5", prompt, cfg_scale: 0.5 };
+    const targetUrl = "https://api-singapore.klingai.com/v1/videos/text2video";
 
-    // 1️⃣ generate token
-    const token = await generateKlingToken(keys_dict.accessKey, keys_dict.secretKey);
+    const data = await this.postToKling(targetUrl, payload);
+    return { id: data.data.task_id, workflow: "text2video" };
+  }
 
-    // 2️⃣ build the Kling API URL for querying a task
-    const targetUrl = `https://api-singapore.klingai.com/v1/videos/text2video/${task_id}`;
+  // ================= IMG2VIDEO =================
+  public static async img2video(options: {
+    image: string;
+    prompt?: string;
+    model?: string;
+    duration?: "5" | "10";
+    mode?: "std" | "pro";
+    cfg_scale?: number;
+    static_mask?: string;
+    dynamic_masks?: Array<{ mask: string; trajectories: { x: number; y: number }[] }>;
+    image_tail?: string;
+    camera_control?: { type?: string; config?: { horizontal?: number; vertical?: number; pan?: number; tilt?: number; roll?: number; zoom?: number } };
+    voice_list?: { voice_id: string }[];
+    sound?: "on" | "off";
+    negative_prompt?: string;
+    callback_url?: string;
+    external_task_id?: string;
+  }) {
+    const {
+      image,
+      prompt,
+      model = "kling-v1",
+      duration = "5",
+      mode = "std",
+      cfg_scale = 0.5,
+      static_mask,
+      dynamic_masks,
+      image_tail,
+      camera_control,
+      voice_list,
+      sound = "off",
+      negative_prompt,
+      callback_url,
+      external_task_id,
+    } = options;
+
+    const payload: any = { model_name: model, image, prompt, duration, mode, cfg_scale, sound };
+    if (static_mask) payload.static_mask = static_mask;
+    if (dynamic_masks) payload.dynamic_masks = dynamic_masks;
+    if (image_tail) payload.image_tail = image_tail;
+    if (camera_control) payload.camera_control = camera_control;
+    if (voice_list) payload.voice_list = voice_list;
+    if (negative_prompt) payload.negative_prompt = negative_prompt;
+    if (callback_url) payload.callback_url = callback_url;
+    if (external_task_id) payload.external_task_id = external_task_id;
+
+    const targetUrl = "https://api-singapore.klingai.com/v1/videos/image2video";
+    const data = await this.postToKling(targetUrl, payload);
+
+    return { id: data.data.task_id, workflow: "image2video" };
+  }
+
+  // ================= GET STATUS =================
+  public static async getStatus(task_id: string, workflow:string = "text2video") {
+    const targetUrl = `https://api-singapore.klingai.com/v1/videos/${workflow}/${task_id}`;
     const encodedTarget = encodeURIComponent(targetUrl);
     const locUrl = `http://localhost:4000/proxy/${encodedTarget}`;
+    const token = await this.getToken();
 
-    // 3️⃣ fetch
     const response = await fetch(locUrl, {
       method: "GET",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
+      headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
     });
 
-    // 4️⃣ handle errors
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(`Task status request failed: ${errorText}`);
     }
 
-    //console.log("Response",response)
     const contentType = response.headers.get("content-type") || "";
-
-
-    // 5️⃣ return standardized dict
     if (contentType.includes("application/json")) {
       const data = await response.json();
-
+      console.log("KLING check status:", data);
       return {
-        task_status: data?.data?.task_status || "unknown",
-        task_status_msg: data?.data?.task_status_msg || "",
-        video_url: data?.data?.task_result?.videos?.[0]?.url || null,
+        status: data?.data?.task_status || "unknown",
+        status_msg: data?.data?.task_status_msg || "",
+        url: data?.data?.task_result?.videos?.[0]?.url || null,
       };
     }
   }
-
-
-
 }

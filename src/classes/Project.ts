@@ -2,11 +2,12 @@
 import { Scene } from "./Scene";
 import { Artbook } from "./Artbook";
 import { UserSettingsDB } from "./UserSettingsDB";
-import { makeAutoObservable, runInAction,toJS } from "mobx";
+import { makeAutoObservable, runInAction, toJS } from "mobx";
 import { Script } from "./Script";
 import { GoogleAI } from "./GoogleAI";
 import { ChatGPT } from "./ChatGPT";
 import { LocalJson } from './LocalJson';
+import { KlingAI } from "./KlingAI";
 
 export type ProjectView =
   | { type: "none" }
@@ -16,9 +17,9 @@ export type ProjectView =
   | { type: "scene" };
 
 const default_projinfo = {
-  "gpt_model":"gpt-4o-mini",
-  "describe_prompt" : "Хорошо Опиши этого персонажа как промпт для генерации картинки. ",
-  "generate_tags_prompt" : `
+  "gpt_model": "gpt-4o-mini",
+  "describe_prompt": "Хорошо Опиши этого персонажа как промпт для генерации картинки. ",
+  "generate_tags_prompt": `
   Опираясь на сценарий (SCRIPT) и шоты из этого сценария(SHOTS JSON) сделай список какие из референсных картинок из REFS DICTIONARY стоит использовать в этой сцене.
 
   в ответе предоставь список, где путь к каждой картинке с новой строки, без дополнительных комментариев в таком виде:
@@ -27,7 +28,7 @@ const default_projinfo = {
 
 
   `,
-  "split_shot_prompt" : `
+  "split_shot_prompt": `
 разбей эту сцену из моего сценария на шоты, сгенерируй промпты для нейросети для генерации видео и предоставь в виде json, в ответе предоставь толкьо json в следующем формате:
 {
   "SHOT_010" : 
@@ -38,10 +39,10 @@ const default_projinfo = {
     },
 
 }`,
-  prompt_presets : {
+  prompt_presets: {
     split_shots: {
       model: "gpt-4o",
-      prompt:  `
+      prompt: `
 разбей эту сцену из моего сценария на шоты, сгенерируй промпты для нейросети для генерации видео и предоставь в виде json, в ответе предоставь толкьо json в следующем формате:
 {
   "SHOT_010" : 
@@ -53,25 +54,25 @@ const default_projinfo = {
 
 }`,
       system_message: "You are a helpful assistant. " +
-            "Always respond using ONLY valid JSON. " +
-            "Do not write explanations. " +
-            "Do not wrap the JSON in backticks. " +
-            "The entire response must be a valid JSON object." ,
-            
-      },
+        "Always respond using ONLY valid JSON. " +
+        "Do not write explanations. " +
+        "Do not wrap the JSON in backticks. " +
+        "The entire response must be a valid JSON object.",
+
+    },
     generate_tags: {
       model: "gpt-4o",
       prompt: "Generate Tags ",
       system_message: "You are a tagger "
     }
   },
-  workflows :{
-    generate_shot_image : {
-      model:"gemini-2.5-flash-image",
+  workflows: {
+    generate_shot_image: {
+      model: "gemini-2.5-flash-image",
     },
-    split_scene_into_shots : {
-      model:"gpt-4o-mini",
-      prompt:  `
+    split_scene_into_shots: {
+      model: "gpt-4o-mini",
+      prompt: `
 разбей эту сцену из моего сценария на шоты, сгенерируй промпты для нейросети для генерации видео и предоставь в виде json, в ответе предоставь толкьо json в следующем формате:
 {
   "SHOT_010" : 
@@ -83,12 +84,17 @@ const default_projinfo = {
 
 }`,
       system_message: "You are a helpful assistant. " +
-            "Always respond using ONLY valid JSON. " +
-            "Do not write explanations. " +
-            "Do not wrap the JSON in backticks. " +
-            "The entire response must be a valid JSON object." ,
+        "Always respond using ONLY valid JSON. " +
+        "Do not write explanations. " +
+        "Do not wrap the JSON in backticks. " +
+        "The entire response must be a valid JSON object.",
+    },
+    generate_video_kling: {
+      model: "kling-v1-6",
     }
-  }
+
+
+  },
 
 }
 
@@ -101,7 +107,7 @@ export class Project {
   userSettingsDB = new UserSettingsDB();
   projinfo: LocalJson | null = null;
   currentView: ProjectView = { type: "none" };
-  selectedScene: Scene | null = null;  
+  selectedScene: Scene | null = null;
 
   constructor(rootDirHandle: FileSystemDirectoryHandle | null = null) {
     this.rootDirHandle = rootDirHandle;
@@ -136,14 +142,14 @@ export class Project {
 
       await this.userSettingsDB.save();
 
-      this.projinfo = await LocalJson.create(this.rootDirHandle as FileSystemDirectoryHandle, 'projinfo.json',default_projinfo );
+      this.projinfo = await LocalJson.create(this.rootDirHandle as FileSystemDirectoryHandle, 'projinfo.json', default_projinfo);
     });
 
     // Load all project content
     await Promise.all([
       this.loadScenes(),
       this.loadArtbook(),
-      this.loadScript(),   
+      this.loadScript(),
     ]);
   }
 
@@ -151,7 +157,7 @@ export class Project {
     if (!this.rootDirHandle) return;
 
     try {
-      const scenesFolder = await this.rootDirHandle.getDirectoryHandle("SCENES",{create:true});
+      const scenesFolder = await this.rootDirHandle.getDirectoryHandle("SCENES", { create: true });
 
       const loadedScenes: Scene[] = [];
 
@@ -179,7 +185,7 @@ export class Project {
     if (!this.rootDirHandle) return;
 
     try {
-      const refsFolder = await this.rootDirHandle.getDirectoryHandle("REFS",{create:true});
+      const refsFolder = await this.rootDirHandle.getDirectoryHandle("REFS", { create: true });
       const artbook = new Artbook(refsFolder, this);
       await artbook.load();
 
@@ -205,7 +211,7 @@ export class Project {
       });
 
       // Create Script object
-      const script = new Script(scriptFileHandle,this);
+      const script = new Script(scriptFileHandle, this);
       await script.load();
 
       runInAction(() => {
@@ -222,13 +228,23 @@ export class Project {
 
   async loadDB() {
     await this.userSettingsDB.load();
-        // Init API Key Getter
-    GoogleAI.getApiKey = () => {return this.userSettingsDB.data.api_keys.Google_API_KEY || null;};
-    GoogleAI.setApiKey = async (key: string) => { await this.userSettingsDB.update(data => { data.api_keys.Google_API_KEY = key; });}
-    ChatGPT.getApiKey = () => {return this.userSettingsDB.data.api_keys.GPT_API_KEY || null; };
-    ChatGPT.setApiKey = async (key: string) => {await this.userSettingsDB.update(data => {data.api_keys.GPT_API_KEY = key;  });  };
+    // Init API Key Getter
+    GoogleAI.getApiKey = () => { return this.userSettingsDB.data.api_keys.Google_API_KEY || null; };
+    GoogleAI.setApiKey = async (key: string) => { await this.userSettingsDB.update(data => { data.api_keys.Google_API_KEY = key; }); }
+    ChatGPT.getApiKey = () => { return this.userSettingsDB.data.api_keys.GPT_API_KEY || null; };
+    ChatGPT.setApiKey = async (key: string) => { await this.userSettingsDB.update(data => { data.api_keys.GPT_API_KEY = key; }); };
 
+    KlingAI.getKeysDict = () => {
+      return {
+        accessKey: this.userSettingsDB.data.api_keys.Kling_Acess_Key,
+        secretKey: this.userSettingsDB.data.api_keys.Kling_Secret_Key
+      }
     }
+
+
+
+
+  }
 
   async createScene(sceneName: string) {
     if (!this.rootDirHandle) {
@@ -273,34 +289,35 @@ export class Project {
   log() {
     console.log(toJS(this));
   }
-  
+
   setView(view: ProjectView, scene: Scene | null = null) {
     this.currentView = view;
     this.selectedScene = scene;
   }
-    
+
   get promptPresets() {
     if (!this.projinfo) return {};
     return this.projinfo.data.prompt_presets;
   }
 
-  savePromptPreset(data:any){
+  savePromptPreset(data: any) {
     runInAction(() => {
-      if(!this.projinfo) return;
+      if (!this.projinfo) return;
       this.projinfo.data.prompt_presets[data.preset] = data;
       this.projinfo?.save();
     })
   }
 
   get workflows() {
-    return this.projinfo?.data.workflows;    
+    return this.projinfo?.data.workflows;
   }
 
-  
-  updateWorkflow(workflow:string , key:string, value:string) {
+
+  updateWorkflow(workflow: string, key: string, value: string) {
     runInAction(() => {
       this.workflows[workflow][key] = value;
-      this.projinfo?.save();    })
+      this.projinfo?.save();
+    })
 
   }
 

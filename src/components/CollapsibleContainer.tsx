@@ -21,10 +21,10 @@ const CollapsibleContainer: React.FC<CollapsibleContainerProps> = ({
   return (
     <div className={`border rounded p-2 mb-2 ${className}`}>
       {/* Header */}
-      <div className="d-flex align-items-center justify-content-between mb-2">
+      <div className="d-flex align-items-center justify-content-between mb-0">
         <div className="d-flex align-items-center">
           <button
-            className="btn btn-sm btn-outline-secondary me-2"
+            className="btn btn-sm "
             onClick={() => setCollapsed(!collapsed)}
           >
             {collapsed ? '▶' : '▼'}
@@ -36,7 +36,7 @@ const CollapsibleContainer: React.FC<CollapsibleContainerProps> = ({
       </div>
 
       {/* Collapsible content */}
-      {!collapsed && <div>{children}</div>}
+      {!collapsed && <div className='mt-2'>{children}</div>}
     </div>
   );
 };

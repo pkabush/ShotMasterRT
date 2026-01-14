@@ -14,7 +14,10 @@ import TagsToggleList from "./TagsToggleList";
 import LoadingSpinner from './Atomic/LoadingSpinner';
 import SimpleSelect from './Atomic/SimpleSelect';
 import { img_models } from '../classes/GoogleAI';
-import { video_models } from '../classes/KlingAI';
+import SettingsButton from './SettingsButton';
+import TaskContainer from './TaskContainer';
+import MediaGalleryVideo from './MediaGalleryVideo';
+import { KlingAI } from '../classes/KlingAI';
 
 interface Props {
   shot: Shot;
@@ -26,7 +29,7 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
   const itemHeight = 200;
   const files = shot.images ?? [];
 
-  
+
   const handleDelete = async () => {
     if (window.confirm(`Are you sure you want to delete shot "${shot.folder.name}"?`)) {
       await shot.delete();
@@ -49,7 +52,7 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
               }}
             />
 
-            <SimpleButton onClick={() => {shot.log()}} label="Log Shot" />
+            <SimpleButton onClick={() => { shot.log() }} label="Log Shot" />
             <SimpleButton onClick={handleDelete} label="Delete Shot" className="btn-outline-danger" />
           </div>
         </div>
@@ -57,46 +60,55 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
         {/* Pick shot type - crude implementation, fix later */}
         <div className="shot_type-group mb-2" role="group">
           <SimpleSelect
-              value={ shot.shotJson.getField("shot_type")||"shot_type"      }
-              options={["simple shot","actor shot"] }
-              onChange={(val) => { shot.shotJson?.updateField("shot_type",val) }}
+            value={shot.shotJson.getField("shot_type") || "shot_type"}
+            options={["simple shot", "actor shot"]}
+            onChange={(val) => { shot.shotJson?.updateField("shot_type", val) }}
           />
         </div>
 
         {/*GENERATE Image*/}
-        <div className="mb-0"> 
+        <div className="mb-0">
           <div className="btn-group mb-2" role="group">
             {/**Button */}
-            <button className="btn btn-sm btn-outline-success" onClick={async () => {shot.GenerateImage();}}> Generate Image </button>
+            <button className="btn btn-sm btn-outline-success" onClick={async () => { shot.GenerateImage(); }}> Generate Image </button>
             {/**Model Selector */}
             <SimpleSelect
               value={shot.scene.project.workflows.generate_shot_image.model}
               options={img_models}
-              onChange={(val) => { shot.scene.project.updateWorkflow("generate_shot_image","model",val); }}
+              onChange={(val) => { shot.scene.project.updateWorkflow("generate_shot_image", "model", val); }}
             />
             {/**Loading Spinner */}
             <LoadingSpinner isLoading={shot.is_generating} asButton />
-          </div>         
+          </div>
         </div>
 
-        {/*GENERATE Viedeo*/}
-        <div className="btn-group mb-2" role="group">
-          {/**Button */}
-          <button className="btn btn-sm btn-outline-success" onClick={async () => {shot.GenerateVideo();}}> Generate Video</button>
-          {/**Model Selector */}
-            <SimpleSelect
-              value={shot.scene.project?.workflows?.generate_video_kling?.model || video_models[0]}
-              options={video_models}
-              onChange={(val) => { 
-                console.log(val)
-                //shot.scene.project.updateWorkflow("generate_shot_image","model",val); 
-              }}
-            />
-          {/**Loading Spinner */}
-          <LoadingSpinner isLoading={shot.is_generating} asButton />
-        </div>
+        {/*GENERATE Video*/}
+        <SettingsButton className='mb-2'
+          buttons={
+            <>
+              {/**Button */}
+              <button className="btn btn-sm btn-outline-success" onClick={async () => { shot.GenerateVideo(); }}> Generate Video</button>
+              {/**Model Selector */}
+              <SimpleSelect
+                value={shot.scene.project?.workflows?.generate_video_kling?.model || KlingAI.videoModels[0]}
+                options={KlingAI.videoModels}
+                onChange={(val) => {
+                  shot.scene.project.updateWorkflow("generate_video_kling","model",val); 
+                }}
+              />
+              {/**Loading Spinner */}
+              <LoadingSpinner isLoading={shot.is_submitting_video} asButton />
+            </>
+          }
+          content={
+            <>
 
 
+            </>
+          }
+        />
+
+        <TaskContainer shot={shot} />
 
 
         <EditableJsonTextField localJson={shot.shotJson} field="prompt" fitHeight />
@@ -105,35 +117,35 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
         <TagsToggleList shot={shot} />
 
 
-        <MediaGallery 
+        <MediaGallery
           label="Shot Results"
           headerExtra={
             <>
-            {/*
+              {/*
             <LoadingButton label="Generate" className="btn-outline-success" onClick={async () => {shot.GenerateImage();}} is_loading={shot.is_generating}  />
             */}
 
-            <SimpleButton
-              label="Import URL"
-              onClick={async () => {
-                try {
-                  const text = await navigator.clipboard.readText();
-                  if (text && (text.startsWith("http://") || text.startsWith("https://"))) {
-                    console.log("Importing URL from clipboard:", text);
+              <SimpleButton
+                label="Import URL"
+                onClick={async () => {
+                  try {
+                    const text = await navigator.clipboard.readText();
+                    if (text && (text.startsWith("http://") || text.startsWith("https://"))) {
+                      console.log("Importing URL from clipboard:", text);
 
-                    const localImage = await LocalImage.fromUrl(text, shot.resultsFolder as FileSystemDirectoryHandle);
-                    shot.addImage(localImage);
+                      const localImage = await LocalImage.fromUrl(text, shot.resultsFolder as FileSystemDirectoryHandle);
+                      shot.addImage(localImage);
 
-                  } else {
-                    alert("Clipboard does not contain a valid URL.");
+                    } else {
+                      alert("Clipboard does not contain a valid URL.");
+                    }
+                  } catch (err) {
+                    console.error("Failed to read clipboard:", err);
+                    alert("Failed to access clipboard.");
                   }
-                } catch (err) {
-                  console.error("Failed to read clipboard:", err);
-                  alert("Failed to access clipboard.");
-                }
-              }}
-            />
-          </>          
+                }}
+              />
+            </>
           }
         >
           {files.map((localImage, index) => (
@@ -141,7 +153,7 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
               key={index}
               localImage={localImage}
               height={itemHeight}
-              onClick={()=>{                 
+              onClick={() => {
                 shot.selectArt(localImage);
               }}
               topRightExtra={
@@ -150,7 +162,6 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
                   <SimpleButton
                     onClick={async () => {
                       if (!window.confirm("Delete this image?")) return;
-
                       try {
                         await localImage.delete(shot.resultsFolder as FileSystemDirectoryHandle); // remove file
                         shot.removeImage(localImage);                // update mobx list
@@ -169,18 +180,44 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
         </MediaGallery>
 
         {/* Selected ArtInfoCard below thumbnails */}
-        {shot.selected_art  && (
+        {shot.selected_art && (
           <ImageEditWindow
             localImage={shot.selected_art}
             initialText="Notes for this image"
-            onImageGenerated={async (result) => {              
-              await shot.saveGoogleResultImage(result,true);            
+            onImageGenerated={async (result) => {
+              await shot.saveGoogleResultImage(result, true);
             }}
             onClose={() => {
               shot.selectArt()
             }}
           />
         )}
+
+
+        {/** VIDEOS Media Gallery */}
+        <MediaGallery label="Generated Videos">
+          {shot.videos.map((localVideo, index) => (
+            <MediaGalleryVideo
+              key={index}
+              localVideo={localVideo}
+              height={500}
+              topRightExtra={
+                <SimpleButton
+                  label="Delete"
+                  className="btn-outline-danger btn-sm"
+                  onClick={async () => {
+                    console.log("delete")
+                    //await localVideo.delete(shot.resultsFolder!);
+                    //shot.removeVideo(localVideo);
+                  }}
+                />
+              }
+            />
+          ))}
+
+        </MediaGallery>
+
+
 
       </div>
     </div>
