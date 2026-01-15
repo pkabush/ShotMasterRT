@@ -184,7 +184,7 @@ export class Shot {
         } ); 
 
         const task = this.addTask(task_info.id, { provider: ai_providers.KLING ,workflow:task_info.workflow})
-        task.check_status();
+        await task.check_status();
       }
 
       //const task_info = await KlingAI.txt2video(prompt); 

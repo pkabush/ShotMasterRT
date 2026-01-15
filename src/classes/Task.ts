@@ -58,7 +58,9 @@ export class Task {
             try {
                 console.log("new attempt");
 
+                
                 const status = await KlingAI.getStatus(this.id, this.data.workflow);
+                console.log("status",status)
                 this.update(status);
 
                 if (status?.status === "succeed" && status.url) {

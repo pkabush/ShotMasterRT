@@ -171,6 +171,8 @@ export class KlingAI {
     const locUrl = `http://localhost:4000/proxy/${encodedTarget}`;
     const token = await this.getToken();
 
+    console.log("KLING_AI Get Status sent");
+
     const response = await fetch(locUrl, {
       method: "GET",
       headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
