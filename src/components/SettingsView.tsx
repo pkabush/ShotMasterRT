@@ -30,7 +30,7 @@ export const SettingsView: React.FC<SettingsViewProps> = observer(({ project }) 
     <div style={{ padding: 20 }}>
       <h3>API Keys</h3>
       <SimpleButton onClick={ ()=> {project.log()}} label="LOG Project" />  
-      <SimpleButton onClick={ ()=> {project.download_asset("assets/server/dist/server.exe","ShotmasterServer.exe")}} label="Download Server" />  
+      <SimpleButton onClick={ ()=> {project.download_asset("assets/server.exe","server.exe")}} label="Download Server" />  
 
       <StringEditField
         label="GPT API Key"
