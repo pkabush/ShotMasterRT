@@ -184,6 +184,7 @@ export class Shot {
         } ); 
 
         const task = this.addTask(task_info.id, { provider: ai_providers.KLING ,workflow:task_info.workflow})
+        await new Promise(res => setTimeout(res, 2000));
         await task.check_status();
       }
 
