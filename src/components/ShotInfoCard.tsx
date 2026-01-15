@@ -206,9 +206,8 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
                   label="Delete"
                   className="btn-outline-danger btn-sm"
                   onClick={async () => {
-                    console.log("delete")
-                    //await localVideo.delete(shot.resultsFolder!);
-                    //shot.removeVideo(localVideo);
+                    await localVideo.delete();
+                    shot.removeVideo(localVideo);
                   }}
                 />
               }

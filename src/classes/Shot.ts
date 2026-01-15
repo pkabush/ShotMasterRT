@@ -165,6 +165,13 @@ export class Shot {
     }
   }
 
+  removeVideo(video: LocalVideo) {
+    // Remove from array
+    this.videos = this.videos.filter(i => i !== video);
+
+    // If it was the source video, clear it
+  }
+
   async GenerateVideo() {
     runInAction(() => {
       this.is_submitting_video = true;

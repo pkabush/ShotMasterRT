@@ -57,10 +57,10 @@ export class LocalVideo {
   }
 
   // Delete video from folder
-  async delete(parentDir: FileSystemDirectoryHandle): Promise<void> {
+  async delete(): Promise<void> {
     try {
       this.revokeUrl();
-      await parentDir.removeEntry(this.handle.name);
+      await this.parent.removeEntry(this.handle.name);
     } catch (err) {
       console.error('Failed to delete video file:', err);
       throw err;
