@@ -61,7 +61,7 @@ export class Shot {
       try {
         this.genVideoFolder = await this.folder.getDirectoryHandle('genVideo', { create: true });
 
-        for await (const [name, handle] of this.genVideoFolder.entries()) {
+        for await (const [, handle] of this.genVideoFolder.entries()) {
           if (handle.kind === 'file') {            
             const localVideo = new LocalVideo(handle as FileSystemFileHandle, this.genVideoFolder);
             this.videos.push(localVideo);

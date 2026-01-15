@@ -70,7 +70,7 @@ export class LocalVideo {
   // Optional: create from Base64 (rare for videos, but possible)
   static async fromBase64(
     base64Data: string,
-    mime: string,
+    //mime: string,
     folder: FileSystemDirectoryHandle,
     filename: string
   ): Promise<LocalVideo> {
