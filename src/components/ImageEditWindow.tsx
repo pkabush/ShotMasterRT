@@ -3,6 +3,7 @@ import { Group, Panel, Separator } from "react-resizable-panels";
 import { LocalImage } from "../classes/LocalImage";
 import LoadingButton from "./LoadingButton";
 import { GoogleAI } from "../classes/GoogleAI";
+import SimpleSelect from "./Atomic/SimpleSelect";
 
 interface ImageEditWindowProps {
   localImage: LocalImage;
@@ -20,6 +21,7 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = ({
   const [url, setUrl] = useState<string | null>(null);
   const [text, setText] = useState(initialText);
   const [generating, setGenerating] = useState(false);
+  const [model, setModel] = useState<string>(GoogleAI.options.img_models.flash_image);
 
   useEffect(() => {
     let mounted = true;
@@ -36,8 +38,8 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = ({
     try {
       const base64Obj = await localImage.getBase64(); // uses cached Base64 if available
 
-      const result = await GoogleAI.img2img(text || "", "", [
-        { rawBase64:base64Obj.rawBase64, mime:base64Obj.mime, description:""}
+      const result = await GoogleAI.img2img(text || "", model, [
+        { rawBase64: base64Obj.rawBase64, mime: base64Obj.mime, description: "" }
       ]);
       if (onImageGenerated) onImageGenerated(result);
     } catch (err) {
@@ -49,7 +51,7 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = ({
 
   return (
     <div className="border d-flex flex-column" style={{ height: "700px" }}>
-      <Group orientation="horizontal"  style={{ height: "100%" }}>
+      <Group orientation="horizontal" style={{ height: "100%" }}>
         {/* Left panel — image */}
         <Panel defaultSize={500} minSize={10} >
           <div
@@ -84,7 +86,7 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = ({
 
         {/* Right panel — settings */}
         <Panel minSize={10}>
-          <div className="d-flex flex-column h-100 p-3"  style={{ height: "100%" }}>
+          <div className="d-flex flex-column h-100 p-3" style={{ height: "100%" }}>
             <div className="d-flex justify-content-end mb-2">
               {onClose && (
                 <button
@@ -109,11 +111,20 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = ({
                   fontSize: "14px",
                 }}
               />
+              <SimpleSelect
+                value={model}
+                options={Object.values(GoogleAI.options.img_models)}
+                label={"Model:"}
+                onChange={(val: string) => {
+                  setModel(val);
+                }}
+              />
               <LoadingButton
                 onClick={handleGenerate}
                 label="Generate"
-                is_loading={generating}
+                is_loading={generating}                                
               />
+
             </div>
           </div>
         </Panel>

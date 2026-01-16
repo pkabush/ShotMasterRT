@@ -3,21 +3,29 @@ import { GoogleGenAI as GoogleSDK } from "@google/genai";
 import { LocalImage } from "./LocalImage";
 
 // Custom error types for clarity
-export class MissingApiKeyError extends Error {}
-export class InvalidApiKeyError extends Error {}
+export class MissingApiKeyError extends Error { }
+export class InvalidApiKeyError extends Error { }
 
-export const img_models = [ 
-    "gemini-2.5-flash-image",
-    "gemini-3-pro-image-preview"
-  ]
+export const img_models = [
+  "gemini-2.5-flash-image",
+  "gemini-3-pro-image-preview"
+]
 
 export class GoogleAI {
+  public static options = {
+    img_models: {
+      flash_image: "gemini-2.5-flash-image",
+      pro_image: "gemini-3-pro-image-preview"
+    }
+  }
+
   // Functions to get/set API key dynamically
   public static getApiKey: (() => string | null) | null = null;
   public static setApiKey: ((key: string) => void) | null = null;
 
   private static getGenAI() {
     const key = this.getApiKey?.() || "";
+    console.log(key);
     if (!key) throw new MissingApiKeyError("No Google API key set");
     return new GoogleSDK({ apiKey: key });
   }
@@ -34,7 +42,7 @@ export class GoogleAI {
         config,
       });
 
-      console.log("RES TEXT",response.text);
+      console.log("RES TEXT", response.text);
       return response.text; // fallback to raw text if no schema
 
     } catch (err: any) {
@@ -56,7 +64,7 @@ export class GoogleAI {
   public static async img2img(
     prompt: string,
     model: string = img_models[0],
-    images?: { rawBase64: string; mime: string; description:string }[]
+    images?: { rawBase64: string; mime: string; description: string }[]
   ) {
     try {
       const genAI = this.getGenAI();
@@ -67,14 +75,13 @@ export class GoogleAI {
       if (images?.length) {
         for (const img of images) {
           if (!img?.rawBase64 || !img?.mime) continue;
-          if (img.description) contents.push({text: img.description});
-          contents.push({inlineData: { data: img.rawBase64, mimeType: img.mime },});
+          if (img.description) contents.push({ text: img.description });
+          contents.push({ inlineData: { data: img.rawBase64, mimeType: img.mime }, });
         }
       }
 
       const payload = {
         model: model,
-        //model: "gemini-3-pro-image-preview",
         contents,
         config: {
           imageConfig: {
@@ -126,7 +133,7 @@ export class GoogleAI {
     }
   }
 
-  public static async saveResultImage(result:any, folder:FileSystemDirectoryHandle){
+  public static async saveResultImage(result: any, folder: FileSystemDirectoryHandle) {
     if (result && result.base64Obj?.rawBase64) {
       const localImage = await LocalImage.fromBase64(
         {
