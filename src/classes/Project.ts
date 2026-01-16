@@ -90,7 +90,14 @@ const default_projinfo = {
         "The entire response must be a valid JSON object.",
     },
     generate_video_kling: {
-      model: "kling-v1-6",
+      model: KlingAI.options.img2video.model.v2_6,
+      mode:KlingAI.options.img2video.mode.std,
+      duration:KlingAI.options.img2video.duration.five,
+    },
+    kling_motion_control: {
+      mode: KlingAI.options.motion_control.mode.std,
+      character_orientation: KlingAI.options.motion_control.character_orientation.image,
+      keep_original_sound: KlingAI.options.motion_control.keep_original_sound.no,
     }
 
 

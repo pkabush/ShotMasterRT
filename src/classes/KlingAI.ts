@@ -67,8 +67,46 @@ export class KlingAI {
     "kling-v2-1-master",
     "kling-v2-5-turbo",
     "kling-v2-6",
-    "kling-video-o1",
+    //"kling-video-o1",
   ];
+
+  public static options = {
+    img2video: {
+      duration: {
+        five: "5",
+        ten: "10",
+      },
+      mode: {
+        std: "std",
+        pro: "pro"
+      },
+      model: {
+        v1: "kling-v1",
+        v1_5: "kling-v1-5",
+        v1_6: "kling-v1-6",
+        v2_0m: "kling-v2-master",
+        v2_1: "kling-v2-1",
+        v2_1m: "kling-v2-1-master",
+        v2_5: "kling-v2-5-turbo",
+        v2_6: "kling-v2-6"
+      }
+    },
+    motion_control: {
+      mode: {
+        std: "std",
+        pro: "pro",
+      },
+      character_orientation: {
+        image: "image",
+        video: "video",
+      },
+      keep_original_sound: {
+        yes: "yes",
+        no: "no",
+      },
+    },
+  }
+
 
   public static async getToken(): Promise<string> {
     const keys_dict = this.getKeysDict?.();
@@ -133,9 +171,9 @@ export class KlingAI {
     const {
       image,
       prompt,
-      model = "kling-v1",
-      duration = "5",
-      mode = "std",
+      model = KlingAI.options.img2video.model.v2_6,
+      duration = KlingAI.options.img2video.duration,
+      mode = KlingAI.options.img2video.mode.std,
       cfg_scale = 0.5,
       static_mask,
       dynamic_masks,
@@ -164,8 +202,51 @@ export class KlingAI {
     return { id: data.data.task_id, workflow: "image2video" };
   }
 
+  // ================= MOTION CONTROL =================
+  public static async motionControl(options: {
+    image: string; // base64 or URL
+    video_url: string; // URL
+    prompt?: string;
+    mode?: "std" | "pro";
+    character_orientation: "image" | "video";
+    keep_original_sound?: "yes" | "no";
+    callback_url?: string;
+    external_task_id?: string;
+  }) {
+    const {
+      image,
+      video_url,
+      prompt,
+      mode = KlingAI.options.motion_control.mode.std,
+      character_orientation,
+      keep_original_sound = KlingAI.options.motion_control.keep_original_sound.yes,
+      callback_url,
+      external_task_id,
+    } = options;
+
+    const payload: any = {
+      image_url:image,
+      video_url,
+      character_orientation,
+      mode,
+      keep_original_sound,
+    };
+
+    if (prompt) payload.prompt = prompt;
+    if (callback_url) payload.callback_url = callback_url;
+    if (external_task_id) payload.external_task_id = external_task_id;
+
+    const targetUrl = "https://api-singapore.klingai.com/v1/videos/motion-control";
+    const data = await this.postToKling(targetUrl, payload);
+
+    return {
+      id: data.data.task_id,
+      workflow: "motion-control",
+    };
+  }
+
   // ================= GET STATUS =================
-  public static async getStatus(task_id: string, workflow:string = "text2video") {
+  public static async getStatus(task_id: string, workflow: string = "text2video") {
     const targetUrl = `https://api-singapore.klingai.com/v1/videos/${workflow}/${task_id}`;
     const encodedTarget = encodeURIComponent(targetUrl);
     const locUrl = `http://localhost:4000/proxy/${encodedTarget}`;

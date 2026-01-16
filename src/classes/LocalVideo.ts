@@ -1,8 +1,11 @@
+import * as webFileStorage from './webFileStorage';
+
 // LocalVideo.ts
 export class LocalVideo {
   handle: FileSystemFileHandle;
   parent: FileSystemDirectoryHandle;
   urlObject: string | null = null;
+  web_url:string = "";
 
   constructor(handle: FileSystemFileHandle, parent: FileSystemDirectoryHandle) {
     this.handle = handle;
@@ -92,5 +95,11 @@ export class LocalVideo {
       console.error('Failed to create LocalVideo from Base64:', err);
       throw err;
     }
+  }
+
+  async getWebUrl(){
+    console.log("web_url",this.web_url)
+    this.web_url = await webFileStorage.ensureUploaded(await this.handle.getFile(), this.web_url)
+    return this.web_url;
   }
 }

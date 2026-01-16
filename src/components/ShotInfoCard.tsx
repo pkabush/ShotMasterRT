@@ -18,6 +18,10 @@ import SettingsButton from './SettingsButton';
 import TaskContainer from './TaskContainer';
 import MediaGalleryVideo from './MediaGalleryVideo';
 import { KlingAI } from '../classes/KlingAI';
+import { WorkflowOptionSelect } from './WorkflowOptionSelect';
+import DropArea from './Atomic/DropArea';
+import { LocalVideo } from '../classes/LocalVideo';
+import { runInAction } from 'mobx';
 
 interface Props {
   shot: Shot;
@@ -28,6 +32,8 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
 
   const itemHeight = 200;
   const files = shot.images ?? [];
+
+  const project = shot.scene.project;
 
 
   const handleDelete = async () => {
@@ -82,19 +88,26 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
           </div>
         </div>
 
-        {/*GENERATE Video*/}
+        {/*GENERATE VIDEO | KLING | img2Video*/}
         <SettingsButton className='mb-2'
           buttons={
             <>
               {/**Button */}
               <button className="btn btn-sm btn-outline-success" onClick={async () => { shot.GenerateVideo(); }}> Generate Video</button>
+              {/**MAKE UNIFIED SELECTOR?? */}
+
               {/**Model Selector */}
-              <SimpleSelect
-                value={shot.scene.project?.workflows?.generate_video_kling?.model || KlingAI.videoModels[0]}
-                options={KlingAI.videoModels}
-                onChange={(val) => {
-                  shot.scene.project.updateWorkflow("generate_video_kling","model",val); 
-                }}
+              <WorkflowOptionSelect project={project}
+                workflowName="generate_video_kling" optionName="model"
+                values={Object.values(KlingAI.options.img2video.model)}
+              />
+              <WorkflowOptionSelect project={project}
+                workflowName="generate_video_kling" optionName="mode" label='mode:'
+                values={Object.values(KlingAI.options.img2video.mode)}
+              />
+              <WorkflowOptionSelect project={project}
+                workflowName="generate_video_kling" optionName="duration" label="Duration:"
+                values={Object.values(KlingAI.options.img2video.duration)}
               />
               {/**Loading Spinner */}
               <LoadingSpinner isLoading={shot.is_submitting_video} asButton />
@@ -102,11 +115,101 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
           }
           content={
             <>
+            </>
+          }
+        />
+
+        {/*GENERATE VIDEO | KLING | Motion Control Video*/}
+        <SettingsButton className='mb-2'
+          buttons={
+            <>
+              {/**Button */}
+              <button className="btn btn-sm btn-outline-success" onClick={async () => {
+                shot.GenerateVideo_KlingMotionControl();
+              }}> Gen Motion Control Video</button>
+              {/**MAKE UNIFIED SELECTOR?? */}
+
+              {/**Model Selector */}
+              <WorkflowOptionSelect project={project}
+                workflowName="kling_motion_control" optionName="character_orientation" label='Orient:'
+                values={Object.values(KlingAI.options.motion_control.character_orientation)}
+              />
+              <WorkflowOptionSelect project={project}
+                workflowName="kling_motion_control" optionName="mode" label="mode:"
+                values={Object.values(KlingAI.options.motion_control.mode)}
+              />
+              <WorkflowOptionSelect project={project} label="Sound:"
+                workflowName="kling_motion_control" optionName="keep_original_sound"
+                values={Object.values(KlingAI.options.motion_control.keep_original_sound)}
+              />
+              {/**Loading Spinner */}
+              <LoadingSpinner isLoading={shot.is_submitting_video} asButton />
+            </>
+          }
+          content={
+            <>
+              {/*Ref Video Preview */}
+              {shot.kling_motion_video && (
+                <MediaGalleryVideo
+                  localVideo={shot.kling_motion_video}
+                  height={400}
+                  topRightExtra={<></>}
+                />
+              )}
+
+              {/** VIDEOS Media Gallery */}
+              <MediaGallery label="Reference Videos">
+                {shot.ref_videos.map((localVideo, index) => (
+                  <MediaGalleryVideo
+                    key={index}
+                    localVideo={localVideo}
+                    height={200}
+                    onClick={() => { shot.setKlingMotionReferenceVideo(localVideo) }}
+                    topRightExtra={
+                      <>
+                        <SimpleButton
+                          label="Delete"
+                          className="btn-outline-danger btn-sm"
+                          onClick={async () => {
+                            await localVideo.delete();
+                            shot.removeReferenceVideo(localVideo);
+                          }}
+                        />
+                      </>
+                    }
+                  />
+                ))}
+
+                {/** DropArea for dragging videos */}
+                <DropArea
+                  width={100}
+                  //height={200}
+                  onDrop={async (file) => {
+                    console.log(file);
+                    // Save File To Local
+                    const fileHandle = await shot.refVideoFolder!.getFileHandle(file.name, { create: true });
+                    const writable = await fileHandle.createWritable();
+                    await writable.write(file);
+                    await writable.close();
+                    console.log(`Saved file ${file.name} successfully!`);
+                    // add Local Video
+                    const localVideo = new LocalVideo(fileHandle as FileSystemFileHandle, shot.refVideoFolder!);
+                    runInAction(()=> {shot.ref_videos.push(localVideo);})                    
+                  }}
+                >
+                </DropArea>
+
+              </MediaGallery>
 
 
             </>
           }
         />
+
+
+
+
+
 
         <TaskContainer shot={shot} />
 
@@ -202,14 +305,16 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
               localVideo={localVideo}
               height={500}
               topRightExtra={
-                <SimpleButton
-                  label="Delete"
-                  className="btn-outline-danger btn-sm"
-                  onClick={async () => {
-                    await localVideo.delete();
-                    shot.removeVideo(localVideo);
-                  }}
-                />
+                <>
+                  <SimpleButton
+                    label="Delete"
+                    className="btn-outline-danger btn-sm"
+                    onClick={async () => {
+                      await localVideo.delete();
+                      shot.removeVideo(localVideo);
+                    }}
+                  />
+                </>
               }
             />
           ))}

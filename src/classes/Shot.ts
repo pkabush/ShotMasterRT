@@ -11,19 +11,25 @@ import { ai_providers } from './AI_providers';
 import { LocalVideo } from './LocalVideo';
 
 
+
+
 export class Shot {
   folder: FileSystemDirectoryHandle;
   scene: Scene;
   shotJson: LocalJson | null = null;
   images: LocalImage[] = [];
   videos: LocalVideo[] = [];
+  ref_videos: LocalVideo[] = [];
   srcImage: LocalImage | null = null;
   resultsFolder: FileSystemDirectoryHandle | null = null; // <--- store results folder
   genVideoFolder: FileSystemDirectoryHandle | null = null; // <--- store results folder
+  refVideoFolder: FileSystemDirectoryHandle | null = null; // <--- store results folder
   is_generating = false;
   selected_art: LocalImage | null = null;
   tasks: Task[] = [];
   is_submitting_video = false;
+  // Kling
+  kling_motion_video: LocalVideo | null = null;
 
   constructor(folder: FileSystemDirectoryHandle, scene: Scene) {
     this.folder = folder;
@@ -62,23 +68,35 @@ export class Shot {
         this.genVideoFolder = await this.folder.getDirectoryHandle('genVideo', { create: true });
 
         for await (const [, handle] of this.genVideoFolder.entries()) {
-          if (handle.kind === 'file') {            
+          if (handle.kind === 'file') {
             const localVideo = new LocalVideo(handle as FileSystemFileHandle, this.genVideoFolder);
             this.videos.push(localVideo);
-
-            //if (this.shotJson.data?.srcImage && name === this.shotJson.data.srcImage) {
-            //  this.srcImage = localImage;
-            //}
           }
         }
-
-
       } catch (err) {
         console.warn('No genVideo folder found or failed to read:', err);
         this.genVideoFolder = null;
       }
 
 
+      // Read Video References Folder
+      try {
+        this.refVideoFolder = await this.folder.getDirectoryHandle('refVideo', { create: true });
+
+        for await (const [name, handle] of this.refVideoFolder.entries()) {
+          if (handle.kind === 'file') {
+            const localVideo = new LocalVideo(handle as FileSystemFileHandle, this.refVideoFolder);
+            this.ref_videos.push(localVideo);
+
+            if (this.shotJson.data?.kling_motion_video && name === this.shotJson.data.kling_motion_video) {
+              this.kling_motion_video = localVideo;
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('No genVideo folder found or failed to read:', err);
+        this.genVideoFolder = null;
+      }
 
       // Load Tasks      
       this.loadTasks();
@@ -153,7 +171,7 @@ export class Shot {
     //console.log("SRC",this.srcImage);
     if (!this.srcImage) { this.setSrcImage(image); }
   }
- 
+
 
   removeImage(image: LocalImage) {
     // Remove from array
@@ -168,8 +186,17 @@ export class Shot {
   removeVideo(video: LocalVideo) {
     // Remove from array
     this.videos = this.videos.filter(i => i !== video);
-
     // If it was the source video, clear it
+  }
+
+  removeReferenceVideo(video: LocalVideo) {
+    this.ref_videos = this.ref_videos.filter(i => i !== video);
+  }
+
+  setKlingMotionReferenceVideo( video: LocalVideo)
+  {
+    this.kling_motion_video = video;
+    this.shotJson?.updateField("kling_motion_video",video.handle.name)
   }
 
   async GenerateVideo() {
@@ -180,20 +207,24 @@ export class Shot {
     let prompt = this.shotJson?.data.prompt || "";
 
     try {
+      const workflow = this.scene.project.workflows.generate_video_kling;
+
       // Generate if we have src image
-      if( this.srcImage)
-      {
+      if (this.srcImage) {
         const img_raw = (await this.srcImage.getBase64()).rawBase64;
         const task_info = await KlingAI.img2video({
-          image:img_raw , 
+          image: img_raw,
           prompt,
-          model:this.scene.project.workflows.generate_video_kling.model,          
-        } ); 
+          model: workflow.model,
+          mode: workflow.mode,
+          duration: workflow.duration,
+        });
 
-        const task = this.addTask(task_info.id, { provider: ai_providers.KLING ,workflow:task_info.workflow})
+        const task = this.addTask(task_info.id, { provider: ai_providers.KLING, workflow: task_info.workflow })
         await new Promise(res => setTimeout(res, 100));
         console.log("created_task");
-        await task.check_status();
+
+        task.check_status();
       }
 
       //const task_info = await KlingAI.txt2video(prompt); 
@@ -206,6 +237,43 @@ export class Shot {
       runInAction(() => {
         this.is_submitting_video = false;
       });
+    }
+  }
+
+  async GenerateVideo_KlingMotionControl() {
+    runInAction(() => { this.is_submitting_video = true; });
+    let prompt = this.shotJson?.data.prompt || "";
+    try {
+      const workflow = this.scene.project.workflows.kling_motion_control;
+
+      // Generate if we have src image
+      if (this.srcImage && this.kling_motion_video) {
+        const img_raw = (await this.srcImage.getBase64()).rawBase64;        
+        const video_url = await this.kling_motion_video.getWebUrl();
+        
+
+        
+        
+        const task_info = await KlingAI.motionControl({
+          image: img_raw,
+          video_url,
+          prompt,
+          mode: workflow.mode,
+          character_orientation: workflow.character_orientation,
+          keep_original_sound: workflow.keep_original_sound,
+        });
+
+        const task = this.addTask(task_info.id, { provider: ai_providers.KLING, workflow: task_info.workflow })
+        await new Promise(res => setTimeout(res, 100));
+        task.check_status();
+        
+       await new Promise(res => setTimeout(res, 2000));
+      }
+
+    } catch (err) {
+      console.error("Submitting Video Generation Failed:", err);
+    } finally {
+      runInAction(() => { this.is_submitting_video = false; });
     }
   }
 

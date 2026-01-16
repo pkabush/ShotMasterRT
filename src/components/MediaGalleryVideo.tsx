@@ -8,6 +8,7 @@ interface Props {
   onClick?: () => void;
   autoPlay?: boolean; // optional autoplay
   loop?: boolean;     // optional loop
+  muted?: boolean; // optional prop  
 }
 
 const MediaGalleryVideo: React.FC<Props> = ({
@@ -17,6 +18,7 @@ const MediaGalleryVideo: React.FC<Props> = ({
   onClick,
   autoPlay = true,
   loop = true,
+  muted = true
 }) => {
   const [url, setUrl] = useState<string | null>(null);
   const [hovered, setHovered] = useState(false);
@@ -62,9 +64,10 @@ const MediaGalleryVideo: React.FC<Props> = ({
       <video
         src={url}
         height={height}
-        onClick={onClick}        
+        onClick={onClick}
         autoPlay={autoPlay}
         loop={loop}
+        muted={muted}
         style={{
           height: `${height}px`,
           width: 'auto',
