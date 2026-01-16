@@ -204,7 +204,7 @@ export class Shot {
       this.is_submitting_video = true;
     });
 
-    let prompt = this.shotJson?.data.prompt || "";
+    let prompt = this.shotJson?.data.video_prompt || "";
 
     try {
       const workflow = this.scene.project.workflows.generate_video_kling;
@@ -242,7 +242,7 @@ export class Shot {
 
   async GenerateVideo_KlingMotionControl() {
     runInAction(() => { this.is_submitting_video = true; });
-    let prompt = this.shotJson?.data.prompt || "";
+    let prompt = this.shotJson?.data.video_prompt || "";
     try {
       const workflow = this.scene.project.workflows.kling_motion_control;
 

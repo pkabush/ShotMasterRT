@@ -215,6 +215,7 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
 
 
         <EditableJsonTextField localJson={shot.shotJson} field="prompt" fitHeight />
+        <EditableJsonTextField localJson={shot.shotJson} field="video_prompt" fitHeight />
         <EditableJsonTextField localJson={shot.shotJson} field="camera" fitHeight />
         <EditableJsonTextField localJson={shot.shotJson} field="action_description" fitHeight />
         <TagsToggleList shot={shot} />
