@@ -135,13 +135,14 @@ export class GoogleAI {
 
   public static async saveResultImage(result: any, folder: FileSystemDirectoryHandle) {
     if (result && result.base64Obj?.rawBase64) {
+      console.log(result.base64Obj.mime.split("/")[1]);
       const localImage = await LocalImage.fromBase64(
         {
           rawBase64: result.base64Obj.rawBase64,
           mime: result.base64Obj.mime
         },
         folder,
-        `${result.id}.png`
+        `${result.id}.${result.base64Obj.mime.split("/")[1]}`
       );
       return localImage;
     } else {
