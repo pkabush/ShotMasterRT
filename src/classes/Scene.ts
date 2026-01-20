@@ -5,17 +5,18 @@ import { makeAutoObservable, runInAction } from "mobx";
 import { Project } from './Project';
 import { toJS } from "mobx";
 //import { GoogleAI } from './GoogleAI';
-import {ChatGPT} from './ChatGPT';
+import { ChatGPT } from './ChatGPT';
 import { Art } from "./Art";
 import Prompt from './Prompt';
+import * as ResolveUtils from './ResolveUtils';
 
 const default_sceneInfoJson = {
-  tags:[],
-  shotsjson:"",
-  script:"",
-  split_shots_prompt:{
+  tags: [],
+  shotsjson: "",
+  script: "",
+  split_shots_prompt: {
     preset: "split_shots",
-  }
+  },  
 }
 
 export class Scene {
@@ -25,12 +26,14 @@ export class Scene {
   project: Project; // <--- new pointer to parent project
   is_generating_shotsjson = false;
   is_generating_tags = false;
-  is_generating_all_shot_images = false;  
-  split_shots_prompt: Prompt|null = null;
+  is_generating_all_shot_images = false;
+  split_shots_prompt: Prompt | null = null;
+  path: string = "";
 
- constructor(folder: FileSystemDirectoryHandle, project: Project) {
+  constructor(folder: FileSystemDirectoryHandle, project: Project) {
     this.folder = folder;
     this.project = project; // assign parent project
+    this.path = "/SCENES/" + folder.name;
     makeAutoObservable(this);
   }
 
@@ -39,7 +42,7 @@ export class Scene {
       this.sceneJson = await LocalJson.create(this.folder, 'sceneinfo.json', default_sceneInfoJson);
 
       this.shots = [];
-      for await (const handle of this.folder.values()) {      
+      for await (const handle of this.folder.values()) {
         if (handle.kind === 'directory') {
           const shot = new Shot(handle as FileSystemDirectoryHandle, this);
           await shot.load(); // load shotinfo.json
@@ -137,11 +140,11 @@ SCRIPT:
 ${scriptText}
 `;
 
-  const system_msg =  this.project.projinfo?.getField("workflows/split_scene_into_shots/system_message")
+    const system_msg = this.project.projinfo?.getField("workflows/split_scene_into_shots/system_message")
 
-  try {
+    try {
       // Call ChatGPT with prompt + system message
-      const res = await ChatGPT.txt2txt(prompt, system_msg,this.project?.projinfo?.getField("workflows/split_scene_into_shots/model"));
+      const res = await ChatGPT.txt2txt(prompt, system_msg, this.project?.projinfo?.getField("workflows/split_scene_into_shots/model"));
       // txt2txt returns string | null
       return res;
     } catch (err) {
@@ -190,12 +193,12 @@ ${scriptText}
 
       } catch (err) {
         console.error(`Error creating shot ${shotKey}:`, err);
-      } 
+      }
     }
   }
 
-  log(){
-    console.log(toJS(this));    
+  log() {
+    console.log(toJS(this));
   }
 
   getTags(): Art[] {
@@ -211,7 +214,7 @@ ${scriptText}
   }
 
   get tags(): Art[] {
-  return this.getTags();
+    return this.getTags();
   }
 
   async generateTags() {
@@ -232,9 +235,9 @@ ${JSON.stringify(this.project?.artbook?.getJson(), null, 2)}
 
 `;
 
-    const system_msg =  "You are a helpful assistant. " +
+    const system_msg = "You are a helpful assistant. " +
       "Do not write explanations. "
-   
+
     try {
       const res = await ChatGPT.txt2txt(prompt, system_msg, this.project?.projinfo?.data.gpt_model);
       //console.log(res);
@@ -245,14 +248,14 @@ ${JSON.stringify(this.project?.artbook?.getJson(), null, 2)}
         console.log("Adding Tag: ", trimmedTag);
         this.addTag(trimmedTag);
       }
-        
-        return res;
-      } catch (err) {
-        console.error("Error generating tags:", err);
-        return null;
-      } finally {
-        runInAction(() => { this.is_generating_tags = false; });
-      }   
+
+      return res;
+    } catch (err) {
+      console.error("Error generating tags:", err);
+      return null;
+    } finally {
+      runInAction(() => { this.is_generating_tags = false; });
+    }
 
   }
 
@@ -285,6 +288,29 @@ ${JSON.stringify(this.project?.artbook?.getJson(), null, 2)}
     runInAction(() => {
       this.is_generating_all_shot_images = false;
     });
+  }
+
+  async createResolveXML() {
+    const shot_items: ResolveUtils.MediaItem[] = [];
+
+    for (const shot of this.shots) {
+      if (shot.srcImage) {
+        console.log(shot.srcImage);
+        shot_items.push({
+          item: shot.srcImage.handle,
+          type: "image",
+          path: this.project.projinfo?.getField("project_path") + shot.srcImage.path,
+          //path: "." + shot.srcImage.path.replace(this.path,""),
+        });
+      }
+    }
+
+    const clips = await ResolveUtils.filesToClips( shot_items, "test/" )
+    console.log(clips);
+    const xml = await ResolveUtils.generateFCPXMLFromClips(clips);
+    ResolveUtils.prettyPrintXml(xml);
+    ResolveUtils.saveLocalTextFile(this.folder,"test.xml",xml);
+
   }
 
 }

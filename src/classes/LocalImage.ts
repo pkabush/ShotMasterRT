@@ -4,10 +4,12 @@ export class LocalImage {
   parent: FileSystemDirectoryHandle;
   urlObject: string | null = null;
   base64Data: { rawBase64: string; mime: string } | null = null; // cache for Base64 + MIME
+  path: string = "";
 
-  constructor(handle: FileSystemFileHandle,parent: FileSystemDirectoryHandle) {
+  constructor(handle: FileSystemFileHandle,parent: FileSystemDirectoryHandle, parent_path :string = "") {
     this.handle = handle;
     this.parent = parent;
+    this.path = parent_path + "/" + handle.name;
   }
 
   // Returns the object URL, creating it if needed

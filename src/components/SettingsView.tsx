@@ -32,6 +32,8 @@ export const SettingsView: React.FC<SettingsViewProps> = observer(({ project }) 
       <SimpleButton onClick={ ()=> {project.log()}} label="LOG Project" />  
       <SimpleButton onClick={ ()=> {project.download_asset("assets/server.exe","server.exe")}} label="Download Server" />  
 
+      <EditableJsonTextField localJson={project.projinfo} field="project_path" fitHeight/>
+
       <StringEditField
         label="GPT API Key"
         value={userSettingsDB.data.api_keys.GPT_API_KEY || ""}
@@ -55,6 +57,7 @@ export const SettingsView: React.FC<SettingsViewProps> = observer(({ project }) 
           await userSettingsDB.update(data => { data.api_keys.Kling_Acess_Key = newValue; });
         }}
       />
+
       <StringEditField
         label="Kling Secret Key"
         value={userSettingsDB.data.api_keys.Kling_Secret_Key || ""}

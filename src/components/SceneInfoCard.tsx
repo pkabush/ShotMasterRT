@@ -6,7 +6,7 @@ import TagsContainer from "./TagsContainer";
 import SimpleButton from "./SimpleButton";
 import SimpleSelect from "./Atomic/SimpleSelect";
 import LoadingSpinner from "./Atomic/LoadingSpinner";
-import {models} from "../classes/ChatGPT";
+import { models } from "../classes/ChatGPT";
 import SettingsButton from "./SettingsButton";
 
 interface Props {
@@ -24,8 +24,8 @@ const SceneInfoCard: React.FC<Props> = observer(({ scene }) => { // <--- observe
 
     await scene.delete();
   };
-  const handleCreateShots = async () => {      
-      scene.createShotsFromShotsJson();
+  const handleCreateShots = async () => {
+    scene.createShotsFromShotsJson();
   };
 
   return (
@@ -35,12 +35,12 @@ const SceneInfoCard: React.FC<Props> = observer(({ scene }) => { // <--- observe
         <SimpleButton onClick={() => scene.log()} label="LOG" />
 
       </div>
-    
+
       {/*<LoadingButton onClick={handleSplitIntoShotsAI} className="btn-outline-success" label="Split Into Shots GPT" is_loading={scene.is_generating_shotsjson}/>*/}
       {/*
       <PromptEditButton initialPrompt={scene.split_shots_prompt} promptLabel="Split Into Shots"/>
       */}
-      
+
 
       {/** GENERATE SHOTS JSON */}
       <SettingsButton className="mb-2"
@@ -50,12 +50,12 @@ const SceneInfoCard: React.FC<Props> = observer(({ scene }) => { // <--- observe
             <button className="btn btn-sm btn-outline-success" onClick={async () => {
               const res = await scene.generateShotsJson()
               scene.sceneJson?.updateField("shotsjson", res);
-              }}> Split Into Shots </button>
+            }}> Split Into Shots </button>
             {/**Model Selector */}
             <SimpleSelect
               value={scene.project.workflows.split_scene_into_shots.model}
               options={models}
-              onChange={(val) => { scene.project.updateWorkflow("split_scene_into_shots","model",val); }}
+              onChange={(val) => { scene.project.updateWorkflow("split_scene_into_shots", "model", val); }}
             />
             {/**Loading Spinner */}
             <LoadingSpinner isLoading={scene.is_generating_shotsjson} asButton />
@@ -76,7 +76,7 @@ const SceneInfoCard: React.FC<Props> = observer(({ scene }) => { // <--- observe
       <EditableJsonTextField localJson={scene.sceneJson} field="script" fitHeight />
       <EditableJsonTextField localJson={scene.sceneJson} field="shotsjson" fitHeight headerExtra={
         <SimpleButton onClick={handleCreateShots} label="Create Shots" />
-      }/>
+      } />
       <TagsContainer scene={scene} />
       <div style={{ height: "500px" }}></div>
     </div>

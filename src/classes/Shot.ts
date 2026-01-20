@@ -30,10 +30,12 @@ export class Shot {
   is_submitting_video = false;
   // Kling
   kling_motion_video: LocalVideo | null = null;
+  path: string = "";
 
   constructor(folder: FileSystemDirectoryHandle, scene: Scene) {
     this.folder = folder;
     this.scene = scene;
+    this.path = scene.path + "/" + folder.name;
     makeAutoObservable(this);
   }
 
@@ -50,7 +52,7 @@ export class Shot {
 
         for await (const [name, handle] of this.resultsFolder.entries()) {
           if (handle.kind === 'file') {
-            const localImage = new LocalImage(handle as FileSystemFileHandle, this.resultsFolder);
+            const localImage = new LocalImage(handle as FileSystemFileHandle, this.resultsFolder, this.path + "/results");
             this.images.push(localImage);
 
             if (this.shotJson.data?.srcImage && name === this.shotJson.data.srcImage) {
@@ -171,7 +173,6 @@ export class Shot {
     //console.log("SRC",this.srcImage);
     if (!this.srcImage) { this.setSrcImage(image); }
   }
-
 
   removeImage(image: LocalImage) {
     // Remove from array
