@@ -9,9 +9,6 @@ import ShotInfoCard from './ShotInfoCard'; // Import the new ShotInfoCard
 import SimpleButton from './SimpleButton';
 import LoadingButton from './LoadingButton';
 import SettingsButton from './SettingsButton';
-import SimpleSelect from './Atomic/SimpleSelect';
-import LoadingSpinner from './Atomic/LoadingSpinner';
-import EditableJsonTextField from './EditableJsonTextField';
 
 interface Props {
   scene: Scene;
@@ -65,7 +62,7 @@ const ShotsInfoStrip: React.FC<Props> = observer(({ scene }) => {
             <>
               {/**Button */}
               <button className="btn btn-sm btn-outline-secondary" onClick={async () => {
-                  scene.createResolveXML();
+                  scene.project.createResolveXML();
               }}> Create Resolve XML </button>
             </>
           }

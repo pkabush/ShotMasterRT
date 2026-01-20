@@ -8,7 +8,6 @@ import { toJS } from "mobx";
 import { ChatGPT } from './ChatGPT';
 import { Art } from "./Art";
 import Prompt from './Prompt';
-import * as ResolveUtils from './ResolveUtils';
 
 const default_sceneInfoJson = {
   tags: [],
@@ -16,7 +15,7 @@ const default_sceneInfoJson = {
   script: "",
   split_shots_prompt: {
     preset: "split_shots",
-  },  
+  },
 }
 
 export class Scene {
@@ -288,29 +287,6 @@ ${JSON.stringify(this.project?.artbook?.getJson(), null, 2)}
     runInAction(() => {
       this.is_generating_all_shot_images = false;
     });
-  }
-
-  async createResolveXML() {
-    const shot_items: ResolveUtils.MediaItem[] = [];
-
-    for (const shot of this.shots) {
-      if (shot.srcImage) {
-        console.log(shot.srcImage);
-        shot_items.push({
-          item: shot.srcImage.handle,
-          type: "image",
-          path: this.project.projinfo?.getField("project_path") + shot.srcImage.path,
-          //path: "." + shot.srcImage.path.replace(this.path,""),
-        });
-      }
-    }
-
-    const clips = await ResolveUtils.filesToClips( shot_items, "test/" )
-    console.log(clips);
-    const xml = await ResolveUtils.generateFCPXMLFromClips(clips);
-    ResolveUtils.prettyPrintXml(xml);
-    ResolveUtils.saveLocalTextFile(this.folder,"test.xml",xml);
-
   }
 
 }

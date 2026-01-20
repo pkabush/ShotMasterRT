@@ -4,242 +4,238 @@
 
 type MediaType = "video" | "image";
 
-interface ClipMetadata {
-    id: string;
-    name: string;
-    durationFrames: number;
-    path: string;
-    mediaType: MediaType;
-}
-
 export interface MediaItem {
     item: FileSystemFileHandle;
     type: MediaType;
     path: string;
 }
 
-export async function saveLocalTextFile(
-    handle: FileSystemDirectoryHandle,
-    filename: string,
-    text: string
-): Promise<void> {
-    try {
-        const fileHandle: FileSystemFileHandle =
-            await handle.getFileHandle(filename, { create: true });
 
-        const writable: FileSystemWritableFileStream =
-            await fileHandle.createWritable();
+export class FCPXMLBuilder {
+    private doc: XMLDocument;
+    private fcpxml: Element;
+    private resources: Element;
+    private project: Element;
+    private spine: Element;
+    private timelineName: string;
+    
 
-        await writable.write(text);
-        await writable.close();
-    } catch (err) {
-        console.error("Failed to save file", err);
-    }
-}
+    constructor(timelineName = "Test RESOLVE", totalFrames = 10000) {
+        this.timelineName = timelineName;
+        // Initialize XML document
+        this.doc = document.implementation.createDocument("", "", null);
 
-async function getVideoDuration(
-    fileHandle: FileSystemFileHandle
-): Promise<number> {
-    const file: File = await fileHandle.getFile();
-    const url: string = URL.createObjectURL(file);
+        // Root element
+        this.fcpxml = this.doc.createElement("fcpxml");
+        this.fcpxml.setAttribute("version", "1.10");
+        this.doc.appendChild(this.fcpxml);
 
-    return new Promise<number>((resolve, reject) => {
-        const video: HTMLVideoElement = document.createElement("video");
-        video.preload = "metadata";
-        video.src = url;
+        // Resources
+        this.resources = this.doc.createElement("resources");
+        this.fcpxml.appendChild(this.resources);
 
-        video.onloadedmetadata = () => {
-            URL.revokeObjectURL(url);
-            resolve(video.duration);
-        };
+        // Add default video format
+        const format = this.doc.createElement("format");
+        format.setAttribute("id", "r0");
+        format.setAttribute("name", "FFVideoFormat1080p30");
+        format.setAttribute("frameDuration", "1/30s");
+        format.setAttribute("width", "1080");
+        format.setAttribute("height", "1920");
+        this.resources.appendChild(format);
 
-        video.onerror = () => {
-            URL.revokeObjectURL(url);
-            reject(new Error("Failed to load video metadata"));
-        };
-    });
-}
+        // -----------------------------
+        // Create Library / Event / Project / Sequence / Spine
+        // -----------------------------
+        const library = this.doc.createElement("library");
+        this.fcpxml.appendChild(library);
 
-export function prettyPrintXml(xmlString: string): string {
-    const PADDING = "  ";
-    const reg = /(>)(<)(\/*)/g;
+        const event = this.doc.createElement("event");
+        event.setAttribute("name", "Auto Import");
+        library.appendChild(event);
 
-    let xml = xmlString.replace(reg, "$1\r\n$2$3");
-    let pad = 0;
+        this.project = this.doc.createElement("project");
+        this.project.setAttribute("name", this.timelineName);
+        event.appendChild(this.project);
 
-    return xml
-        .split("\r\n")
-        .map((node: string) => {
-            let indent = "";
+        const sequence = this.doc.createElement("sequence");
+        sequence.setAttribute("format", "r0");
+        sequence.setAttribute("duration", `${totalFrames}/30s`);
+        sequence.setAttribute("tcStart", "0/1s");
+        sequence.setAttribute("tcFormat", "NDF");
+        this.project.appendChild(sequence);
 
-            if (node.match(/<\/\w/)) pad -= 1;
-            for (let i = 0; i < pad; i++) indent += PADDING;
-            if (node.match(/<[^!?].*>[^<]*$/)) pad += 1;
+        this.spine = this.doc.createElement("spine");
+        sequence.appendChild(this.spine);
 
-            return indent + node;
-        })
-        .join("\r\n");
-}
-
-export async function filesToClips(
-    files: MediaItem[],
-    baseRoot: string,
-    fps: number = 30,
-    imageDurationSec: number = 5
-): Promise<ClipMetadata[]> {
-    const clips: ClipMetadata[] = [];
-
-    for (const { item: handle, type: mediaType, path } of files) {
-        const file: File = await handle.getFile();
-
-        let durationFrames: number;
-
-        if (mediaType === "video") {
-            const durationSec = await getVideoDuration(handle);
-            durationFrames = Math.round(durationSec * fps);
-        } else {
-            // Image: synthetic timeline duration
-            durationFrames = imageDurationSec * fps;
-        }
-
-        clips.push({
-            id: "r" + (clips.length + 2), // reserve r0/r1
-            name: file.name,
-            path,
-            mediaType,
-            durationFrames
-        });
-    }
-
-    return clips;
-}
-
-export async function generateFCPXMLFromClips(
-    clips: ClipMetadata[],
-    timelineName = "Test (Resolve)"
-): Promise<string> {
-    const totalFrames: number = clips.reduce(
-        (sum, c) => sum + c.durationFrames,
-        0
-    );
-
-    // -----------------------------
-    // DOM XML builder
-    // -----------------------------
-    const doc: XMLDocument = document.implementation.createDocument("", "", null);
-
-    const fcpxml = doc.createElement("fcpxml");
-    fcpxml.setAttribute("version", "1.10");
-    doc.appendChild(fcpxml);
-
-    // -----------------------------
-    // Resources
-    // -----------------------------
-    const resources = doc.createElement("resources");
-    fcpxml.appendChild(resources);
-
-    // Video format for clips
-    const format = doc.createElement("format");
-    format.setAttribute("id", "r1");
-    format.setAttribute("name", "FFVideoFormat1080p30");
-    format.setAttribute("frameDuration", "1/30s");
-    format.setAttribute("width", "1920");
-    format.setAttribute("height", "1080");
-    resources.appendChild(format);
-
-    // Assets
-    for (const clip of clips) {
-        const asset = doc.createElement("asset");
-
-        // Single-line style Resolve expects
-        asset.setAttribute("format", "r1");
-        asset.setAttribute(
-            "src",
-            `file://localhost/${clip.path.replace(/\\/g, "/")}`
+        // -----------------------------
+        // Create effects first with IDs r1 and r2
+        // -----------------------------
+        const vivid = this.doc.createElement("effect");
+        vivid.setAttribute(
+            "uid",
+            ".../Generators.localized/Solids.localized/Vivid.localized/Vivid.motn"
         );
-        asset.setAttribute("start", "0/1s");
-        asset.setAttribute("name", clip.name);
-        asset.setAttribute("duration", "0/1s"); // works for still images
-        asset.setAttribute("hasVideo", "1");     // must be 1 for Resolve
-        asset.setAttribute("id", clip.id);
+        vivid.setAttribute("name", "Vivid");
+        vivid.setAttribute("id", "r1");
+        this.resources.appendChild(vivid);
 
-        resources.appendChild(asset);
+        const basicTitle = this.doc.createElement("effect");
+        basicTitle.setAttribute(
+            "uid",
+            //".../Titles.localized/Bumper:Opener.localized/Basic Title.localized/Basic Title.moti"
+            ".../Titles.localized/Lower Thirds.localized/Basic Lower Third.localized/Basic Lower Third.moti"
+        );
+        basicTitle.setAttribute("name", "Basic Title");
+        basicTitle.setAttribute("id", "r2");
+        this.resources.appendChild(basicTitle);
+
     }
 
     // -----------------------------
-    // Library / Event / Project
+    // Add a single asset
     // -----------------------------
-    const library = doc.createElement("library");
-    fcpxml.appendChild(library);
+    addAsset(path: string, name: string, durationFrames:number = 0) {
+        const asset = this.doc.createElement("asset");
+        asset.setAttribute("format", "r0");
+        asset.setAttribute("src", `file://localhost/${path.replace(/\\/g, "/")}`);
+        asset.setAttribute("start", "0/1s");
+        asset.setAttribute("name", name);
+        asset.setAttribute("duration", `${durationFrames}/30s`);
+        asset.setAttribute("hasVideo", "1");
 
-    const event = doc.createElement("event");
-    event.setAttribute("name", "Auto Import");
-    library.appendChild(event);
+        // Generate a unique ID based on the number of existing assets
+        const currentAssets = this.resources.children;
+        const newIdNumber = currentAssets.length;
+        asset.setAttribute("id", `r${newIdNumber}`);
 
-    const project = doc.createElement("project");
-    project.setAttribute("name", timelineName); // timeline name here
-    event.appendChild(project);
+        this.resources.appendChild(asset);
 
-    // -----------------------------
-    // Sequence
-    // -----------------------------
-    const sequence = doc.createElement("sequence");
-    sequence.setAttribute("format", "r1");
-    sequence.setAttribute("duration", `${totalFrames}/30s`);
-    sequence.setAttribute("tcStart", "0/1s");
-    sequence.setAttribute("tcFormat", "NDF");
-    project.appendChild(sequence);
-
-    const spine = doc.createElement("spine");
-    sequence.appendChild(spine);
+        return asset.getAttribute("id");
+    }
 
     // -----------------------------
-    // Asset clips
+    // Append clip to spine
     // -----------------------------
-    let offsetFrames = 0;
+    appendClip(id: string, name: string, durationFrames: number, offsetFrames: number, lane: number = 0) {
+        const clipEl = this.doc.createElement("video")
+        clipEl.setAttribute("start", "0/1s");
+        clipEl.setAttribute("ref", id);
+        clipEl.setAttribute("name", name);
+        clipEl.setAttribute("enabled", "1");
+        clipEl.setAttribute("lane", lane.toString());
+        clipEl.setAttribute("duration", `${durationFrames}/30s`);
+        clipEl.setAttribute("offset", `${offsetFrames}/30s`);
+        this.spine.appendChild(clipEl);
+    }
 
-    for (const clip of clips) {
-        let clipEl: HTMLElement;
+    appendText(
+        text: string,
+        durationFrames: number,
+        offsetFrames: number,
+        lane: number = 3, // optional lane number
+        name: string = "Rich" // optional title name
+    ) {
+        // Create <title> element
+        const titleEl = this.doc.createElement("title");
+        titleEl.setAttribute("start","0/1s");
 
-        if (clip.mediaType === "image") {
-            // Still images: use <video>
-            clipEl = doc.createElement("video");
-        } else {
-            // Videos: use <clip>
-            clipEl = doc.createElement("clip");
-            clipEl.setAttribute("format", "r1");
+        // Assign next available resource ID
+        titleEl.setAttribute("ref", "r2");
+        titleEl.setAttribute("name", name);
+        titleEl.setAttribute("lane", lane.toString());
+        titleEl.setAttribute("offset",  `${offsetFrames}/30s`);
+        titleEl.setAttribute("duration", `${durationFrames}/30s`);
+        titleEl.setAttribute("enabled", "1");
+
+        // <text> element
+        const textEl = this.doc.createElement("text");
+        textEl.setAttribute("roll-up-height", "0");
+
+        const textStyleRef = this.doc.createElement("text-style");
+        textStyleRef.setAttribute("ref", "ts0");
+        textStyleRef.textContent = text;
+        textEl.appendChild(textStyleRef);
+        titleEl.appendChild(textEl);
+
+        // <text-style-def> element
+        const styleDef = this.doc.createElement("text-style-def");
+        styleDef.setAttribute("id", "ts0");
+
+        const style = this.doc.createElement("text-style");
+        style.setAttribute("fontSize", "32");
+        style.setAttribute("italic", "0");
+        style.setAttribute("fontColor", "1 1 1 1");
+        style.setAttribute("bold", "1");
+        style.setAttribute("lineSpacing", "0");
+        style.setAttribute("font", "Open Sans");
+        style.setAttribute("alignment", "center");
+        style.setAttribute("strokeWidth", "0");
+        style.setAttribute("strokeColor", "0 0 0 1");
+
+        styleDef.appendChild(style);
+        titleEl.appendChild(styleDef);
+
+        // <adjust-transform> element
+        const adjust = this.doc.createElement("adjust-transform");
+        adjust.setAttribute("scale", "1 1");
+        adjust.setAttribute("anchor", "0 0");
+        adjust.setAttribute("position", "0 1");
+        titleEl.appendChild(adjust);
+
+        // Append to spine
+        this.spine.appendChild(titleEl);        
+    }
+
+
+
+
+
+    // -----------------------------
+    // Generate XML string
+    // -----------------------------
+    getXmlString() {
+        const serializer = new XMLSerializer();
+        let xmlString = serializer.serializeToString(this.doc);
+        xmlString = `<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE fcpxml>\n` + xmlString;
+        return xmlString;
+    }
+
+    log() {
+        const PADDING = "  ";
+        const reg = /(>)(<)(\/*)/g;
+
+        let xml = this.getXmlString().replace(reg, "$1\r\n$2$3");
+        let pad = 0;
+
+        const xml_str = xml
+            .split("\r\n")
+            .map((node: string) => {
+                let indent = "";
+
+                if (node.match(/<\/\w/)) pad -= 1;
+                for (let i = 0; i < pad; i++) indent += PADDING;
+                if (node.match(/<[^!?].*>[^<]*$/)) pad += 1;
+
+                return indent + node;
+            })
+            .join("\r\n");
+        console.log(xml_str);
+    }
+
+    async save(handle: FileSystemDirectoryHandle) {
+        try {
+            const fileHandle: FileSystemFileHandle =
+                await handle.getFileHandle(this.timelineName + ".xml", { create: true });
+
+            const writable: FileSystemWritableFileStream =
+                await fileHandle.createWritable();
+
+            await writable.write(this.getXmlString());
+            await writable.close();
+        } catch (err) {
+            console.error("Failed to save file", err);
         }
 
-        clipEl.setAttribute("start", "0/1s");
-        clipEl.setAttribute("ref", clip.id);
-        clipEl.setAttribute("name", clip.name);
-        clipEl.setAttribute("enabled", "1");
-        clipEl.setAttribute("duration", `${clip.durationFrames}/30s`);
-        clipEl.setAttribute("offset", `${offsetFrames}/30s`);
 
-        // Transform (position / scale)
-        const adjust = doc.createElement("adjust-transform");
-        adjust.setAttribute("anchor", "0 0");
-        adjust.setAttribute("scale", "1 1");
-        adjust.setAttribute("position", "0 0");
-        //clipEl.appendChild(adjust);
-
-        spine.appendChild(clipEl);
-        offsetFrames += clip.durationFrames;
     }
-
-    // -----------------------------
-    // Serialize
-    // -----------------------------
-    const serializer = new XMLSerializer();
-    let xmlString = serializer.serializeToString(doc);
-
-    xmlString =
-        `<?xml version="1.0" encoding="UTF-8"?>\n<!DOCTYPE fcpxml>\n` +
-        xmlString;
-
-    console.log("Created Resolve-compatible FCPXML");
-    console.log(prettyPrintXml(xmlString));
-
-    return xmlString;
 }

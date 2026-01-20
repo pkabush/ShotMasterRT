@@ -6,10 +6,12 @@ export class LocalVideo {
   parent: FileSystemDirectoryHandle;
   urlObject: string | null = null;
   web_url:string = "";
+  path: string = "";
 
-  constructor(handle: FileSystemFileHandle, parent: FileSystemDirectoryHandle) {
+  constructor(handle: FileSystemFileHandle, parent: FileSystemDirectoryHandle,parent_path :string = "") {
     this.handle = handle;
     this.parent = parent;
+    this.path = parent_path + "/" + handle.name;
   }
 
   // Returns a temporary object URL for video playback
