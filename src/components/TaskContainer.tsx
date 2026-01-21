@@ -2,7 +2,7 @@ import React from "react";
 import { observer } from "mobx-react-lite";
 import { Shot } from "../classes/Shot";
 import TaskInfoCard from "./TaskInfoCard";
-import CollapsibleContainer from "./CollapsibleContainer";
+import CollapsibleContainer from "./Atomic/CollapsibleContainer";
 
 interface Props {
   shot: Shot;

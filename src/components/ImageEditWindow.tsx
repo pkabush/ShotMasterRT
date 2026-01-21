@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Group, Panel, Separator } from "react-resizable-panels";
 import { LocalImage } from "../classes/LocalImage";
-import LoadingButton from "./LoadingButton";
+import LoadingButton from "./Atomic/LoadingButton";
 import { GoogleAI } from "../classes/GoogleAI";
 import SimpleSelect from "./Atomic/SimpleSelect";
 

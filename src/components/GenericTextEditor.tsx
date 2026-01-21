@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import CollapsibleContainer from './CollapsibleContainer';
+import CollapsibleContainer from './Atomic/CollapsibleContainer';
 
 export interface GenericTextEditorProps {
   label: string;

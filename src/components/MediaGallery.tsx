@@ -1,5 +1,5 @@
 import React from 'react';
-import CollapsibleContainer from './CollapsibleContainer'; // adjust path if needed
+import CollapsibleContainer from './Atomic/CollapsibleContainer'; // adjust path if needed
 
 interface Props {
   label?: string;

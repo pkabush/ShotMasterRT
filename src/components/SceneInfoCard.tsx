@@ -3,11 +3,11 @@ import { observer } from "mobx-react-lite"; // <--- important
 import { Scene } from "../classes/Scene";
 import EditableJsonTextField from "./EditableJsonTextField";
 import TagsContainer from "./TagsContainer";
-import SimpleButton from "./SimpleButton";
+import SimpleButton from "./Atomic/SimpleButton";
 import SimpleSelect from "./Atomic/SimpleSelect";
 import LoadingSpinner from "./Atomic/LoadingSpinner";
 import { models } from "../classes/ChatGPT";
-import SettingsButton from "./SettingsButton";
+import SettingsButton from "./Atomic/SettingsButton";
 
 interface Props {
   scene: Scene;

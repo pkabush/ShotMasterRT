@@ -9,6 +9,7 @@ import { Task } from './Task';
 //import { Art } from "./Art";
 import { ai_providers } from './AI_providers';
 import { LocalVideo } from './LocalVideo';
+import { MediaFolder } from './MediaFolder';
 
 
 
@@ -32,6 +33,10 @@ export class Shot {
   kling_motion_video: LocalVideo | null = null;
   path: string = "";
 
+  // MediaFolders
+  results_MediaFolder : MediaFolder | null = null;
+  
+
   constructor(folder: FileSystemDirectoryHandle, scene: Scene) {
     this.folder = folder;
     this.scene = scene;
@@ -45,6 +50,13 @@ export class Shot {
 
       this.images = [];
       this.srcImage = null;
+
+      // Load Media Folders
+      this.results_MediaFolder = new MediaFolder(this.folder, "results", this.path);
+      await this.results_MediaFolder.load();
+      this.results_MediaFolder.pickByFilename(this.shotJson.data.srcImage);
+
+
 
       // Try to get or create results folder
       try {

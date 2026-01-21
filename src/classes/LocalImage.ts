@@ -1,5 +1,7 @@
+import type { LocalMedia } from "./interfaces/LocalMedia";
+
 // LocalImage.ts
-export class LocalImage {
+export class LocalImage implements LocalMedia{
   handle: FileSystemFileHandle;
   parent: FileSystemDirectoryHandle;
   urlObject: string | null = null;
@@ -62,13 +64,13 @@ export class LocalImage {
     }
   }
 
-  async delete(parentDir: FileSystemDirectoryHandle): Promise<void> {
+  async delete(): Promise<void> {
     try {
       // Revoke URL if created
       this.revokeUrl();
 
       // Remove the file from the directory
-      await parentDir.removeEntry(this.handle.name);
+      await this.parent.removeEntry(this.handle.name);
 
     } catch (err) {
       console.error('Failed to delete image file:', err);

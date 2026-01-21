@@ -2,7 +2,7 @@ import React from 'react';
 import { observer } from 'mobx-react-lite';
 import SceneListItem from './SceneListItem.tsx';
 import { Project } from '../classes/Project';
-import SimpleButton from './SimpleButton';
+import SimpleButton from './Atomic/SimpleButton.tsx';
 
 type FolderListProps = {
   project: Project | null;

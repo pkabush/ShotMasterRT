@@ -8,6 +8,7 @@ import { toJS } from "mobx";
 import { ChatGPT } from './ChatGPT';
 import { Art } from "./Art";
 import Prompt from './Prompt';
+import * as ResolveUtils from './ResolveUtils';
 
 const default_sceneInfoJson = {
   tags: [],
@@ -288,5 +289,35 @@ ${JSON.stringify(this.project?.artbook?.getJson(), null, 2)}
       this.is_generating_all_shot_images = false;
     });
   }
+
+  async createResolveXML() {
+
+    const timeline = new ResolveUtils.FCPXMLBuilder(this.folder.name);
+    let offsetFrames = 1000;
+
+    for (const shot of this.shots) {
+      let id = "r1"
+      const durationFrames = 5;
+      if (shot.srcImage) {
+        const img_path = this.project.projinfo?.getField("project_path") + shot.srcImage.path
+        id = timeline.addAsset(img_path, shot.folder.name)!;
+      }
+
+      if (shot.videos.length > 0) {
+        const vod_path = this.project.projinfo?.getField("project_path") + shot.videos[0].path;
+        const vod_id = timeline.addAsset(vod_path, shot.folder.name)!;
+        timeline.appendClip(vod_id, shot.folder.name, durationFrames, offsetFrames, 1);
+      }
+
+      timeline.appendClip(id, shot.folder.name, durationFrames, offsetFrames);
+      timeline.appendText(this.folder.name + " " + shot.folder.name, durationFrames, offsetFrames)
+
+      offsetFrames += durationFrames;
+    }
+
+    timeline.log()
+    timeline.save(this.project.timelinesDirHandle!);
+  }
+
 
 }

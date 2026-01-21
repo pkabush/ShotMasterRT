@@ -1,7 +1,8 @@
+import type { LocalMedia } from './interfaces/LocalMedia';
 import * as webFileStorage from './webFileStorage';
 
 // LocalVideo.ts
-export class LocalVideo {
+export class LocalVideo implements LocalMedia{
   handle: FileSystemFileHandle;
   parent: FileSystemDirectoryHandle;
   urlObject: string | null = null;

@@ -3,7 +3,7 @@ import { observer } from "mobx-react-lite";
 import { Project } from "../classes/Project";
 import GenericTextEditor from "./GenericTextEditor";
 import TabsContainer from "./TabsContainer";
-import SimpleButton from "./SimpleButton";
+import SimpleButton from "./Atomic/SimpleButton";
 
 interface ScriptViewProps {
   project: Project;

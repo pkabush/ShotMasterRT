@@ -1,12 +1,12 @@
 import React from "react";
 import { observer } from "mobx-react-lite";
-import CollapsibleContainer from "./CollapsibleContainer";
+import CollapsibleContainer from "./Atomic/CollapsibleContainer";
 import { Scene } from "../classes/Scene";
-import SimpleButton from "./SimpleButton";
+import SimpleButton from "./Atomic/SimpleButton";
 import TagListItem from "./TagListItem";
 import ArtDropdownItem from "./ArtDropdownItem";
 //import { runInAction } from "mobx";
-import LoadingButton from './LoadingButton';
+import LoadingButton from './Atomic/LoadingButton';
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import "../css/Dropdown.css";
 

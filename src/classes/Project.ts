@@ -8,7 +8,6 @@ import { GoogleAI } from "./GoogleAI";
 import { ChatGPT } from "./ChatGPT";
 import { LocalJson } from './LocalJson';
 import { KlingAI } from "./KlingAI";
-import * as ResolveUtils from './ResolveUtils';
 
 export type ProjectView =
   | { type: "none" }
@@ -116,6 +115,7 @@ export class Project {
   projinfo: LocalJson | null = null;
   currentView: ProjectView = { type: "none" };
   selectedScene: Scene | null = null;
+  timelinesDirHandle: FileSystemDirectoryHandle | null = null;
 
   constructor(rootDirHandle: FileSystemDirectoryHandle | null = null) {
     this.rootDirHandle = rootDirHandle;
@@ -127,6 +127,7 @@ export class Project {
 
     // Set root directory
     this.rootDirHandle = handle;
+    this.timelinesDirHandle = await this.rootDirHandle.getDirectoryHandle('Timelines', { create: true });
 
     // Update database (recent folders, last opened)
     runInAction(async () => {
@@ -338,44 +339,6 @@ export class Project {
     link.click();
     document.body.removeChild(link);
   }
-
-  async createResolveXML() {
-
-    const timeline = new ResolveUtils.FCPXMLBuilder("test_timeline");
-    let offsetFrames = 0;
-
-    for (const scene of this.scenes) {
-      
-      timeline.appendClip("r1", scene.folder.name, 30, offsetFrames);
-      timeline.appendText(scene.folder.name , 30, offsetFrames,3)
-      offsetFrames += 30;
-
-      for (const shot of scene.shots) {
-        let id = "r1"
-        const durationFrames = 150;
-        if (shot.srcImage) {
-          const img_path = this.projinfo?.getField("project_path") + shot.srcImage.path
-          id = timeline.addAsset(img_path, shot.folder.name)!;
-        }
-
-        if (shot.videos.length > 0) {
-          const vod_path = this.projinfo?.getField("project_path") + shot.videos[0].path;
-          const vod_id = timeline.addAsset(vod_path, shot.folder.name, 150)!;
-          timeline.appendClip(vod_id, shot.folder.name, durationFrames, offsetFrames, 1);
-        }
-
-
-        timeline.appendClip(id, shot.folder.name, durationFrames, offsetFrames);
-        timeline.appendText(scene.folder.name + " " + shot.folder.name, durationFrames, offsetFrames)
-
-        offsetFrames += durationFrames;
-      }
-    }
-    timeline.log()
-    timeline.save(this.rootDirHandle!);
-
-  }
-
 
 }
 

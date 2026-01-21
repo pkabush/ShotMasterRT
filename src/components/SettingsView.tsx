@@ -2,10 +2,10 @@ import React from "react";
 import { observer } from "mobx-react-lite";
 import { Project } from "../classes/Project";
 import { StringEditField } from "./StringEditField";
-import SimpleButton from "./SimpleButton";
+import SimpleButton from "./Atomic/SimpleButton.tsx";
 import EditableJsonTextField from './EditableJsonTextField';
 import TabsContainer from "./TabsContainer";
-import SimpleDropdown from './SimpleDropdown';
+import SimpleDropdown from './Atomic/SimpleDropdown.tsx';
 import * as GPT from "../classes/ChatGPT.ts";
 
 interface SettingsViewProps {

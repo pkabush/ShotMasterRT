@@ -6,9 +6,8 @@ import { observer } from 'mobx-react-lite';
 import ShotStripPreview from './ShotStripPreview';
 import ResizableContainer from './ResizableContainer';
 import ShotInfoCard from './ShotInfoCard'; // Import the new ShotInfoCard
-import SimpleButton from './SimpleButton';
-import LoadingButton from './LoadingButton';
-import SettingsButton from './SettingsButton';
+import SimpleButton from './Atomic/SimpleButton';
+import LoadingButton from './Atomic/LoadingButton';
 
 interface Props {
   scene: Scene;
@@ -41,8 +40,8 @@ const ShotsInfoStrip: React.FC<Props> = observer(({ scene }) => {
             <ShotStripPreview
               key={shot.folder.name}
               shot={shot}
-              isSelected={selectedShot === shot}
-              onClick={setSelectedShot}
+              isSelected={selectedShot === shot }
+              onClick={setSelectedShot} 
             />
           ))}
 
@@ -56,24 +55,7 @@ const ShotsInfoStrip: React.FC<Props> = observer(({ scene }) => {
       <div>
         <LoadingButton onClick={() => { scene.generateAllShotImages() }} label="Generate ALL" is_loading={scene.is_generating_all_shot_images} />
         <SimpleButton label="+ Add Shot" onClick={handleAddShot} />
-
-        <SettingsButton className="mb-2"
-          buttons={
-            <>
-              {/**Button */}
-              <button className="btn btn-sm btn-outline-secondary" onClick={async () => {
-                  scene.project.createResolveXML();
-              }}> Create Resolve XML </button>
-            </>
-          }
-          content={
-            <>
-
-            </>
-          }
-        />
-
-
+        <SimpleButton label="Export Resolve XML" onClick={() => {scene.createResolveXML()}} />
       </div>
 
       {/* Show info card for the selected shot */}

@@ -43,12 +43,13 @@ const ShotStripPreview: React.FC<Props> = observer(({ shot, isSelected, onClick 
 
   return (
     <div
-      className="flex-shrink-0 border rounded position-relative d-flex align-items-center justify-content-center"
+      className="flex-shrink-0 position-relative d-flex align-items-center justify-content-center"
       style={{
         height: '100%',
         cursor: 'pointer',
-        borderWidth: isSelected ? 2 : 1,
-        borderColor: isSelected ? '#0d6efd' : '#dee2e6',
+        borderWidth: isSelected ? 2 : 0,
+        borderColor: isSelected ? '#04914a' : '#dee2e6',
+        borderStyle: 'solid',
       }}
       onClick={() => onClick(shot)}
     >

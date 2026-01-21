@@ -4,6 +4,8 @@
 
 type MediaType = "video" | "image";
 
+const frame_rate = 24;
+
 export interface MediaItem {
     item: FileSystemFileHandle;
     type: MediaType;
@@ -18,7 +20,7 @@ export class FCPXMLBuilder {
     private project: Element;
     private spine: Element;
     private timelineName: string;
-    
+
 
     constructor(timelineName = "Test RESOLVE", totalFrames = 10000) {
         this.timelineName = timelineName;
@@ -37,8 +39,8 @@ export class FCPXMLBuilder {
         // Add default video format
         const format = this.doc.createElement("format");
         format.setAttribute("id", "r0");
-        format.setAttribute("name", "FFVideoFormat1080p30");
-        format.setAttribute("frameDuration", "1/30s");
+        format.setAttribute("name", `FFVideoFormat1080p${frame_rate}`);
+        format.setAttribute("frameDuration", `1/${frame_rate}s`);
         format.setAttribute("width", "1080");
         format.setAttribute("height", "1920");
         this.resources.appendChild(format);
@@ -59,7 +61,7 @@ export class FCPXMLBuilder {
 
         const sequence = this.doc.createElement("sequence");
         sequence.setAttribute("format", "r0");
-        sequence.setAttribute("duration", `${totalFrames}/30s`);
+        sequence.setAttribute("duration", `${totalFrames}/${frame_rate}s`);
         sequence.setAttribute("tcStart", "0/1s");
         sequence.setAttribute("tcFormat", "NDF");
         this.project.appendChild(sequence);
@@ -94,14 +96,14 @@ export class FCPXMLBuilder {
     // -----------------------------
     // Add a single asset
     // -----------------------------
-    addAsset(path: string, name: string, durationFrames:number = 0) {
+    addAsset(path: string, name: string) {
         const asset = this.doc.createElement("asset");
-        asset.setAttribute("format", "r0");
+        //asset.setAttribute("format", "r0");
         asset.setAttribute("src", `file://localhost/${path.replace(/\\/g, "/")}`);
-        asset.setAttribute("start", "0/1s");
+        //asset.setAttribute("start", "0/1s");
         asset.setAttribute("name", name);
-        asset.setAttribute("duration", `${durationFrames}/30s`);
-        asset.setAttribute("hasVideo", "1");
+        //asset.setAttribute("duration", `${durationFrames}/${frame_rate}s`);
+        //asset.setAttribute("hasVideo", "1");
 
         // Generate a unique ID based on the number of existing assets
         const currentAssets = this.resources.children;
@@ -118,13 +120,15 @@ export class FCPXMLBuilder {
     // -----------------------------
     appendClip(id: string, name: string, durationFrames: number, offsetFrames: number, lane: number = 0) {
         const clipEl = this.doc.createElement("video")
-        clipEl.setAttribute("start", "0/1s");
+        clipEl.setAttribute("start", "1/24s");
         clipEl.setAttribute("ref", id);
         clipEl.setAttribute("name", name);
         clipEl.setAttribute("enabled", "1");
         clipEl.setAttribute("lane", lane.toString());
-        clipEl.setAttribute("duration", `${durationFrames}/30s`);
-        clipEl.setAttribute("offset", `${offsetFrames}/30s`);
+        //clipEl.setAttribute("duration", `${durationFrames}/${frame_rate}s`);
+        //clipEl.setAttribute("offset", `${offsetFrames}/${frame_rate}s`);
+        clipEl.setAttribute("duration", `${durationFrames}/1s`);
+        clipEl.setAttribute("offset", `${offsetFrames}/1s`);
         this.spine.appendChild(clipEl);
     }
 
@@ -137,14 +141,17 @@ export class FCPXMLBuilder {
     ) {
         // Create <title> element
         const titleEl = this.doc.createElement("title");
-        titleEl.setAttribute("start","0/1s");
+        titleEl.setAttribute("start", "1/24s");
 
         // Assign next available resource ID
         titleEl.setAttribute("ref", "r2");
         titleEl.setAttribute("name", name);
         titleEl.setAttribute("lane", lane.toString());
-        titleEl.setAttribute("offset",  `${offsetFrames}/30s`);
-        titleEl.setAttribute("duration", `${durationFrames}/30s`);
+        //titleEl.setAttribute("offset",  `${offsetFrames}/${frame_rate}s`);
+        //titleEl.setAttribute("duration", `${durationFrames}/${frame_rate}s`);
+        titleEl.setAttribute("offset", `${offsetFrames}/1s`);
+        titleEl.setAttribute("duration", `${durationFrames}/1s`);
+
         titleEl.setAttribute("enabled", "1");
 
         // <text> element
@@ -183,16 +190,9 @@ export class FCPXMLBuilder {
         titleEl.appendChild(adjust);
 
         // Append to spine
-        this.spine.appendChild(titleEl);        
+        this.spine.appendChild(titleEl);
     }
 
-
-
-
-
-    // -----------------------------
-    // Generate XML string
-    // -----------------------------
     getXmlString() {
         const serializer = new XMLSerializer();
         let xmlString = serializer.serializeToString(this.doc);

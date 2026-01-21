@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { observer } from "mobx-react-lite";
 import { Art } from "../classes/Art";
 import { Scene } from "../classes/Scene";
-import SimpleButton from "./SimpleButton";
+import SimpleButton from "./Atomic/SimpleButton";
 
 type Props = {
   art: Art;

@@ -1,6 +1,6 @@
 import React from "react";
 import { observer } from "mobx-react-lite";
-import CollapsibleContainer from "./CollapsibleContainer";
+import CollapsibleContainer from "./Atomic/CollapsibleContainer";
 import { Shot } from "../classes/Shot";
 
 interface TagsToggleListProps {
