@@ -5,7 +5,7 @@ import type { FC, ReactNode } from "react";
 interface DropAreaProps {
     width?: string | number;
     height?: string | number;
-    onDrop: (file: File) => void;
+    onDrop: (file: File[]) => void;
     children?: ReactNode; // optional content inside the box
 }
 
@@ -29,9 +29,9 @@ const DropArea: FC<DropAreaProps> = ({
     const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
         setIsDragging(false);
-        const file = e.dataTransfer.files[0];
-        if (file) {
-            onDrop(file);
+        const files  = Array.from(e.dataTransfer.files);
+        if (files.length > 0) {
+            onDrop(files);
         }
     };
 
@@ -41,13 +41,13 @@ const DropArea: FC<DropAreaProps> = ({
             style={{
                 width,
                 height,
-                border: isDragging ? "2px solid #42a5f5" : "2px dashed #aaa",
+                border: isDragging ? "2px solid #42a5f5" : "2px dashed #606060",
                 borderRadius: "8px",
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
                 cursor: "pointer",
-                backgroundColor: isDragging ? "#294457" : "#2d2d2d",
+                backgroundColor: isDragging ? "#294457" : "#2a2a31",
                 boxShadow: isDragging ? "0 0 10px rgba(66,165,245,0.5)" : "none",
                 transition: "all 0.2s ease-in-out",
             }}
@@ -56,7 +56,7 @@ const DropArea: FC<DropAreaProps> = ({
             onDrop={handleDrop}
         >
             {children || (
-                <span style={{ display: "block", textAlign: "center", width: "100%" }}>
+                <span style={{ display: "block", textAlign: "center", width: "100%",color:"#5e727e" }}>
                     Drag and Drop Here
                 </span>
             )}

@@ -9,6 +9,8 @@ interface Props {
   autoPlay?: boolean; // optional autoplay
   loop?: boolean;     // optional loop
   muted?: boolean; // optional prop  
+  isSelected?: boolean;
+  isPicked?: boolean;
 }
 
 const MediaGalleryVideo: React.FC<Props> = ({
@@ -18,7 +20,9 @@ const MediaGalleryVideo: React.FC<Props> = ({
   onClick,
   autoPlay = true,
   loop = true,
-  muted = true
+  muted = true,
+  isSelected = false,
+  isPicked = false
 }) => {
   const [url, setUrl] = useState<string | null>(null);
   const [hovered, setHovered] = useState(false);
@@ -56,11 +60,34 @@ const MediaGalleryVideo: React.FC<Props> = ({
 
   return (
     <div
-      className="position-relative d-inline-block border rounded"
-      style={{ height: `${height}px`, cursor: 'pointer' }}
+      className="position-relative d-inline-block"
+      style={{
+        height: `${height}px`,
+        cursor: 'pointer',
+        outline: isPicked ? '3px solid #085db7' : 'none',
+        outlineOffset: -3,
+      }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
+      {/* Green selection circle */}
+      {isSelected && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 5,
+            left: 5,
+            width: 20,
+            height: 20,
+            borderRadius: '50%',
+            backgroundColor: 'limegreen',
+            border: '2px solid white',
+            zIndex: 20,
+          }}
+        />
+      )}
+
+
       <video
         src={url}
         height={height}

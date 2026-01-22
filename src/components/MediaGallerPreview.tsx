@@ -10,15 +10,19 @@ import MediaGalleryVideo from "./MediaGalleryVideo";
 interface MediaGalleryPreviewProps {
   mediaItem: LocalMedia;
   height?: number;
-  onSelectImage?: (image: LocalImage) => void;
+  onSelectMedia?: (image: LocalMedia) => void;
   topRightExtra?: React.ReactNode; // now optional input
+  isSelected?: boolean; // <-- new
+  isPicked?: boolean;
 }
 
 const MediaGalleryPreview: React.FC<MediaGalleryPreviewProps> = ({
   mediaItem,
   height = 300,
-  onSelectImage,
+  onSelectMedia,
   topRightExtra,
+  isSelected = false,
+  isPicked = false,
 }) => {
   if (mediaItem instanceof LocalImage) {
     return (
@@ -26,8 +30,10 @@ const MediaGalleryPreview: React.FC<MediaGalleryPreviewProps> = ({
         key={mediaItem.path}
         localImage={mediaItem}
         height={height}
-        onClick={() => onSelectImage?.(mediaItem)}
+        onClick={() => onSelectMedia?.(mediaItem)}
         topRightExtra={topRightExtra}
+        isSelected = {isSelected}
+        isPicked = {isPicked}
       />
     );
   }
@@ -39,6 +45,9 @@ const MediaGalleryPreview: React.FC<MediaGalleryPreviewProps> = ({
         localVideo={mediaItem}
         height={height}
         topRightExtra={topRightExtra}
+        isSelected = {isSelected}
+        isPicked = {isPicked}
+        onClick={() => onSelectMedia?.(mediaItem)}
       />
     );
   }

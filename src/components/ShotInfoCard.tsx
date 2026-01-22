@@ -190,7 +190,8 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
                       <DropArea
                         width={100}
                         //height={200}
-                        onDrop={async (file) => {
+                        onDrop={async (files) => {                          
+                          const file = files[0];
                           console.log(file);
                           // Save File To Local
                           const fileHandle = await shot.refVideoFolder!.getFileHandle(file.name, { create: true });
@@ -297,9 +298,7 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
                   onImageGenerated={async (result) => {
                     await shot.saveGoogleResultImage(result, true);
                   }}
-                  onClose={() => {
-                    shot.selectArt()
-                  }}
+                  onClose={() => { shot.selectArt() }}
                 />
               )}
 
@@ -336,7 +335,11 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
 
 
         ,
-        ResultImages: <MediaFolderGallery mediaFolder={shot.results_MediaFolder}></MediaFolderGallery>
+        ResultImages: <>
+          <MediaFolderGallery mediaFolder={shot.MediaFolder_genVideo}></MediaFolderGallery>
+          <MediaFolderGallery mediaFolder={shot.MediaFolder_results}></MediaFolderGallery>
+          <MediaFolderGallery mediaFolder={shot.MediaFolder_refVideo}></MediaFolderGallery>          
+        </>
 
         ,
       }}

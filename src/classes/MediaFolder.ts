@@ -13,6 +13,10 @@ export class MediaFolder {
     pickedMedia: LocalMedia | null = null;
     selectedMedia: LocalMedia | null = null;
 
+    // Callbacks
+    onPicked?: (media: LocalMedia | null) => void;
+    onSelected?: (media: LocalMedia | null) => void;
+
     constructor(parentFolder: FileSystemDirectoryHandle, folderName: string, basePath: string = "") {
         this.parentFolder = parentFolder;
         this.folderName = folderName;
@@ -25,23 +29,13 @@ export class MediaFolder {
             // Get or create the folder inside parent
             this.folder = await this.parentFolder.getDirectoryHandle(this.folderName, { create: createIfMissing });
 
-            const loadedMedia: LocalMedia[] = [];
-
-            for await (const [name, handle] of this.folder.entries()) {
+            for await (const [, handle] of this.folder.entries()) {
                 if (handle.kind === "file") {
-                    const fileHandle = handle as FileSystemFileHandle;
-
-                    if (name.match(/\.(png|jpe?g|gif|webp)$/i)) {
-                        loadedMedia.push(new LocalImage(fileHandle, this.folder, this.path));
-                    } else if (name.match(/\.(mp4|mov|webm|avi)$/i)) {
-                        loadedMedia.push(new LocalVideo(fileHandle, this.folder, this.path));
-                    }
+                    this.loadFile(handle as FileSystemFileHandle);
                 }
             }
 
-            runInAction(() => {
-                this.media = loadedMedia;
-            });
+
         } catch (err) {
             console.error(`Failed to load MediaFolder '${this.folderName}':`, err);
             runInAction(() => {
@@ -67,15 +61,19 @@ export class MediaFolder {
     }
 
     setSelectedMedia(media: LocalMedia | null) {
+        if (this.selectedMedia === media) return;
         runInAction(() => {
             this.selectedMedia = media;
         });
+        this.onSelected?.(media);
     }
 
     setPickedMedia(media: LocalMedia | null) {
+        if (this.pickedMedia === media) return;
         runInAction(() => {
             this.pickedMedia = media;
         });
+        this.onPicked?.(media);
     }
     log() { console.log(toJS(this)); }
 
@@ -88,5 +86,104 @@ export class MediaFolder {
             console.warn(`Media with filename '${filename}' not found.`);
         }
     }
+    async downloadFromUrl(url: string): Promise<LocalMedia | null> {
+        if (!this.folder) { throw new Error("MediaFolder not loaded"); }
+
+        try {
+            const response = await fetch(url);
+            if (!response.ok) { throw new Error(`Failed to fetch: ${response.statusText}`); }
+
+            const blob = await response.blob();
+
+            // Extract filename from URL
+            const urlObj = new URL(url);
+            let filename = urlObj.pathname.split("/").pop() || "download";
+
+            // Fallback extension from MIME type if missing
+            if (!filename.includes(".")) {
+                const ext = blob.type.split("/")[1];
+                if (ext) filename += `.${ext}`;
+            }
+
+            // Create file in folder
+            const fileHandle = await this.folder.getFileHandle(filename, { create: true });
+            const writable = await fileHandle.createWritable();
+            await writable.write(blob);
+            await writable.close();
+
+            const newMedia = this.loadFile(fileHandle);
+
+            return newMedia;
+        } catch (err) {
+            console.error("Failed to download media from URL:", err);
+            throw err;
+        }
+    }
+    loadFile(fileHandle: FileSystemFileHandle): LocalMedia | null {
+        const name = fileHandle.name;
+
+        let mediaItem: LocalMedia | null = null;
+
+        if (name.match(/\.(png|jpe?g|gif|webp)$/i)) {
+            mediaItem = new LocalImage(fileHandle, this.folder!, this.path);
+        } else if (name.match(/\.(mp4|mov|webm|avi)$/i)) {
+            mediaItem = new LocalVideo(fileHandle, this.folder!, this.path);
+        }
+
+        if (!mediaItem) return null;
+
+        runInAction(() => {
+            this.media.push(mediaItem);
+        });
+
+        return mediaItem;
+    }
+    async saveFiles(files: File[]) {
+        if (!this.folder) { throw new Error("MediaFolder not loaded"); }
+
+        for (const file of files) {
+            try {
+                // Create / overwrite file
+                const fileHandle = await this.folder.getFileHandle(file.name, { create: true, });
+                const writable = await fileHandle.createWritable();
+                await writable.write(file);
+                await writable.close();
+                // Load + register media
+                this.loadFile(fileHandle);
+            } catch (err) {
+                console.error(`Failed to save file '${file.name}':`, err);
+            }
+        }
+    }
+    async copyFromClipboard() {
+        if (!this.folder) { throw new Error("MediaFolder not loaded"); }
+        if (!navigator.clipboard || !navigator.clipboard.read) { console.warn("Clipboard API not supported"); return; }
+
+        const files: File[] = [];
+
+        try {
+            const items = await navigator.clipboard.read();
+            console.log(items);
+
+            for (const item of items) {
+                for (const type of item.types) {
+                    if (!type.startsWith("image/") && !type.startsWith("video/")) { continue; }
+
+                    const blob = await item.getType(type);
+
+                    // Preserve original filename if present
+                    const filename = (blob as File).name || `clipboard-${Date.now()}.${type.split("/")[1]}`;
+                    files.push(blob instanceof File ? blob : new File([blob], filename, { type }));
+                }
+            }
+
+            if (files.length === 0) { console.info("Clipboard does not contain files"); return; }
+            await this.saveFiles(files);
+        } catch (err) {
+            console.error("Failed to read from clipboard:", err);
+            return;
+        }
+    }
+
 
 }

@@ -10,6 +10,7 @@ import { Task } from './Task';
 import { ai_providers } from './AI_providers';
 import { LocalVideo } from './LocalVideo';
 import { MediaFolder } from './MediaFolder';
+import type { LocalMedia } from './interfaces/LocalMedia';
 
 
 
@@ -18,13 +19,6 @@ export class Shot {
   folder: FileSystemDirectoryHandle;
   scene: Scene;
   shotJson: LocalJson | null = null;
-  images: LocalImage[] = [];
-  videos: LocalVideo[] = [];
-  ref_videos: LocalVideo[] = [];
-  srcImage: LocalImage | null = null;
-  resultsFolder: FileSystemDirectoryHandle | null = null; // <--- store results folder
-  genVideoFolder: FileSystemDirectoryHandle | null = null; // <--- store results folder
-  refVideoFolder: FileSystemDirectoryHandle | null = null; // <--- store results folder
   is_generating = false;
   selected_art: LocalImage | null = null;
   tasks: Task[] = [];
@@ -33,9 +27,23 @@ export class Shot {
   kling_motion_video: LocalVideo | null = null;
   path: string = "";
 
+
+  // old Folders to remove
+  images: LocalImage[] = [];
+  videos: LocalVideo[] = [];
+  ref_videos: LocalVideo[] = [];
+  resultsFolder: FileSystemDirectoryHandle | null = null; // <--- store results folder
+  genVideoFolder: FileSystemDirectoryHandle | null = null; // <--- store results folder
+  refVideoFolder: FileSystemDirectoryHandle | null = null; // <--- store results folder
+
+
   // MediaFolders
-  results_MediaFolder : MediaFolder | null = null;
-  
+  srcImage: LocalImage | null = null;
+
+  MediaFolder_results: MediaFolder | null = null;
+  MediaFolder_genVideo: MediaFolder | null = null;
+  MediaFolder_refVideo: MediaFolder | null = null;
+
 
   constructor(folder: FileSystemDirectoryHandle, scene: Scene) {
     this.folder = folder;
@@ -52,9 +60,20 @@ export class Shot {
       this.srcImage = null;
 
       // Load Media Folders
-      this.results_MediaFolder = new MediaFolder(this.folder, "results", this.path);
-      await this.results_MediaFolder.load();
-      this.results_MediaFolder.pickByFilename(this.shotJson.data.srcImage);
+      this.MediaFolder_results = new MediaFolder(this.folder, "results", this.path);
+      await this.MediaFolder_results.load();
+      this.MediaFolder_results.pickByFilename(this.shotJson.data.srcImage);
+      this.MediaFolder_results.onPicked = (media: LocalMedia | null) => { this.setSrcImage(media as LocalImage) };
+
+      this.MediaFolder_genVideo = new MediaFolder(this.folder, "genVideo", this.path);
+      await this.MediaFolder_genVideo.load();
+      //this.MediaFolder_genVideo.pickByFilename(this.shotJson.data.srcImage);
+
+      this.MediaFolder_refVideo = new MediaFolder(this.folder, "refVideo", this.path);
+      await this.MediaFolder_refVideo.load();
+      this.MediaFolder_refVideo.pickByFilename(this.shotJson.data.kling_motion_video);
+
+
 
 
 
@@ -206,10 +225,9 @@ export class Shot {
     this.ref_videos = this.ref_videos.filter(i => i !== video);
   }
 
-  setKlingMotionReferenceVideo( video: LocalVideo)
-  {
+  setKlingMotionReferenceVideo(video: LocalVideo) {
     this.kling_motion_video = video;
-    this.shotJson?.updateField("kling_motion_video",video.handle.name)
+    this.shotJson?.updateField("kling_motion_video", video.handle.name)
   }
 
   async GenerateVideo() {
@@ -261,12 +279,12 @@ export class Shot {
 
       // Generate if we have src image
       if (this.srcImage && this.kling_motion_video) {
-        const img_raw = (await this.srcImage.getBase64()).rawBase64;        
+        const img_raw = (await this.srcImage.getBase64()).rawBase64;
         const video_url = await this.kling_motion_video.getWebUrl();
-        
 
-        
-        
+
+
+
         const task_info = await KlingAI.motionControl({
           image: img_raw,
           video_url,
@@ -279,8 +297,8 @@ export class Shot {
         const task = this.addTask(task_info.id, { provider: ai_providers.KLING, workflow: task_info.workflow })
         await new Promise(res => setTimeout(res, 100));
         task.check_status();
-        
-       await new Promise(res => setTimeout(res, 2000));
+
+        await new Promise(res => setTimeout(res, 2000));
       }
 
     } catch (err) {
