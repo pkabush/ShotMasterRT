@@ -337,7 +337,7 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
         ,
         ResultImages: <>
           <MediaFolderGallery mediaFolder={shot.MediaFolder_genVideo}></MediaFolderGallery>
-          <MediaFolderGallery mediaFolder={shot.MediaFolder_results}></MediaFolderGallery>
+          <MediaFolderGallery mediaFolder={shot.MediaFolder_results} pick_endframe={true}></MediaFolderGallery>
           <MediaFolderGallery mediaFolder={shot.MediaFolder_refVideo}></MediaFolderGallery>          
         </>
 

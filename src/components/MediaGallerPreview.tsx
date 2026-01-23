@@ -14,6 +14,7 @@ interface MediaGalleryPreviewProps {
   topRightExtra?: React.ReactNode; // now optional input
   isSelected?: boolean; // <-- new
   isPicked?: boolean;
+  label?: string;
 }
 
 const MediaGalleryPreview: React.FC<MediaGalleryPreviewProps> = ({
@@ -23,18 +24,28 @@ const MediaGalleryPreview: React.FC<MediaGalleryPreviewProps> = ({
   topRightExtra,
   isSelected = false,
   isPicked = false,
+  label = "",
 }) => {
   if (mediaItem instanceof LocalImage) {
     return (
-      <MediaGalleryImage
-        key={mediaItem.path}
-        localImage={mediaItem}
-        height={height}
-        onClick={() => onSelectMedia?.(mediaItem)}
-        topRightExtra={topRightExtra}
-        isSelected = {isSelected}
-        isPicked = {isPicked}
-      />
+      <div className="position-relative d-inline-block">
+        <MediaGalleryImage
+          key={mediaItem.path}
+          localImage={mediaItem}
+          height={height}
+          onClick={() => onSelectMedia?.(mediaItem)}
+          topRightExtra={topRightExtra}
+          isSelected={isSelected}
+          isPicked={isPicked}
+        />
+
+        {/**BOTTOM LABEL */}
+        {label &&
+          <div className="position-absolute bottom-0 start-50 translate-middle-x bg-dark text-white px-2 py-1 rounded small text-nowrap opacity-75 pe-none mb-1"        >
+            {label}
+          </div>}
+
+      </div>
     );
   }
 
@@ -45,8 +56,8 @@ const MediaGalleryPreview: React.FC<MediaGalleryPreviewProps> = ({
         localVideo={mediaItem}
         height={height}
         topRightExtra={topRightExtra}
-        isSelected = {isSelected}
-        isPicked = {isPicked}
+        isSelected={isSelected}
+        isPicked={isPicked}
         onClick={() => onSelectMedia?.(mediaItem)}
       />
     );

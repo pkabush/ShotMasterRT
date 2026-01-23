@@ -61,9 +61,16 @@ export class Shot {
 
       // Load Media Folders
       this.MediaFolder_results = new MediaFolder(this.folder, "results", this.path);
-      await this.MediaFolder_results.load();
-      this.MediaFolder_results.pickByFilename(this.shotJson.data.srcImage);
-      this.MediaFolder_results.onPicked = (media: LocalMedia | null) => { this.setSrcImage(media as LocalImage) };
+      await this.MediaFolder_results.load();   
+      this.MediaFolder_results.setNamedMediaJson( this.shotJson?.getField("results_MF") );
+      this.MediaFolder_results.onNamedMediaUpdate = (name:string,media: LocalMedia | null) => { 
+        this.shotJson?.updateField("results_MF", this.MediaFolder_results?.namedMediaJson);
+      };
+
+
+
+
+
 
       this.MediaFolder_genVideo = new MediaFolder(this.folder, "genVideo", this.path);
       await this.MediaFolder_genVideo.load();
@@ -71,7 +78,7 @@ export class Shot {
 
       this.MediaFolder_refVideo = new MediaFolder(this.folder, "refVideo", this.path);
       await this.MediaFolder_refVideo.load();
-      this.MediaFolder_refVideo.pickByFilename(this.shotJson.data.kling_motion_video);
+      //this.MediaFolder_refVideo.pickByFilename(this.shotJson.data.kling_motion_video);
 
 
 

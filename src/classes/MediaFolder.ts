@@ -12,10 +12,15 @@ export class MediaFolder {
     path: string = "";
     pickedMedia: LocalMedia | null = null;
     selectedMedia: LocalMedia | null = null;
+    // Named Media Array
+    named_media: Record<string, LocalMedia> = {};
 
     // Callbacks
     onPicked?: (media: LocalMedia | null) => void;
     onSelected?: (media: LocalMedia | null) => void;
+    onNamedMediaUpdate?: (name: string, media: LocalMedia | null) => void;
+
+
 
     constructor(parentFolder: FileSystemDirectoryHandle, folderName: string, basePath: string = "") {
         this.parentFolder = parentFolder;
@@ -53,12 +58,20 @@ export class MediaFolder {
             await mediaItem.delete();
             runInAction(() => {
                 this.media = this.media.filter(i => i !== mediaItem);
+
+                // remove from named_media if referenced
+                for (const key of Object.keys(this.named_media)) {
+                    if (this.named_media[key] === mediaItem) {
+                        delete this.named_media[key];
+                    }
+                }
             });
         } catch (err) {
             console.error("Failed to delete media:", err);
             alert(`Failed to delete ${mediaItem instanceof LocalImage ? "image" : "video"}.`);
         }
     }
+
 
     setSelectedMedia(media: LocalMedia | null) {
         if (this.selectedMedia === media) return;
@@ -72,20 +85,12 @@ export class MediaFolder {
         if (this.pickedMedia === media) return;
         runInAction(() => {
             this.pickedMedia = media;
+            this.setNamedMedia("picked", media);
         });
         this.onPicked?.(media);
     }
     log() { console.log(toJS(this)); }
 
-    pickByFilename(filename: string | null | undefined) {
-        if (!filename) return; // exit if null or empty
-        const mediaItem = this.media.find(m => m.path.endsWith(filename));
-        if (mediaItem) {
-            this.setPickedMedia(mediaItem);
-        } else {
-            console.warn(`Media with filename '${filename}' not found.`);
-        }
-    }
     async downloadFromUrl(url: string): Promise<LocalMedia | null> {
         if (!this.folder) { throw new Error("MediaFolder not loaded"); }
 
@@ -184,6 +189,55 @@ export class MediaFolder {
             return;
         }
     }
+
+    // Named Media Acess
+    setNamedMedia(name: string, media: LocalMedia | null) {
+        runInAction(() => {
+            if (media === null) {
+                delete this.named_media[name];
+            } else {
+                this.named_media[name] = media;
+            }
+            this.onNamedMediaUpdate?.(name, media);
+        });
+    }
+    getNamedMedia(name: string): LocalMedia | null {
+        return this.named_media[name] ?? null;
+    }
+    getMediaTags(media: LocalMedia): string[] {
+        return Object.entries(this.named_media)
+            .filter(([, value]) => value === media)
+            .map(([key]) => key);
+    }
+    getMediaByFilename(filename: string): LocalMedia | null {
+        return this.media.find(m => m.path.endsWith(filename)) ?? null;
+    }
+
+    get namedMediaJson(): Record<string, string> {
+        const result: Record<string, string> = {};
+        for (const [name, media] of Object.entries(this.named_media)) {
+            result[name] = media.handle.name;
+        }
+        return result;
+    }
+
+    setNamedMediaJson(value: any) {        
+        runInAction(() => {
+            this.named_media = {};
+
+            if (value == null) return;
+
+            for (const [name, filename] of Object.entries(value)) {
+                const media = this.media.find(m => m.handle.name === filename);
+                if (media) {
+                    this.named_media[name] = media;
+                } else {
+                    console.warn(`namedMediaJson: media file '${filename}' not found for tag '${name}'`);
+                }
+            }
+        });
+    }
+
 
 
 }

@@ -15,10 +15,11 @@ interface MediaFolderGalleryProps {
     mediaFolder: MediaFolder | null;
     label?: string;
     itemHeight?: number;
+    pick_endframe?: boolean;
 }
 
 export const MediaFolderGallery: React.FC<MediaFolderGalleryProps> = observer(
-    ({ mediaFolder, label = null, itemHeight = 300 }) => {
+    ({ mediaFolder, label = null, itemHeight = 300, pick_endframe = false }) => {
         if (!mediaFolder || !mediaFolder.folder) return null;
         label = label || mediaFolder.folderName;
 
@@ -57,7 +58,6 @@ export const MediaFolderGallery: React.FC<MediaFolderGalleryProps> = observer(
                                 initialText="Notes for this image"
                                 onImageGenerated={async (result) => {
                                     console.log("Image generated:", result);
-
                                     const localImage: LocalImage | null = await GoogleAI.saveResultImage(result, mediaFolder.folder as FileSystemDirectoryHandle);
                                     if (localImage) mediaFolder.loadFile(localImage?.handle);
                                 }}
@@ -72,16 +72,15 @@ export const MediaFolderGallery: React.FC<MediaFolderGalleryProps> = observer(
                             mediaItem={mediaItem}
                             height={itemHeight}
                             onSelectMedia={(media: LocalMedia) => { mediaFolder.setSelectedMedia(media) }}
-                            isSelected={mediaFolder.pickedMedia == mediaItem}
+                            isSelected={mediaFolder.pickedMedia == mediaItem || mediaItem == mediaFolder.getNamedMedia("endframe")}
                             isPicked={mediaFolder.selectedMedia == mediaItem}
+                            label = {mediaFolder.getMediaTags(mediaItem).join(",")}
                             topRightExtra={
                                 <>
                                     <SimpleButton
                                         label="Pick"
                                         className="btn-outline-secondary btn-sm"
-                                        onClick={() => {
-                                            mediaFolder.setPickedMedia(mediaItem);
-                                        }}
+                                        onClick={() => { mediaFolder.setNamedMedia("picked", mediaItem) }}
                                     />
                                     <SimpleButton
                                         label="Delete"
@@ -90,6 +89,12 @@ export const MediaFolderGallery: React.FC<MediaFolderGalleryProps> = observer(
                                             await mediaFolder.deleteMedia(mediaItem);
                                         }}
                                     />
+                                    {pick_endframe && <SimpleButton
+                                        label="Last"
+                                        className="btn-outline-secondary btn-sm"
+                                        onClick={() => { mediaFolder.setNamedMedia("endframe", mediaItem) }}
+                                    />
+                                    }
                                 </>
                             }
                         />
