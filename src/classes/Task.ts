@@ -3,10 +3,6 @@ import { makeAutoObservable, toJS, runInAction } from "mobx";
 import { Shot } from "./Shot";
 import { ai_providers } from "./AI_providers";
 import { KlingAI } from "./KlingAI";
-import { LocalVideo } from "./LocalVideo";
-
-
-
 
 export class Task {
     shot: Shot;
@@ -93,29 +89,9 @@ export class Task {
         this.finish_checking();
     }
 
-    async downloadResults(): Promise<LocalVideo | null> {
+    async downloadResults(){
         const url = this.data?.url;
-        const folder = this.shot.genVideoFolder; // make sure this exists
-        if (!url) {
-            console.warn("No URL found to download.");
-            return null;
-        }
-        if (!folder) {
-            console.warn("No results folder available to save file.");
-            return null;
-        }
-
-        try {
-            // Use LocalVideo's static factory
-            const localVideo = await LocalVideo.fromUrl(url, folder);
-
-            console.log(`Downloaded result video: ${localVideo.handle.name}`);
-            runInAction(() => { this.shot.videos.push(localVideo); });
-            return localVideo;
-        } catch (err) {
-            console.error("Failed to download Kling task result:", err);
-            return null;
-        }
+        this.shot.MediaFolder_genVideo?.downloadFromUrl(url);
     }
 
 }

@@ -3,6 +3,7 @@ import { makeAutoObservable, runInAction, toJS } from "mobx";
 import { LocalImage } from './LocalImage';
 import { LocalVideo } from './LocalVideo';
 import type { LocalMedia } from "./interfaces/LocalMedia";
+import type { LocalJson } from "./LocalJson";
 
 export class MediaFolder {
     parentFolder: FileSystemDirectoryHandle;
@@ -14,32 +15,33 @@ export class MediaFolder {
     selectedMedia: LocalMedia | null = null;
     // Named Media Array
     named_media: Record<string, LocalMedia> = {};
+    tags:string[] = ["picked","start_frame","end_frame","motion_ref"];
+    storage_json : LocalJson|null = null;
 
     // Callbacks
     onPicked?: (media: LocalMedia | null) => void;
     onSelected?: (media: LocalMedia | null) => void;
-    onNamedMediaUpdate?: (name: string, media: LocalMedia | null) => void;
+    onNamedMediaUpdate?: () => void;
 
-
-
-    constructor(parentFolder: FileSystemDirectoryHandle, folderName: string, basePath: string = "") {
+    constructor(parentFolder: FileSystemDirectoryHandle, folderName: string, basePath: string = "", storage_json : LocalJson | null = null) {
         this.parentFolder = parentFolder;
         this.folderName = folderName;
         this.path = basePath ? `${basePath}/${folderName}` : folderName;
+        this.storage_json = storage_json;
         makeAutoObservable(this);
     }
 
-    async load(createIfMissing: boolean = true): Promise<void> {
+    async load(  ): Promise<void> {
         try {
             // Get or create the folder inside parent
-            this.folder = await this.parentFolder.getDirectoryHandle(this.folderName, { create: createIfMissing });
+            this.folder = await this.parentFolder.getDirectoryHandle(this.folderName, { create: true });
 
             for await (const [, handle] of this.folder.entries()) {
                 if (handle.kind === "file") {
                     this.loadFile(handle as FileSystemFileHandle);
                 }
             }
-
+            if (this.storage_json){this.setNamedMediaJson( this.storage_json.getField("MediaFolder_" + this.folderName ) );}
 
         } catch (err) {
             console.error(`Failed to load MediaFolder '${this.folderName}':`, err);
@@ -81,14 +83,6 @@ export class MediaFolder {
         this.onSelected?.(media);
     }
 
-    setPickedMedia(media: LocalMedia | null) {
-        if (this.pickedMedia === media) return;
-        runInAction(() => {
-            this.pickedMedia = media;
-            this.setNamedMedia("picked", media);
-        });
-        this.onPicked?.(media);
-    }
     log() { console.log(toJS(this)); }
 
     async downloadFromUrl(url: string): Promise<LocalMedia | null> {
@@ -160,6 +154,7 @@ export class MediaFolder {
             }
         }
     }
+
     async copyFromClipboard() {
         if (!this.folder) { throw new Error("MediaFolder not loaded"); }
         if (!navigator.clipboard || !navigator.clipboard.read) { console.warn("Clipboard API not supported"); return; }
@@ -193,12 +188,14 @@ export class MediaFolder {
     // Named Media Acess
     setNamedMedia(name: string, media: LocalMedia | null) {
         runInAction(() => {
-            if (media === null) {
+            if (media === null || this.named_media[name] == media) {
                 delete this.named_media[name];
             } else {
                 this.named_media[name] = media;
             }
-            this.onNamedMediaUpdate?.(name, media);
+            this.onNamedMediaUpdate?.();
+            // Save to local Json
+            if (this.storage_json){this.storage_json.updateField( "MediaFolder_" + this.folderName , this.namedMediaJson );}
         });
     }
     getNamedMedia(name: string): LocalMedia | null {

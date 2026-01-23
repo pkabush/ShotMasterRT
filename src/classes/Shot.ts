@@ -10,40 +10,24 @@ import { Task } from './Task';
 import { ai_providers } from './AI_providers';
 import { LocalVideo } from './LocalVideo';
 import { MediaFolder } from './MediaFolder';
-import type { LocalMedia } from './interfaces/LocalMedia';
-
 
 
 
 export class Shot {
   folder: FileSystemDirectoryHandle;
+  path: string = "";
   scene: Scene;
   shotJson: LocalJson | null = null;
-  is_generating = false;
-  selected_art: LocalImage | null = null;
   tasks: Task[] = [];
+
+  // Processes
   is_submitting_video = false;
-  // Kling
-  kling_motion_video: LocalVideo | null = null;
-  path: string = "";
-
-
-  // old Folders to remove
-  images: LocalImage[] = [];
-  videos: LocalVideo[] = [];
-  ref_videos: LocalVideo[] = [];
-  resultsFolder: FileSystemDirectoryHandle | null = null; // <--- store results folder
-  genVideoFolder: FileSystemDirectoryHandle | null = null; // <--- store results folder
-  refVideoFolder: FileSystemDirectoryHandle | null = null; // <--- store results folder
-
+  is_generating = false;   
 
   // MediaFolders
-  srcImage: LocalImage | null = null;
-
   MediaFolder_results: MediaFolder | null = null;
   MediaFolder_genVideo: MediaFolder | null = null;
   MediaFolder_refVideo: MediaFolder | null = null;
-
 
   constructor(folder: FileSystemDirectoryHandle, scene: Scene) {
     this.folder = folder;
@@ -52,91 +36,44 @@ export class Shot {
     makeAutoObservable(this);
   }
 
+  // GETTERS FOR CONVINIENCE
+  get srcImage(): LocalImage | null {
+    return this.MediaFolder_results!.getNamedMedia("start_frame") as LocalImage;    
+  }
+  get end_frame(): LocalImage | null {
+    return this.MediaFolder_results!.getNamedMedia("end_frame") as LocalImage;    
+  }
+  get kling_motion_video(): LocalVideo | null {
+      return this.MediaFolder_refVideo!.getNamedMedia("motion_ref") as LocalVideo;    
+  }
+  get outVideo(): LocalVideo | null {
+      return this.MediaFolder_genVideo!.getNamedMedia("picked") as LocalVideo;    
+  }
+
+
+
+
   async load(): Promise<void> {
     try {
       this.shotJson = await LocalJson.create(this.folder, 'shotinfo.json');
 
-      this.images = [];
-      this.srcImage = null;
-
       // Load Media Folders
-      this.MediaFolder_results = new MediaFolder(this.folder, "results", this.path);
+      this.MediaFolder_results = new MediaFolder(this.folder, "results", this.path,this.shotJson);
+      this.MediaFolder_results.tags = ["start_frame","end_frame"];
       await this.MediaFolder_results.load();   
-      this.MediaFolder_results.setNamedMediaJson( this.shotJson?.getField("results_MF") );
-      this.MediaFolder_results.onNamedMediaUpdate = (name:string,media: LocalMedia | null) => { 
-        this.shotJson?.updateField("results_MF", this.MediaFolder_results?.namedMediaJson);
-      };
 
 
-
-
-
-
-      this.MediaFolder_genVideo = new MediaFolder(this.folder, "genVideo", this.path);
+      this.MediaFolder_genVideo = new MediaFolder(this.folder, "genVideo", this.path,this.shotJson);
+      this.MediaFolder_genVideo.tags = ["picked"];
       await this.MediaFolder_genVideo.load();
-      //this.MediaFolder_genVideo.pickByFilename(this.shotJson.data.srcImage);
 
-      this.MediaFolder_refVideo = new MediaFolder(this.folder, "refVideo", this.path);
+
+      this.MediaFolder_refVideo = new MediaFolder(this.folder, "refVideo", this.path,this.shotJson);
+      this.MediaFolder_refVideo.tags = ["motion_ref"];
       await this.MediaFolder_refVideo.load();
-      //this.MediaFolder_refVideo.pickByFilename(this.shotJson.data.kling_motion_video);
 
+      
 
-
-
-
-      // Try to get or create results folder
-      try {
-        this.resultsFolder = await this.folder.getDirectoryHandle('results', { create: true });
-
-        for await (const [name, handle] of this.resultsFolder.entries()) {
-          if (handle.kind === 'file') {
-            const localImage = new LocalImage(handle as FileSystemFileHandle, this.resultsFolder, this.path + "/results");
-            this.images.push(localImage);
-
-            if (this.shotJson.data?.srcImage && name === this.shotJson.data.srcImage) {
-              this.srcImage = localImage;
-            }
-          }
-        }
-      } catch (err) {
-        console.warn('No results folder found or failed to read:', err);
-        this.resultsFolder = null;
-      }
-
-      // Read Video Folder
-      try {
-        this.genVideoFolder = await this.folder.getDirectoryHandle('genVideo', { create: true });
-
-        for await (const [, handle] of this.genVideoFolder.entries()) {
-          if (handle.kind === 'file') {
-            const localVideo = new LocalVideo(handle as FileSystemFileHandle, this.genVideoFolder, this.path + "/genVideo");
-            this.videos.push(localVideo);
-          }
-        }
-      } catch (err) {
-        console.warn('No genVideo folder found or failed to read:', err);
-        this.genVideoFolder = null;
-      }
-
-
-      // Read Video References Folder
-      try {
-        this.refVideoFolder = await this.folder.getDirectoryHandle('refVideo', { create: true });
-
-        for await (const [name, handle] of this.refVideoFolder.entries()) {
-          if (handle.kind === 'file') {
-            const localVideo = new LocalVideo(handle as FileSystemFileHandle, this.refVideoFolder);
-            this.ref_videos.push(localVideo);
-
-            if (this.shotJson.data?.kling_motion_video && name === this.shotJson.data.kling_motion_video) {
-              this.kling_motion_video = localVideo;
-            }
-          }
-        }
-      } catch (err) {
-        console.warn('No genVideo folder found or failed to read:', err);
-        this.genVideoFolder = null;
-      }
 
       // Load Tasks      
       this.loadTasks();
@@ -144,9 +81,6 @@ export class Shot {
     } catch (err) {
       console.error('Error loading shot:', this.folder.name, err);
       this.shotJson = null;
-      this.images = [];
-      this.srcImage = null;
-      this.resultsFolder = null;
     }
   }
 
@@ -180,15 +114,6 @@ export class Shot {
     this.shotJson?.updateField("tasks", tasks);
   }
 
-  setSrcImage(image: LocalImage | null) {
-    this.srcImage = image;
-
-    if (this.shotJson?.data) {
-      this.shotJson.data.srcImage = image?.handle.name;
-      this.shotJson.save();
-    }
-  }
-
   async delete(): Promise<void> {
     if (!this.scene?.folder) {
       console.error("Cannot delete shot: scene folder not set");
@@ -206,36 +131,7 @@ export class Shot {
     }
   }
 
-  addImage(image: LocalImage) {
-    this.images.push(image);
-    //console.log("SRC",this.srcImage);
-    if (!this.srcImage) { this.setSrcImage(image); }
-  }
 
-  removeImage(image: LocalImage) {
-    // Remove from array
-    this.images = this.images.filter(i => i !== image);
-
-    // If it was the source image, clear it
-    if (this.srcImage === image) {
-      this.setSrcImage(null);
-    }
-  }
-
-  removeVideo(video: LocalVideo) {
-    // Remove from array
-    this.videos = this.videos.filter(i => i !== video);
-    // If it was the source video, clear it
-  }
-
-  removeReferenceVideo(video: LocalVideo) {
-    this.ref_videos = this.ref_videos.filter(i => i !== video);
-  }
-
-  setKlingMotionReferenceVideo(video: LocalVideo) {
-    this.kling_motion_video = video;
-    this.shotJson?.updateField("kling_motion_video", video.handle.name)
-  }
 
   async GenerateVideo() {
     runInAction(() => {
@@ -250,8 +146,11 @@ export class Shot {
       // Generate if we have src image
       if (this.srcImage) {
         const img_raw = (await this.srcImage.getBase64()).rawBase64;
+        const img_tail_raw = (await this.end_frame?.getBase64())?.rawBase64;
+
         const task_info = await KlingAI.img2video({
           image: img_raw,
+          image_tail: img_tail_raw,
           prompt,
           model: workflow.model,
           mode: workflow.mode,
@@ -344,8 +243,8 @@ export class Shot {
 
     try {
       const result = await GoogleAI.img2img(prompt || "", this.scene.project.workflows.generate_shot_image.model, images);
-      const localImage: LocalImage | null = await GoogleAI.saveResultImage(result, this.resultsFolder as FileSystemDirectoryHandle);
-      if (localImage) this.addImage(localImage);
+      const localImage: LocalImage | null = await GoogleAI.saveResultImage(result, this.MediaFolder_results?.folder as FileSystemDirectoryHandle);
+      if (localImage) this.MediaFolder_results?.loadFile(localImage.handle);
     } catch (err) {
       console.error("GenerateImage failed:", err);
     } finally {
@@ -355,15 +254,11 @@ export class Shot {
     }
   }
 
-  selectArt(art: LocalImage | null = null) {
-    runInAction(() => { this.selected_art = art; });
-  }
-
   async saveGoogleResultImage(result: any, select: boolean = false) {
-    const localImage: LocalImage | null = await GoogleAI.saveResultImage(result, this.resultsFolder as FileSystemDirectoryHandle);
+    const localImage: LocalImage | null = await GoogleAI.saveResultImage(result, this.MediaFolder_results?.folder as FileSystemDirectoryHandle);
     if (localImage) {
-      this.addImage(localImage);
-      if (select) this.selectArt(localImage);
+      const media_item = this.MediaFolder_results!.loadFile(localImage.handle);      
+      if (select) this.MediaFolder_results?.setNamedMedia("selected",media_item )
     }
   }
 

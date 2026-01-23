@@ -1,3 +1,4 @@
+import { observer } from "mobx-react-lite";
 import SimpleSelect from "./Atomic/SimpleSelect";
 import { Project } from "../classes/Project";
 
@@ -9,15 +10,16 @@ type WorkflowOptionSelectProps = {
     values: string[];
 };
 
-export function WorkflowOptionSelect({
+// Wrap the component with observer so it reacts to MobX state changes
+export const WorkflowOptionSelect = observer(function WorkflowOptionSelect({
     workflowName,
     project,
     optionName,
     label,
     values,
 }: WorkflowOptionSelectProps) {
-    const value =
-        project?.workflows?.[workflowName]?.[optionName];
+    // Get the current value from the observable project workflow
+    const value = project?.workflows?.[workflowName]?.[optionName];
 
     return (
         <SimpleSelect
@@ -29,4 +31,4 @@ export function WorkflowOptionSelect({
             }}
         />
     );
-}
+});

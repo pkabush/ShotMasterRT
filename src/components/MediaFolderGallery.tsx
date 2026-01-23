@@ -10,16 +10,16 @@ import DropArea from "./Atomic/DropArea";
 import type { LocalMedia } from "../classes/interfaces/LocalMedia";
 import ImageEditWindow from "./ImageEditWindow";
 import { GoogleAI } from "../classes/GoogleAI";
+import SimpleDropdown from "./Atomic/SimpleDropdown";
 
 interface MediaFolderGalleryProps {
     mediaFolder: MediaFolder | null;
     label?: string;
     itemHeight?: number;
-    pick_endframe?: boolean;
 }
 
 export const MediaFolderGallery: React.FC<MediaFolderGalleryProps> = observer(
-    ({ mediaFolder, label = null, itemHeight = 300, pick_endframe = false }) => {
+    ({ mediaFolder, label = null, itemHeight = 300 }) => {
         if (!mediaFolder || !mediaFolder.folder) return null;
         label = label || mediaFolder.folderName;
 
@@ -72,16 +72,11 @@ export const MediaFolderGallery: React.FC<MediaFolderGalleryProps> = observer(
                             mediaItem={mediaItem}
                             height={itemHeight}
                             onSelectMedia={(media: LocalMedia) => { mediaFolder.setSelectedMedia(media) }}
-                            isSelected={mediaFolder.pickedMedia == mediaItem || mediaItem == mediaFolder.getNamedMedia("endframe")}
+                            isSelected={mediaFolder.getMediaTags(mediaItem).length > 0}
                             isPicked={mediaFolder.selectedMedia == mediaItem}
-                            label = {mediaFolder.getMediaTags(mediaItem).join(",")}
+                            label={mediaFolder.getMediaTags(mediaItem).join(",")}
                             topRightExtra={
                                 <>
-                                    <SimpleButton
-                                        label="Pick"
-                                        className="btn-outline-secondary btn-sm"
-                                        onClick={() => { mediaFolder.setNamedMedia("picked", mediaItem) }}
-                                    />
                                     <SimpleButton
                                         label="Delete"
                                         className="btn-outline-danger btn-sm"
@@ -89,12 +84,16 @@ export const MediaFolderGallery: React.FC<MediaFolderGalleryProps> = observer(
                                             await mediaFolder.deleteMedia(mediaItem);
                                         }}
                                     />
-                                    {pick_endframe && <SimpleButton
-                                        label="Last"
-                                        className="btn-outline-secondary btn-sm"
-                                        onClick={() => { mediaFolder.setNamedMedia("endframe", mediaItem) }}
+
+                                    <SimpleDropdown
+                                        items={mediaFolder.tags}
+                                        currentItem={"TAG"}
+                                        onPicked={(val) => {                                             
+                                            mediaFolder.setNamedMedia(val, mediaItem) 
+                                        }}
                                     />
-                                    }
+
+
                                 </>
                             }
                         />

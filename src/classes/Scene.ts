@@ -303,8 +303,8 @@ ${JSON.stringify(this.project?.artbook?.getJson(), null, 2)}
         id = timeline.addAsset(img_path, shot.folder.name)!;
       }
 
-      if (shot.videos.length > 0) {
-        const vod_path = this.project.projinfo?.getField("project_path") + shot.videos[0].path;
+      if (shot.outVideo) {
+        const vod_path = this.project.projinfo?.getField("project_path") + shot.outVideo.path;
         const vod_id = timeline.addAsset(vod_path, shot.folder.name)!;
         timeline.appendClip(vod_id, shot.folder.name, durationFrames, offsetFrames, 1);
       }
