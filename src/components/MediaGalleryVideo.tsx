@@ -4,11 +4,12 @@ import { LocalVideo } from '../classes/LocalVideo';
 interface Props {
   localVideo: LocalVideo;
   height?: number;
+  fillParent?: boolean;            // NEW: fill parent container
   topRightExtra?: React.ReactNode;
   onClick?: () => void;
-  autoPlay?: boolean; // optional autoplay
-  loop?: boolean;     // optional loop
-  muted?: boolean; // optional prop  
+  autoPlay?: boolean;
+  loop?: boolean;
+  muted?: boolean;  
   isSelected?: boolean;
   isPicked?: boolean;
 }
@@ -16,6 +17,7 @@ interface Props {
 const MediaGalleryVideo: React.FC<Props> = ({
   localVideo,
   height = 250,
+  fillParent = false,             // default false
   topRightExtra,
   onClick,
   autoPlay = true,
@@ -43,7 +45,7 @@ const MediaGalleryVideo: React.FC<Props> = ({
 
     return () => {
       mounted = false;
-      localVideo.revokeUrl(); // optional cleanup
+      localVideo.revokeUrl(); // cleanup
     };
   }, [localVideo]);
 
@@ -62,7 +64,8 @@ const MediaGalleryVideo: React.FC<Props> = ({
     <div
       className="position-relative d-inline-block"
       style={{
-        height: `${height}px`,
+        height: fillParent ? '100%' : `${height}px`,
+        width: fillParent ? '100%' : 'auto',
         cursor: 'pointer',
         outline: isPicked ? '3px solid #085db7' : 'none',
         outlineOffset: -3,
@@ -87,17 +90,15 @@ const MediaGalleryVideo: React.FC<Props> = ({
         />
       )}
 
-
       <video
         src={url}
-        height={height}
         onClick={onClick}
         autoPlay={autoPlay}
         loop={loop}
         muted={muted}
         style={{
-          height: `${height}px`,
-          width: 'auto',
+          height: fillParent ? '100%' : `${height}px`,
+          width: fillParent ? '100%' : 'auto',
           objectFit: 'contain',
           display: 'block',
         }}

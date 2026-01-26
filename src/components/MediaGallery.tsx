@@ -26,17 +26,17 @@ const MediaGallery: React.FC<Props> = ({
       headerExtra={headerExtra} // pass it down
     >
 
+      {/* Children */}
+      <div className="d-flex flex-wrap gap-2">
+        {children}
+      </div>
+
       {/* Render optional edit window */}
       {editWindow && (
         <div className="mb-3">
           {editWindow}
         </div>
       )}
-
-
-      <div className="d-flex flex-wrap gap-2">
-        {children}
-      </div>
 
     </CollapsibleContainer>
   );

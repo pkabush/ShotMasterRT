@@ -4,6 +4,7 @@ import { LocalImage } from './LocalImage';
 import { LocalVideo } from './LocalVideo';
 import type { LocalMedia } from "./interfaces/LocalMedia";
 import type { LocalJson } from "./LocalJson";
+import type { Shot } from "./Shot";
 
 export class MediaFolder {
     parentFolder: FileSystemDirectoryHandle;
@@ -17,17 +18,19 @@ export class MediaFolder {
     named_media: Record<string, LocalMedia> = {};
     tags:string[] = ["picked","start_frame","end_frame","motion_ref"];
     storage_json : LocalJson|null = null;
+    shot : Shot|null = null;
 
     // Callbacks
     onPicked?: (media: LocalMedia | null) => void;
     onSelected?: (media: LocalMedia | null) => void;
     onNamedMediaUpdate?: () => void;
 
-    constructor(parentFolder: FileSystemDirectoryHandle, folderName: string, basePath: string = "", storage_json : LocalJson | null = null) {
+    constructor(parentFolder: FileSystemDirectoryHandle, folderName: string, basePath: string = "", storage_json : LocalJson | null = null,shot: Shot|null = null) {
         this.parentFolder = parentFolder;
         this.folderName = folderName;
         this.path = basePath ? `${basePath}/${folderName}` : folderName;
         this.storage_json = storage_json;
+        this.shot = shot;
         makeAutoObservable(this);
     }
 

@@ -58,17 +58,17 @@ export class Shot {
       this.shotJson = await LocalJson.create(this.folder, 'shotinfo.json');
 
       // Load Media Folders
-      this.MediaFolder_results = new MediaFolder(this.folder, "results", this.path,this.shotJson);
+      this.MediaFolder_results = new MediaFolder(this.folder, "results", this.path,this.shotJson,this);
       this.MediaFolder_results.tags = ["start_frame","end_frame"];
       await this.MediaFolder_results.load();   
 
 
-      this.MediaFolder_genVideo = new MediaFolder(this.folder, "genVideo", this.path,this.shotJson);
+      this.MediaFolder_genVideo = new MediaFolder(this.folder, "genVideo", this.path,this.shotJson,this);
       this.MediaFolder_genVideo.tags = ["picked"];
       await this.MediaFolder_genVideo.load();
 
 
-      this.MediaFolder_refVideo = new MediaFolder(this.folder, "refVideo", this.path,this.shotJson);
+      this.MediaFolder_refVideo = new MediaFolder(this.folder, "refVideo", this.path,this.shotJson,this);
       this.MediaFolder_refVideo.tags = ["motion_ref"];
       await this.MediaFolder_refVideo.load();
 
