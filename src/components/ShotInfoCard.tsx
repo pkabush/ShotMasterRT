@@ -2,19 +2,16 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { Shot } from '../classes/Shot';
-import EditableJsonTextField from './EditableJsonTextField';
 import SimpleButton from './Atomic/SimpleButton';
 import SimpleToggle from './SimpleToggle';
-import TagsToggleList from "./TagsToggleList";
-import LoadingSpinner from './Atomic/LoadingSpinner';
 import SimpleSelect from './Atomic/SimpleSelect';
-import { img_models } from '../classes/GoogleAI';
 import TaskContainer from './TaskContainer';
 import TabsContainer from './TabsContainer';
 import { MediaFolderGallery } from './MediaFolderGallery';
 import { Kling_GenerateVideo } from './Kling/Kling_GenerateVideo';
 import { Kling_MotionControl } from './Kling/Kling_MotionControl';
 import { Google_StylizeImageNode } from './GoogleNodes/Google_StylizeImageNode';
+import { Google_GenerateImageNode } from './GoogleNodes/Google_GenerateImageNode';
 
 interface Props {
   shot: Shot;
@@ -65,29 +62,15 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
 
 
                 <Google_StylizeImageNode shot={shot}/>
-
-                {/*GENERATE Image*/}
-                <div className="mb-0">
-                  <div className="btn-group mb-2" role="group">
-                    {/**Button */}
-                    <button className="btn btn-sm btn-outline-success" onClick={async () => { shot.GenerateImage(); }}> Generate Image </button>
-                    {/**Model Selector */}
-                    <SimpleSelect
-                      value={shot.scene.project.workflows.generate_shot_image.model}
-                      options={img_models}
-                      onChange={(val) => { shot.scene.project.updateWorkflow("generate_shot_image", "model", val); }}
-                    />
-                    {/**Loading Spinner */}
-                    <LoadingSpinner isLoading={shot.is_generating} asButton />
-                  </div>
-                </div>
+                <Google_GenerateImageNode shot={shot}/>
 
 
-                <EditableJsonTextField localJson={shot.shotJson} field="prompt" fitHeight />
+                {/** 
                 <EditableJsonTextField localJson={shot.shotJson} field="video_prompt" fitHeight />
                 <EditableJsonTextField localJson={shot.shotJson} field="camera" fitHeight />
                 <EditableJsonTextField localJson={shot.shotJson} field="action_description" fitHeight />
                 <TagsToggleList shot={shot} />
+                */}
 
                 <MediaFolderGallery mediaFolder={shot.MediaFolder_results}></MediaFolderGallery>
 
