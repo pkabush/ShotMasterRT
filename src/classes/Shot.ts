@@ -270,7 +270,7 @@ export class Shot {
 
     // Add Reference image
     const base64Obj = await this.ref_frame.getBase64(); // uses cached Base64 if available
-    images.push({ rawBase64: base64Obj.rawBase64, mime: base64Obj.mime, description: "Reference Image" });
+    images.push({ rawBase64: base64Obj.rawBase64, mime: base64Obj.mime, description: "Base Image" });
 
     for (const art of this.scene.getTags()) {
       if (skipped.includes(art.path)) continue; // skip this tag
