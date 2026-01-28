@@ -249,10 +249,6 @@ export class Project {
         secretKey: this.userSettingsDB.data.api_keys.Kling_Secret_Key
       }
     }
-
-
-
-
   }
 
   async createScene(sceneName: string) {
@@ -321,9 +317,9 @@ export class Project {
     return this.projinfo?.data.workflows;
   }
 
-
   updateWorkflow(workflow: string, key: string, value: string) {
     runInAction(() => {
+      if (!this.workflows[workflow]) { this.workflows[workflow] = {}; }
       this.workflows[workflow][key] = value;
       this.projinfo?.save();
     })

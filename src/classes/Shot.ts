@@ -22,7 +22,7 @@ export class Shot {
 
   // Processes
   is_submitting_video = false;
-  is_generating = false;   
+  is_generating = false;         
 
   // MediaFolders
   MediaFolder_results: MediaFolder | null = null;
@@ -49,7 +49,9 @@ export class Shot {
   get outVideo(): LocalVideo | null {
       return this.MediaFolder_genVideo!.getNamedMedia("picked") as LocalVideo;    
   }
-
+  get ref_frame(): LocalImage | null {
+      return this.MediaFolder_results!.getNamedMedia("ref_frame") as LocalImage;    
+  }
 
 
 
@@ -59,7 +61,7 @@ export class Shot {
 
       // Load Media Folders
       this.MediaFolder_results = new MediaFolder(this.folder, "results", this.path,this.shotJson,this);
-      this.MediaFolder_results.tags = ["start_frame","end_frame"];
+      this.MediaFolder_results.tags = ["start_frame","end_frame","ref_frame"];
       await this.MediaFolder_results.load();   
 
 
@@ -253,6 +255,48 @@ export class Shot {
       });
     }
   }
+
+  async StylizeImage() {
+    if (!this.ref_frame) {
+      console.error("No Reference Frame");
+      return;
+    }
+
+    runInAction(() => { this.is_generating = true;});
+
+    // add input images, skipping any skipped tags
+    const skipped = this.getSkippedTags();
+    const images: { rawBase64: string; mime: string; description: string }[] = [];
+
+    // Add Reference image
+    const base64Obj = await this.ref_frame.getBase64(); // uses cached Base64 if available
+    images.push({ rawBase64: base64Obj.rawBase64, mime: base64Obj.mime, description: "Reference Image" });
+
+    for (const art of this.scene.getTags()) {
+      if (skipped.includes(art.path)) continue; // skip this tag
+      try {
+        const base64Obj = await art.image.getBase64(); // uses cached Base64 if available
+        images.push({ rawBase64: base64Obj.rawBase64, mime: base64Obj.mime, description: art.path });
+      } catch (err) {
+        console.warn("Failed to load tag image:", art.path, err);
+      }
+    }
+    let prompt = (this.scene.project.workflows.stylize_image_google.prompt || "") + (this.shotJson?.data.stylize_prompt || "");
+
+    try {
+      const result = await GoogleAI.img2img(prompt || "", this.scene.project.workflows.stylize_image_google.model, images);
+      const localImage: LocalImage | null = await GoogleAI.saveResultImage(result, this.MediaFolder_results?.folder as FileSystemDirectoryHandle);
+      if (localImage) this.MediaFolder_results?.loadFile(localImage.handle);
+    } catch (err) {
+      console.error("GenerateImage failed:", err);
+    } finally {
+      runInAction(() => {
+        this.is_generating = false; // start generating
+      });
+    }
+  }
+
+
 
   async saveGoogleResultImage(result: any, select: boolean = false) {
     const localImage: LocalImage | null = await GoogleAI.saveResultImage(result, this.MediaFolder_results?.folder as FileSystemDirectoryHandle);

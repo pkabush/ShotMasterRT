@@ -14,6 +14,7 @@ import TabsContainer from './TabsContainer';
 import { MediaFolderGallery } from './MediaFolderGallery';
 import { Kling_GenerateVideo } from './Kling/Kling_GenerateVideo';
 import { Kling_MotionControl } from './Kling/Kling_MotionControl';
+import { Google_StylizeImageNode } from './GoogleNodes/Google_StylizeImageNode';
 
 interface Props {
   shot: Shot;
@@ -63,6 +64,7 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
               <div className="card-body">
 
 
+                <Google_StylizeImageNode shot={shot}/>
 
                 {/*GENERATE Image*/}
                 <div className="mb-0">
