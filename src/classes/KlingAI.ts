@@ -86,8 +86,13 @@ export class KlingAI {
         v2_1: "kling-v2-1",
         v2_1m: "kling-v2-1-master",
         v2_5: "kling-v2-5-turbo",
-        v2_6: "kling-v2-6"
-      }
+        v2_6: "kling-v2-6",
+        vo1: "kling-video-o1",
+      },
+      sound: {
+        on: "on",
+        off: "off"
+      },
     },
     motion_control: {
       mode: {

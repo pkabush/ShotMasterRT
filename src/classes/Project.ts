@@ -93,6 +93,7 @@ const default_projinfo = {
       model: KlingAI.options.img2video.model.v2_6,
       mode: KlingAI.options.img2video.mode.std,
       duration: KlingAI.options.img2video.duration.five,
+      sound:KlingAI.options.img2video.sound.off,
     },
     kling_motion_control: {
       mode: KlingAI.options.motion_control.mode.std,

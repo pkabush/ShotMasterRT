@@ -22,7 +22,7 @@ export class Shot {
 
   // Processes
   is_submitting_video = false;
-  is_generating = false;         
+  is_generating = false;
 
   // MediaFolders
   MediaFolder_results: MediaFolder | null = null;
@@ -38,19 +38,19 @@ export class Shot {
 
   // GETTERS FOR CONVINIENCE
   get srcImage(): LocalImage | null {
-    return this.MediaFolder_results!.getNamedMedia("start_frame") as LocalImage;    
+    return this.MediaFolder_results!.getNamedMedia("start_frame") as LocalImage;
   }
   get end_frame(): LocalImage | null {
-    return this.MediaFolder_results!.getNamedMedia("end_frame") as LocalImage;    
+    return this.MediaFolder_results!.getNamedMedia("end_frame") as LocalImage;
   }
   get kling_motion_video(): LocalVideo | null {
-      return this.MediaFolder_refVideo!.getNamedMedia("motion_ref") as LocalVideo;    
+    return this.MediaFolder_refVideo!.getNamedMedia("motion_ref") as LocalVideo;
   }
   get outVideo(): LocalVideo | null {
-      return this.MediaFolder_genVideo!.getNamedMedia("picked") as LocalVideo;    
+    return this.MediaFolder_genVideo!.getNamedMedia("picked") as LocalVideo;
   }
   get ref_frame(): LocalImage | null {
-      return this.MediaFolder_results!.getNamedMedia("ref_frame") as LocalImage;    
+    return this.MediaFolder_results!.getNamedMedia("ref_frame") as LocalImage;
   }
 
 
@@ -60,21 +60,21 @@ export class Shot {
       this.shotJson = await LocalJson.create(this.folder, 'shotinfo.json');
 
       // Load Media Folders
-      this.MediaFolder_results = new MediaFolder(this.folder, "results", this.path,this.shotJson,this);
-      this.MediaFolder_results.tags = ["start_frame","end_frame","ref_frame"];
-      await this.MediaFolder_results.load();   
+      this.MediaFolder_results = new MediaFolder(this.folder, "results", this.path, this.shotJson, this);
+      this.MediaFolder_results.tags = ["start_frame", "end_frame", "ref_frame"];
+      await this.MediaFolder_results.load();
 
 
-      this.MediaFolder_genVideo = new MediaFolder(this.folder, "genVideo", this.path,this.shotJson,this);
+      this.MediaFolder_genVideo = new MediaFolder(this.folder, "genVideo", this.path, this.shotJson, this);
       this.MediaFolder_genVideo.tags = ["picked"];
       await this.MediaFolder_genVideo.load();
 
 
-      this.MediaFolder_refVideo = new MediaFolder(this.folder, "refVideo", this.path,this.shotJson,this);
+      this.MediaFolder_refVideo = new MediaFolder(this.folder, "refVideo", this.path, this.shotJson, this);
       this.MediaFolder_refVideo.tags = ["motion_ref"];
       await this.MediaFolder_refVideo.load();
 
-      
+
 
 
       // Load Tasks      
@@ -133,42 +133,72 @@ export class Shot {
     }
   }
 
-
-
   async GenerateVideo() {
     runInAction(() => {
       this.is_submitting_video = true;
     });
 
-    let prompt = this.shotJson?.data.video_prompt || "";
+    const prompt = this.shotJson?.data.video_prompt || "";
 
     try {
       const workflow = this.scene.project.workflows.generate_video_kling;
+      const model = workflow.model;
 
-      // Generate if we have src image
-      if (this.srcImage) {
+      let task_info: { id: string; workflow: string } | null = null;
+
+      // ================= OMNI VIDEO (kling-video-o1) =================
+      if (model === KlingAI.options.omni_video.model.o1) {
+        const image_list = [];
+
+        if (this.srcImage) {
+          image_list.push({
+            image_url: (await this.srcImage.getBase64()).rawBase64,
+            type: KlingAI.options.omni_video.image.type.first_frame,
+          });
+        }
+
+        if (this.end_frame) {
+          image_list.push({
+            image_url: (await this.end_frame.getBase64()).rawBase64,
+            type: KlingAI.options.omni_video.image.type.end_frame,
+          });
+        }
+
+        task_info = await KlingAI.omniVideo({
+          prompt,
+          model: "kling-video-o1",
+          mode: workflow.mode ?? "pro",
+          duration: workflow.duration ?? "5",
+          aspect_ratio: "16:9", // required unless editing video
+          image_list: image_list.length ? image_list : undefined,
+        });
+      }
+
+      // ================= IMG2VIDEO (default Kling models) =================
+      else if (this.srcImage) {
         const img_raw = (await this.srcImage.getBase64()).rawBase64;
         const img_tail_raw = (await this.end_frame?.getBase64())?.rawBase64;
 
-        const task_info = await KlingAI.img2video({
+        task_info = await KlingAI.img2video({
           image: img_raw,
           image_tail: img_tail_raw,
           prompt,
-          model: workflow.model,
+          model,
           mode: workflow.mode,
           duration: workflow.duration,
+          sound: workflow?.sound ?? KlingAI.options.img2video.sound.off
         });
-
-        const task = this.addTask(task_info.id, { provider: ai_providers.KLING, workflow: task_info.workflow })
-        await new Promise(res => setTimeout(res, 100));
-        console.log("created_task");
-
-        task.check_status();
       }
 
-      //const task_info = await KlingAI.txt2video(prompt); 
-      //
+      if (!task_info) return;
 
+      const task = this.addTask(task_info.id, {
+        provider: ai_providers.KLING,
+        workflow: task_info.workflow,
+      });
+
+      await new Promise(res => setTimeout(res, 100));
+      task.check_status();
 
     } catch (err) {
       console.error("Submitting Video Generation Failed:", err);
@@ -189,9 +219,6 @@ export class Shot {
       if (this.srcImage && this.kling_motion_video) {
         const img_raw = (await this.srcImage.getBase64()).rawBase64;
         const video_url = await this.kling_motion_video.getWebUrl();
-
-
-
 
         const task_info = await KlingAI.motionControl({
           image: img_raw,
@@ -262,7 +289,7 @@ export class Shot {
       return;
     }
 
-    runInAction(() => { this.is_generating = true;});
+    runInAction(() => { this.is_generating = true; });
 
     // add input images, skipping any skipped tags
     const skipped = this.getSkippedTags();
@@ -301,8 +328,8 @@ export class Shot {
   async saveGoogleResultImage(result: any, select: boolean = false) {
     const localImage: LocalImage | null = await GoogleAI.saveResultImage(result, this.MediaFolder_results?.folder as FileSystemDirectoryHandle);
     if (localImage) {
-      const media_item = this.MediaFolder_results!.loadFile(localImage.handle);      
-      if (select) this.MediaFolder_results?.setNamedMedia("selected",media_item )
+      const media_item = this.MediaFolder_results!.loadFile(localImage.handle);
+      if (select) this.MediaFolder_results?.setNamedMedia("selected", media_item)
     }
   }
 

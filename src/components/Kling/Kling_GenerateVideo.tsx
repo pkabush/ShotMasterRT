@@ -58,6 +58,15 @@ export const Kling_GenerateVideo: React.FC<Kling_GenerateVideoProps> = observer(
             values={Object.values(KlingAI.options.img2video.duration)}
           />
 
+          {/* Duration Selector */}
+          <WorkflowOptionSelect
+            project={project}
+            workflowName="generate_video_kling"
+            optionName="sound"
+            label="Sound:"
+            values={Object.values(KlingAI.options.img2video.sound)}
+          />
+
           {/* Loading Spinner */}
           <LoadingSpinner isLoading={shot.is_submitting_video} asButton />
         </>
