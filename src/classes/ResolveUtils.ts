@@ -96,14 +96,17 @@ export class FCPXMLBuilder {
     // -----------------------------
     // Add a single asset
     // -----------------------------
-    addAsset(path: string, name: string) {
+    addAsset(path: string, name: string, hasVideo: boolean = false, duration: number = 5) {
         const asset = this.doc.createElement("asset");
-        //asset.setAttribute("format", "r0");
+        asset.setAttribute("format", "r0");
         asset.setAttribute("src", `file://localhost/${path.replace(/\\/g, "/")}`);
-        //asset.setAttribute("start", "0/1s");
+        asset.setAttribute("start", "0/1s");
         asset.setAttribute("name", name);
         //asset.setAttribute("duration", `${durationFrames}/${frame_rate}s`);
-        //asset.setAttribute("hasVideo", "1");
+        if (hasVideo) {
+            asset.setAttribute("duration", `${duration}/${1}s`);
+            asset.setAttribute("hasVideo", "1");
+        }
 
         // Generate a unique ID based on the number of existing assets
         const currentAssets = this.resources.children;
@@ -120,7 +123,7 @@ export class FCPXMLBuilder {
     // -----------------------------
     appendClip(id: string, name: string, durationFrames: number, offsetFrames: number, lane: number = 0) {
         const clipEl = this.doc.createElement("video")
-        clipEl.setAttribute("start", "1/24s");
+        clipEl.setAttribute("start", "0/24s");
         clipEl.setAttribute("ref", id);
         clipEl.setAttribute("name", name);
         clipEl.setAttribute("enabled", "1");
