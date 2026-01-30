@@ -15,17 +15,17 @@ export class MediaFolder {
     pickedMedia: LocalMedia | null = null;
     selectedMedia: LocalMedia | null = null;
     // Named Media Array
-    named_media: Record<string, LocalMedia> = {};
-    tags:string[] = ["picked","start_frame","end_frame","motion_ref"];
-    storage_json : LocalJson|null = null;
-    shot : Shot|null = null;
+    tags: string[] = ["picked", "start_frame", "end_frame", "motion_ref"];
+    multi_tags: string[] = ["ref_frame"];
+    storage_json: LocalJson | null = null;
+    shot: Shot | null = null;
 
     // Callbacks
     onPicked?: (media: LocalMedia | null) => void;
     onSelected?: (media: LocalMedia | null) => void;
-    onNamedMediaUpdate?: () => void;
 
-    constructor(parentFolder: FileSystemDirectoryHandle, folderName: string, basePath: string = "", storage_json : LocalJson | null = null,shot: Shot|null = null) {
+
+    constructor(parentFolder: FileSystemDirectoryHandle, folderName: string, basePath: string = "", storage_json: LocalJson | null = null, shot: Shot | null = null) {
         this.parentFolder = parentFolder;
         this.folderName = folderName;
         this.path = basePath ? `${basePath}/${folderName}` : folderName;
@@ -34,17 +34,18 @@ export class MediaFolder {
         makeAutoObservable(this);
     }
 
-    async load(  ): Promise<void> {
+    async load(): Promise<void> {
         try {
             // Get or create the folder inside parent
             this.folder = await this.parentFolder.getDirectoryHandle(this.folderName, { create: true });
 
             for await (const [, handle] of this.folder.entries()) {
-                if (handle.kind === "file") {
-                    this.loadFile(handle as FileSystemFileHandle);
-                }
+                if (handle.kind === "file") { this.loadFile(handle as FileSystemFileHandle); }
             }
-            if (this.storage_json){this.setNamedMediaJson( this.storage_json.getField("MediaFolder_" + this.folderName ) );}
+            /*
+            if (this.storage_json) {
+                this.setNamedMediaJson(this.storage_json.getField("MediaFolder_" + this.folderName));
+            }*/
 
         } catch (err) {
             console.error(`Failed to load MediaFolder '${this.folderName}':`, err);
@@ -61,22 +62,12 @@ export class MediaFolder {
 
         try {
             await mediaItem.delete();
-            runInAction(() => {
-                this.media = this.media.filter(i => i !== mediaItem);
-
-                // remove from named_media if referenced
-                for (const key of Object.keys(this.named_media)) {
-                    if (this.named_media[key] === mediaItem) {
-                        delete this.named_media[key];
-                    }
-                }
-            });
+            runInAction(() => { this.media = this.media.filter(i => i !== mediaItem); });
         } catch (err) {
             console.error("Failed to delete media:", err);
             alert(`Failed to delete ${mediaItem instanceof LocalImage ? "image" : "video"}.`);
         }
     }
-
 
     setSelectedMedia(media: LocalMedia | null) {
         if (this.selectedMedia === media) return;
@@ -127,16 +118,31 @@ export class MediaFolder {
         let mediaItem: LocalMedia | null = null;
 
         if (name.match(/\.(png|jpe?g|gif|webp)$/i)) {
-            mediaItem = new LocalImage(fileHandle, this.folder!, this.path);
+            mediaItem = new LocalImage(fileHandle, this.folder!, this.path, this.shot);
         } else if (name.match(/\.(mp4|mov|webm|avi)$/i)) {
-            mediaItem = new LocalVideo(fileHandle, this.folder!, this.path);
+            mediaItem = new LocalVideo(fileHandle, this.folder!, this.path, this.shot);
         }
 
         if (!mediaItem) return null;
 
-        runInAction(() => {
-            this.media.push(mediaItem);
-        });
+        // Set Tags from JSON
+        mediaItem.setTags(toJS(this.storage_json?.getField("MF_" + this.folderName + "/" + mediaItem.name)));
+
+        // Set callback so unique tags are removed from other media
+        //@ts-ignore
+        mediaItem.onTagChanged = (currentMedia, tag, added) => {
+            if (added && !this.multi_tags.includes(tag)) {
+                for (const otherMedia of this.media) {
+                    if (otherMedia !== currentMedia && otherMedia.hasTag(tag)) {
+                        otherMedia.removeTag(tag);
+                    }
+                }
+            }
+
+            if (this.storage_json) { this.storage_json.updateField("MF_" + this.folderName, this.mediaJson); }
+        };
+
+        runInAction(() => { this.media.push(mediaItem); });
 
         return mediaItem;
     }
@@ -188,56 +194,29 @@ export class MediaFolder {
         }
     }
 
-    // Named Media Acess
-    setNamedMedia(name: string, media: LocalMedia | null) {
-        runInAction(() => {
-            if (media === null || this.named_media[name] == media) {
-                delete this.named_media[name];
-            } else {
-                this.named_media[name] = media;
-            }
-            this.onNamedMediaUpdate?.();
-            // Save to local Json
-            if (this.storage_json){this.storage_json.updateField( "MediaFolder_" + this.folderName , this.namedMediaJson );}
-        });
-    }
-    getNamedMedia(name: string): LocalMedia | null {
-        return this.named_media[name] ?? null;
-    }
-    getMediaTags(media: LocalMedia): string[] {
-        return Object.entries(this.named_media)
-            .filter(([, value]) => value === media)
-            .map(([key]) => key);
-    }
-    getMediaByFilename(filename: string): LocalMedia | null {
-        return this.media.find(m => m.path.endsWith(filename)) ?? null;
-    }
-
-    get namedMediaJson(): Record<string, string> {
-        const result: Record<string, string> = {};
-        for (const [name, media] of Object.entries(this.named_media)) {
-            result[name] = media.handle.name;
+    //-------------------
+    // Tag Functions 
+    // ------------------
+    get mediaJson(): any {
+        const result: any = {};
+        for (const media of this.media) {
+            if (media.tags.length > 0) result[media.name] = toJS(media.tags);
         }
-        return result;
+        return toJS(result);
     }
 
-    setNamedMediaJson(value: any) {        
-        runInAction(() => {
-            this.named_media = {};
-
-            if (value == null) return;
-
-            for (const [name, filename] of Object.entries(value)) {
-                const media = this.media.find(m => m.handle.name === filename);
-                if (media) {
-                    this.named_media[name] = media;
-                } else {
-                    console.warn(`namedMediaJson: media file '${filename}' not found for tag '${name}'`);
-                }
-            }
-        });
+    getMediaWithTag(tag: string): LocalMedia[] {
+        if (!tag) return [];
+        return this.media.filter(media => media.hasTag(tag));
     }
 
+    getFirstMediaWithTag(tag: string): LocalMedia | null {
+        return this.media.find(media => media.hasTag(tag)) ?? null;
+    }
+
+    hasAnyMediaWithTag(tag: string): boolean {
+        return this.media.some(media => media.hasTag(tag));
+    }
 
 
 }

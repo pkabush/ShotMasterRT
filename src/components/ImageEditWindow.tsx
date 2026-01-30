@@ -4,19 +4,22 @@ import { LocalImage } from "../classes/LocalImage";
 import LoadingButton from "./Atomic/LoadingButton";
 import { GoogleAI } from "../classes/GoogleAI";
 import SimpleSelect from "./Atomic/SimpleSelect";
+import { observer } from "mobx-react-lite";
 
 interface ImageEditWindowProps {
   localImage: LocalImage;
   initialText?: string;
   onImageGenerated?: (result: any) => void;
   onClose?: () => void;
+  reference_images?: LocalImage[];
 }
 
-const ImageEditWindow: React.FC<ImageEditWindowProps> = ({
+const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
   localImage,
-  initialText = "",
+  initialText = "Redraw the source_image using reference images ref1,ref2,ref3.",
   onImageGenerated,
   onClose,
+  reference_images = [],
 }) => {
   const [url, setUrl] = useState<string | null>(null);
   const [text, setText] = useState(initialText);
@@ -38,9 +41,21 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = ({
     try {
       const base64Obj = await localImage.getBase64(); // uses cached Base64 if available
 
+      const refs = await Promise.all(reference_images.map(img => img.getBase64()));
+
       const result = await GoogleAI.img2img(text || "", model, [
-        { rawBase64: base64Obj.rawBase64, mime: base64Obj.mime, description: "" }
+        {
+          rawBase64: base64Obj.rawBase64,
+          mime: base64Obj.mime,
+          description: "source_image",
+        },
+        ...refs.map((r, index) => ({
+          rawBase64: r.rawBase64,
+          mime: r.mime,
+          description: `ref${index + 1}`,
+        })),
       ]);
+
       if (onImageGenerated) onImageGenerated(result);
     } catch (err) {
       console.error("GenerateImage failed:", err);
@@ -100,10 +115,42 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = ({
             </div>
 
             <div className="flex-grow-1 d-flex flex-column">
+
+              {/**
+              <MediaFolderGallery mediaFolder={localImage.shot?.MediaFolder_results || null } showEditWindow={false} itemHeight={200} label="Reference Images"/>              
+              */}
+
+              {/**REFERENCE IMAGES */}
+              {reference_images.length > 0 && (
+                <div className="d-flex gap-2 mb-2 flex-wrap">
+                  {reference_images.map((img, i) => {
+                    if (!img.urlObject) {
+                      img.getUrlObject();
+                      return null;
+                    }
+
+                    return (
+                      <img
+                        key={i}
+                        src={img.urlObject}
+                        alt={`ref-${i}`}
+                        style={{
+                          width: 100,
+                          height: 100,
+                          objectFit: "cover",
+                          borderRadius: 4,
+                          border: "1px solid #444",
+                        }}
+                      />
+                    );
+                  })}
+                </div>
+              )}
+
               <textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                placeholder="Edit This Image:"
+                placeholder="Redraw the source_image using reference images ref1,ref2,ref3."
                 style={{
                   flexGrow: 1,
                   resize: "none",
@@ -122,7 +169,7 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = ({
               <LoadingButton
                 onClick={handleGenerate}
                 label="Generate"
-                is_loading={generating}                                
+                is_loading={generating}
               />
 
             </div>
@@ -131,6 +178,6 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = ({
       </Group>
     </div>
   );
-};
+});
 
 export default ImageEditWindow;

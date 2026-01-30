@@ -20,10 +20,11 @@ interface MediaFolderGalleryProps {
     mediaFolder: MediaFolder | null;
     label?: string;
     itemHeight?: number;
+    showEditWindow?: boolean;
 }
 
 export const MediaFolderGallery: React.FC<MediaFolderGalleryProps> = observer(
-    ({ mediaFolder, label = null, itemHeight = 300 }) => {
+    ({ mediaFolder, label = null, itemHeight = 300, showEditWindow = true }) => {
         if (!mediaFolder || !mediaFolder.folder) return null;
         label = label || mediaFolder.folderName;
 
@@ -56,59 +57,60 @@ export const MediaFolderGallery: React.FC<MediaFolderGalleryProps> = observer(
 
                     }
                     editWindow={
-                        <     >
-                            {/**IMAGE EDIT*/}
-                            {
-                                mediaFolder.selectedMedia instanceof LocalImage ? (
-                                    <ImageEditWindow
-                                        localImage={mediaFolder.selectedMedia}
-                                        initialText="Notes for this image"
-                                        onImageGenerated={async (result) => {
-                                            console.log("Image generated:", result);
-                                            const localImage: LocalImage | null = await GoogleAI.saveResultImage(result, mediaFolder.folder as FileSystemDirectoryHandle);
-                                            if (localImage) mediaFolder.loadFile(localImage?.handle);
-                                        }}
-                                        onClose={() => mediaFolder.setSelectedMedia(null)}
-                                    />
-                                ) : null
-                            }
-                            {/* VIDEO EDIT*/}
-                            {
-                                mediaFolder.selectedMedia instanceof LocalVideo ? (
-                                    <>
-                                        <VideoEditWindow
-                                            localVideo={mediaFolder.selectedMedia as LocalVideo} // must be LocalVideo
-                                            initialText="Notes for this video"
-                                            onVideoTaskCreated={async (task_info) => {
-                                                console.log("Video task created:", task_info);
-
-                                                const shot = mediaFolder.shot as Shot;
-                                                const task = shot.addTask(task_info.id, { provider: ai_providers.KLING, workflow: task_info.workflow })
-                                                await new Promise(res => setTimeout(res, 100));
-                                                console.log("created_task");
-
-                                                task.check_status();
-                                                /*
-                                                if (result?.url) {
-                                                    try {
-                                                        const savedVideo: LocalVideo = await LocalVideo.fromUrl(
-                                                            result.url,
-                                                            mediaFolder.folder as FileSystemDirectoryHandle
-                                                        );
-                                                        mediaFolder.loadFile(savedVideo.handle);
-                                                    } catch (err) {
-                                                        console.error("Failed to save generated video:", err);
-                                                    }
-                                                }
-                                                */
+                        showEditWindow ? (
+                            <     >
+                                {/**IMAGE EDIT*/}
+                                {
+                                    mediaFolder.selectedMedia instanceof LocalImage ? (
+                                        <ImageEditWindow
+                                            localImage={mediaFolder.selectedMedia}
+                                            reference_images={mediaFolder.getMediaWithTag("ref_frame") as LocalImage[]}
+                                            onImageGenerated={async (result) => {
+                                                console.log("Image generated:", result);
+                                                const localImage: LocalImage | null = await GoogleAI.saveResultImage(result, mediaFolder.folder as FileSystemDirectoryHandle);
+                                                if (localImage) mediaFolder.loadFile(localImage?.handle);
                                             }}
                                             onClose={() => mediaFolder.setSelectedMedia(null)}
                                         />
-                                    </>
-                                ) : null
-                            }
+                                    ) : null
+                                }
+                                {/* VIDEO EDIT*/}
+                                {
+                                    mediaFolder.selectedMedia instanceof LocalVideo ? (
+                                        <>
+                                            <VideoEditWindow
+                                                localVideo={mediaFolder.selectedMedia as LocalVideo} // must be LocalVideo
+                                                initialText="Notes for this video"
+                                                onVideoTaskCreated={async (task_info) => {
+                                                    console.log("Video task created:", task_info);
 
-                        </>
+                                                    const shot = mediaFolder.shot as Shot;
+                                                    const task = shot.addTask(task_info.id, { provider: ai_providers.KLING, workflow: task_info.workflow })
+                                                    await new Promise(res => setTimeout(res, 100));
+                                                    console.log("created_task");
+
+                                                    task.check_status();
+                                                    /*
+                                                    if (result?.url) {
+                                                        try {
+                                                            const savedVideo: LocalVideo = await LocalVideo.fromUrl(
+                                                                result.url,
+                                                                mediaFolder.folder as FileSystemDirectoryHandle
+                                                            );
+                                                            mediaFolder.loadFile(savedVideo.handle);
+                                                        } catch (err) {
+                                                            console.error("Failed to save generated video:", err);
+                                                        }
+                                                    }
+                                                    */
+                                                }}
+                                                onClose={() => mediaFolder.setSelectedMedia(null)}
+                                            />
+                                        </>
+                                    ) : null
+                                }
+
+                            </>) : null
                     }
                 >
                     {mediaFolder.media.map((mediaItem) => (
@@ -117,9 +119,9 @@ export const MediaFolderGallery: React.FC<MediaFolderGalleryProps> = observer(
                             mediaItem={mediaItem}
                             height={itemHeight}
                             onSelectMedia={(media: LocalMedia) => { mediaFolder.setSelectedMedia(media) }}
-                            isSelected={mediaFolder.getMediaTags(mediaItem).length > 0}
+                            isSelected={mediaItem.hasTag("start_frame")}
                             isPicked={mediaFolder.selectedMedia == mediaItem}
-                            label={mediaFolder.getMediaTags(mediaItem).join(",")}
+                            //label={mediaFolder.getMediaTags(mediaItem).join(",")}
                             topRightExtra={
                                 <>
                                     <SimpleButton
@@ -130,11 +132,21 @@ export const MediaFolderGallery: React.FC<MediaFolderGalleryProps> = observer(
                                         }}
                                     />
 
+                                    <SimpleButton
+                                        label="LOG"
+                                        className="btn-outline-secondary btn-sm"
+                                        onClick={async () => {
+                                            mediaItem.log();
+                                        }}
+                                    />
+
+
                                     <SimpleDropdown
                                         items={mediaFolder.tags}
                                         currentItem={"TAG"}
                                         onPicked={(val) => {
-                                            mediaFolder.setNamedMedia(val, mediaItem)
+                                            //mediaFolder.setNamedMedia(val, mediaItem)
+                                            mediaItem.toggleTag(val);
                                         }}
                                     />
 

@@ -100,8 +100,6 @@ const default_projinfo = {
       character_orientation: KlingAI.options.motion_control.character_orientation.image,
       keep_original_sound: KlingAI.options.motion_control.keep_original_sound.no,
     }
-
-
   },
 
 }

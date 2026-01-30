@@ -38,19 +38,19 @@ export class Shot {
 
   // GETTERS FOR CONVINIENCE
   get srcImage(): LocalImage | null {
-    return this.MediaFolder_results!.getNamedMedia("start_frame") as LocalImage;
+    return this.MediaFolder_results!.getFirstMediaWithTag("start_frame") as LocalImage;
   }
   get end_frame(): LocalImage | null {
-    return this.MediaFolder_results!.getNamedMedia("end_frame") as LocalImage;
+    return this.MediaFolder_results!.getFirstMediaWithTag("end_frame") as LocalImage;
   }
   get kling_motion_video(): LocalVideo | null {
-    return this.MediaFolder_refVideo!.getNamedMedia("motion_ref") as LocalVideo;
+    return this.MediaFolder_refVideo!.getFirstMediaWithTag("motion_ref") as LocalVideo;
   }
   get outVideo(): LocalVideo | null {
-    return this.MediaFolder_genVideo!.getNamedMedia("picked") as LocalVideo;
+    return this.MediaFolder_genVideo!.getFirstMediaWithTag("picked") as LocalVideo;
   }
-  get ref_frame(): LocalImage | null {
-    return this.MediaFolder_results!.getNamedMedia("ref_frame") as LocalImage;
+  get unreal_frame(): LocalImage | null {
+    return this.MediaFolder_results!.getFirstMediaWithTag("unreal_frame") as LocalImage;
   }
 
 
@@ -61,7 +61,7 @@ export class Shot {
 
       // Load Media Folders
       this.MediaFolder_results = new MediaFolder(this.folder, "results", this.path, this.shotJson, this);
-      this.MediaFolder_results.tags = ["start_frame", "end_frame", "ref_frame"];
+      this.MediaFolder_results.tags = ["start_frame", "end_frame", "ref_frame","unreal_frame"];
       await this.MediaFolder_results.load();
 
 
@@ -284,7 +284,7 @@ export class Shot {
   }
 
   async StylizeImage() {
-    if (!this.ref_frame) {
+    if (!this.unreal_frame) {
       console.error("No Reference Frame");
       return;
     }
@@ -296,7 +296,7 @@ export class Shot {
     const images: { rawBase64: string; mime: string; description: string }[] = [];
 
     // Add Reference image
-    const base64Obj = await this.ref_frame.getBase64(); // uses cached Base64 if available
+    const base64Obj = await this.unreal_frame.getBase64(); // uses cached Base64 if available
     images.push({ rawBase64: base64Obj.rawBase64, mime: base64Obj.mime, description: "Base Image" });
 
     for (const art of this.scene.getTags()) {
@@ -329,7 +329,7 @@ export class Shot {
     const localImage: LocalImage | null = await GoogleAI.saveResultImage(result, this.MediaFolder_results?.folder as FileSystemDirectoryHandle);
     if (localImage) {
       const media_item = this.MediaFolder_results!.loadFile(localImage.handle);
-      if (select) this.MediaFolder_results?.setNamedMedia("selected", media_item)
+      if (select) this.MediaFolder_results?.setSelectedMedia(media_item);
     }
   }
 

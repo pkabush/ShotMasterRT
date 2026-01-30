@@ -50,7 +50,7 @@ export const Google_StylizeImageNode: React.FC<Google_StylizeImageNodeProps> = o
             content={
                 <>
                     {/* Preview original input image */}
-                    <MediaGalleryPreview mediaItem={shot.ref_frame as LocalMedia} height={300} label="REFERENCE" />
+                    <MediaGalleryPreview mediaItem={shot.unreal_frame as LocalMedia} height={300} label="REFERENCE" />
 
                     <EditableJsonTextField localJson={project.projinfo} field="workflows/stylize_image_google/prompt" fitHeight />
 

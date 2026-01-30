@@ -76,7 +76,7 @@ export const Kling_GenerateVideo: React.FC<Kling_GenerateVideoProps> = observer(
           <EditableJsonTextField localJson={shot.shotJson} field="video_prompt" fitHeight />
           <MediaGalleryPreview mediaItem={shot.srcImage as LocalMedia} height={400} />
           <MediaGalleryPreview
-            mediaItem={shot.MediaFolder_results?.getNamedMedia("end_frame") as LocalMedia}
+            mediaItem={shot.end_frame as LocalMedia}
             height={400}
           />
 
