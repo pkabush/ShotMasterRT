@@ -4,7 +4,7 @@
 
 type MediaType = "video" | "image";
 
-const frame_rate = 24;
+const frame_rate = 30;
 
 export interface MediaItem {
     item: FileSystemFileHandle;

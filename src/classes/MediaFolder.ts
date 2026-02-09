@@ -5,6 +5,7 @@ import { LocalVideo } from './LocalVideo';
 import type { LocalMedia } from "./interfaces/LocalMedia";
 import type { LocalJson } from "./LocalJson";
 import type { Shot } from "./Shot";
+import { LocalAudio } from "./LocalAudio";
 
 export class MediaFolder {
     parentFolder: FileSystemDirectoryHandle;
@@ -121,7 +122,11 @@ export class MediaFolder {
             mediaItem = new LocalImage(fileHandle, this.folder!, this.path, this.shot);
         } else if (name.match(/\.(mp4|mov|webm|avi)$/i)) {
             mediaItem = new LocalVideo(fileHandle, this.folder!, this.path, this.shot);
+        } else if (name.match(/\.(mp3|wav|m4a)$/i)) {
+            mediaItem = new LocalAudio(fileHandle, this.folder!, this.path, this.shot);
         }
+
+
 
         if (!mediaItem) return null;
 

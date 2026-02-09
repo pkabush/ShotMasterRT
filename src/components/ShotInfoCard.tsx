@@ -12,6 +12,7 @@ import { Kling_GenerateVideo } from './Kling/Kling_GenerateVideo';
 import { Kling_MotionControl } from './Kling/Kling_MotionControl';
 import { Google_StylizeImageNode } from './GoogleNodes/Google_StylizeImageNode';
 import { Google_GenerateImageNode } from './GoogleNodes/Google_GenerateImageNode';
+import { Kling_LipSync } from './Kling/Kling_LipSync';
 
 interface Props {
   shot: Shot;
@@ -61,8 +62,8 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
               <div className="card-body">
 
 
-                <Google_StylizeImageNode shot={shot}/>
-                <Google_GenerateImageNode shot={shot}/>
+                <Google_StylizeImageNode shot={shot} />
+                <Google_GenerateImageNode shot={shot} />
 
 
                 {/** 
@@ -92,6 +93,13 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
 
           </>
           ,
+          LipSync: <>
+            <Kling_LipSync shot={shot}/>
+
+          </>
+          ,
+
+
           "Output": <>
             <MediaFolderGallery mediaFolder={shot.MediaFolder_genVideo}></MediaFolderGallery>
             <MediaFolderGallery mediaFolder={shot.MediaFolder_results}></MediaFolderGallery>

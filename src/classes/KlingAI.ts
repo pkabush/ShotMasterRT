@@ -382,4 +382,61 @@ export class KlingAI {
       workflow: "omni-video",
     };
   }
+
+  // ================= Identyfi Face =================
+  public static async identifyFace(options: {
+    video_id?: string;
+    video_url?: string;
+  }): Promise<any> {
+    const { video_id, video_url } = options;
+
+    if ((!video_id && !video_url) || (video_id && video_url)) {
+      throw new Error("You must provide either video_id or video_url, but not both.");
+    }
+
+    const payload: any = {};
+    if (video_id) payload.video_id = video_id;
+    if (video_url) payload.video_url = video_url;
+
+    const targetUrl = "https://api-singapore.klingai.com/v1/videos/identify-face";
+    const data = await this.postToKling(targetUrl, payload);
+
+    return data as any;
+  }
+
+  public static async lipSync(options: {
+    session_id: string;              // From IdentifyFace
+    face_choose: LipSyncFaceChoose[]; // Currently only one face supported
+    callback_url?: string;
+    external_task_id?: string;
+  }): Promise<any> {
+    const { session_id, face_choose, callback_url, external_task_id } = options;
+
+    if (!session_id) throw new Error("session_id is required for LipSync");
+    if (!face_choose || face_choose.length === 0) throw new Error("face_choose must include at least one face");
+
+    const payload: any = { session_id, face_choose };
+    if (callback_url) payload.callback_url = callback_url;
+    if (external_task_id) payload.external_task_id = external_task_id;
+
+    const targetUrl = "https://api-singapore.klingai.com/v1/videos/advanced-lip-sync";
+    const data = await this.postToKling(targetUrl, payload);
+
+    return {
+      id: data.data.task_id,
+      workflow: "advanced-lip-sync",
+    };
+  }
+
+}
+
+export interface LipSyncFaceChoose {
+  face_id: string;          // Required: face ID from IdentifyFace
+  audio_id?: string;        // Optional: TTS-generated audio ID
+  sound_file?: string;      // Optional: Base64 or accessible URL audio
+  sound_start_time: number; // Required: start time in ms
+  sound_end_time: number;   // Required: end time in ms
+  sound_insert_time: number; // Required: insert time in ms
+  sound_volume?: number;    // Optional, default 1, range [0,2]
+  original_audio_volume?: number; // Optional, default 1, range [0,2]
 }

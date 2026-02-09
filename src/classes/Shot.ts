@@ -4,12 +4,13 @@ import { LocalJson } from './LocalJson';
 import { LocalImage } from './LocalImage';
 import { makeAutoObservable, runInAction, toJS } from "mobx";
 import { GoogleAI } from './GoogleAI';
-import { KlingAI } from './KlingAI';
+import { KlingAI, type LipSyncFaceChoose } from './KlingAI';
 import { Task } from './Task';
 //import { Art } from "./Art";
 import { ai_providers } from './AI_providers';
 import { LocalVideo } from './LocalVideo';
 import { MediaFolder } from './MediaFolder';
+import type { LocalAudio } from './LocalAudio';
 
 
 
@@ -28,6 +29,7 @@ export class Shot {
   MediaFolder_results: MediaFolder | null = null;
   MediaFolder_genVideo: MediaFolder | null = null;
   MediaFolder_refVideo: MediaFolder | null = null;
+  MediaFolder_Audio: MediaFolder | null = null;
 
   constructor(folder: FileSystemDirectoryHandle, scene: Scene) {
     this.folder = folder;
@@ -52,8 +54,10 @@ export class Shot {
   get unreal_frame(): LocalImage | null {
     return this.MediaFolder_results!.getFirstMediaWithTag("unreal_frame") as LocalImage;
   }
-
-
+  get kling_face_id_data(): any | null {
+    if (!this.outVideo) return null;
+    return this.shotJson?.getField("KlingFaceID/" + this.outVideo.name);
+  }
 
   async load(): Promise<void> {
     try {
@@ -61,7 +65,7 @@ export class Shot {
 
       // Load Media Folders
       this.MediaFolder_results = new MediaFolder(this.folder, "results", this.path, this.shotJson, this);
-      this.MediaFolder_results.tags = ["start_frame", "end_frame", "ref_frame","unreal_frame"];
+      this.MediaFolder_results.tags = ["start_frame", "end_frame", "ref_frame", "unreal_frame"];
       await this.MediaFolder_results.load();
 
 
@@ -74,7 +78,9 @@ export class Shot {
       this.MediaFolder_refVideo.tags = ["motion_ref"];
       await this.MediaFolder_refVideo.load();
 
-
+      this.MediaFolder_Audio = new MediaFolder(this.folder, "audio", this.path, this.shotJson, this);
+      this.MediaFolder_Audio.tags = ["ID-0", "ID-1", "ID-2"];
+      await this.MediaFolder_Audio.load();
 
 
       // Load Tasks      
@@ -208,6 +214,78 @@ export class Shot {
       });
     }
   }
+
+  async Kling_IdentyfiFace() {
+    runInAction(() => { this.is_submitting_video = true; });
+    try {
+      console.log("Identyfying Video Face");
+      if (this.outVideo) {
+        const video_url = await this.outVideo.getWebUrl();
+        const res = await KlingAI.identifyFace({ video_url });
+        console.log("FACE ID res:", res);
+
+        if (res.message == "SUCCEED") {
+          this.shotJson?.updateField("KlingFaceID/" + this.outVideo.name, res.data);
+        }
+
+
+      }
+    } catch (err) {
+      console.error("Face Identification Failed:", err);
+    } finally {
+      runInAction(() => { this.is_submitting_video = false; });
+    }
+  }
+
+  async Kling_LypSync() {
+    runInAction(() => { this.is_submitting_video = true; });
+    try {
+      const face_choose: LipSyncFaceChoose[] = [];
+
+      // Loop sequentially to await async calls
+      for (const tag of ["ID-0", "ID-1", "ID-2"]) {
+        const audio = this.MediaFolder_Audio!.getFirstMediaWithTag(tag) as LocalAudio | null;
+        if (!audio) continue;
+
+        const objectUrl = await audio.getBase64(); // or await audio.getBase64()
+        if (!objectUrl) continue;
+
+        const duration = 5000; // replace with actual audio duration if available
+
+        face_choose.push({
+          face_id: tag.replace("ID-",""),           // adjust if face_id differs
+          sound_file: objectUrl.rawBase64,
+          sound_start_time: 0,
+          sound_end_time: duration,
+          sound_insert_time: 0,
+          sound_volume: 1,
+          original_audio_volume: 1,
+        });
+      }
+
+      if (face_choose.length === 0) {
+        console.warn("No audios found for lip-sync");
+        return;
+      }
+
+      const task_info = await KlingAI.lipSync({
+        session_id: this.kling_face_id_data.session_id,
+        face_choose
+      });
+
+      const task = this.addTask(task_info.id, { provider: ai_providers.KLING, workflow: task_info.workflow });
+      await new Promise(res => setTimeout(res, 100));
+      task.check_status();
+
+      await new Promise(res => setTimeout(res, 2000));
+
+    } catch (err) {
+      console.error("Submitting Lip Sync Failed:", err);
+    } finally {
+      runInAction(() => { this.is_submitting_video = false; });
+    }
+  }
+
 
   async GenerateVideo_KlingMotionControl() {
     runInAction(() => { this.is_submitting_video = true; });
