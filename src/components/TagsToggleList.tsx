@@ -2,6 +2,7 @@ import React from "react";
 import { observer } from "mobx-react-lite";
 import CollapsibleContainer from "./Atomic/CollapsibleContainer";
 import { Shot } from "../classes/Shot";
+import MediaGalleryImage from "./MediaGalleryImage";
 
 interface TagsToggleListProps {
   shot: Shot;
@@ -26,11 +27,13 @@ const TagsToggleList: React.FC<TagsToggleListProps> = observer(({ shot }) => {
 
             const isActive = !shot.getSkippedTags().includes(art.path);
 
+
             return (
               <li
                 key={index}
                 className="list-group-item p-0 border-0 d-flex align-items-center gap-2"
               >
+                <MediaGalleryImage localImage={art.image} height={25} zoomOnHover={true}/>
                 <input
                   type="checkbox"
                   className="form-check-input m-0"
@@ -40,6 +43,8 @@ const TagsToggleList: React.FC<TagsToggleListProps> = observer(({ shot }) => {
                   }}
                 />
                 <span className={!isActive ? "text-muted" : ""}>{art.path}</span>
+
+
               </li>
             );
           })}

@@ -151,3 +151,10 @@ export class GoogleAI {
     }
   }
 }
+
+
+export type AIImageInput = {
+  rawBase64: string;
+  mime: string;
+  description: string;
+};

@@ -8,6 +8,7 @@ interface Props {
   onClick?: () => void;
   isSelected?: boolean;
   isPicked?: boolean;
+  zoomOnHover?: boolean;
 }
 
 const MediaGalleryImage: React.FC<Props> = ({
@@ -16,10 +17,12 @@ const MediaGalleryImage: React.FC<Props> = ({
   topRightExtra,
   onClick,
   isSelected = false,
-  isPicked = false
+  isPicked = false,
+  zoomOnHover = false,
 }) => {
   const [url, setUrl] = useState<string | null>(null);
   const [hovered, setHovered] = useState(false);
+
 
   useEffect(() => {
     let mounted = true;
@@ -57,7 +60,7 @@ const MediaGalleryImage: React.FC<Props> = ({
       style={{
         height: `${height}px`, cursor: 'pointer',
         outline: isPicked ? '3px solid #085db7' : 'none',
-        outlineOffset: -3, 
+        outlineOffset: -3,
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
@@ -108,6 +111,22 @@ const MediaGalleryImage: React.FC<Props> = ({
           {topRightExtra}
         </div>
       )}
+
+      {hovered && zoomOnHover && (
+        <img
+          src={url}
+          style={{
+            position: 'absolute',
+            top: '100%',
+            left: 0,
+            width: 400,
+            zIndex: 50,
+            borderRadius: 6,
+            boxShadow: '0 10px 30px rgba(0,0,0,0.4)',
+          }}
+        />
+      )}
+
     </div>
   );
 };
