@@ -237,7 +237,6 @@ export class Shot {
     }
   }
 
-
   async Kling_LypSync() {
     runInAction(() => { this.is_submitting_video = true; });
     try {
@@ -251,13 +250,13 @@ export class Shot {
         const objectUrl = await audio.getBase64(); // or await audio.getBase64()
         if (!objectUrl) continue;
 
-        const duration = 5000; // replace with actual audio duration if available
+        const duration = await audio.getDuration(); // replace with actual audio duration if available
 
         face_choose.push({
           face_id: tag.replace("ID-", ""),           // adjust if face_id differs
           sound_file: objectUrl.rawBase64,
           sound_start_time: 0,
-          sound_end_time: duration,
+          sound_end_time: Math.min(duration * 1000,5000),
           sound_insert_time: 0,
           sound_volume: 1,
           original_audio_volume: 1,

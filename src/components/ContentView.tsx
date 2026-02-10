@@ -7,6 +7,7 @@ import { ArtbookView } from "./ArtbookView";
 import TabsContainer from "./TabsContainer";
 import SceneInfoCard from "./SceneInfoCard";
 import ShotsInfoStrip from "./ShotsInfoStrip";
+import TaskView from "./TaskView";
 
 interface ContentViewProps {
   project: Project;
@@ -39,6 +40,10 @@ export const ContentView: React.FC<ContentViewProps> = observer(({ project }) =>
           />
         </div>
       );
+    case "taskview":
+      return  <TaskView project={project} />;
+
+
     default:
       return null;
   }

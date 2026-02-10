@@ -95,6 +95,7 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
           ,
           LipSync: <>
             <Kling_LipSync shot={shot}/>
+            <TaskContainer shot={shot} />
 
           </>
           ,

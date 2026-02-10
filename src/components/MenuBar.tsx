@@ -53,6 +53,10 @@ export const MenuBar: React.FC<MenuBarProps> = ({ onOpenFolder, recentFolders, o
             title="Artbook"
             onClick={() => project.setView({ type: "artbook" })}
           />
+          <MenuColumn
+            title="TaskView"
+            onClick={() => project.setView({ type: "taskview" })}
+          />
         </Nav>
       </Container>
     </Navbar>

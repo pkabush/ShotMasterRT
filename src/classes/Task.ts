@@ -38,12 +38,16 @@ export class Task {
         return this.shot.shotJson?.getField(`tasks/${this.id}`);
     }
 
+    get status() {
+        return this.data.status ?? "submitted";        
+    }
+
     finish_checking() {
         runInAction(() => { this.is_checking_status = false; });
         this._status_log = "";
     }
 
-    async check_status(retries: number = 30, delayMs: number = 5000) {
+    async check_status(retries: number = 30, delayMs: number = 15000) {
         if (this.data.provider !== ai_providers.KLING) return;
 
         runInAction(() => { this.is_checking_status = true; this._status_log = "start checking"; });

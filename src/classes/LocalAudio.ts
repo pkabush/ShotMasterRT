@@ -59,6 +59,24 @@ export class LocalAudio extends LocalMedia {
       throw err;
     }
   }
+
+    async getDuration(): Promise<number> {
+    const file = await this.handle.getFile();
+    const objectUrl = URL.createObjectURL(file);
+
+    return await new Promise((resolve, reject) => {
+      const audio = new Audio();
+      audio.src = objectUrl;
+      audio.addEventListener('loadedmetadata', () => {
+        URL.revokeObjectURL(objectUrl);
+        resolve(audio.duration);
+      });
+      audio.addEventListener('error', () => {
+        URL.revokeObjectURL(objectUrl);
+        reject(new Error('Failed to load audio'));
+      });
+    });
+  }
 }
 
 // Utility

@@ -14,7 +14,8 @@ export type ProjectView =
   | { type: "settings" }
   | { type: "script" }
   | { type: "artbook" }
-  | { type: "scene" };
+  | { type: "scene" }
+  | { type: "taskview" };
 
 const default_projinfo = {
   "gpt_model": "gpt-4o-mini",

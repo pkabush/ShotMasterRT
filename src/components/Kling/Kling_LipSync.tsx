@@ -111,6 +111,8 @@ export const Kling_LipSync: React.FC<Kling_LipSyncProps> = observer(({ shot }) =
             {/* Media Folder Galleries */}
             <MediaFolderGallery mediaFolder={shot.MediaFolder_genVideo} label="Generated Videos" />
             <MediaFolderGallery mediaFolder={shot.MediaFolder_Audio} label="Generated Audios" />
+
+            
         </div>
     );
 });

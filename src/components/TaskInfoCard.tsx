@@ -6,6 +6,7 @@ import LoadingSpinner from "./Atomic/LoadingSpinner";
 
 interface Props {
     task: Task;
+    show_path?: boolean;
 }
 
 const statusColors: Record<string, string> = {
@@ -15,9 +16,8 @@ const statusColors: Record<string, string> = {
     failed: "red",
 };
 
-const TaskInfoCard: React.FC<Props> = observer(({ task }) => {
-    const data = task.data;
-    const status = data?.status ?? "submitted";
+const TaskInfoCard: React.FC<Props> = observer(({ task , show_path=false }) => {
+    const status = task.status;
     const color = statusColors[status] ?? "gray";
 
     return (
@@ -33,6 +33,7 @@ const TaskInfoCard: React.FC<Props> = observer(({ task }) => {
                             backgroundColor: color,
                         }}
                     />
+                    {show_path && <span className="text-muted">{task.shot.scene.folder.name +"/"+ task.shot.folder.name  + "/"}</span>}
                     <span className="fw-bold">{task.id}</span>
                     <span className="text-muted">{status}</span>
                 </div>
