@@ -265,7 +265,7 @@ export class Shot {
       }
 
       if (face_choose.length === 0) {
-        console.warn("No audios found for lip-sync!");
+        console.warn("No audios found for lip-sync.");
         return;
       }
 
