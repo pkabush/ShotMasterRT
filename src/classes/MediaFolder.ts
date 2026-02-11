@@ -71,9 +71,11 @@ export class MediaFolder {
     }
 
     setSelectedMedia(media: LocalMedia | null) {
-        if (this.selectedMedia === media) return;
         runInAction(() => {
-            this.selectedMedia = media;
+            if (this.selectedMedia === media)
+                this.selectedMedia = null;
+            else
+                this.selectedMedia = media;
         });
         this.onSelected?.(media);
     }
@@ -223,5 +225,9 @@ export class MediaFolder {
         return this.media.some(media => media.hasTag(tag));
     }
 
+    getMediaByFilename(filename: string): LocalMedia | null {
+        if (!filename) return null;
+        return this.media.find(m => m.name === filename) ?? null;
+    }
 
 }

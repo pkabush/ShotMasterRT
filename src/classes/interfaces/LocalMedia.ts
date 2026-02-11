@@ -36,8 +36,8 @@ export class LocalMedia {
     });
   }
 
-  get name():string{
-      return this.handle.name;
+  get name(): string {
+    return this.handle.name;
   }
 
   // Delete from folder
@@ -122,7 +122,7 @@ export class LocalMedia {
     }
   }
   setTags(tags: string[]) {
-    if(!tags) return;
+    if (!tags) return;
     this.tags = Array.from(new Set(tags.filter(Boolean)));
   }
 
@@ -134,5 +134,17 @@ export class LocalMedia {
     if (!tag) return;
     if (this.hasTag(tag)) { this.removeTag(tag); }
     else { this.addTag(tag); }
+  }
+
+  async openInNewTab() {
+    try {     
+      const url = await this.getUrlObject();
+
+      const tabName = this.path.replace(/[\/\\]/g, "_");
+      window.open(url, tabName, "noopener,noreferrer");
+
+    } catch (err) {
+      console.error("Failed to open media in new tab:", err);
+    }
   }
 }

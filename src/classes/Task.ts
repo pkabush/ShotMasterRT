@@ -3,6 +3,8 @@ import { makeAutoObservable, toJS, runInAction } from "mobx";
 import { Shot } from "./Shot";
 import { ai_providers } from "./AI_providers";
 import { KlingAI } from "./KlingAI";
+import { notificationManager } from "./NotificationManager";
+import type { LocalMedia } from "./interfaces/LocalMedia";
 
 export class Task {
     shot: Shot;
@@ -39,7 +41,7 @@ export class Task {
     }
 
     get status() {
-        return this.data.status ?? "submitted";        
+        return this.data.status ?? "submitted";
     }
 
     finish_checking() {
@@ -58,9 +60,9 @@ export class Task {
             try {
                 console.log("new attempt");
 
-                
+
                 const status = await KlingAI.getStatus(this.id, this.data.workflow);
-                console.log("status",status)
+                console.log("status", status)
                 this.update(status);
 
                 if (status?.status === "succeed" && status.url) {
@@ -93,9 +95,27 @@ export class Task {
         this.finish_checking();
     }
 
-    async downloadResults(){
+    async downloadResults() {
         const url = this.data?.url;
-        this.shot.MediaFolder_genVideo?.downloadFromUrl(url);
+        const res_media = await this.shot.MediaFolder_genVideo?.downloadFromUrl(url);
+        if( !res_media ) return;
+
+        this.update({ result: res_media?.name});
+
+        notificationManager.add(`Downloaded ${this.shot.path}`, notificationManager.types.success, { 
+            onClick: () => { this.navigate(); } ,
+            media: res_media,
+        })
+
+    }
+
+    navigate() {
+        this.shot.scene.selectShot(this.shot);
+        this.shot.scene.project.setScene(this.shot.scene);
+    }
+
+    get result() : LocalMedia | null{
+        return this.shot.MediaFolder_genVideo!.getMediaByFilename(this.data.result);
     }
 
 }

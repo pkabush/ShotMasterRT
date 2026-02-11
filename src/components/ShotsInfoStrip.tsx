@@ -1,7 +1,6 @@
 // ShotsInfoStrip
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Scene } from '../classes/Scene';
-import { Shot } from '../classes/Shot';
 import { observer } from 'mobx-react-lite';
 import ShotStripPreview from './ShotStripPreview';
 import ResizableContainer from './ResizableContainer';
@@ -14,21 +13,12 @@ interface Props {
 }
 
 const ShotsInfoStrip: React.FC<Props> = observer(({ scene }) => {
-  const [selectedShot, setSelectedShot] = useState<Shot | null>(null);
-
-  // Reset selected shot when scene changes
-  useEffect(() => {
-    setSelectedShot(null);
-  }, [scene]);
-
   const handleAddShot = async () => {
     const shotName = prompt("Enter new shot name:");
     if (!shotName) return;
 
     const newShot = await scene.createShot(shotName);
-    if (newShot) {
-      setSelectedShot(newShot); // optionally select the new shot
-    }
+    if (newShot) { scene.selectShot(newShot) }
   };
 
   return (
@@ -40,8 +30,8 @@ const ShotsInfoStrip: React.FC<Props> = observer(({ scene }) => {
             <ShotStripPreview
               key={shot.folder.name}
               shot={shot}
-              isSelected={selectedShot === shot }
-              onClick={setSelectedShot} 
+              isSelected={scene.selectedShot === shot }
+              onClick={ () => {scene.selectShot(shot)}} 
             />
           ))}
 
@@ -59,7 +49,7 @@ const ShotsInfoStrip: React.FC<Props> = observer(({ scene }) => {
       </div>
 
       {/* Show info card for the selected shot */}
-      {selectedShot && <ShotInfoCard shot={selectedShot} />}
+      {scene.selectedShot && <ShotInfoCard shot={scene.selectedShot} />}
     </div>
   );
 });

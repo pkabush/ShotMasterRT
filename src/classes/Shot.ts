@@ -38,6 +38,10 @@ export class Shot {
     makeAutoObservable(this);
   }
 
+  get name() {
+    return this.folder.name;
+  }
+
   // GETTERS FOR CONVINIENCE
   get srcImage(): LocalImage | null {
     return this.MediaFolder_results!.getFirstMediaWithTag("start_frame") as LocalImage;
@@ -256,7 +260,7 @@ export class Shot {
           face_id: tag.replace("ID-", ""),           // adjust if face_id differs
           sound_file: objectUrl.rawBase64,
           sound_start_time: 0,
-          sound_end_time: Math.min(duration * 1000,5000),
+          sound_end_time: Math.min(duration * 1000, 5000),
           sound_insert_time: 0,
           sound_volume: 1,
           original_audio_volume: 1,

@@ -29,12 +29,23 @@ export class Scene {
   is_generating_all_shot_images = false;
   split_shots_prompt: Prompt | null = null;
   path: string = "";
+  selectedShot :Shot | null = null;
 
   constructor(folder: FileSystemDirectoryHandle, project: Project) {
     this.folder = folder;
     this.project = project; // assign parent project
     this.path = "/SCENES/" + folder.name;
     makeAutoObservable(this);
+  }
+
+  get name(){
+    return this.folder.name;
+  }
+
+  selectShot( shot:Shot){
+    if (this.shots.includes(shot)){
+      this.selectedShot = shot;
+    }
   }
 
   async load(): Promise<void> {

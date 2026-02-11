@@ -4,6 +4,7 @@ import TaskInfoCard from "./TaskInfoCard";
 import CollapsibleContainer from "./Atomic/CollapsibleContainer";
 import type { Project } from "../classes/Project";
 import SimpleButton from "./Atomic/SimpleButton";
+import { notificationManager } from "../classes/NotificationManager";
 
 interface Props {
     project: Project;
@@ -29,6 +30,19 @@ const TaskView: React.FC<Props> = observer(({ project }) => {
             }}></SimpleButton>
             <SimpleButton label={"Check ALL Submitted"} onClick={() => {
                 for (const task of allTasks) { if (task.status == "submitted" || task.status == "processing") task.check_status(); }
+            }}></SimpleButton>
+
+
+            <SimpleButton label={"Notify "} onClick={() => {                
+                notificationManager.add('Project loaded', notificationManager.types.success, {onClick: () => {
+                    console.log("test")                    
+                    project.setScene(project.scenes[3]);
+                    
+                }});
+            }}></SimpleButton>
+            
+            <SimpleButton label={"Notify 2 "} onClick={() => {                
+                notificationManager.add('Project loaded V2', notificationManager.types.error);                
             }}></SimpleButton>
 
 

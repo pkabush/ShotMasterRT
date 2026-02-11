@@ -17,6 +17,7 @@ interface MediaGalleryPreviewProps {
   isSelected?: boolean;
   isPicked?: boolean;
   label?: string;
+  autoPlay? : boolean;
 }
 
 const MediaGalleryPreview: React.FC<MediaGalleryPreviewProps> = observer(({
@@ -27,6 +28,7 @@ const MediaGalleryPreview: React.FC<MediaGalleryPreviewProps> = observer(({
   isSelected = false,
   isPicked = false,
   label = "",
+  autoPlay = true,
 }) => {
 
   const renderBottomLabel = () =>
@@ -86,6 +88,7 @@ const MediaGalleryPreview: React.FC<MediaGalleryPreviewProps> = observer(({
           topRightExtra={topRightExtra}
           isSelected={isSelected}
           isPicked={isPicked}
+          autoPlay={autoPlay}
         />
         {renderBottomLabel()}
         {renderTags()}

@@ -118,9 +118,9 @@ const MediaGalleryImage: React.FC<Props> = ({
           style={{
             position: 'absolute',
             top: '100%',
-            left: 0,
+            left: '100%',
             width: 400,
-            zIndex: 50,
+            zIndex: 50000,
             borderRadius: 6,
             boxShadow: '0 10px 30px rgba(0,0,0,0.4)',
           }}

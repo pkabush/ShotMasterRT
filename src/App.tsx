@@ -4,6 +4,7 @@ import { MenuBar } from './components/MenuBar';
 import FolderList from './components/FolderList';
 import { Project } from './classes/Project';
 import { ContentView } from "./components/ContentView";
+import { NotificationContainer } from './components/NotificationContainer';
 
 const App: React.FC = observer(() => {
   const [project] = useState(() => new Project(null)); // MobX observable Project
@@ -72,6 +73,8 @@ const App: React.FC = observer(() => {
           </div>
         </div>
       </div>
+
+      <NotificationContainer />
     </div>
   );
 });

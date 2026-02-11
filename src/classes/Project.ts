@@ -300,6 +300,10 @@ export class Project {
     this.selectedScene = scene;
   }
 
+  setScene( scene:Scene )  {
+    this.setView({ type: "scene" }, scene);
+  }
+
   get promptPresets() {
     if (!this.projinfo) return {};
     return this.projinfo.data.prompt_presets;

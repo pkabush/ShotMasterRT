@@ -3,6 +3,7 @@ import { observer } from "mobx-react-lite";
 import { Task } from "../classes/Task";
 import SimpleButton from "./Atomic/SimpleButton";
 import LoadingSpinner from "./Atomic/LoadingSpinner";
+import { MediaPreviewSmall } from "./MediaPreviewSmall";
 
 interface Props {
     task: Task;
@@ -16,7 +17,7 @@ const statusColors: Record<string, string> = {
     failed: "red",
 };
 
-const TaskInfoCard: React.FC<Props> = observer(({ task , show_path=false }) => {
+const TaskInfoCard: React.FC<Props> = observer(({ task, show_path = false }) => {
     const status = task.status;
     const color = statusColors[status] ?? "gray";
 
@@ -33,9 +34,25 @@ const TaskInfoCard: React.FC<Props> = observer(({ task , show_path=false }) => {
                             backgroundColor: color,
                         }}
                     />
-                    {show_path && <span className="text-muted">{task.shot.scene.folder.name +"/"+ task.shot.folder.name  + "/"}</span>}
+                    {show_path && (
+                        <span
+                            className="text-muted"
+                            style={{ cursor: 'pointer' }}
+                            onClick={() => { task.navigate(); }}
+                        >
+                            {task.shot.scene.folder.name}/{task.shot.folder.name}/
+                        </span>
+                    )}
+
+
                     <span className="fw-bold">{task.id}</span>
                     <span className="text-muted">{status}</span>
+
+                    {/**RESULTS PREVIEW */}
+                    {task.result && (
+                        <MediaPreviewSmall media={task.result} />
+                    )}
+
                 </div>
 
                 {/* Right side: buttons */}
@@ -46,7 +63,7 @@ const TaskInfoCard: React.FC<Props> = observer(({ task , show_path=false }) => {
                     <SimpleButton
                         label="Check Status"
                         className="btn-outline-primary btn-sm rounded-0"
-                        onClick={() => { task.check_status()}}
+                        onClick={() => { task.check_status() }}
                     />
 
                     <SimpleButton
@@ -58,6 +75,8 @@ const TaskInfoCard: React.FC<Props> = observer(({ task , show_path=false }) => {
                             }
                         }}
                     />
+
+
 
                     <SimpleButton
                         label="Log"
