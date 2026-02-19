@@ -7,7 +7,6 @@ import SimpleSelect from "./Atomic/SimpleSelect";
 import { observer } from "mobx-react-lite";
 import EditableJsonTextField from "./EditableJsonTextField";
 import TagsToggleList from "./TagsToggleList";
-import { Tab } from "react-bootstrap";
 import TabsContainer from "./TabsContainer";
 import SimpleButton from "./Atomic/SimpleButton";
 

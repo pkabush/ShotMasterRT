@@ -2,7 +2,7 @@
 import { Scene } from './Scene';
 import { LocalJson } from './LocalJson';
 import { LocalImage } from './LocalImage';
-import { makeAutoObservable, runInAction, toJS } from "mobx";
+import { makeObservable, observable, runInAction, toJS } from "mobx";
 import { GoogleAI, type AIImageInput } from './GoogleAI';
 import { KlingAI, type LipSyncFaceChoose } from './KlingAI';
 import { Task } from './Task';
@@ -11,13 +11,11 @@ import { ai_providers } from './AI_providers';
 import { LocalVideo } from './LocalVideo';
 import { MediaFolder } from './MediaFolder';
 import type { LocalAudio } from './LocalAudio';
+import { LocalFolder } from './LocalFile';
 
 
 
-export class Shot {
-  folder: FileSystemDirectoryHandle;
-  path: string = "";
-  scene: Scene;
+export class Shot extends LocalFolder {
   shotJson: LocalJson | null = null;
   tasks: Task[] = [];
 
@@ -31,19 +29,28 @@ export class Shot {
   MediaFolder_refVideo: MediaFolder | null = null;
   MediaFolder_Audio: MediaFolder | null = null;
 
-  constructor(folder: FileSystemDirectoryHandle, scene: Scene) {
-    this.folder = folder;
-    this.scene = scene;
-    this.path = scene.path + "/" + folder.name;
-    makeAutoObservable(this);
+  constructor(handle: FileSystemDirectoryHandle, scene: Scene) {
+    super(scene, handle);
+
+    // Use makeObservable because we extend LocalFolder
+    makeObservable(this, {
+      shotJson: observable,
+      tasks: observable,
+      is_submitting_video: observable,
+      is_generating: observable,
+      MediaFolder_results: observable,
+      MediaFolder_genVideo: observable,
+      MediaFolder_refVideo: observable,
+      MediaFolder_Audio: observable,
+    });
+  }
+
+  get scene() : Scene {
+    return this.parentFolder as Scene;
   }
 
   get mediafolders() {
-    return [this.MediaFolder_results,this.MediaFolder_Audio,this.MediaFolder_genVideo,this.MediaFolder_refVideo]    
-  }
-
-  get name() {
-    return this.folder.name;
+    return [this.MediaFolder_results, this.MediaFolder_Audio, this.MediaFolder_genVideo, this.MediaFolder_refVideo]
   }
 
   // GETTERS FOR CONVINIENCE
@@ -69,24 +76,24 @@ export class Shot {
 
   async load(): Promise<void> {
     try {
-      this.shotJson = await LocalJson.create(this.folder, 'shotinfo.json');
+      this.shotJson = await LocalJson.create(this.handle, 'shotinfo.json');
 
       // Load Media Folders
-      this.MediaFolder_results = new MediaFolder(this.folder, "results", this.path, this);
+      this.MediaFolder_results = new MediaFolder(this.handle, "results", this.path, this);
       this.MediaFolder_results.tags = ["start_frame", "end_frame", "ref_frame", "unreal_frame"];
       await this.MediaFolder_results.load();
 
 
-      this.MediaFolder_genVideo = new MediaFolder(this.folder, "genVideo", this.path, this);
+      this.MediaFolder_genVideo = new MediaFolder(this.handle, "genVideo", this.path, this);
       this.MediaFolder_genVideo.tags = ["picked"];
       await this.MediaFolder_genVideo.load();
 
 
-      this.MediaFolder_refVideo = new MediaFolder(this.folder, "refVideo", this.path, this);
+      this.MediaFolder_refVideo = new MediaFolder(this.handle, "refVideo", this.path, this);
       this.MediaFolder_refVideo.tags = ["motion_ref"];
       await this.MediaFolder_refVideo.load();
 
-      this.MediaFolder_Audio = new MediaFolder(this.folder, "audio", this.path, this);
+      this.MediaFolder_Audio = new MediaFolder(this.handle, "audio", this.path, this);
       this.MediaFolder_Audio.tags = ["ID-0", "ID-1", "ID-2"];
       await this.MediaFolder_Audio.load();
 
@@ -95,7 +102,7 @@ export class Shot {
       this.loadTasks();
 
     } catch (err) {
-      console.error('Error loading shot:', this.folder.name, err);
+      console.error('Error loading shot:', this.name, err);
       this.shotJson = null;
     }
   }
@@ -131,13 +138,13 @@ export class Shot {
   }
 
   async delete(): Promise<void> {
-    if (!this.scene?.folder) {
+    if (!this.scene?.handle) {
       console.error("Cannot delete shot: scene folder not set");
       return;
     }
 
     try {
-      await this.scene.folder.removeEntry(this.folder.name, { recursive: true });
+      await this.scene.handle.removeEntry(this.name, { recursive: true });
 
       runInAction(() => {
         this.scene.shots = this.scene.shots.filter(s => s !== this);

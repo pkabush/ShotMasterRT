@@ -1,7 +1,7 @@
 // Scene.ts
 import { LocalJson } from './LocalJson';
 import { Shot } from './Shot';
-import { makeAutoObservable, runInAction } from "mobx";
+import { action, computed,  makeObservable, observable, runInAction } from "mobx";
 import { Project } from './Project';
 import { toJS } from "mobx";
 //import { GoogleAI } from './GoogleAI';
@@ -9,6 +9,7 @@ import { ChatGPT } from './ChatGPT';
 import { Art } from "./Art";
 import Prompt from './Prompt';
 import * as ResolveUtils from './ResolveUtils';
+import { LocalFolder } from './LocalFile';
 
 const default_sceneInfoJson = {
   tags: [],
@@ -19,8 +20,7 @@ const default_sceneInfoJson = {
   },
 }
 
-export class Scene {
-  folder: FileSystemDirectoryHandle;
+export class Scene extends LocalFolder {
   sceneJson: LocalJson | null = null;
   shots: Shot[] = [];
   project: Project; // <--- new pointer to parent project
@@ -28,19 +28,27 @@ export class Scene {
   is_generating_tags = false;
   is_generating_all_shot_images = false;
   split_shots_prompt: Prompt | null = null;
-  path: string = "";
   selectedShot: Shot | null = null;
 
-  constructor(folder: FileSystemDirectoryHandle, project: Project) {
-    this.folder = folder;
+  constructor(handle: FileSystemDirectoryHandle, project: Project, parentFolder:LocalFolder) {
+    super( parentFolder, handle);
+
     this.project = project; // assign parent project
-    this.path = "/SCENES/" + folder.name;
-    makeAutoObservable(this);
+    // makeObservable instead of makeAutoObservable
+    makeObservable(this, {
+      sceneJson: observable,
+      shots: observable,
+      is_generating_shotsjson: observable,
+      is_generating_tags: observable,
+      is_generating_all_shot_images: observable,
+      split_shots_prompt: observable,
+      selectedShot: observable,
+      finishedShotsNum: computed,
+      tags: computed,
+      selectShot: action,
+    });
   }
 
-  get name() {
-    return this.folder.name;
-  }
 
   selectShot(shot: Shot) {
     if (this.shots.includes(shot)) {
@@ -50,10 +58,10 @@ export class Scene {
 
   async load(): Promise<void> {
     try {
-      this.sceneJson = await LocalJson.create(this.folder, 'sceneinfo.json', default_sceneInfoJson);
+      this.sceneJson = await LocalJson.create(this.handle, 'sceneinfo.json', default_sceneInfoJson);
 
       this.shots = [];
-      for await (const handle of this.folder.values()) {
+      for await (const handle of this.handle.values()) {
         if (handle.kind === 'directory') {
           const shot = new Shot(handle as FileSystemDirectoryHandle, this);
           await shot.load(); // load shotinfo.json
@@ -79,14 +87,14 @@ export class Scene {
   }
 
   async delete(): Promise<void> {
-    if (!this.project?.rootDirHandle) {
+    if (!this.project?.handle) {
       console.error("Cannot delete scene: project root not set");
       return;
     }
 
     try {
-      const scenesFolder = await this.project.rootDirHandle.getDirectoryHandle("SCENES");
-      await scenesFolder.removeEntry(this.folder.name, { recursive: true });
+      const scenesFolder = await this.project.handle.getDirectoryHandle("SCENES");
+      await scenesFolder.removeEntry(this.name, { recursive: true });
 
       runInAction(() => {
         if (this.project) {
@@ -101,25 +109,25 @@ export class Scene {
 
   // create Shot
   async createShot(shotName: string): Promise<Shot | null> {
-    if (!this.folder) {
+    if (!this.handle) {
       console.error("No scene folder available");
       return null;
     }
 
     // Check if the shot already exists
-    const existingShot = this.shots.find(s => s.folder.name === shotName);
+    const existingShot = this.shots.find(s => s.name === shotName);
     if (existingShot) {
       return existingShot;
     }
 
     try {
-      const shotFolder = await this.folder.getDirectoryHandle(shotName, { create: true });
+      const shotFolder = await this.handle.getDirectoryHandle(shotName, { create: true });
       const shot = new Shot(shotFolder, this);
       await shot.load();
 
       // Insert shot alphabetically by folder name
       runInAction(() => {
-        const index = this.shots.findIndex(s => s.folder.name.localeCompare(shotName) > 0);
+        const index = this.shots.findIndex(s => s.name.localeCompare(shotName) > 0);
         if (index === -1) this.shots.push(shot);
         else this.shots.splice(index, 0, shot);
       });
@@ -303,7 +311,7 @@ ${JSON.stringify(this.project?.artbook?.getJson(), null, 2)}
 
   async createResolveXML() {
 
-    const timeline = new ResolveUtils.FCPXMLBuilder(this.folder.name);
+    const timeline = new ResolveUtils.FCPXMLBuilder(this.name);
     let offsetFrames = 1000;
 
     for (const shot of this.shots) {
@@ -311,17 +319,17 @@ ${JSON.stringify(this.project?.artbook?.getJson(), null, 2)}
       const durationFrames = 5;
       if (shot.srcImage) {
         const img_path = this.project.projinfo?.getField("project_path") + shot.srcImage.path
-        id = timeline.addAsset(img_path, shot.folder.name)!;
+        id = timeline.addAsset(img_path, shot.name)!;
       }
 
       if (shot.outVideo) {
         const vod_path = this.project.projinfo?.getField("project_path") + shot.outVideo.path;
-        const vod_id = timeline.addAsset(vod_path, shot.folder.name, true, durationFrames)!;
-        timeline.appendClip(vod_id, shot.folder.name, durationFrames, offsetFrames, 1);
+        const vod_id = timeline.addAsset(vod_path, shot.name, true, durationFrames)!;
+        timeline.appendClip(vod_id, shot.name, durationFrames, offsetFrames, 1);
       }
 
-      timeline.appendClip(id, shot.folder.name, durationFrames, offsetFrames);
-      timeline.appendText(this.folder.name + " " + shot.folder.name, durationFrames, offsetFrames)
+      timeline.appendClip(id, shot.name, durationFrames, offsetFrames);
+      timeline.appendText(this.name + " " + shot.name, durationFrames, offsetFrames)
 
       offsetFrames += durationFrames;
     }

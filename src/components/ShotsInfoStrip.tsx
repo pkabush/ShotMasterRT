@@ -28,7 +28,7 @@ const ShotsInfoStrip: React.FC<Props> = observer(({ scene }) => {
         <div className="d-flex overflow-auto gap-2 h-100">
           {scene.shots.map((shot) => (
             <ShotStripPreview
-              key={shot.folder.name}
+              key={shot.name}
               shot={shot}
               isSelected={scene.selectedShot === shot }
               onClick={ () => {scene.selectShot(shot)}} 

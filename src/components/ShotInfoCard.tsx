@@ -22,7 +22,7 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
   if (!shot.shotJson) return <div>Loading shot info...</div>;
 
   const handleDelete = async () => {
-    if (window.confirm(`Are you sure you want to delete shot "${shot.folder.name}"?`)) {
+    if (window.confirm(`Are you sure you want to delete shot "${shot.name}"?`)) {
       await shot.delete();
     }
   };
@@ -30,7 +30,7 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
   return (
     <>
       <div className="d-flex align-items-center justify-content-between mb-0">
-        <strong>{shot.folder.name}</strong>
+        <strong>{shot.name}</strong>
         <div className="d-flex gap-2">
 
           {/* Pick shot type - crude implementation, fix later */}

@@ -18,7 +18,7 @@ const FolderList: React.FC<FolderListProps> = observer(({ project }) => {
     await project.createScene(sceneName);
   };
 
-  const currentFolderName = project.rootDirHandle?.name || 'No Project Opened';
+  const currentFolderName = project.name || 'No Project Opened';
 
   return (
     <div

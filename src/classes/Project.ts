@@ -2,12 +2,13 @@
 import { Scene } from "./Scene";
 import { Artbook } from "./Artbook";
 import { UserSettingsDB } from "./UserSettingsDB";
-import { makeAutoObservable, runInAction, toJS } from "mobx";
+import { action, makeObservable, observable, runInAction, toJS } from "mobx";
 import { Script } from "./Script";
 import { GoogleAI } from "./GoogleAI";
 import { ChatGPT } from "./ChatGPT";
 import { LocalJson } from './LocalJson';
 import { KlingAI } from "./KlingAI";
+import { LocalFolder } from "./LocalFile";
 
 export type ProjectView =
   | { type: "none" }
@@ -106,28 +107,46 @@ const default_projinfo = {
 }
 
 
-export class Project {
-  rootDirHandle: FileSystemDirectoryHandle | null = null;
+export class Project extends LocalFolder {
   scenes: Scene[] = [];
   artbook: Artbook | null = null;
   script: Script | null = null;         // <--- Added
-  userSettingsDB = new UserSettingsDB();
+  userSettingsDB : UserSettingsDB;
   projinfo: LocalJson | null = null;
   currentView: ProjectView = { type: "none" };
   selectedScene: Scene | null = null;
   timelinesDirHandle: FileSystemDirectoryHandle | null = null;
 
-  constructor(rootDirHandle: FileSystemDirectoryHandle | null = null) {
-    this.rootDirHandle = rootDirHandle;
-    makeAutoObservable(this);
+  scenesLocalFolder: LocalFolder | null = null;
+
+  constructor(parentFolder: FileSystemDirectoryHandle,userSettingsDB : UserSettingsDB) {
+    super( null, parentFolder);
+
+    this.userSettingsDB = userSettingsDB;
+
+    makeObservable(this, {
+      parentFolder: observable,
+      scenes: observable,
+      artbook: observable,
+      script: observable,
+      currentView: observable,
+      selectedScene: observable,
+      loadFromFolder: action,
+      setView: action,
+      setScene: action,
+    });
   }
+  
 
   async loadFromFolder(handle: FileSystemDirectoryHandle) {
     if (!handle) return;
 
     // Set root directory
-    this.rootDirHandle = handle;
-    this.timelinesDirHandle = await this.rootDirHandle.getDirectoryHandle('Timelines', { create: true });
+    this.handle = handle;
+    this.path = "";
+    this.timelinesDirHandle = await this.handle.getDirectoryHandle('Timelines', { create: true });
+
+    console.log(handle);
 
     // Update database (recent folders, last opened)
     runInAction(async () => {
@@ -151,7 +170,7 @@ export class Project {
 
       await this.userSettingsDB.save();
 
-      this.projinfo = await LocalJson.create(this.rootDirHandle as FileSystemDirectoryHandle, 'projinfo.json', default_projinfo);
+      this.projinfo = await LocalJson.create(this.handle as FileSystemDirectoryHandle, 'projinfo.json', default_projinfo);
     });
 
     // Load all project content
@@ -163,16 +182,17 @@ export class Project {
   }
 
   async loadScenes() {
-    if (!this.rootDirHandle) return;
+    if (!this.handle) return;
 
     try {
-      const scenesFolder = await this.rootDirHandle.getDirectoryHandle("SCENES", { create: true });
+      const scenesFolder = await this.handle.getDirectoryHandle("SCENES", { create: true });
+      this.scenesLocalFolder = new LocalFolder(this, scenesFolder);
 
       const loadedScenes: Scene[] = [];
 
       for await (const entry of (scenesFolder as any).values()) {
         if (entry.kind === "directory") {
-          const scene = new Scene(entry, this);
+          const scene = new Scene(entry, this, this.scenesLocalFolder);
           await scene.load();
           loadedScenes.push(scene);
         }
@@ -191,10 +211,10 @@ export class Project {
   }
 
   async loadArtbook() {
-    if (!this.rootDirHandle) return;
+    if (!this.handle) return;
 
     try {
-      const refsFolder = await this.rootDirHandle.getDirectoryHandle("REFS", { create: true });
+      const refsFolder = await this.handle.getDirectoryHandle("REFS", { create: true });
       const artbook = new Artbook(refsFolder, this);
       await artbook.load();
 
@@ -211,11 +231,11 @@ export class Project {
   }
 
   async loadScript() {
-    if (!this.rootDirHandle) return;
+    if (!this.handle) return;
 
     try {
       // Get or create the script file
-      const scriptFileHandle = await this.rootDirHandle.getFileHandle("script.txt", {
+      const scriptFileHandle = await this.handle.getFileHandle("script.txt", {
         create: true,
       });
 
@@ -252,16 +272,16 @@ export class Project {
   }
 
   async createScene(sceneName: string) {
-    if (!this.rootDirHandle) {
+    if (!this.handle) {
       console.error("No project folder open");
       return null;
     }
 
-    const existingScene = this.scenes.find(s => s.folder.name === sceneName);
+    const existingScene = this.scenes.find(s => s.handle.name === sceneName);
     if (existingScene) return existingScene;
 
     try {
-      const scenesFolder = await this.rootDirHandle.getDirectoryHandle("SCENES", {
+      const scenesFolder = await this.handle.getDirectoryHandle("SCENES", {
         create: true,
       });
 
@@ -269,12 +289,12 @@ export class Project {
         create: true,
       });
 
-      const scene = new Scene(newSceneFolder, this);
+      const scene = new Scene(newSceneFolder, this, this.scenesLocalFolder!);
       await scene.load();
 
       runInAction(() => {
         const index = this.scenes.findIndex(
-          (s) => s.folder.name.localeCompare(scene.folder.name) > 0
+          (s) => s.name.localeCompare(scene.name) > 0
         );
         if (index === -1) {
           this.scenes.push(scene);

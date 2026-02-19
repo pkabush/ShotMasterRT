@@ -40,7 +40,7 @@ const TaskInfoCard: React.FC<Props> = observer(({ task, show_path = false }) => 
                             style={{ cursor: 'pointer' }}
                             onClick={() => { task.navigate(); }}
                         >
-                            {task.shot.scene.folder.name}/{task.shot.folder.name}/
+                            {task.shot.scene.name}/{task.shot.name}/
                         </span>
                     )}
 

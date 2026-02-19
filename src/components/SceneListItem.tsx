@@ -23,7 +23,7 @@ const SceneListItem: React.FC<Props> = observer(({ scene }) => {
     >
       {/* Scene name */}
       <span className={isSelected ? 'text-success' : undefined}>
-        {scene.folder.name}
+        {scene.name}
       </span>
 
       {/* Shots count: finished / total, light grey */}

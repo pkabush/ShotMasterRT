@@ -11,7 +11,7 @@ interface MenuBarProps {
   onOpenFolder: () => void;
   recentFolders: FileSystemDirectoryHandle[];
   onOpenRecent: (handle: FileSystemDirectoryHandle) => void;
-  project: Project;
+  project: Project | null;
 }
 
 export const MenuBar: React.FC<MenuBarProps> = ({ onOpenFolder, recentFolders, onOpenRecent,project}) => {
@@ -41,6 +41,8 @@ export const MenuBar: React.FC<MenuBarProps> = ({ onOpenFolder, recentFolders, o
           <MenuColumn title="File" items={fileMenuItems} />
           <MenuColumn title="Edit" items={editMenuItems} />
           <MenuColumn title="Help" items={helpMenuItems} />
+
+          { project && (<>
           <MenuColumn
             title="Settings"
             onClick={() => project.setView({ type: "settings" })}
@@ -56,7 +58,9 @@ export const MenuBar: React.FC<MenuBarProps> = ({ onOpenFolder, recentFolders, o
           <MenuColumn
             title="TaskView"
             onClick={() => project.setView({ type: "taskview" })}
-          />
+          /></>
+          )}
+
         </Nav>
       </Container>
     </Navbar>

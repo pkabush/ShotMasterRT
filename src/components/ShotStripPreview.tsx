@@ -55,7 +55,7 @@ const ShotStripPreview: React.FC<Props> = observer(({ shot, isSelected, onClick 
     >
       <img
         src={imageUrl}
-        alt={shot.folder.name}
+        alt={shot.name}
         className="img-fluid"
         style={{
           height: '100%',
@@ -76,7 +76,7 @@ const ShotStripPreview: React.FC<Props> = observer(({ shot, isSelected, onClick 
           borderTopRightRadius: '4px',
         }}
       >
-        {shot.folder.name}
+        {shot.name}
       </div>
 
 

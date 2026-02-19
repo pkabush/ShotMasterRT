@@ -10,10 +10,11 @@ import ShotsInfoStrip from "./ShotsInfoStrip";
 import TaskView from "./TaskView";
 
 interface ContentViewProps {
-  project: Project;
+  project: Project | null;
 }
 
 export const ContentView: React.FC<ContentViewProps> = observer(({ project }) => {  
+  if(!project) return null;
   
   switch (project.currentView.type) {
     case "settings":
@@ -31,7 +32,7 @@ export const ContentView: React.FC<ContentViewProps> = observer(({ project }) =>
       const scene = project.selectedScene;
       return (
         <div>
-          <h2>{scene.folder.name}</h2>
+          <h2>{scene.name}</h2>
           <TabsContainer
             tabs={{
               Scene: <SceneInfoCard scene={scene} />,
