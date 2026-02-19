@@ -29,7 +29,7 @@ export class Scene {
   is_generating_all_shot_images = false;
   split_shots_prompt: Prompt | null = null;
   path: string = "";
-  selectedShot :Shot | null = null;
+  selectedShot: Shot | null = null;
 
   constructor(folder: FileSystemDirectoryHandle, project: Project) {
     this.folder = folder;
@@ -38,12 +38,12 @@ export class Scene {
     makeAutoObservable(this);
   }
 
-  get name(){
+  get name() {
     return this.folder.name;
   }
 
-  selectShot( shot:Shot){
-    if (this.shots.includes(shot)){
+  selectShot(shot: Shot) {
+    if (this.shots.includes(shot)) {
       this.selectedShot = shot;
     }
   }
@@ -316,7 +316,7 @@ ${JSON.stringify(this.project?.artbook?.getJson(), null, 2)}
 
       if (shot.outVideo) {
         const vod_path = this.project.projinfo?.getField("project_path") + shot.outVideo.path;
-        const vod_id = timeline.addAsset(vod_path, shot.folder.name,true, durationFrames)!;
+        const vod_id = timeline.addAsset(vod_path, shot.folder.name, true, durationFrames)!;
         timeline.appendClip(vod_id, shot.folder.name, durationFrames, offsetFrames, 1);
       }
 
@@ -329,6 +329,5 @@ ${JSON.stringify(this.project?.artbook?.getJson(), null, 2)}
     timeline.log()
     timeline.save(this.project.timelinesDirHandle!);
   }
-
 
 }

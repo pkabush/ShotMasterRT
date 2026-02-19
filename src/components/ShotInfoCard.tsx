@@ -88,15 +88,11 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
 
             <TaskContainer shot={shot} />
             <MediaFolderGallery mediaFolder={shot.MediaFolder_genVideo}></MediaFolderGallery>
-
-
-
           </>
           ,
           LipSync: <>
             <Kling_LipSync shot={shot}/>
             <TaskContainer shot={shot} />
-
           </>
           ,
 

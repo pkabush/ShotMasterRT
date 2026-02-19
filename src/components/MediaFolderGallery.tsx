@@ -9,7 +9,6 @@ import MediaGalleryPreview from "./MediaGallerPreview";
 import DropArea from "./Atomic/DropArea";
 import type { LocalMedia } from "../classes/interfaces/LocalMedia";
 import ImageEditWindow from "./ImageEditWindow";
-import { GoogleAI } from "../classes/GoogleAI";
 import SimpleDropdown from "./Atomic/SimpleDropdown";
 import { LocalVideo } from "../classes/LocalVideo";
 import VideoEditWindow from "./VideoEditWindow";
@@ -65,11 +64,6 @@ export const MediaFolderGallery: React.FC<MediaFolderGalleryProps> = observer(
                                         <ImageEditWindow
                                             localImage={mediaFolder.selectedMedia}
                                             reference_images={mediaFolder.getMediaWithTag("ref_frame") as LocalImage[]}
-                                            onImageGenerated={async (result) => {
-                                                console.log("Image generated:", result);
-                                                const localImage: LocalImage | null = await GoogleAI.saveResultImage(result, mediaFolder.folder as FileSystemDirectoryHandle);
-                                                if (localImage) mediaFolder.loadFile(localImage?.handle);
-                                            }}
                                             onClose={() => mediaFolder.setSelectedMedia(null)}
                                         />
                                     ) : null

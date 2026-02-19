@@ -1,7 +1,8 @@
+import { LocalJson } from "../LocalJson";
 import type { MediaFolder } from "../MediaFolder";
 import type { Shot } from "../Shot";
 import * as webFileStorage from './../webFileStorage';
-import { runInAction, toJS, makeObservable, observable, action } from "mobx";
+import { runInAction, toJS, makeObservable, observable, action, computed } from "mobx";
 
 // LocalMediaInterface.ts
 export class LocalMedia {
@@ -11,8 +12,8 @@ export class LocalMedia {
   shot: Shot | null;
   urlObject: string | null = null;
   web_url: string = "";
-  tags: string[] = [];
   mediaFolder: MediaFolder | null = null;
+  mediaJson: LocalJson | null = null;
   onTagChanged?: (media: LocalMedia, tag: string, added: boolean) => void;
 
   constructor(handle: FileSystemFileHandle, parent: FileSystemDirectoryHandle, parent_path: string = "", shot: Shot | null = null) {
@@ -29,11 +30,15 @@ export class LocalMedia {
       delete: action,
       getUrlObject: action,
       //Tags
-      tags: observable,
+      tags: computed,
       addTag: action,
       removeTag: action,
       setTags: action,
     });
+  }
+
+  async load(): Promise<void> {
+    this.mediaJson = await LocalJson.create(this.parent, this.name + '.json');
   }
 
   get name(): string {
@@ -107,23 +112,31 @@ export class LocalMedia {
     console.log(toJS(this));
   }
 
-  addTag(tag: string) {
-    if (!tag) return;
-    if (!this.tags.includes(tag)) {
-      this.tags.push(tag);
-      this.onTagChanged?.(this, tag, true);
-    }
+  get tags(): string[] {
+    if (!this.mediaJson) return [];
+    const tags = this.mediaJson.getField("tags");
+    return Array.isArray(tags) ? tags : [];
   }
 
-  removeTag(tag: string) {
-    if (this.tags.includes(tag)) {
-      this.tags = this.tags.filter(t => t !== tag);
-      this.onTagChanged?.(this, tag, false);
-    }
+  async setTags(tags: string[]) {
+    if (!this.mediaJson) return;
+    const cleaned = Array.from(new Set(tags.filter(Boolean)));
+    await this.mediaJson.updateField("tags", cleaned.length ? cleaned : undefined);
   }
-  setTags(tags: string[]) {
-    if (!tags) return;
-    this.tags = Array.from(new Set(tags.filter(Boolean)));
+
+  async addTag(tag: string) {
+    if (!tag) return;
+    const current = this.tags;
+    if (current.includes(tag)) return;
+    await this.setTags([...current, tag]);
+    this.onTagChanged?.(this, tag, true);
+  }
+
+  async removeTag(tag: string) {
+    const current = this.tags;
+    if (!current.includes(tag)) return;
+    await this.setTags(current.filter(t => t !== tag));
+    this.onTagChanged?.(this, tag, false);
   }
 
   hasTag(tag: string): boolean {
@@ -137,7 +150,7 @@ export class LocalMedia {
   }
 
   async openInNewTab() {
-    try {     
+    try {
       const url = await this.getUrlObject();
 
       const tabName = this.path.replace(/[\/\\]/g, "_");
@@ -147,4 +160,6 @@ export class LocalMedia {
       console.error("Failed to open media in new tab:", err);
     }
   }
+
+
 }

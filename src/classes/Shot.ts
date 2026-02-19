@@ -38,6 +38,10 @@ export class Shot {
     makeAutoObservable(this);
   }
 
+  get mediafolders() {
+    return [this.MediaFolder_results,this.MediaFolder_Audio,this.MediaFolder_genVideo,this.MediaFolder_refVideo]    
+  }
+
   get name() {
     return this.folder.name;
   }
@@ -68,21 +72,21 @@ export class Shot {
       this.shotJson = await LocalJson.create(this.folder, 'shotinfo.json');
 
       // Load Media Folders
-      this.MediaFolder_results = new MediaFolder(this.folder, "results", this.path, this.shotJson, this);
+      this.MediaFolder_results = new MediaFolder(this.folder, "results", this.path, this);
       this.MediaFolder_results.tags = ["start_frame", "end_frame", "ref_frame", "unreal_frame"];
       await this.MediaFolder_results.load();
 
 
-      this.MediaFolder_genVideo = new MediaFolder(this.folder, "genVideo", this.path, this.shotJson, this);
+      this.MediaFolder_genVideo = new MediaFolder(this.folder, "genVideo", this.path, this);
       this.MediaFolder_genVideo.tags = ["picked"];
       await this.MediaFolder_genVideo.load();
 
 
-      this.MediaFolder_refVideo = new MediaFolder(this.folder, "refVideo", this.path, this.shotJson, this);
+      this.MediaFolder_refVideo = new MediaFolder(this.folder, "refVideo", this.path, this);
       this.MediaFolder_refVideo.tags = ["motion_ref"];
       await this.MediaFolder_refVideo.load();
 
-      this.MediaFolder_Audio = new MediaFolder(this.folder, "audio", this.path, this.shotJson, this);
+      this.MediaFolder_Audio = new MediaFolder(this.folder, "audio", this.path, this);
       this.MediaFolder_Audio.tags = ["ID-0", "ID-1", "ID-2"];
       await this.MediaFolder_Audio.load();
 
@@ -324,6 +328,12 @@ export class Shot {
     }
   }
 
+  getFilteredTags() {
+    return this.scene.getTags().filter(tag =>
+      !this.getSkippedTags().includes(tag.path)
+    );
+  }
+
   async getImageTags(): Promise<AIImageInput[]> {
     const skipped = this.getSkippedTags();
     const images: AIImageInput[] = [];
@@ -346,6 +356,8 @@ export class Shot {
     return images;
   }
 
+
+
   async GenerateImage() {
     runInAction(() => { this.is_generating = true; });
 
@@ -365,7 +377,18 @@ export class Shot {
           this.MediaFolder_results?.folder as FileSystemDirectoryHandle
         );
 
-      if (localImage) { this.MediaFolder_results?.loadFile(localImage.handle); }
+      if (localImage) {
+        const generatedImage = await this.MediaFolder_results?.loadFile(localImage.handle);
+
+        // Save Generation Info
+        generatedImage?.mediaJson?.updateField("geninfo", {
+          workflow: "shot_generate_image",
+          prompt: prompt,
+          model: this.scene.project.workflows.generate_shot_image.model,
+          art_refs: this.getFilteredTags().map(tag => tag.path),
+        })
+
+      }
     } catch (err) {
       console.error("GenerateImage failed:", err);
     } finally {
@@ -409,7 +432,18 @@ export class Shot {
         );
 
       if (localImage) {
-        this.MediaFolder_results?.loadFile(localImage.handle);
+        const loadedLocalImage = await this.MediaFolder_results?.loadFile(localImage.handle);
+
+        // Save Generation Info
+        loadedLocalImage?.mediaJson?.updateField("geninfo", {
+          workflow: "stylize_image_google",
+          global_prompt: this.scene.project.workflows.stylize_image_google.prompt || "",
+          prompt: this.shotJson?.data.stylize_prompt || "",
+          model: this.scene.project.workflows.stylize_image_google.model,
+          art_refs: this.getFilteredTags().map(tag => tag.path),
+          source: this.unreal_frame.path,
+        })
+
       }
     } catch (err) {
       console.error("StylizeImage failed:", err);
@@ -420,13 +454,16 @@ export class Shot {
     }
   }
 
+  /*
+  // Probably can delete this part??
   async saveGoogleResultImage(result: any, select: boolean = false) {
     const localImage: LocalImage | null = await GoogleAI.saveResultImage(result, this.MediaFolder_results?.folder as FileSystemDirectoryHandle);
     if (localImage) {
-      const media_item = this.MediaFolder_results!.loadFile(localImage.handle);
+      const media_item = await this.MediaFolder_results!.loadFile(localImage.handle);
+      await media_item?.load()
       if (select) this.MediaFolder_results?.setSelectedMedia(media_item);
     }
-  }
+  }*/
 
   getSkippedTags(): string[] {
     return this.shotJson?.data?.skippedTags || [];
@@ -457,5 +494,6 @@ export class Shot {
   }
 
   log() { console.log(toJS(this)); }
+
 
 }

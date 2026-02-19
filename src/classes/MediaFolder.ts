@@ -3,7 +3,6 @@ import { makeAutoObservable, runInAction, toJS } from "mobx";
 import { LocalImage } from './LocalImage';
 import { LocalVideo } from './LocalVideo';
 import type { LocalMedia } from "./interfaces/LocalMedia";
-import type { LocalJson } from "./LocalJson";
 import type { Shot } from "./Shot";
 import { LocalAudio } from "./LocalAudio";
 
@@ -18,19 +17,16 @@ export class MediaFolder {
     // Named Media Array
     tags: string[] = ["picked", "start_frame", "end_frame", "motion_ref"];
     multi_tags: string[] = ["ref_frame"];
-    storage_json: LocalJson | null = null;
     shot: Shot | null = null;
 
     // Callbacks
     onPicked?: (media: LocalMedia | null) => void;
     onSelected?: (media: LocalMedia | null) => void;
 
-
-    constructor(parentFolder: FileSystemDirectoryHandle, folderName: string, basePath: string = "", storage_json: LocalJson | null = null, shot: Shot | null = null) {
+    constructor(parentFolder: FileSystemDirectoryHandle, folderName: string, basePath: string = "", shot: Shot | null = null) {
         this.parentFolder = parentFolder;
         this.folderName = folderName;
         this.path = basePath ? `${basePath}/${folderName}` : folderName;
-        this.storage_json = storage_json;
         this.shot = shot;
         makeAutoObservable(this);
     }
@@ -41,12 +37,8 @@ export class MediaFolder {
             this.folder = await this.parentFolder.getDirectoryHandle(this.folderName, { create: true });
 
             for await (const [, handle] of this.folder.entries()) {
-                if (handle.kind === "file") { this.loadFile(handle as FileSystemFileHandle); }
+                if (handle.kind === "file") { await this.loadFile(handle as FileSystemFileHandle); }
             }
-            /*
-            if (this.storage_json) {
-                this.setNamedMediaJson(this.storage_json.getField("MediaFolder_" + this.folderName));
-            }*/
 
         } catch (err) {
             console.error(`Failed to load MediaFolder '${this.folderName}':`, err);
@@ -115,7 +107,8 @@ export class MediaFolder {
             throw err;
         }
     }
-    loadFile(fileHandle: FileSystemFileHandle): LocalMedia | null {
+
+    async loadFile(fileHandle: FileSystemFileHandle): Promise<LocalMedia | null> {
         const name = fileHandle.name;
 
         let mediaItem: LocalMedia | null = null;
@@ -128,15 +121,12 @@ export class MediaFolder {
             mediaItem = new LocalAudio(fileHandle, this.folder!, this.path, this.shot);
         }
 
-
-
         if (!mediaItem) return null;
 
-        // Set Tags from JSON
-        mediaItem.setTags(toJS(this.storage_json?.getField("MF_" + this.folderName + "/" + mediaItem.name)));
+        await mediaItem.load();
+        mediaItem.mediaFolder = this;
 
-        // Set callback so unique tags are removed from other media
-        //@ts-ignore
+        // Update tags for Single Select Tags
         mediaItem.onTagChanged = (currentMedia, tag, added) => {
             if (added && !this.multi_tags.includes(tag)) {
                 for (const otherMedia of this.media) {
@@ -145,14 +135,13 @@ export class MediaFolder {
                     }
                 }
             }
-
-            if (this.storage_json) { this.storage_json.updateField("MF_" + this.folderName, this.mediaJson); }
-        };
+        }
 
         runInAction(() => { this.media.push(mediaItem); });
 
         return mediaItem;
     }
+
     async saveFiles(files: File[]) {
         if (!this.folder) { throw new Error("MediaFolder not loaded"); }
 
@@ -199,17 +188,6 @@ export class MediaFolder {
             console.error("Failed to read from clipboard:", err);
             return;
         }
-    }
-
-    //-------------------
-    // Tag Functions 
-    // ------------------
-    get mediaJson(): any {
-        const result: any = {};
-        for (const media of this.media) {
-            if (media.tags.length > 0) result[media.name] = toJS(media.tags);
-        }
-        return toJS(result);
     }
 
     getMediaWithTag(tag: string): LocalMedia[] {
