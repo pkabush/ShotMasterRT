@@ -5,9 +5,9 @@ import { WorkflowOptionSelect } from "../WorkflowOptionSelect";
 import LoadingSpinner from "../Atomic/LoadingSpinner";
 import { KlingAI } from "../../classes/KlingAI";
 import { Shot } from "../../classes/Shot";
-import MediaGalleryVideo from "../MediaGalleryVideo";
+import MediaGalleryVideo from "../MediaComponents/MediaGalleryVideo";
 import EditableJsonTextField from "../EditableJsonTextField";
-import MediaGalleryPreview from "../MediaGallerPreview";
+import MediaGalleryPreview from "../MediaComponents/MediaGallerPreview";
 import { MediaFolderGallery } from "../MediaFolderGallery";
 import type { LocalMedia } from "../../classes/interfaces/LocalMedia";
 

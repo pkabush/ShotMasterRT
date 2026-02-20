@@ -1,8 +1,8 @@
 // Kling_LipSync.tsx
 import React from "react";
 import { observer } from "mobx-react-lite";
-import MediaGalleryVideo from "../MediaGalleryVideo";
-import MediaGalleryAudio from "../MediaGalleryAudio";
+import MediaGalleryVideo from "../MediaComponents/MediaGalleryVideo";
+import MediaGalleryAudio from "../MediaComponents/MediaGalleryAudio";
 import { MediaFolderGallery } from "../MediaFolderGallery";
 import type { Shot } from "../../classes/Shot";
 import type { LocalAudio } from "../../classes/LocalAudio";

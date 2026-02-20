@@ -19,7 +19,7 @@ const SceneInfoCard: React.FC<Props> = observer(({ scene }) => { // <--- observe
   }
 
   const handleDelete = async () => {
-    const confirmed = window.confirm(`Are you sure you want to delete scene "${scene.folder.name}"?`);
+    const confirmed = window.confirm(`Are you sure you want to delete scene "${scene.name}"?`);
     if (!confirmed) return;
 
     await scene.delete();

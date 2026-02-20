@@ -1,30 +1,33 @@
 // Artbook.ts
-import { makeAutoObservable, runInAction,toJS } from "mobx";
+import { action, makeObservable, observable, runInAction,toJS } from "mobx";
 import { Art } from "./Art";
 import { Project } from "./Project";
+import { LocalFolder } from "./LocalFile";
 
-export class Artbook {
-  rootHandle: FileSystemDirectoryHandle | null = null;
+export class Artbook extends LocalFolder{
   project: Project | null = null; 
   data: Record<string, Record<string, Art[]>> = {};
 
-  constructor(rootHandle: FileSystemDirectoryHandle | null = null, project: Project | null = null) {
-    this.rootHandle = rootHandle;
-    this.project = project;  // store the project pointer
-    makeAutoObservable(this);
+  constructor(handle: FileSystemDirectoryHandle, parentFolder: LocalFolder) {
+    super(parentFolder, handle);
+    this.project = parentFolder as Project;  // store the project pointer
+    makeObservable(this, {
+      project: observable.ref,   // observe reference only
+      data: observable,          // deep observable
+      load: action,      
+    });
   }
 
   async load() {
-    if (!this.rootHandle) return;
-
     try {
       const result: Record<string, Record<string, Art[]>> = {};
 
-      for await (const typeEntry of this.rootHandle.values()) {
+      for await (const typeEntry of this.handle.values()) {
         if (typeEntry.kind !== "directory") continue;
 
         const typeName = typeEntry.name;
         const typeHandle = typeEntry as FileSystemDirectoryHandle;
+        const typeFolder = new LocalFolder(this, typeHandle)
 
         const items: Record<string, Art[]> = {};
 
@@ -33,16 +36,17 @@ export class Artbook {
 
           const itemName = itemEntry.name;
           const itemHandle = itemEntry as FileSystemDirectoryHandle;
+          const itemFolder =  new LocalFolder(typeFolder, itemHandle)
 
           const arts: Art[] = [];
 
           for await (const imgEntry of itemHandle.values()) {
             if (imgEntry.kind !== "file") continue; // skip non-files
-            if (!imgEntry.name.match(/\.(png|jpg|jpeg|webp|gif)$/i)) continue;
+            if (!imgEntry.name.match(/\.(png|jpg|jpeg|webp|gif)$/i)) continue;            
 
             const fileHandle = imgEntry as FileSystemFileHandle; // now typed correctly
             const path = `${typeName}/${itemName}/${fileHandle.name}`;
-            arts.push(new Art(fileHandle, itemHandle, path, this));
+            arts.push(new Art(fileHandle, itemFolder, path, this));
           }
 
           items[itemName] = arts;

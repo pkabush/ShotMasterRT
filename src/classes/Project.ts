@@ -146,7 +146,7 @@ export class Project extends LocalFolder {
     this.path = "";
     this.timelinesDirHandle = await this.handle.getDirectoryHandle('Timelines', { create: true });
 
-    console.log(handle);
+    //console.log(handle);
 
     // Update database (recent folders, last opened)
     runInAction(async () => {
@@ -178,6 +178,7 @@ export class Project extends LocalFolder {
       this.loadScenes(),
       this.loadArtbook(),
       this.loadScript(),
+      this.loadDB(),
     ]);
   }
 
@@ -359,6 +360,8 @@ export class Project extends LocalFolder {
     link.click();
     document.body.removeChild(link);
   }
+
+
 
 
 }

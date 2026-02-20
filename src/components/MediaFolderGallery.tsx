@@ -5,7 +5,7 @@ import type { MediaFolder } from "../classes/MediaFolder";
 import { LocalImage } from "../classes/LocalImage";
 import MediaGallery from "./MediaGallery";
 import SimpleButton from "./Atomic/SimpleButton";
-import MediaGalleryPreview from "./MediaGallerPreview";
+import MediaGalleryPreview from "./MediaComponents/MediaGallerPreview";
 import DropArea from "./Atomic/DropArea";
 import type { LocalMedia } from "../classes/interfaces/LocalMedia";
 import ImageEditWindow from "./ImageEditWindow";
@@ -24,8 +24,9 @@ interface MediaFolderGalleryProps {
 
 export const MediaFolderGallery: React.FC<MediaFolderGalleryProps> = observer(
     ({ mediaFolder, label = null, itemHeight = 300, showEditWindow = true }) => {
-        if (!mediaFolder || !mediaFolder.folder) return null;
-        label = label || mediaFolder.folderName;
+
+        if (!mediaFolder || !mediaFolder.handle) return null;
+        label = label || mediaFolder.name;
 
         return (
             <>

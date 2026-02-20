@@ -3,7 +3,7 @@ import { observer } from "mobx-react-lite";
 import { Task } from "../classes/Task";
 import SimpleButton from "./Atomic/SimpleButton";
 import LoadingSpinner from "./Atomic/LoadingSpinner";
-import { MediaPreviewSmall } from "./MediaPreviewSmall";
+import { MediaPreviewSmall } from "./MediaComponents/MediaPreviewSmall";
 
 interface Props {
     task: Task;

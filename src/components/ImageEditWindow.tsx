@@ -9,6 +9,12 @@ import EditableJsonTextField from "./EditableJsonTextField";
 import TagsToggleList from "./TagsToggleList";
 import TabsContainer from "./TabsContainer";
 import SimpleButton from "./Atomic/SimpleButton";
+import MediaGalleryImage from "./MediaComponents/MediaGalleryImage";
+import type { MediaFolder } from "../classes/MediaFolder";
+import type { LocalFolder } from "../classes/LocalFile";
+import MediaGalleryPreview from "./MediaComponents/MediaGallerPreview";
+import MediaImage from "./MediaComponents/MediaImage";
+import MediaWrapper from "./MediaComponents/MediaWrapper";
 
 
 
@@ -66,7 +72,7 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
       ]);
 
       console.log("Image generated:", result);
-      const genImage: LocalImage | null = await GoogleAI.saveResultImage(result, localImage.parent as FileSystemDirectoryHandle);
+      const genImage: LocalImage | null = await GoogleAI.saveResultImage(result, localImage.parentFolder as LocalFolder);
       if (genImage) {
         const loadedLocalImage = await localImage.mediaFolder?.loadFile(genImage?.handle);
 
@@ -268,6 +274,41 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
 
                   </div>,
                 GenerateInfo: <>
+                  {/* Source preview */}
+                  {localImage.sourceImage && (
+                    <>
+                      <MediaGalleryPreview
+                        mediaItem={localImage.sourceImage}
+                        label={"SOURCE"}
+                        showTags={false}
+                        height={150}
+                        onSelectMedia={() => {
+                          const mf = localImage.sourceImage?.parentFolder as MediaFolder;
+                          mf.setSelectedMedia(localImage.sourceImage);
+                        }}
+                      />
+
+                    </>
+                  )}
+
+                  {/* Generated media previews */}
+                  {localImage.generatedMedia?.length > 0 && (
+                    <>
+                      {localImage.generatedMedia.map((media) => (
+                        <MediaGalleryPreview
+                          height={150}
+                          key={media.path}   // or media.id if you have one
+                          mediaItem={media}
+                          label={"child"}
+                          showTags={false}
+                          onSelectMedia={() => {
+                            const mf = media.parentFolder as MediaFolder;
+                            mf.setSelectedMedia(media);
+                          }}
+                        />
+                      ))}
+                    </>
+                  )}
 
 
                   <div>
@@ -275,11 +316,6 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
                       {JSON.stringify(localImage.mediaJson?.data.geninfo, null, 2)}
                     </pre>
                   </div>
-
-                  <SimpleButton onClick={ () => {
-                    const source = localImage.mediaJson?.getField("geninfo/source")
-                    
-                  }}/>
 
                 </>,
               }}

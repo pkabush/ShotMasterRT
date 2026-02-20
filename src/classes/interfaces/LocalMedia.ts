@@ -1,3 +1,5 @@
+import { LocalFile, LocalFolder } from "../LocalFile";
+import type { LocalImage } from "../LocalImage";
 import { LocalJson } from "../LocalJson";
 import type { MediaFolder } from "../MediaFolder";
 import type { Shot } from "../Shot";
@@ -5,10 +7,7 @@ import * as webFileStorage from './../webFileStorage';
 import { runInAction, toJS, makeObservable, observable, action, computed } from "mobx";
 
 // LocalMediaInterface.ts
-export class LocalMedia {
-  handle: FileSystemFileHandle;
-  parent: FileSystemDirectoryHandle;
-  path: string;
+export class LocalMedia extends LocalFile {
   shot: Shot | null;
   urlObject: string | null = null;
   web_url: string = "";
@@ -16,11 +15,11 @@ export class LocalMedia {
   mediaJson: LocalJson | null = null;
   onTagChanged?: (media: LocalMedia, tag: string, added: boolean) => void;
 
-  constructor(handle: FileSystemFileHandle, parent: FileSystemDirectoryHandle, parent_path: string = "", shot: Shot | null = null) {
+  constructor(handle: FileSystemFileHandle, parentFolder: LocalFolder) {
+    super(parentFolder, handle)
     this.handle = handle;
-    this.parent = parent;
-    this.path = parent_path + "/" + handle.name;
-    this.shot = shot;
+
+    this.shot = parentFolder.parentFolder as Shot;
 
     makeObservable(this, {
       urlObject: observable,
@@ -38,7 +37,7 @@ export class LocalMedia {
   }
 
   async load(): Promise<void> {
-    this.mediaJson = await LocalJson.create(this.parent, this.name + '.json');
+    this.mediaJson = await LocalJson.create(this.parentFolder!.handle, this.name + '.json');
   }
 
   get name(): string {
@@ -49,7 +48,7 @@ export class LocalMedia {
   async delete(): Promise<void> {
     try {
       this.revokeUrl();
-      await this.parent.removeEntry(this.handle.name);
+      await this.parentFolder?.handle.removeEntry(this.handle.name);
     } catch (err) {
       console.error('Failed to delete video file:', err);
       throw err;
@@ -84,7 +83,7 @@ export class LocalMedia {
     return this.urlObject!;
   }
   // Create a LocalVideo from a URL
-  static async fromUrl(url: string, folder: FileSystemDirectoryHandle): Promise<LocalMedia> {
+  static async fromUrl(url: string, folder: LocalFolder): Promise<LocalMedia> {
     try {
       const response = await fetch(url);
       if (!response.ok) throw new Error(`Failed to fetch video: ${response.statusText}`);
@@ -96,7 +95,7 @@ export class LocalMedia {
       const filename = urlParts[urlParts.length - 1].split("?")[0];
 
       // Create file handle and write blob
-      const fileHandle = await folder.getFileHandle(filename, { create: true });
+      const fileHandle = await folder.handle.getFileHandle(filename, { create: true });
       const writable = await fileHandle.createWritable();
       await writable.write(blob);
       await writable.close();
@@ -161,5 +160,33 @@ export class LocalMedia {
     }
   }
 
+
+
+
+  // Gen Info
+  get genInfo(): any | null {
+    if (!this.mediaJson) return null;
+    return this.mediaJson.getField("geninfo");
+  }
+
+  get sourceImage(): LocalImage | null {
+    if (!this.mediaJson) return null;
+    const source_path = this.genInfo?.source;
+    if (!source_path) return null;
+    return this.getByAbsPath(source_path) as LocalImage;
+  }
+
+  get generatedMedia(): LocalMedia[] {
+    const generated_images: LocalMedia[] = [];
+
+    for (const media of this.mediaFolder!.media) {
+      if (media.genInfo && media.genInfo.source) {
+        if (media.genInfo.source == this.path) generated_images.push(media);
+      }
+
+    }
+
+    return generated_images;
+  }
 
 }

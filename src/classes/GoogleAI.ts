@@ -1,6 +1,7 @@
 // classes/GoogleGenAI.ts
 import { GoogleGenAI as GoogleSDK } from "@google/genai";
 import { LocalImage } from "./LocalImage";
+import type { LocalFolder } from "./LocalFile";
 
 // Custom error types for clarity
 export class MissingApiKeyError extends Error { }
@@ -133,7 +134,7 @@ export class GoogleAI {
     }
   }
 
-  public static async saveResultImage(result: any, folder: FileSystemDirectoryHandle) {
+  public static async saveResultImage(result: any, folder: LocalFolder) {
     if (result && result.base64Obj?.rawBase64) {
       console.log(result.base64Obj.mime.split("/")[1]);
       const localImage = await LocalImage.fromBase64(

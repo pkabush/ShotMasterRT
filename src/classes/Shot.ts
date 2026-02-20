@@ -79,24 +79,19 @@ export class Shot extends LocalFolder {
       this.shotJson = await LocalJson.create(this.handle, 'shotinfo.json');
 
       // Load Media Folders
-      this.MediaFolder_results = new MediaFolder(this.handle, "results", this.path, this);
+      this.MediaFolder_results = await MediaFolder.create(this, "results");
       this.MediaFolder_results.tags = ["start_frame", "end_frame", "ref_frame", "unreal_frame"];
-      await this.MediaFolder_results.load();
 
 
-      this.MediaFolder_genVideo = new MediaFolder(this.handle, "genVideo", this.path, this);
+      this.MediaFolder_genVideo = await MediaFolder.create(this, "genVideo");
       this.MediaFolder_genVideo.tags = ["picked"];
-      await this.MediaFolder_genVideo.load();
 
-
-      this.MediaFolder_refVideo = new MediaFolder(this.handle, "refVideo", this.path, this);
+      this.MediaFolder_refVideo = await MediaFolder.create(this, "refVideo");
       this.MediaFolder_refVideo.tags = ["motion_ref"];
-      await this.MediaFolder_refVideo.load();
 
-      this.MediaFolder_Audio = new MediaFolder(this.handle, "audio", this.path, this);
+
+      this.MediaFolder_Audio = await MediaFolder.create(this, "audio");
       this.MediaFolder_Audio.tags = ["ID-0", "ID-1", "ID-2"];
-      await this.MediaFolder_Audio.load();
-
 
       // Load Tasks      
       this.loadTasks();
@@ -381,11 +376,11 @@ export class Shot extends LocalFolder {
       const localImage: LocalImage | null =
         await GoogleAI.saveResultImage(
           result,
-          this.MediaFolder_results?.folder as FileSystemDirectoryHandle
+          this.MediaFolder_results as LocalFolder
         );
 
       if (localImage) {
-        const generatedImage = await this.MediaFolder_results?.loadFile(localImage.handle);
+        const generatedImage = await this.MediaFolder_results?.addMediaItem(localImage);
 
         // Save Generation Info
         generatedImage?.mediaJson?.updateField("geninfo", {
@@ -435,11 +430,11 @@ export class Shot extends LocalFolder {
       const localImage: LocalImage | null =
         await GoogleAI.saveResultImage(
           result,
-          this.MediaFolder_results?.folder as FileSystemDirectoryHandle
+          this.MediaFolder_results as LocalFolder
         );
 
       if (localImage) {
-        const loadedLocalImage = await this.MediaFolder_results?.loadFile(localImage.handle);
+        const loadedLocalImage = await this.MediaFolder_results?.addMediaItem(localImage);
 
         // Save Generation Info
         loadedLocalImage?.mediaJson?.updateField("geninfo", {

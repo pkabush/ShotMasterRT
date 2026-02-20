@@ -5,7 +5,7 @@ export abstract class LocalItem {
 
   private children: LocalItem[] = [];
 
-  constructor( parentFolder: LocalFolder | null = null) {
+  constructor(parentFolder: LocalFolder | null = null) {
     this.parentFolder = parentFolder;
     this.parentFolder?.children.push(this);
   }
@@ -21,6 +21,16 @@ export abstract class LocalItem {
     }
     return null;
   }
+  
+  getByAbsPath(targetPath: string): LocalItem | null {
+    return this.root.getByPath(targetPath);
+  }
+
+  get root(): LocalItem {
+    let current: LocalItem = this;
+    while (current.parentFolder) { current = current.parentFolder; }
+    return current;
+  }
 }
 
 export class LocalFile extends LocalItem {
@@ -32,7 +42,7 @@ export class LocalFile extends LocalItem {
   ) {
     super(parentFolder);
     this.handle = handle;
-    this.path = (parentFolder?.path || "")  +  "/" + (handle?.name || "");
+    this.path = (parentFolder?.path || "") + "/" + (handle?.name || "");
   }
 
   get name(): string {
@@ -50,7 +60,7 @@ export class LocalFolder extends LocalItem {
   ) {
     super(parentFolder);
     this.handle = handle;
-    this.path = (parentFolder?.path || "")  +  "/" + (handle?.name || "");
+    this.path = (parentFolder?.path || "") + "/" + (handle?.name || "");
   }
 
   get name(): string {

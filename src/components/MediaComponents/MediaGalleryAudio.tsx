@@ -1,6 +1,6 @@
 // MediaGalleryAudio.tsx
 import React, { useEffect, useState } from 'react';
-import { LocalAudio } from '../classes/LocalAudio';
+import { LocalAudio } from '../../classes/LocalAudio';
 
 interface Props {
   localAudio: LocalAudio;

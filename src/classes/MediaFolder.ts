@@ -1,17 +1,14 @@
 // MediaFolder.ts
-import { makeAutoObservable, runInAction, toJS } from "mobx";
+import { action, makeObservable, observable, runInAction, toJS } from "mobx";
 import { LocalImage } from './LocalImage';
 import { LocalVideo } from './LocalVideo';
 import type { LocalMedia } from "./interfaces/LocalMedia";
 import type { Shot } from "./Shot";
 import { LocalAudio } from "./LocalAudio";
+import { LocalFolder } from "./LocalFile";
 
-export class MediaFolder {
-    parentFolder: FileSystemDirectoryHandle;
-    folderName: string;
-    folder: FileSystemDirectoryHandle | null = null;
+export class MediaFolder extends LocalFolder {
     media: LocalMedia[] = []; // unified array
-    path: string = "";
     pickedMedia: LocalMedia | null = null;
     selectedMedia: LocalMedia | null = null;
     // Named Media Array
@@ -23,34 +20,56 @@ export class MediaFolder {
     onPicked?: (media: LocalMedia | null) => void;
     onSelected?: (media: LocalMedia | null) => void;
 
-    constructor(parentFolder: FileSystemDirectoryHandle, folderName: string, basePath: string = "", shot: Shot | null = null) {
-        this.parentFolder = parentFolder;
-        this.folderName = folderName;
-        this.path = basePath ? `${basePath}/${folderName}` : folderName;
-        this.shot = shot;
-        makeAutoObservable(this);
+    static async create(
+        parentFolder: LocalFolder,
+        name: string
+    ): Promise<MediaFolder> {
+        const handle = await parentFolder.handle.getDirectoryHandle(name, { create: true });
+        const mediaFodler = new MediaFolder(parentFolder, handle);
+        await mediaFodler.load();
+        return mediaFodler;
+    }
+
+    constructor(parentFolder: LocalFolder, handle: FileSystemDirectoryHandle) {
+        super(parentFolder, handle)
+
+        this.shot = parentFolder as Shot;
+        makeObservable(this, {
+            // observables
+            media: observable,
+            pickedMedia: observable,
+            selectedMedia: observable,
+            tags: observable,
+            multi_tags: observable,
+            shot: observable,
+
+            // actions
+            load: action,
+            deleteMedia: action,
+            setSelectedMedia: action,
+            downloadFromUrl: action,
+            loadFile: action,
+            saveFiles: action,
+            copyFromClipboard: action,
+        });
     }
 
     async load(): Promise<void> {
         try {
-            // Get or create the folder inside parent
-            this.folder = await this.parentFolder.getDirectoryHandle(this.folderName, { create: true });
-
-            for await (const [, handle] of this.folder.entries()) {
+            for await (const [, handle] of this.handle.entries()) {
                 if (handle.kind === "file") { await this.loadFile(handle as FileSystemFileHandle); }
             }
 
         } catch (err) {
-            console.error(`Failed to load MediaFolder '${this.folderName}':`, err);
+            console.error(`Failed to load MediaFolder '${this.name}':`, err);
             runInAction(() => {
-                this.folder = null;
                 this.media = [];
             });
         }
     }
 
     async deleteMedia(mediaItem: LocalMedia, showConfirm: boolean = true): Promise<void> {
-        if (!this.folder) throw new Error("Folder not loaded");
+        if (!this.handle) throw new Error("Folder not loaded");
         if (showConfirm && !window.confirm(`Delete this ${mediaItem instanceof LocalImage ? "image" : "video"}?`)) { return; }
 
         try {
@@ -75,7 +94,7 @@ export class MediaFolder {
     log() { console.log(toJS(this)); }
 
     async downloadFromUrl(url: string): Promise<LocalMedia | null> {
-        if (!this.folder) { throw new Error("MediaFolder not loaded"); }
+        if (!this.handle) { throw new Error("MediaFolder not loaded"); }
 
         try {
             const response = await fetch(url);
@@ -94,7 +113,7 @@ export class MediaFolder {
             }
 
             // Create file in folder
-            const fileHandle = await this.folder.getFileHandle(filename, { create: true });
+            const fileHandle = await this.handle.getFileHandle(filename, { create: true });
             const writable = await fileHandle.createWritable();
             await writable.write(blob);
             await writable.close();
@@ -114,13 +133,17 @@ export class MediaFolder {
         let mediaItem: LocalMedia | null = null;
 
         if (name.match(/\.(png|jpe?g|gif|webp)$/i)) {
-            mediaItem = new LocalImage(fileHandle, this.folder!, this.path, this.shot);
+            mediaItem = new LocalImage(fileHandle, this);
         } else if (name.match(/\.(mp4|mov|webm|avi)$/i)) {
-            mediaItem = new LocalVideo(fileHandle, this.folder!, this.path, this.shot);
+            mediaItem = new LocalVideo(fileHandle, this);
         } else if (name.match(/\.(mp3|wav|m4a)$/i)) {
-            mediaItem = new LocalAudio(fileHandle, this.folder!, this.path, this.shot);
+            mediaItem = new LocalAudio(fileHandle, this);
         }
 
+        return await this.addMediaItem(mediaItem);
+    }
+
+    async addMediaItem(mediaItem : LocalMedia | null) : Promise<LocalMedia | null>{
         if (!mediaItem) return null;
 
         await mediaItem.load();
@@ -138,17 +161,17 @@ export class MediaFolder {
         }
 
         runInAction(() => { this.media.push(mediaItem); });
-
         return mediaItem;
     }
 
+
     async saveFiles(files: File[]) {
-        if (!this.folder) { throw new Error("MediaFolder not loaded"); }
+        if (!this.handle) { throw new Error("MediaFolder not loaded"); }
 
         for (const file of files) {
             try {
                 // Create / overwrite file
-                const fileHandle = await this.folder.getFileHandle(file.name, { create: true, });
+                const fileHandle = await this.handle.getFileHandle(file.name, { create: true, });
                 const writable = await fileHandle.createWritable();
                 await writable.write(file);
                 await writable.close();
@@ -161,7 +184,7 @@ export class MediaFolder {
     }
 
     async copyFromClipboard() {
-        if (!this.folder) { throw new Error("MediaFolder not loaded"); }
+        if (!this.handle) { throw new Error("MediaFolder not loaded"); }
         if (!navigator.clipboard || !navigator.clipboard.read) { console.warn("Clipboard API not supported"); return; }
 
         const files: File[] = [];

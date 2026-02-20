@@ -1,7 +1,7 @@
 // NotificationItem.tsx
 import React from 'react';
 import { notificationManager, type Notification } from '../classes/NotificationManager';
-import { MediaPreviewSmall } from './MediaPreviewSmall';
+import { MediaPreviewSmall } from './MediaComponents/MediaPreviewSmall';
 
 
 const typeToBootstrap: Record<string, string> = {

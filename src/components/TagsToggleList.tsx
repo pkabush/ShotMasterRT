@@ -2,7 +2,7 @@ import React from "react";
 import { observer } from "mobx-react-lite";
 import CollapsibleContainer from "./Atomic/CollapsibleContainer";
 import { Shot } from "../classes/Shot";
-import MediaGalleryImage from "./MediaGalleryImage";
+import MediaGalleryImage from "./MediaComponents/MediaGalleryImage";
 
 interface TagsToggleListProps {
   shot: Shot;

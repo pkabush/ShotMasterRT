@@ -4,7 +4,7 @@ import LoadingButton from "./Atomic/LoadingButton";
 import SimpleSelect from "./Atomic/SimpleSelect";
 import { KlingAI } from "../classes/KlingAI";
 import { LocalVideo } from "../classes/LocalVideo";
-import MediaGalleryVideo from "./MediaGalleryVideo";
+import MediaGalleryVideo from "./MediaComponents/MediaGalleryVideo";
 
 interface VideoEditWindowProps {
     localVideo: LocalVideo;

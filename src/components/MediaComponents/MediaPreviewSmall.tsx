@@ -1,6 +1,6 @@
 import React from "react";
 
-import type { LocalMedia } from "../classes/interfaces/LocalMedia";
+import type { LocalMedia } from "../../classes/interfaces/LocalMedia";
 import MediaGalleryPreview from "./MediaGallerPreview";
 
 interface MediaPreviewSmallProps {

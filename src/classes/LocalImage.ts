@@ -1,4 +1,5 @@
 import { LocalMedia } from './interfaces/LocalMedia';
+import type { LocalFolder } from './LocalFile';
 
 // LocalImage.ts
 export class LocalImage extends LocalMedia{
@@ -25,7 +26,7 @@ export class LocalImage extends LocalMedia{
     // **New static factory from Base64 string**
   static async fromBase64(
     base64Obj: { rawBase64: string; mime: string },
-    folder: FileSystemDirectoryHandle,
+    folder: LocalFolder,
     filename: string
   ): Promise<LocalImage> {
     try {
@@ -45,7 +46,7 @@ export class LocalImage extends LocalMedia{
       }
 
       // Create file in folder
-      const fileHandle = await folder.getFileHandle(filename, { create: true });
+      const fileHandle = await folder.handle.getFileHandle(filename, { create: true });
       const writable = await fileHandle.createWritable();
       await writable.write(bytes);
       await writable.close();

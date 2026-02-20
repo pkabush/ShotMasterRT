@@ -1,11 +1,11 @@
 // MediaGalleryPreview.tsx
 import React from "react";
-import type { LocalMedia } from "../classes/interfaces/LocalMedia";
-import { LocalImage } from "../classes/LocalImage";
+import type { LocalMedia } from "../../classes/interfaces/LocalMedia";
+import { LocalImage } from "../../classes/LocalImage";
 import MediaGalleryImage from "./MediaGalleryImage";
-import { LocalVideo } from "../classes/LocalVideo";
+import { LocalVideo } from "../../classes/LocalVideo";
 import MediaGalleryVideo from "./MediaGalleryVideo";
-import { LocalAudio } from "../classes/LocalAudio";
+import { LocalAudio } from "../../classes/LocalAudio";
 import MediaGalleryAudio from "./MediaGalleryAudio";
 import { observer } from "mobx-react-lite";
 
@@ -18,6 +18,7 @@ interface MediaGalleryPreviewProps {
   isPicked?: boolean;
   label?: string;
   autoPlay? : boolean;
+  showTags? :boolean;
 }
 
 const MediaGalleryPreview: React.FC<MediaGalleryPreviewProps> = observer(({
@@ -29,6 +30,7 @@ const MediaGalleryPreview: React.FC<MediaGalleryPreviewProps> = observer(({
   isPicked = false,
   label = "",
   autoPlay = true,
+  showTags = true,
 }) => {
 
   const renderBottomLabel = () =>
@@ -39,7 +41,7 @@ const MediaGalleryPreview: React.FC<MediaGalleryPreviewProps> = observer(({
     ) : null;
 
   const renderTags = () =>
-    mediaItem.tags?.length ? (
+    mediaItem.tags?.length && showTags ? (
       <div
         className="position-absolute bottom-0 start-50 translate-middle-x d-flex flex-wrap gap-1 justify-center mb-1"
         style={{ maxWidth: "90%" }}

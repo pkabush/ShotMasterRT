@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from 'react';
-import { LocalImage } from '../classes/LocalImage';
+import React, { useState } from 'react';
+import MediaImage from './MediaImage';
+import { LocalImage } from '../../classes/LocalImage';
 
 interface Props {
   localImage: LocalImage;
@@ -20,52 +21,20 @@ const MediaGalleryImage: React.FC<Props> = ({
   isPicked = false,
   zoomOnHover = false,
 }) => {
-  const [url, setUrl] = useState<string | null>(null);
   const [hovered, setHovered] = useState(false);
-
-
-  useEffect(() => {
-    let mounted = true;
-
-    const loadUrl = async () => {
-      try {
-        const objectUrl = await localImage.getUrlObject();
-        if (mounted && objectUrl) setUrl(objectUrl);
-      } catch (err) {
-        console.error('Error loading LocalImage', err);
-      }
-    };
-
-    loadUrl();
-
-    return () => {
-      mounted = false;
-    };
-  }, [localImage]);
-
-  if (!url) {
-    return (
-      <div
-        className="d-flex align-items-center justify-content-center border rounded p-2"
-        style={{ height: `${height}px`, width: 'auto' }}
-      >
-        Loading...
-      </div>
-    );
-  }
 
   return (
     <div
       className="position-relative d-inline-block"
       style={{
-        height: `${height}px`, cursor: 'pointer',
+        height,
+        cursor: 'pointer',
         outline: isPicked ? '3px solid #085db7' : 'none',
         outlineOffset: -3,
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      {/* Green selection circle */}
       {isSelected && (
         <div
           style={{
@@ -82,30 +51,28 @@ const MediaGalleryImage: React.FC<Props> = ({
         />
       )}
 
-
-      <img
-        src={url}
-        alt="Media"
+      <MediaImage
+        localImage={localImage}
         className="img-fluid"
-        onClick={onClick}
         style={{
-          height: `${height}px`,
+          height,
           width: 'auto',
           objectFit: 'contain',
           display: 'block',
         }}
+        onClick={onClick}
+        alt="Media"
       />
 
-      {/* Top-right extra container, visible only on hover */}
       {topRightExtra && hovered && (
         <div
-          className="position-absolute"
           style={{
-            top: '5px',
-            right: '5px',
+            position: 'absolute',
+            top: 5,
+            right: 5,
             zIndex: 10,
             display: 'flex',
-            gap: '5px',
+            gap: 5,
           }}
         >
           {topRightExtra}
@@ -113,8 +80,8 @@ const MediaGalleryImage: React.FC<Props> = ({
       )}
 
       {hovered && zoomOnHover && (
-        <img
-          src={url}
+        <MediaImage
+          localImage={localImage}
           style={{
             position: 'absolute',
             top: '100%',
@@ -126,7 +93,6 @@ const MediaGalleryImage: React.FC<Props> = ({
           }}
         />
       )}
-
     </div>
   );
 };
