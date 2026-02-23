@@ -1,4 +1,4 @@
-import { LocalMedia } from './interfaces/LocalMedia';
+import { LocalMedia } from './LocalMedia';
 import type { LocalFolder } from './LocalFile';
 
 // LocalAudio.ts
@@ -10,7 +10,7 @@ export class LocalAudio extends LocalMedia {
     if (this.base64Data) return this.base64Data;
 
     try {
-      const file = await this.handle.getFile();
+      const file = await this.getFile();
       const arrayBuffer = await file.arrayBuffer();
       const mime = file.type || "audio/mpeg"; // default to mp3
       const rawBase64 = arrayBufferToBase64(arrayBuffer);
@@ -62,7 +62,7 @@ export class LocalAudio extends LocalMedia {
   }
 
     async getDuration(): Promise<number> {
-    const file = await this.handle.getFile();
+    const file = await this.getFile();
     const objectUrl = URL.createObjectURL(file);
 
     return await new Promise((resolve, reject) => {

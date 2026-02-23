@@ -5,7 +5,7 @@ import MediaGalleryVideo from "../MediaComponents/MediaGalleryVideo";
 import MediaGalleryAudio from "../MediaComponents/MediaGalleryAudio";
 import { MediaFolderGallery } from "../MediaFolderGallery";
 import type { Shot } from "../../classes/Shot";
-import type { LocalAudio } from "../../classes/LocalAudio";
+import type { LocalAudio } from "../../classes/fileSystem/LocalAudio";
 import LoadingSpinner from "../Atomic/LoadingSpinner";
 
 interface Kling_LipSyncProps {

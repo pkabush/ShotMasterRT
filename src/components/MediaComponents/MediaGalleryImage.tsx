@@ -1,24 +1,18 @@
 import React, { useState } from 'react';
 import MediaImage from './MediaImage';
-import { LocalImage } from '../../classes/LocalImage';
+import { LocalImage } from '../../classes/fileSystem/LocalImage';
 
 interface Props {
   localImage: LocalImage;
   height?: number;
-  topRightExtra?: React.ReactNode;
   onClick?: () => void;
-  isSelected?: boolean;
-  isPicked?: boolean;
   zoomOnHover?: boolean;
 }
 
 const MediaGalleryImage: React.FC<Props> = ({
   localImage,
   height = 150,
-  topRightExtra,
   onClick,
-  isSelected = false,
-  isPicked = false,
   zoomOnHover = false,
 }) => {
   const [hovered, setHovered] = useState(false);
@@ -29,27 +23,10 @@ const MediaGalleryImage: React.FC<Props> = ({
       style={{
         height,
         cursor: 'pointer',
-        outline: isPicked ? '3px solid #085db7' : 'none',
-        outlineOffset: -3,
       }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
     >
-      {isSelected && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 5,
-            left: 5,
-            width: 20,
-            height: 20,
-            borderRadius: '50%',
-            backgroundColor: 'limegreen',
-            border: '2px solid white',
-            zIndex: 20,
-          }}
-        />
-      )}
 
       <MediaImage
         localImage={localImage}
@@ -63,21 +40,6 @@ const MediaGalleryImage: React.FC<Props> = ({
         onClick={onClick}
         alt="Media"
       />
-
-      {topRightExtra && hovered && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 5,
-            right: 5,
-            zIndex: 10,
-            display: 'flex',
-            gap: 5,
-          }}
-        >
-          {topRightExtra}
-        </div>
-      )}
 
       {hovered && zoomOnHover && (
         <MediaImage

@@ -40,3 +40,13 @@
 .read-the-docs {
   color: #888;
 }
+
+
+.top-right-buttons {
+  position: absolute;   /* was position-absolute */
+  top: 5px;
+  right: 5px;
+  z-index: 10;
+  display: flex;
+  gap: 5px;
+}

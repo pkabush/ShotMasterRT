@@ -4,7 +4,7 @@ import { Shot } from "./Shot";
 import { ai_providers } from "./AI_providers";
 import { KlingAI } from "./KlingAI";
 import { notificationManager } from "./NotificationManager";
-import type { LocalMedia } from "./interfaces/LocalMedia";
+import type { LocalMedia } from "./fileSystem/LocalMedia";
 
 export class Task {
     shot: Shot;
@@ -98,7 +98,12 @@ export class Task {
     async downloadResults() {
         const url = this.data?.url;
         const res_media = await this.shot.MediaFolder_genVideo?.downloadFromUrl(url);
+
         if( !res_media ) return;
+
+
+        // Save Res Media GenINFO
+        if (this.data.geninfo) res_media?.mediaJson?.updateField("geninfo", this.data.geninfo)
 
         this.update({ result: res_media?.name});
 

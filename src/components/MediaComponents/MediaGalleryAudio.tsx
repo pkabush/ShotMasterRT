@@ -1,31 +1,25 @@
 // MediaGalleryAudio.tsx
 import React, { useEffect, useState } from 'react';
-import { LocalAudio } from '../../classes/LocalAudio';
+import { LocalAudio } from '../../classes/fileSystem/LocalAudio';
 
 interface Props {
   localAudio: LocalAudio;
   height?: number;          // height of audio player
   width?: number;           // width of container
-  topRightExtra?: React.ReactNode;
   onClick?: () => void;
   autoPlay?: boolean;
   loop?: boolean;
   muted?: boolean;
-  isSelected?: boolean;
-  isPicked?: boolean;
 }
 
 const MediaGalleryAudio: React.FC<Props> = ({
   localAudio,
   height = 250,
   width = 250,
-  topRightExtra,
   onClick,
   autoPlay = false,
   loop = false,
   muted = false,
-  isSelected = false,
-  isPicked = false,
 }) => {
   const [url, setUrl] = useState<string | null>(null);
 
@@ -56,8 +50,6 @@ const MediaGalleryAudio: React.FC<Props> = ({
         height: height, // extra space for name label and top padding
         width,
         cursor: 'pointer',
-        outline: isPicked ? '3px solid #085db7' : 'none',
-        outlineOffset: -3,
         paddingTop: '20px', // <-- added padding to push content down
         paddingLeft: '5px',
         paddingRight: '5px',
@@ -73,23 +65,6 @@ const MediaGalleryAudio: React.FC<Props> = ({
       >
         {localAudio.name}
       </div>
-
-      {/* Green selection circle */}
-      {isSelected && (
-        <div
-          style={{
-            position: 'absolute',
-            top: 25, // shifted down a bit so it doesn't overlap padding
-            left: 5,
-            width: 20,
-            height: 20,
-            borderRadius: '50%',
-            backgroundColor: 'limegreen',
-            border: '2px solid white',
-            zIndex: 20,
-          }}
-        />
-      )}
 
       {/* Audio player */}
       {url ? (
@@ -110,21 +85,6 @@ const MediaGalleryAudio: React.FC<Props> = ({
         </div>
       )}
 
-      {/* Top-right extras */}
-      {topRightExtra && (
-        <div
-          className="position-absolute"
-          style={{
-            top: '5px',   // stays near top
-            right: '5px',
-            zIndex: 10,
-            display: 'flex',
-            gap: '5px',
-          }}
-        >
-          {topRightExtra}
-        </div>
-      )}
     </div>
   );
 };

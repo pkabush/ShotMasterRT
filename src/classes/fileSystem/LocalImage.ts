@@ -1,4 +1,4 @@
-import { LocalMedia } from './interfaces/LocalMedia';
+import { LocalMedia } from './LocalMedia';
 import type { LocalFolder } from './LocalFile';
 
 // LocalImage.ts
@@ -10,7 +10,7 @@ export class LocalImage extends LocalMedia{
     if (this.base64Data) return this.base64Data;
 
     try {
-      const file = await this.handle.getFile();
+      const file = await this.getFile();
       const arrayBuffer = await file.arrayBuffer();
       const mime = file.type || "image/png";
       const rawBase64 = arrayBufferToBase64(arrayBuffer);

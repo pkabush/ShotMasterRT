@@ -9,7 +9,7 @@ import { ChatGPT } from './ChatGPT';
 import { Art } from "./Art";
 import Prompt from './Prompt';
 import * as ResolveUtils from './ResolveUtils';
-import { LocalFolder } from './LocalFile';
+import { LocalFolder } from './fileSystem/LocalFile';
 
 const default_sceneInfoJson = {
   tags: [],

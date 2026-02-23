@@ -1,11 +1,11 @@
 // MediaGalleryPreview.tsx
 import React from "react";
-import type { LocalMedia } from "../../classes/interfaces/LocalMedia";
-import { LocalImage } from "../../classes/LocalImage";
+import type { LocalMedia } from "../../classes/fileSystem/LocalMedia";
+import { LocalImage } from "../../classes/fileSystem/LocalImage";
 import MediaGalleryImage from "./MediaGalleryImage";
-import { LocalVideo } from "../../classes/LocalVideo";
+import { LocalVideo } from "../../classes/fileSystem/LocalVideo";
 import MediaGalleryVideo from "./MediaGalleryVideo";
-import { LocalAudio } from "../../classes/LocalAudio";
+import { LocalAudio } from "../../classes/fileSystem/LocalAudio";
 import MediaGalleryAudio from "./MediaGalleryAudio";
 import { observer } from "mobx-react-lite";
 
@@ -13,51 +13,17 @@ interface MediaGalleryPreviewProps {
   mediaItem: LocalMedia;
   height?: number;
   onSelectMedia?: (media: LocalMedia) => void;
-  topRightExtra?: React.ReactNode;
-  isSelected?: boolean;
-  isPicked?: boolean;
-  label?: string;
-  autoPlay? : boolean;
-  showTags? :boolean;
+  autoPlay?: boolean;
+  children?: React.ReactNode;
 }
 
 const MediaGalleryPreview: React.FC<MediaGalleryPreviewProps> = observer(({
   mediaItem,
   height = 300,
   onSelectMedia,
-  topRightExtra,
-  isSelected = false,
-  isPicked = false,
-  label = "",
   autoPlay = true,
-  showTags = true,
+  children = [],
 }) => {
-
-  const renderBottomLabel = () =>
-    label ? (
-      <div className="position-absolute bottom-0 start-50 translate-middle-x bg-dark text-white px-2 py-1 rounded small text-nowrap opacity-75 pe-none mb-1">
-        {label}
-      </div>
-    ) : null;
-
-  const renderTags = () =>
-    mediaItem.tags?.length && showTags ? (
-      <div
-        className="position-absolute bottom-0 start-50 translate-middle-x d-flex flex-wrap gap-1 justify-center mb-1"
-        style={{ maxWidth: "90%" }}
-      >
-        {mediaItem.tags.map((tag, index) => (
-          <div
-            key={`${tag}-${index}`}
-            className="bg-dark text-white px-2 py-1 rounded small text-nowrap opacity-75"
-            style={{ cursor: "pointer" }}
-            onClick={() => mediaItem.removeTag(tag)}
-          >
-            {tag}
-          </div>
-        ))}
-      </div>
-    ) : null;
 
   // ===== IMAGE =====
   if (mediaItem instanceof LocalImage) {
@@ -68,12 +34,8 @@ const MediaGalleryPreview: React.FC<MediaGalleryPreviewProps> = observer(({
           localImage={mediaItem}
           height={height}
           onClick={() => onSelectMedia?.(mediaItem)}
-          topRightExtra={topRightExtra}
-          isSelected={isSelected}
-          isPicked={isPicked}
         />
-        {renderBottomLabel()}
-        {renderTags()}
+        {children}
       </div>
     );
   }
@@ -87,13 +49,9 @@ const MediaGalleryPreview: React.FC<MediaGalleryPreviewProps> = observer(({
           localVideo={mediaItem}
           height={height}
           onClick={() => onSelectMedia?.(mediaItem)}
-          topRightExtra={topRightExtra}
-          isSelected={isSelected}
-          isPicked={isPicked}
           autoPlay={autoPlay}
-        />
-        {renderBottomLabel()}
-        {renderTags()}
+        />        
+        {children}
       </div>
     );
   }
@@ -107,12 +65,8 @@ const MediaGalleryPreview: React.FC<MediaGalleryPreviewProps> = observer(({
           localAudio={mediaItem}
           height={height}
           onClick={() => onSelectMedia?.(mediaItem)}
-          topRightExtra={topRightExtra}
-          isSelected={isSelected}
-          isPicked={isPicked}
         />
-        {renderBottomLabel()}
-        {renderTags()}
+        {children}
       </div>
     );
   }

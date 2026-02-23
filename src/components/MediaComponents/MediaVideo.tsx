@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { observer } from "mobx-react-lite";
-import { LocalVideo } from "../../classes/LocalVideo";
+import { LocalVideo } from "../../classes/fileSystem/LocalVideo";
 
 interface Props extends React.VideoHTMLAttributes<HTMLVideoElement> {
   localVideo: LocalVideo;

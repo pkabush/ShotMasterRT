@@ -1,7 +1,7 @@
 // classes/GoogleGenAI.ts
 import { GoogleGenAI as GoogleSDK } from "@google/genai";
-import { LocalImage } from "./LocalImage";
-import type { LocalFolder } from "./LocalFile";
+import { LocalImage } from "./fileSystem/LocalImage";
+import type { LocalFolder } from "./fileSystem/LocalFile";
 
 // Custom error types for clarity
 export class MissingApiKeyError extends Error { }

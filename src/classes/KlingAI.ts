@@ -433,10 +433,12 @@ export class KlingAI {
 export interface LipSyncFaceChoose {
   face_id: string;          // Required: face ID from IdentifyFace
   audio_id?: string;        // Optional: TTS-generated audio ID
+  sound_file_path?: string;
   sound_file?: string;      // Optional: Base64 or accessible URL audio
   sound_start_time: number; // Required: start time in ms
   sound_end_time: number;   // Required: end time in ms
   sound_insert_time: number; // Required: insert time in ms
   sound_volume?: number;    // Optional, default 1, range [0,2]
   original_audio_volume?: number; // Optional, default 1, range [0,2]
+  
 }

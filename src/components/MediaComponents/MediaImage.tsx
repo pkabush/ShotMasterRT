@@ -1,6 +1,6 @@
 import React, { useEffect } from "react";
 import { observer } from "mobx-react-lite";
-import { LocalImage } from "../../classes/LocalImage";
+import { LocalImage } from "../../classes/fileSystem/LocalImage";
 
 interface Props extends React.ImgHTMLAttributes<HTMLImageElement> {
   localImage: LocalImage;

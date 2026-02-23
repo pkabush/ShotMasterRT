@@ -1,4 +1,4 @@
-import { LocalMedia } from './interfaces/LocalMedia';
+import { LocalMedia } from './LocalMedia';
 import type { LocalFolder } from './LocalFile';
 
 // LocalVideo.ts

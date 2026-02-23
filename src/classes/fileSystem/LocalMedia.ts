@@ -1,9 +1,9 @@
-import { LocalFile, LocalFolder } from "../LocalFile";
-import type { LocalImage } from "../LocalImage";
+import { LocalFile, LocalFolder } from "./LocalFile";
+import type { LocalImage } from "./LocalImage";
 import { LocalJson } from "../LocalJson";
 import type { MediaFolder } from "../MediaFolder";
 import type { Shot } from "../Shot";
-import * as webFileStorage from './../webFileStorage';
+import * as webFileStorage from '../webFileStorage';
 import { runInAction, toJS, makeObservable, observable, action, computed } from "mobx";
 
 // LocalMediaInterface.ts
@@ -14,6 +14,7 @@ export class LocalMedia extends LocalFile {
   mediaFolder: MediaFolder | null = null;
   mediaJson: LocalJson | null = null;
   onTagChanged?: (media: LocalMedia, tag: string, added: boolean) => void;
+  file: File | null = null;
 
   constructor(handle: FileSystemFileHandle, parentFolder: LocalFolder) {
     super(parentFolder, handle)
@@ -64,7 +65,7 @@ export class LocalMedia extends LocalFile {
   }
 
   async getWebUrl() {
-    const nextUrl = await webFileStorage.ensureUploaded(await this.handle.getFile(), this.web_url);
+    const nextUrl = await webFileStorage.ensureUploaded(await this.getFile(), this.web_url);
     runInAction(() => { this.web_url = nextUrl; });
     return this.web_url;
   }
@@ -72,7 +73,7 @@ export class LocalMedia extends LocalFile {
   async getUrlObject(): Promise<string> {
     if (!this.urlObject) {
       try {
-        const file = await this.handle.getFile();
+        const file = await this.getFile();
         const objectUrl = URL.createObjectURL(file);
         runInAction(() => { this.urlObject = objectUrl; });
       } catch (err) {

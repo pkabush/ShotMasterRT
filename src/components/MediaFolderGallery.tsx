@@ -1,19 +1,25 @@
 // MediaFolderGallery.tsx
-import React from "react";
+import React, { useState } from "react";
 import { observer } from "mobx-react-lite";
 import type { MediaFolder } from "../classes/MediaFolder";
-import { LocalImage } from "../classes/LocalImage";
+import { LocalImage } from "../classes/fileSystem/LocalImage";
 import MediaGallery from "./MediaGallery";
 import SimpleButton from "./Atomic/SimpleButton";
 import MediaGalleryPreview from "./MediaComponents/MediaGallerPreview";
 import DropArea from "./Atomic/DropArea";
-import type { LocalMedia } from "../classes/interfaces/LocalMedia";
+import type { LocalMedia } from "../classes/fileSystem/LocalMedia";
 import ImageEditWindow from "./ImageEditWindow";
 import SimpleDropdown from "./Atomic/SimpleDropdown";
-import { LocalVideo } from "../classes/LocalVideo";
+import { LocalVideo } from "../classes/fileSystem/LocalVideo";
 import VideoEditWindow from "./VideoEditWindow";
 import type { Shot } from "../classes/Shot";
 import { ai_providers } from "../classes/AI_providers";
+import GrayscaleOverlay from "./Atomic/MediaElements/GrayscaleOverlay";
+import AddOutline from "./Atomic/MediaElements/AddOutline";
+import MediaItemTags from "./Atomic/MediaElements/MediaItemTags";
+import HoverContainer from "./MediaComponents/HoverContainer";
+import TopRightExtra from "./Atomic/MediaElements/TopRightExtra";
+import SimpleToggle from "./SimpleToggle";
 
 interface MediaFolderGalleryProps {
     mediaFolder: MediaFolder | null;
@@ -24,6 +30,8 @@ interface MediaFolderGalleryProps {
 
 export const MediaFolderGallery: React.FC<MediaFolderGalleryProps> = observer(
     ({ mediaFolder, label = null, itemHeight = 300, showEditWindow = true }) => {
+        const [highlightGenParents, setHighlightGenParents] = useState<boolean>(true);
+
 
         if (!mediaFolder || !mediaFolder.handle) return null;
         label = label || mediaFolder.name;
@@ -33,6 +41,7 @@ export const MediaFolderGallery: React.FC<MediaFolderGalleryProps> = observer(
                 <MediaGallery label={label}
                     headerExtra={
                         <>
+                            <SimpleToggle label={"Highlight Gen Relations"} value={highlightGenParents} onToggle={(e) => { setHighlightGenParents(e) }} />
                             <SimpleButton label="Log" className="btn-outline-secondary btn-sm"
                                 onClick={() => { mediaFolder.log(); }} />
                             <SimpleButton label="Import URL" className="btn-outline-secondary btn-sm"
@@ -80,24 +89,11 @@ export const MediaFolderGallery: React.FC<MediaFolderGalleryProps> = observer(
                                                     console.log("Video task created:", task_info);
 
                                                     const shot = mediaFolder.shot as Shot;
-                                                    const task = shot.addTask(task_info.id, { provider: ai_providers.KLING, workflow: task_info.workflow })
+                                                    const task = shot.addTask(task_info.id, { provider: ai_providers.KLING, workflow: task_info.workflow, geninfo: task_info.geninfo })
                                                     await new Promise(res => setTimeout(res, 100));
                                                     console.log("created_task");
 
                                                     task.check_status();
-                                                    /*
-                                                    if (result?.url) {
-                                                        try {
-                                                            const savedVideo: LocalVideo = await LocalVideo.fromUrl(
-                                                                result.url,
-                                                                mediaFolder.folder as FileSystemDirectoryHandle
-                                                            );
-                                                            mediaFolder.loadFile(savedVideo.handle);
-                                                        } catch (err) {
-                                                            console.error("Failed to save generated video:", err);
-                                                        }
-                                                    }
-                                                    */
                                                 }}
                                                 onClose={() => mediaFolder.setSelectedMedia(null)}
                                             />
@@ -108,47 +104,54 @@ export const MediaFolderGallery: React.FC<MediaFolderGalleryProps> = observer(
                             </>) : null
                     }
                 >
-                    {mediaFolder.media.map((mediaItem) => (
-                        <MediaGalleryPreview
-                            key={mediaItem.path}
-                            mediaItem={mediaItem}
-                            height={itemHeight}
-                            onSelectMedia={(media: LocalMedia) => { mediaFolder.setSelectedMedia(media) }}
-                            isSelected={mediaItem.hasTag("start_frame")}
-                            isPicked={mediaFolder.selectedMedia == mediaItem}
-                            //label={mediaFolder.getMediaTags(mediaItem).join(",")}
-                            topRightExtra={
+                    {mediaFolder.mediaOrdered.map((mediaItem) => (
+
+                        <HoverContainer key={mediaItem.path}
+                            hoverElements={
                                 <>
-                                    <SimpleButton
-                                        label="Delete"
-                                        className="btn-outline-danger btn-sm"
-                                        onClick={async () => {
-                                            await mediaFolder.deleteMedia(mediaItem);
-                                        }}
-                                    />
-
-                                    <SimpleButton
-                                        label="LOG"
-                                        className="btn-outline-secondary btn-sm"
-                                        onClick={async () => {
-                                            mediaItem.log();
-                                        }}
-                                    />
-
-
-                                    <SimpleDropdown
-                                        items={mediaFolder.tags}
-                                        currentItem={"TAG"}
-                                        onPicked={(val) => {
-                                            //mediaFolder.setNamedMedia(val, mediaItem)
-                                            mediaItem.toggleTag(val);
-                                        }}
-                                    />
-
-
+                                    <TopRightExtra>
+                                        <SimpleButton
+                                            label="Delete"
+                                            className="btn-outline-danger btn-sm"
+                                            onClick={async () => {
+                                                await mediaFolder.deleteMedia(mediaItem);
+                                            }}
+                                        />
+                                        <SimpleButton
+                                            label="LOG"
+                                            className="btn-outline-secondary btn-sm"
+                                            onClick={async () => {
+                                                mediaItem.log();
+                                            }}
+                                        />
+                                        <SimpleDropdown
+                                            items={mediaFolder.tags}
+                                            currentItem={"TAG"}
+                                            onPicked={(val) => {
+                                                mediaItem.toggleTag(val);
+                                            }}
+                                        />
+                                    </TopRightExtra>
                                 </>
-                            }
-                        />
+                            }>
+                            <MediaGalleryPreview
+                                mediaItem={mediaItem}
+                                height={itemHeight}
+                                onSelectMedia={(media: LocalMedia) => { mediaFolder.setSelectedMedia(media) }}
+                            >
+                                {mediaFolder.selectedMedia != null && (
+                                    mediaFolder.selectedMedia !== mediaItem &&
+                                    mediaFolder.selectedMedia?.sourceImage !== mediaItem &&
+                                    !mediaFolder.selectedMedia?.generatedMedia.includes(mediaItem)
+                                ) && highlightGenParents && (<GrayscaleOverlay />)}
+
+                                <AddOutline showOutline={mediaFolder.selectedMedia == mediaItem} color="#0a74ff" width={5} />
+                                <AddOutline showOutline={mediaFolder.selectedMedia?.sourceImage == mediaItem} color="#ff0ab565" width={5} />
+                                <AddOutline showOutline={mediaFolder.selectedMedia?.generatedMedia.includes(mediaItem)} color="#fffb0a65" width={5} />
+
+                                <MediaItemTags mediaItem={mediaItem} />
+                            </MediaGalleryPreview>
+                        </HoverContainer>
                     ))}
 
                     <DropArea width={100} height={itemHeight} onDrop={async (files) => { await mediaFolder.saveFiles(files); }}>

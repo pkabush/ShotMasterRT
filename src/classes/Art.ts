@@ -1,9 +1,9 @@
 // Art.ts
-import { LocalImage } from "./LocalImage";
+import { LocalImage } from "./fileSystem/LocalImage";
 import { LocalJson } from "./LocalJson";
 import { makeAutoObservable, runInAction } from "mobx";
 import { Artbook } from "./Artbook";
-import type { LocalFolder } from "./LocalFile";
+import type { LocalFolder } from "./fileSystem/LocalFile";
 
 export class Art {
   handle: FileSystemFileHandle;

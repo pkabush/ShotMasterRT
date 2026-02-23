@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Group, Panel, Separator } from "react-resizable-panels";
-import { LocalImage } from "../classes/LocalImage";
+import { LocalImage } from "../classes/fileSystem/LocalImage";
 import LoadingButton from "./Atomic/LoadingButton";
 import { GoogleAI } from "../classes/GoogleAI";
 import SimpleSelect from "./Atomic/SimpleSelect";
@@ -8,13 +8,10 @@ import { observer } from "mobx-react-lite";
 import EditableJsonTextField from "./EditableJsonTextField";
 import TagsToggleList from "./TagsToggleList";
 import TabsContainer from "./TabsContainer";
-import SimpleButton from "./Atomic/SimpleButton";
-import MediaGalleryImage from "./MediaComponents/MediaGalleryImage";
 import type { MediaFolder } from "../classes/MediaFolder";
-import type { LocalFolder } from "../classes/LocalFile";
+import type { LocalFolder } from "../classes/fileSystem/LocalFile";
 import MediaGalleryPreview from "./MediaComponents/MediaGallerPreview";
-import MediaImage from "./MediaComponents/MediaImage";
-import MediaWrapper from "./MediaComponents/MediaWrapper";
+import BottomCenterLabel from "./Atomic/MediaElements/BottomCenterLabel";
 
 
 
@@ -279,15 +276,14 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
                     <>
                       <MediaGalleryPreview
                         mediaItem={localImage.sourceImage}
-                        label={"SOURCE"}
-                        showTags={false}
                         height={150}
                         onSelectMedia={() => {
                           const mf = localImage.sourceImage?.parentFolder as MediaFolder;
                           mf.setSelectedMedia(localImage.sourceImage);
                         }}
-                      />
-
+                      > 
+                      <BottomCenterLabel label="SOURCE"/>
+                      </MediaGalleryPreview>  
                     </>
                   )}
 
@@ -299,17 +295,16 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
                           height={150}
                           key={media.path}   // or media.id if you have one
                           mediaItem={media}
-                          label={"child"}
-                          showTags={false}
                           onSelectMedia={() => {
                             const mf = media.parentFolder as MediaFolder;
                             mf.setSelectedMedia(media);
                           }}
-                        />
+                        >
+                      <BottomCenterLabel label="Child"/>
+                      </MediaGalleryPreview>
                       ))}
                     </>
                   )}
-
 
                   <div>
                     <pre style={{ whiteSpace: "pre-wrap", wordWrap: "break-word" }}>

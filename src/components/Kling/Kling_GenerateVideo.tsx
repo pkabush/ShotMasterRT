@@ -6,7 +6,7 @@ import { KlingAI } from "../../classes/KlingAI";
 import LoadingSpinner from "../Atomic/LoadingSpinner";
 import MediaGalleryPreview from "../MediaComponents/MediaGallerPreview";
 import { MediaFolderGallery } from "../MediaFolderGallery";
-import type { LocalMedia } from "../../classes/interfaces/LocalMedia";
+import type { LocalMedia } from "../../classes/fileSystem/LocalMedia";
 import type { Shot } from "../../classes/Shot";
 import EditableJsonTextField from "../EditableJsonTextField";
 

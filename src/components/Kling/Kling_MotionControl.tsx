@@ -9,7 +9,7 @@ import MediaGalleryVideo from "../MediaComponents/MediaGalleryVideo";
 import EditableJsonTextField from "../EditableJsonTextField";
 import MediaGalleryPreview from "../MediaComponents/MediaGallerPreview";
 import { MediaFolderGallery } from "../MediaFolderGallery";
-import type { LocalMedia } from "../../classes/interfaces/LocalMedia";
+import type { LocalMedia } from "../../classes/fileSystem/LocalMedia";
 
 interface Kling_MotionControlProps {
   shot: Shot;

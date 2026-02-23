@@ -1,11 +1,11 @@
 // MediaFolder.ts
-import { action, makeObservable, observable, runInAction, toJS } from "mobx";
-import { LocalImage } from './LocalImage';
-import { LocalVideo } from './LocalVideo';
-import type { LocalMedia } from "./interfaces/LocalMedia";
+import { action, computed, makeObservable, observable, runInAction, toJS } from "mobx";
+import { LocalImage } from './fileSystem/LocalImage';
+import { LocalVideo } from './fileSystem/LocalVideo';
+import type { LocalMedia } from "./fileSystem/LocalMedia";
 import type { Shot } from "./Shot";
-import { LocalAudio } from "./LocalAudio";
-import { LocalFolder } from "./LocalFile";
+import { LocalAudio } from "./fileSystem/LocalAudio";
+import { LocalFolder } from "./fileSystem/LocalFile";
 
 export class MediaFolder extends LocalFolder {
     media: LocalMedia[] = []; // unified array
@@ -51,6 +51,9 @@ export class MediaFolder extends LocalFolder {
             loadFile: action,
             saveFiles: action,
             copyFromClipboard: action,
+            // computed
+            mediaOrdered: computed,
+
         });
     }
 
@@ -66,6 +69,12 @@ export class MediaFolder extends LocalFolder {
                 this.media = [];
             });
         }
+    }
+
+    get mediaOrdered(): LocalMedia[] {
+        return [...this.media].sort(
+            (a, b) => a.lastModified - b.lastModified
+        );
     }
 
     async deleteMedia(mediaItem: LocalMedia, showConfirm: boolean = true): Promise<void> {
@@ -143,7 +152,7 @@ export class MediaFolder extends LocalFolder {
         return await this.addMediaItem(mediaItem);
     }
 
-    async addMediaItem(mediaItem : LocalMedia | null) : Promise<LocalMedia | null>{
+    async addMediaItem(mediaItem: LocalMedia | null): Promise<LocalMedia | null> {
         if (!mediaItem) return null;
 
         await mediaItem.load();

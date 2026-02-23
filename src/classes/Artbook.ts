@@ -2,7 +2,7 @@
 import { action, makeObservable, observable, runInAction,toJS } from "mobx";
 import { Art } from "./Art";
 import { Project } from "./Project";
-import { LocalFolder } from "./LocalFile";
+import { LocalFolder } from "./fileSystem/LocalFile";
 
 export class Artbook extends LocalFolder{
   project: Project | null = null; 

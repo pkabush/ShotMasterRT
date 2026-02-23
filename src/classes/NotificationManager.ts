@@ -1,6 +1,6 @@
 // NotificationManager.ts
 import { makeAutoObservable } from 'mobx';
-import type { LocalMedia } from './interfaces/LocalMedia';
+import type { LocalMedia } from './fileSystem/LocalMedia';
 
 export const NotificationTypes = {
   info: 'info',

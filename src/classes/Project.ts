@@ -8,7 +8,7 @@ import { GoogleAI } from "./GoogleAI";
 import { ChatGPT } from "./ChatGPT";
 import { LocalJson } from './LocalJson';
 import { KlingAI } from "./KlingAI";
-import { LocalFolder } from "./LocalFile";
+import { LocalFolder } from "./fileSystem/LocalFile";
 
 export type ProjectView =
   | { type: "none" }

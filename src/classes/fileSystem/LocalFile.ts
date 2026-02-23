@@ -1,3 +1,5 @@
+import { action, makeObservable, observable, runInAction } from "mobx";
+
 // LocalItem.ts
 export abstract class LocalItem {
   path: string = "";
@@ -21,7 +23,7 @@ export abstract class LocalItem {
     }
     return null;
   }
-  
+
   getByAbsPath(targetPath: string): LocalItem | null {
     return this.root.getByPath(targetPath);
   }
@@ -35,6 +37,8 @@ export abstract class LocalItem {
 
 export class LocalFile extends LocalItem {
   handle: FileSystemFileHandle;
+  private _file: File | null = null;
+  lastModified: number = 0;
 
   constructor(
     parentFolder: LocalFolder | null = null,
@@ -43,10 +47,29 @@ export class LocalFile extends LocalItem {
     super(parentFolder);
     this.handle = handle;
     this.path = (parentFolder?.path || "") + "/" + (handle?.name || "");
+
+    makeObservable(this, {
+      lastModified: observable,
+      getFile: action.bound, // action.bound ensures proper this context
+    });
   }
 
   get name(): string {
     return this.handle.name;
+  }
+
+  async getFile(forceRefresh = false): Promise<File> {
+    if (!this._file || forceRefresh) {
+      const file = await this.handle.getFile();
+
+      runInAction(() => { 
+        this._file = file;
+        this.lastModified = file.lastModified;
+      });
+
+    }
+
+    return this._file!;
   }
 }
 

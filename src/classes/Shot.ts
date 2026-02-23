@@ -1,17 +1,17 @@
 // Shot.ts
 import { Scene } from './Scene';
 import { LocalJson } from './LocalJson';
-import { LocalImage } from './LocalImage';
+import { LocalImage } from './fileSystem/LocalImage';
 import { makeObservable, observable, runInAction, toJS } from "mobx";
 import { GoogleAI, type AIImageInput } from './GoogleAI';
 import { KlingAI, type LipSyncFaceChoose } from './KlingAI';
 import { Task } from './Task';
 //import { Art } from "./Art";
 import { ai_providers } from './AI_providers';
-import { LocalVideo } from './LocalVideo';
+import { LocalVideo } from './fileSystem/LocalVideo';
 import { MediaFolder } from './MediaFolder';
-import type { LocalAudio } from './LocalAudio';
-import { LocalFolder } from './LocalFile';
+import type { LocalAudio } from './fileSystem/LocalAudio';
+import { LocalFolder } from './fileSystem/LocalFile';
 
 
 
@@ -45,7 +45,7 @@ export class Shot extends LocalFolder {
     });
   }
 
-  get scene() : Scene {
+  get scene(): Scene {
     return this.parentFolder as Scene;
   }
 
@@ -115,9 +115,7 @@ export class Shot extends LocalFolder {
 
   addTask(id: string, data?: any | null): Task {
     const task = new Task(this, id);
-    runInAction(() => {
-      this.tasks.push(task);
-    });
+    runInAction(() => { this.tasks.push(task); });
     task.update(data);
     return task;
   }
@@ -211,6 +209,19 @@ export class Shot extends LocalFolder {
       const task = this.addTask(task_info.id, {
         provider: ai_providers.KLING,
         workflow: task_info.workflow,
+        // Add Gen Info
+        geninfo: {
+          workflow: "kling_generate_video",
+          prompt: prompt,
+          model: model,
+          source: this.srcImage?.path,
+          end_frame: this.end_frame?.path,
+          kling: {
+            mode: workflow.mode,
+            duration: workflow.duration,
+            sound: workflow?.sound ?? KlingAI.options.img2video.sound.off
+          }
+        }
       });
 
       await new Promise(res => setTimeout(res, 100));
@@ -238,7 +249,6 @@ export class Shot extends LocalFolder {
           this.shotJson?.updateField("KlingFaceID/" + this.outVideo.name, res.data);
         }
 
-
       }
     } catch (err) {
       console.error("Face Identification Failed:", err);
@@ -264,6 +274,7 @@ export class Shot extends LocalFolder {
 
         face_choose.push({
           face_id: tag.replace("ID-", ""),           // adjust if face_id differs
+          sound_file_path: audio.path,
           sound_file: objectUrl.rawBase64,
           sound_start_time: 0,
           sound_end_time: Math.min(duration * 1000, 5000),
@@ -283,7 +294,15 @@ export class Shot extends LocalFolder {
         face_choose
       });
 
-      const task = this.addTask(task_info.id, { provider: ai_providers.KLING, workflow: task_info.workflow });
+      const task = this.addTask(task_info.id, {
+        provider: ai_providers.KLING,
+        workflow: task_info.workflow,
+        geninfo: {
+          workflow: "kling_LipSync",
+          source: this.outVideo?.path,
+          face_choose: face_choose.map(obj => ({ ...obj, sound_file: "" }))
+        }
+      });
       await new Promise(res => setTimeout(res, 100));
       task.check_status();
 
@@ -316,7 +335,23 @@ export class Shot extends LocalFolder {
           keep_original_sound: workflow.keep_original_sound,
         });
 
-        const task = this.addTask(task_info.id, { provider: ai_providers.KLING, workflow: task_info.workflow })
+        const task = this.addTask(task_info.id, {
+          provider: ai_providers.KLING,
+          workflow: task_info.workflow,
+          // GENINFO
+          geninfo: {
+            workflow: "kling_MotionControl",
+            prompt: prompt,
+            source: this.srcImage?.path,
+            motionVideo: this.kling_motion_video.path,
+            kling: {
+              mode: workflow.mode,
+              duration: workflow.duration,
+              character_orientation: workflow.character_orientation,
+              keep_original_sound: workflow.keep_original_sound,
+            }
+          }
+        })
         await new Promise(res => setTimeout(res, 100));
         task.check_status();
 
@@ -357,8 +392,6 @@ export class Shot extends LocalFolder {
 
     return images;
   }
-
-
 
   async GenerateImage() {
     runInAction(() => { this.is_generating = true; });
