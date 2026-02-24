@@ -10,6 +10,7 @@ import type { LocalMedia } from "../../classes/fileSystem/LocalMedia";
 import type { Shot } from "../../classes/Shot";
 import EditableJsonTextField from "../EditableJsonTextField";
 import TagsToggleList from "../TagsToggleList";
+import BottomCenterLabel from "../Atomic/MediaElements/BottomCenterLabel";
 
 
 interface Google_StylizeImageNodeProps {
@@ -50,7 +51,9 @@ export const Google_StylizeImageNode: React.FC<Google_StylizeImageNodeProps> = o
             content={
                 <>
                     {/* Preview original input image */}
-                    <MediaGalleryPreview mediaItem={shot.unreal_frame as LocalMedia} height={300} label="REFERENCE" />
+                    <MediaGalleryPreview mediaItem={shot.unreal_frame as LocalMedia} height={300}>
+                        <BottomCenterLabel label="REFERENCE" />
+                    </MediaGalleryPreview>
 
                     <EditableJsonTextField localJson={project.projinfo} field="workflows/stylize_image_google/prompt" fitHeight />
 

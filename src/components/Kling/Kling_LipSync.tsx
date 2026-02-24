@@ -40,7 +40,6 @@ export const Kling_LipSync: React.FC<Kling_LipSyncProps> = observer(({ shot }) =
                 <MediaGalleryVideo
                     localVideo={shot.outVideo}
                     height={400}
-                    topRightExtra={<></>}
                 />
             ) : (
                 <div className="text-left text-muted my-3">

@@ -75,7 +75,6 @@ export const Kling_MotionControl: React.FC<Kling_MotionControlProps> = observer(
             <MediaGalleryVideo
               localVideo={shot.kling_motion_video}
               height={400}
-              topRightExtra={<></>}
             />
           )}
 
