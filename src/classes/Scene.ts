@@ -1,7 +1,7 @@
 // Scene.ts
 import { LocalJson } from './LocalJson';
 import { Shot } from './Shot';
-import { action, computed,  makeObservable, observable, runInAction } from "mobx";
+import { action, computed, makeObservable, observable, runInAction } from "mobx";
 import { Project } from './Project';
 import { toJS } from "mobx";
 //import { GoogleAI } from './GoogleAI';
@@ -30,8 +30,8 @@ export class Scene extends LocalFolder {
   split_shots_prompt: Prompt | null = null;
   selectedShot: Shot | null = null;
 
-  constructor(handle: FileSystemDirectoryHandle, project: Project, parentFolder:LocalFolder) {
-    super( parentFolder, handle);
+  constructor(handle: FileSystemDirectoryHandle, project: Project, parentFolder: LocalFolder) {
+    super(parentFolder, handle);
 
     this.project = project; // assign parent project
     // makeObservable instead of makeAutoObservable
@@ -141,6 +141,27 @@ export class Scene extends LocalFolder {
 
   get finishedShotsNum(): number {
     return this.shots.filter(shot => shot.shotJson?.data?.finished).length;
+  }
+
+  getShotsWithStatus(status: string, exact = false): number {
+    const keys = Object.keys(Shot.shot_states);
+    const targetIndex = keys.indexOf(status);
+
+    if (targetIndex === -1) return 0;
+
+    return this.shots.filter((shot) => {
+      // Use first key as default if shot_state is missing
+      const shotState = shot.shotJson?.data?.shot_state ?? keys[0];
+      const shotIndex = keys.indexOf(shotState);
+
+      if (exact) {
+        // only count shots exactly matching the target status
+        return shotIndex === targetIndex;
+      } else {
+        // inclusive: count shots with status >= target status
+        return shotIndex >= targetIndex;
+      }
+    }).length;
   }
 
   async generateShotsJson(): Promise<string | null> {

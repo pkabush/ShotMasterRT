@@ -5,9 +5,10 @@ interface Props {
   value: boolean; // controlled value
   onToggle: (newValue: boolean) => void;
   useIndicator?: boolean; // optional: if true, render a small circle instead of label
+  activeColor?: string; // NEW: color when toggle is ON
 }
 
-const SimpleToggle: React.FC<Props> = ({ label, value, onToggle, useIndicator = false }) => {
+const SimpleToggle: React.FC<Props> = ({ label, value, onToggle, useIndicator = false,activeColor = 'green' }) => {
   if (useIndicator) {
     return (
       <div
@@ -16,7 +17,7 @@ const SimpleToggle: React.FC<Props> = ({ label, value, onToggle, useIndicator = 
           width: '16px',
           height: '16px',
           borderRadius: '50%',
-          backgroundColor: value ? 'green' : 'transparent',
+          backgroundColor: value ? activeColor : 'transparent',
           border: '2px solid green',
           cursor: 'pointer',
         }}
@@ -24,11 +25,16 @@ const SimpleToggle: React.FC<Props> = ({ label, value, onToggle, useIndicator = 
     );
   }
 
-  // old button style
+
   return (
     <button
-      className={`btn btn-sm ${value ? 'btn-success' : 'btn-outline-secondary'}`}
+      className="btn btn-sm"
       onClick={() => onToggle(!value)}
+      style={{
+        backgroundColor: value ? activeColor : 'transparent',
+        color: value ? 'white' : '#6c757d',
+        border: `1px solid ${activeColor}`,
+      }}
     >
       {label}
     </button>

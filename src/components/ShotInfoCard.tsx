@@ -13,6 +13,7 @@ import { Kling_MotionControl } from './Kling/Kling_MotionControl';
 import { Google_StylizeImageNode } from './GoogleNodes/Google_StylizeImageNode';
 import { Google_GenerateImageNode } from './GoogleNodes/Google_GenerateImageNode';
 import { Kling_LipSync } from './Kling/Kling_LipSync';
+import MultiStateToggle from './Atomic/MultiStateToggle';
 
 interface Props {
   shot: Shot;
@@ -40,14 +41,42 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
             onChange={(val) => { shot.shotJson?.updateField("shot_type", val) }}
           />
 
+          {/* Pick shot type - crude implementation, fix later */}
+          <SimpleSelect
+            value={shot.shotJson.getField("shot_state") || Object.keys(Shot.shot_states)[0]}
+            options={Object.keys(Shot.shot_states)}
+            onChange={(val) => { shot.shotJson?.updateField("shot_state", val) }}
+            colorMap={Shot.shot_states}
+          />
+
+          {/**
+          <SimpleToggle
+            label="Finished Image"
+            value={!!shot.shotJson.data?.finished_image} // <-- controlled from JSON
+            onToggle={(state) => {
+              if (shot.shotJson) {
+                shot.shotJson.updateField('finished_image', state);
+              }
+            }}
+            activeColor='#848000'
+          />
+
           <SimpleToggle
             label="Finished"
             value={!!shot.shotJson.data?.finished} // <-- controlled from JSON
             onToggle={(state) => {
               if (shot.shotJson) {
                 shot.shotJson.updateField('finished', state);
+                if(state) shot.shotJson.updateField('finished_image', state);
               }
             }}
+          />
+           */}
+
+          <MultiStateToggle
+            states={Shot.shot_states}
+            value={shot.shotJson.data?.shot_state || Object.keys(Shot.shot_states)[0]}
+            onChange={(newState) => { if (shot.shotJson) { shot.shotJson.updateField("shot_state", newState); } }}
           />
 
           <SimpleButton onClick={() => { shot.log() }} label="Log Shot" />
@@ -91,7 +120,7 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
           </>
           ,
           LipSync: <>
-            <Kling_LipSync shot={shot}/>
+            <Kling_LipSync shot={shot} />
             <TaskContainer shot={shot} />
           </>
           ,

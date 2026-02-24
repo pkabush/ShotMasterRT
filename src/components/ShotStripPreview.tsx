@@ -4,6 +4,7 @@ import { observer } from 'mobx-react-lite';
 import { Shot } from '../classes/Shot';
 //import { LocalImage } from '../classes/LocalImage';
 import SimpleToggle from './SimpleToggle';
+import MultiStateToggle from './Atomic/MultiStateToggle';
 
 interface Props {
   shot: Shot;
@@ -89,16 +90,14 @@ const ShotStripPreview: React.FC<Props> = observer(({ shot, isSelected, onClick 
         }}
         onClick={(e) => e.stopPropagation()} // prevent parent onClick
       >
-        <SimpleToggle
-          label="Finished"
-          value={!!shot.shotJson?.data?.finished}
-          useIndicator
-          onToggle={(state) => {
-            if (shot.shotJson) {
-              shot.shotJson.updateField('finished', state);
-            }
-          }}
+
+        <MultiStateToggle
+          states={Shot.shot_states}
+          value={shot.shotJson!.data?.shot_state || Object.keys(Shot.shot_states)[0]}
+          onChange={(newState) => { if (shot.shotJson) { shot.shotJson.updateField("shot_state", newState); } }}
+          useIndicator = {true}
         />
+
       </div>
 
     </div>

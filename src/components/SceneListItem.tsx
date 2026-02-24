@@ -1,6 +1,8 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite'; // <-- import observer
 import { Scene } from '../classes/Scene';
+import { Shot } from '../classes/Shot';
+import ShotStatusBar from './ShotStatusBar';
 
 type Props = {
   scene: Scene;
@@ -28,7 +30,13 @@ const SceneListItem: React.FC<Props> = observer(({ scene }) => {
 
       {/* Shots count: finished / total, light grey */}
       <span className="text-muted">
-        {scene.finishedShotsNum} / {scene.shots.length}
+        {/**
+        {scene.getShotsWithStatus("image_ready")} /{scene.getShotsWithStatus("video_ready")} / {scene.shots.length}
+         */}
+        <ShotStatusBar
+          scene={scene}
+          statuses={["started","image_ready", "video_ready" ]}
+        />
       </span>
     </li>
   );

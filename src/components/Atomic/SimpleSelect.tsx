@@ -5,8 +5,8 @@ type SimpleSelectProps = {
   options: string[];
   onChange?: (value: string) => void;
   label?: string;
-  width?: number;
   className?: string;
+  colorMap?: Record<string, string>; // optional
 };
 
 const SimpleSelect: React.FC<SimpleSelectProps> = ({
@@ -15,7 +15,10 @@ const SimpleSelect: React.FC<SimpleSelectProps> = ({
   onChange,
   label,
   className = "",
+  colorMap,
 }) => {
+  const selectedColor = colorMap?.[value];
+
   return (
     <div className="btn-group" role="group">
       {label && (
@@ -24,15 +27,39 @@ const SimpleSelect: React.FC<SimpleSelectProps> = ({
         </span>
       )}
 
-      <div className={`btn btn-sm btn-outline-secondary p-0 ${className}`}>
+      <div
+        className={`btn btn-sm btn-outline-secondary p-0 ${className}`}
+        style={
+          selectedColor
+            ? {
+                backgroundColor: selectedColor,
+                borderColor: selectedColor,
+              }
+            : undefined
+        }
+      >
         <select
           className="form-select form-select-sm border-0 rounded-0"
           value={value}
           onChange={(e) => onChange?.(e.target.value)}
-
+          style={
+            selectedColor
+              ? {
+                  backgroundColor: selectedColor,
+                }
+              : undefined
+          }
         >
           {options.map((opt) => (
-            <option key={opt} value={opt}>
+            <option
+              key={opt}
+              value={opt}
+              style={
+                colorMap?.[opt]
+                  ? { backgroundColor: colorMap[opt] }
+                  : undefined
+              }
+            >
               {opt}
             </option>
           ))}

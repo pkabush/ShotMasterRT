@@ -15,6 +15,8 @@ import { LocalFolder } from './fileSystem/LocalFile';
 
 
 
+
+
 export class Shot extends LocalFolder {
   shotJson: LocalJson | null = null;
   tasks: Task[] = [];
@@ -22,6 +24,12 @@ export class Shot extends LocalFolder {
   // Processes
   is_submitting_video = false;
   is_generating = false;
+
+  public static shot_states = {
+    "started": "#575757ff",
+    "image_ready": "#8aa200ff",
+    "video_ready": "#007118",
+  }
 
   // MediaFolders
   MediaFolder_results: MediaFolder | null = null;
@@ -529,6 +537,8 @@ export class Shot extends LocalFolder {
   }
 
   log() { console.log(toJS(this)); }
+
+  
 
 
 }
