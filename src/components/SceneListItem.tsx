@@ -1,7 +1,6 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite'; // <-- import observer
 import { Scene } from '../classes/Scene';
-import { Shot } from '../classes/Shot';
 import ShotStatusBar from './ShotStatusBar';
 
 type Props = {

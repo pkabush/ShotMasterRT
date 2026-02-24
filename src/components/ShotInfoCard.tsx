@@ -3,7 +3,6 @@ import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { Shot } from '../classes/Shot';
 import SimpleButton from './Atomic/SimpleButton';
-import SimpleToggle from './SimpleToggle';
 import SimpleSelect from './Atomic/SimpleSelect';
 import TaskContainer from './TaskContainer';
 import TabsContainer from './TabsContainer';

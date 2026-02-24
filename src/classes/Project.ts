@@ -115,7 +115,7 @@ export class Project extends LocalFolder {
   projinfo: LocalJson | null = null;
   currentView: ProjectView = { type: "none" };
   selectedScene: Scene | null = null;
-  timelinesDirHandle: FileSystemDirectoryHandle | null = null;
+  timelinesDirHandle: LocalFolder | null = null;
 
   scenesLocalFolder: LocalFolder | null = null;
 
@@ -144,7 +144,8 @@ export class Project extends LocalFolder {
     // Set root directory
     this.handle = handle;
     this.path = "";
-    this.timelinesDirHandle = await this.handle.getDirectoryHandle('Timelines', { create: true });
+    this.timelinesDirHandle = await LocalFolder.open( this, 'Timelines' );
+    //await this.handle.getDirectoryHandle('Timelines', { create: true });
 
     //console.log(handle);
 

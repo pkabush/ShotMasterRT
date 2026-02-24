@@ -335,28 +335,33 @@ ${JSON.stringify(this.project?.artbook?.getJson(), null, 2)}
     const timeline = new ResolveUtils.FCPXMLBuilder(this.name);
     let offsetFrames = 1000;
 
+    const timelineFolder = await LocalFolder.open( this.project.timelinesDirHandle, this.name  );
+
     for (const shot of this.shots) {
       let id = "r1"
       const durationFrames = 5;
+      const name = this.name + "_" + shot.name
       if (shot.srcImage) {
-        const img_path = this.project.projinfo?.getField("project_path") + shot.srcImage.path
-        id = timeline.addAsset(img_path, shot.name)!;
+        const new_img = await shot.srcImage.copyToFolder(timelineFolder, "img_" + name);
+        const img_path = this.project.projinfo?.getField("project_path") + new_img.path
+        id = timeline.addAsset(img_path, "img_" + name)!;
       }
 
       if (shot.outVideo) {
-        const vod_path = this.project.projinfo?.getField("project_path") + shot.outVideo.path;
-        const vod_id = timeline.addAsset(vod_path, shot.name, true, durationFrames)!;
-        timeline.appendClip(vod_id, shot.name, durationFrames, offsetFrames, 1);
+        const new_vod = await shot.outVideo.copyToFolder(timelineFolder, "vod_" + name);
+        const vod_path = this.project.projinfo?.getField("project_path") + new_vod.path;
+        const vod_id = timeline.addAsset(vod_path, "vod_" + name, true, durationFrames)!;
+        timeline.appendClip(vod_id, "vod_" + name, durationFrames, offsetFrames, 1);
       }
 
-      timeline.appendClip(id, shot.name, durationFrames, offsetFrames);
-      timeline.appendText(this.name + " " + shot.name, durationFrames, offsetFrames)
+      timeline.appendClip(id, name, durationFrames, offsetFrames);
+      timeline.appendText(name, durationFrames, offsetFrames)
 
       offsetFrames += durationFrames;
     }
 
     timeline.log()
-    timeline.save(this.project.timelinesDirHandle!);
+    timeline.save(this.project.timelinesDirHandle?.handle!);
   }
 
 }
