@@ -16,6 +16,9 @@ export class LocalMedia extends LocalFile {
   onTagChanged?: (media: LocalMedia, tag: string, added: boolean) => void;
   file: File | null = null;
 
+  // internal promise
+  private _urlPromise: Promise<string> | null = null;
+
   constructor(handle: FileSystemFileHandle, parentFolder: LocalFolder) {
     super(parentFolder, handle)
     this.handle = handle;
@@ -35,6 +38,8 @@ export class LocalMedia extends LocalFile {
       removeTag: action,
       setTags: action,
     });
+
+    this._urlPromise = null; // initialize
   }
 
   async load(): Promise<void> {
@@ -71,18 +76,34 @@ export class LocalMedia extends LocalFile {
   }
 
   async getUrlObject(): Promise<string> {
-    if (!this.urlObject) {
+    if (this.urlObject) return this.urlObject; // already loaded
+    if (this._urlPromise) return this._urlPromise; // already loading
+
+    // store promise so concurrent calls reuse it
+    this._urlPromise = (async () => {
       try {
         const file = await this.getFile();
+
+        // Revoke old URL if any
+        if (this.urlObject) URL.revokeObjectURL(this.urlObject);
+
         const objectUrl = URL.createObjectURL(file);
         runInAction(() => { this.urlObject = objectUrl; });
       } catch (err) {
         console.error("Failed to create object URL:", err);
         runInAction(() => { this.urlObject = ""; });
+      } finally {
+        // clear the promise so next call can retry if needed
+        this._urlPromise = null;
       }
-    }
-    return this.urlObject!;
+
+      return this.urlObject!;
+    })();
+
+    return this._urlPromise;
   }
+
+
   // Create a LocalVideo from a URL
   static async fromUrl(url: string, folder: LocalFolder): Promise<LocalMedia> {
     try {
