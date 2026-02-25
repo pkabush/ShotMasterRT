@@ -354,8 +354,16 @@ ${JSON.stringify(this.project?.artbook?.getJson(), null, 2)}
         timeline.appendClip(vod_id, "vod_" + name, durationFrames, offsetFrames, 1);
       }
 
+      if (shot.outVideoLipsync) {
+        const new_vod = await shot.outVideoLipsync.copyToFolder(timelineFolder, "vodLS_" + name);
+        const vod_path = this.project.projinfo?.getField("project_path") + new_vod.path;
+        const vod_id = timeline.addAsset(vod_path, "vodLS_" + name, true, durationFrames)!;
+        timeline.appendClip(vod_id, "vodLS_" + name, durationFrames, offsetFrames, 2);
+      }
+
+
       timeline.appendClip(id, name, durationFrames, offsetFrames);
-      timeline.appendText(name, durationFrames, offsetFrames)
+      timeline.appendText(name, durationFrames, offsetFrames,3);
 
       offsetFrames += durationFrames;
     }

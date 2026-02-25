@@ -15,8 +15,6 @@ import { LocalFolder } from './fileSystem/LocalFile';
 
 
 
-
-
 export class Shot extends LocalFolder {
   shotJson: LocalJson | null = null;
   tasks: Task[] = [];
@@ -26,9 +24,10 @@ export class Shot extends LocalFolder {
   is_generating = false;
 
   public static shot_states = {
-    "started": "#575757ff",
-    "image_ready": "#8aa200ff",
-    "video_ready": "#007118",
+    "Started": "#575757ff",
+    "Image_ready": "#8aa200ff",
+    "LipSync": "#893877ff",
+    "Finished": "#007118",
   }
 
   // MediaFolders
@@ -74,6 +73,10 @@ export class Shot extends LocalFolder {
   get outVideo(): LocalVideo | null {
     return this.MediaFolder_genVideo!.getFirstMediaWithTag("picked") as LocalVideo;
   }
+  get outVideoLipsync(): LocalVideo | null {
+    return this.MediaFolder_genVideo!.getFirstMediaWithTag("lipsync") as LocalVideo;
+  }
+
   get unreal_frame(): LocalImage | null {
     return this.MediaFolder_results!.getFirstMediaWithTag("unreal_frame") as LocalImage;
   }
@@ -92,7 +95,7 @@ export class Shot extends LocalFolder {
 
 
       this.MediaFolder_genVideo = await MediaFolder.create(this, "genVideo");
-      this.MediaFolder_genVideo.tags = ["picked"];
+      this.MediaFolder_genVideo.tags = ["picked","lipsync"];
 
       this.MediaFolder_refVideo = await MediaFolder.create(this, "refVideo");
       this.MediaFolder_refVideo.tags = ["motion_ref"];

@@ -2,6 +2,7 @@ import React from 'react';
 import { observer } from 'mobx-react-lite'; // <-- import observer
 import { Scene } from '../classes/Scene';
 import ShotStatusBar from './ShotStatusBar';
+import { Shot } from '../classes/Shot';
 
 type Props = {
   scene: Scene;
@@ -34,7 +35,7 @@ const SceneListItem: React.FC<Props> = observer(({ scene }) => {
          */}
         <ShotStatusBar
           scene={scene}
-          statuses={["started","image_ready", "video_ready" ]}
+          statuses={ Object.keys(Shot.shot_states) }
         />
       </span>
     </li>
