@@ -108,7 +108,10 @@ export class Scene extends LocalFolder {
   }
 
   // create Shot
-  async createShot(shotName: string): Promise<Shot | null> {
+  async createShot(shotName?: string): Promise<Shot | null> {
+    console.log(shotName);
+    if (!shotName) shotName = this.nextShotName;    
+
     if (!this.handle) {
       console.error("No scene folder available");
       return null;
@@ -137,6 +140,23 @@ export class Scene extends LocalFolder {
       console.error("Failed to create shot:", err);
       return null;
     }
+  }
+
+  get nextShotName(): string {
+    const numbers = this.shots
+      .map(shot => {
+        const match = shot.name.match(/^SHOT_(\d+)$/);
+        if (!match) return null;
+        const rawNumber = parseInt(match[1], 10);
+        // Strip last digit (floor to nearest 10)
+        return Math.floor(rawNumber / 10) * 10;
+      })
+      .filter((n): n is number => n !== null);
+
+    const maxNumber = numbers.length > 0 ? Math.max(...numbers) : 0;
+    const nextNumber = maxNumber + 10;
+    const padded = nextNumber.toString().padStart(3, '0');
+    return `SHOT_${padded}`;
   }
 
   get finishedShotsNum(): number {
@@ -335,7 +355,7 @@ ${JSON.stringify(this.project?.artbook?.getJson(), null, 2)}
     const timeline = new ResolveUtils.FCPXMLBuilder(this.name);
     let offsetFrames = 1000;
 
-    const timelineFolder = await LocalFolder.open( this.project.timelinesDirHandle, this.name  );
+    const timelineFolder = await LocalFolder.open(this.project.timelinesDirHandle, this.name);
 
     for (const shot of this.shots) {
       let id = "r1"
@@ -363,7 +383,7 @@ ${JSON.stringify(this.project?.artbook?.getJson(), null, 2)}
 
 
       timeline.appendClip(id, name, durationFrames, offsetFrames);
-      timeline.appendText(name, durationFrames, offsetFrames,3);
+      timeline.appendText(name, durationFrames, offsetFrames, 3);
 
       offsetFrames += durationFrames;
     }

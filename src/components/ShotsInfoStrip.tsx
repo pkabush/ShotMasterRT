@@ -13,12 +13,17 @@ interface Props {
 }
 
 const ShotsInfoStrip: React.FC<Props> = observer(({ scene }) => {
-  const handleAddShot = async () => {
-    const shotName = prompt("Enter new shot name:");
-    if (!shotName) return;
-
-    const newShot = await scene.createShot(shotName);
-    if (newShot) { scene.selectShot(newShot) }
+  const handleAddShot = async (e: any) => {
+    if (e.ctrlKey) {
+      const newShot = await scene.createShot();
+      if (newShot) { scene.selectShot(newShot) }
+    }
+    else {
+      const shotName = prompt("Enter new shot name:");
+      if (!shotName) return;
+      const newShot = await scene.createShot(shotName);
+      if (newShot) { scene.selectShot(newShot) }
+    }
   };
 
   return (
@@ -30,8 +35,8 @@ const ShotsInfoStrip: React.FC<Props> = observer(({ scene }) => {
             <ShotStripPreview
               key={shot.name}
               shot={shot}
-              isSelected={scene.selectedShot === shot }
-              onClick={ () => {scene.selectShot(shot)}} 
+              isSelected={scene.selectedShot === shot}
+              onClick={() => { scene.selectShot(shot) }}
             />
           ))}
 
@@ -44,8 +49,11 @@ const ShotsInfoStrip: React.FC<Props> = observer(({ scene }) => {
       {/* Buttons */}
       <div>
         <LoadingButton onClick={() => { scene.generateAllShotImages() }} label="Generate ALL" is_loading={scene.is_generating_all_shot_images} />
-        <SimpleButton label="+ Add Shot" onClick={handleAddShot} />
-        <SimpleButton label="Export Resolve XML" onClick={() => {scene.createResolveXML()}} />
+        <SimpleButton label="Export Resolve XML" onClick={() => { scene.createResolveXML() }} />
+
+        <SimpleButton label="+ Add Shot" onClick={handleAddShot}
+          tooltip='Creates New SHOT.
+Hold CTRL to auto Name Shot.'/>
       </div>
 
       {/* Show info card for the selected shot */}

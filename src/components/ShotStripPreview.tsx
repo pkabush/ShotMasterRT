@@ -3,6 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import { Shot } from '../classes/Shot';
 import MultiStateToggle from './Atomic/MultiStateToggle';
+import MediaImage from './MediaComponents/MediaImage';
+import BottomCenterLabel from './Atomic/MediaElements/BottomCenterLabel';
 
 interface Props {
   shot: Shot;
@@ -10,35 +12,9 @@ interface Props {
   onClick: (shot: Shot) => void;
 }
 
-const DEFAULT_IMAGE_URL =
-  'https://cdn.pixabay.com/photo/2021/05/09/06/07/dog-6240043_1280.jpg';
+
 
 const ShotStripPreview: React.FC<Props> = observer(({ shot, isSelected, onClick }) => {
-  const [imageUrl, setImageUrl] = useState<string>(DEFAULT_IMAGE_URL);
-
-  useEffect(() => {
-    let canceled = false;
-
-    const loadImage = async () => {
-      if (shot.srcImage) {
-        try {
-          const url = await shot.srcImage.getUrlObject();
-          if (!canceled && url) setImageUrl(url);
-        } catch (err) {
-          console.error('Failed to load srcImage URL:', err);
-          if (!canceled) setImageUrl(DEFAULT_IMAGE_URL);
-        }
-      } else {
-        setImageUrl(DEFAULT_IMAGE_URL);
-      }
-    };
-
-    loadImage();
-
-    return () => {
-      canceled = true;
-    };
-  }, [shot.srcImage]);
 
   return (
     <div
@@ -52,17 +28,36 @@ const ShotStripPreview: React.FC<Props> = observer(({ shot, isSelected, onClick 
       }}
       onClick={() => onClick(shot)}
     >
-      <img
-        src={imageUrl}
-        alt={shot.name}
-        className="img-fluid"
-        style={{
-          height: '100%',
-          width: 'auto',
-          objectFit: 'contain',
-          display: 'block',
-        }}
-      />
+      {shot.srcImage ? (
+        <MediaImage
+          localImage={shot.srcImage}
+          alt={shot.name}
+          className="img-fluid"
+          style={{
+            height: '100%',
+            width: 'auto',
+            objectFit: 'contain',
+            display: 'block',
+          }}
+        />
+      ) : (
+        <div
+          style={{
+            height: '100%',
+            aspectRatio: '9 / 16',
+            backgroundColor: 'black',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: 'grey',
+            fontSize: '1rem',
+            fontWeight: 500,
+          }}
+        >
+          {shot.name}
+        </div>
+      )}
+
 
       {/* Shot name overlay */}
       <div
@@ -93,7 +88,7 @@ const ShotStripPreview: React.FC<Props> = observer(({ shot, isSelected, onClick 
           states={Shot.shot_states}
           value={shot.shotJson!.data?.shot_state || Object.keys(Shot.shot_states)[0]}
           onChange={(newState) => { if (shot.shotJson) { shot.shotJson.updateField("shot_state", newState); } }}
-          useIndicator = {true}
+          useIndicator={true}
         />
 
       </div>
