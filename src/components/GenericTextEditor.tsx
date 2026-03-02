@@ -20,7 +20,6 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
 }) => {
   const [text, setText] = useState(initialText);
   const [originalText, setOriginalText] = useState(initialText);
-  const [autoSave, setAutoSave] = useState(false);
   const [saving, setSaving] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -49,12 +48,6 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
   };
 
   useEffect(() => {
-    if (!autoSave || !hasChanges) return;
-    const timeout = setTimeout(() => handleSave(), 1000);
-    return () => clearTimeout(timeout);
-  }, [text, autoSave, hasChanges]);
-
-  useEffect(() => {
     if (fitHeight && textareaRef.current) {
       textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
@@ -72,15 +65,6 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
       >
         {saving ? 'Saving...' : hasChanges ? 'Save*' : 'Save'}
       </button>
-
-      <label className="d-flex align-items-center gap-1 mb-0">
-        <input
-          type="checkbox"
-          checked={autoSave}
-          onChange={(e) => setAutoSave(e.target.checked)}
-        />
-        Auto-save
-      </label>      
     </div>
   );
 
@@ -96,6 +80,7 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
         }}
         value={text}
         onChange={(e) => handleChange(e.target.value)}
+        onBlur={handleSave}   
       />
     </CollapsibleContainer>
   );

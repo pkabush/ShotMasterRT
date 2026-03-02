@@ -21,6 +21,7 @@ interface VideoEditWindowProps {
 }
 
 type OmniMode = typeof KlingAI.options.omni_video.mode[keyof typeof KlingAI.options.omni_video.mode];
+type OmniModel = typeof KlingAI.options.omni_video.model[keyof typeof KlingAI.options.omni_video.model];
 type KeepOriginalSound = typeof KlingAI.options.omni_video.video.keep_original_sound[keyof typeof KlingAI.options.omni_video.video.keep_original_sound];
 
 const VideoEditWindow: React.FC<VideoEditWindowProps> = ({
@@ -32,6 +33,7 @@ const VideoEditWindow: React.FC<VideoEditWindowProps> = ({
     const [generating, setGenerating] = useState(false);
     const [useReferences, setUseReferences] = useState(false);
     const [mode, setMode] = useState<OmniMode>(KlingAI.options.omni_video.mode.pro);
+    const [model, setModel] = useState<OmniModel>(KlingAI.options.omni_video.model.o1);
     const [keepSound, setKeepSound] = useState<KeepOriginalSound>(KlingAI.options.omni_video.video.keep_original_sound.yes);
 
     const handleGenerate = async () => {
@@ -42,17 +44,17 @@ const VideoEditWindow: React.FC<VideoEditWindowProps> = ({
             const image_list = [];
 
             if (useReferences) {
-                for( const refImage of reference_images) {
+                for (const refImage of reference_images) {
                     image_list.push({
                         image_url: (await refImage.getBase64()).rawBase64,
                     });
                 }
             }
-            
+
 
             const result = await KlingAI.omniVideo({
                 prompt: prompt,
-                model: KlingAI.options.omni_video.model.o1,
+                model: model,
                 mode,
                 video_list: [
                     {
@@ -67,7 +69,7 @@ const VideoEditWindow: React.FC<VideoEditWindowProps> = ({
             (result as any).geninfo = {
                 workflow: "kling_VideoEditO1",
                 prompt: prompt,
-                model: KlingAI.options.omni_video.model.o1,
+                model: model,
                 source: localVideo.path,
                 refs: useReferences ? reference_images.map(img => img.path) : undefined,
                 kling: {
@@ -151,12 +153,19 @@ const VideoEditWindow: React.FC<VideoEditWindowProps> = ({
 
 
                                         <SimpleSelect
+                                            label="Model:"
+                                            value={model}
+                                            options={Object.values(KlingAI.options.omni_video.model)}
+                                            onChange={(val: string) => setModel(val as OmniModel)}
+                                        />
+
+                                        <SimpleSelect
                                             label="Mode:"
                                             value={mode}
                                             options={Object.values(KlingAI.options.omni_video.mode)}
                                             onChange={(val: string) => setMode(val as OmniMode)}
                                         />
-
+                                        
                                         <SimpleSelect
                                             label="Keep Original Sound:"
                                             value={keepSound}

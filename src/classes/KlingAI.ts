@@ -87,6 +87,7 @@ export class KlingAI {
         v2_1m: "kling-v2-1-master",
         v2_5: "kling-v2-5-turbo",
         v2_6: "kling-v2-6",
+        v3:  "kling-v3",
         vo1: "kling-video-o1",
       },
       sound: {
@@ -111,6 +112,7 @@ export class KlingAI {
     omni_video: {
       model: {
         o1: "kling-video-o1",
+        v3: "kling-v3-omni"
       },
       mode: {
         std: "std",
@@ -322,7 +324,7 @@ export class KlingAI {
   // ================= OMNI VIDEO (O1) =================
   public static async omniVideo(options: {
     prompt: string;
-    model?: "kling-video-o1";
+    model?: "kling-video-o1" | "kling-v3-omni";
     mode?: "std" | "pro";
     aspect_ratio?: "16:9" | "9:16" | "1:1";
     duration?: "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10";
