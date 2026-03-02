@@ -1,10 +1,13 @@
 // ShotStripPreview.tsx
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { Shot } from '../classes/Shot';
 import MultiStateToggle from './Atomic/MultiStateToggle';
-import MediaImage from './MediaComponents/MediaImage';
-import BottomCenterLabel from './Atomic/MediaElements/BottomCenterLabel';
+import type { LocalImage } from '../classes/fileSystem/LocalImage';
+import MediaPreview from './MediaComponents/MediaPreview';
+
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faFaceSurprise, faFilm, faImage } from '@fortawesome/free-solid-svg-icons';
 
 interface Props {
   shot: Shot;
@@ -28,10 +31,9 @@ const ShotStripPreview: React.FC<Props> = observer(({ shot, isSelected, onClick 
       }}
       onClick={() => onClick(shot)}
     >
-      {shot.srcImage ? (
-        <MediaImage
-          localImage={shot.srcImage}
-          alt={shot.name}
+      {shot.previewMedia ? (
+        <MediaPreview
+          media={shot.previewMedia as LocalImage}
           className="img-fluid"
           style={{
             height: '100%',
@@ -39,7 +41,11 @@ const ShotStripPreview: React.FC<Props> = observer(({ shot, isSelected, onClick 
             objectFit: 'contain',
             display: 'block',
           }}
+          autoPlay={true}
+          loop={true}
+          muted={true}
         />
+
       ) : (
         <div
           style={{
@@ -74,12 +80,62 @@ const ShotStripPreview: React.FC<Props> = observer(({ shot, isSelected, onClick 
       </div>
 
 
+      {/* Top-left icons container */}
+      <div
+        className="position-absolute d-flex"
+        style={{
+          top: 1,
+          left: 1,
+          gap: '0px', // space between icons
+          backgroundColor: 'rgba(0,0,0,0.4)', // subtle dark background
+          borderRadius: '4px',               // rounded corners
+          padding: '2px 1px',                // space around icons
+          alignItems: 'center',              // vertically center icons
+        }}
+      >
+        {/* Image icon */}
+        <FontAwesomeIcon
+          icon={faImage}
+          style={{
+            color: shot.srcImage ? '#e2eb3a' : 'white',
+            opacity: shot.srcImage ? 1 : 0.2,
+            fontSize: '1.2rem', // bigger icons
+          }}
+          title={shot.srcImage ? "Image available" : "No image"}
+        />
+
+        {/* Video icon */}
+        <FontAwesomeIcon
+          icon={faFilm}
+          style={{
+            color: shot.outVideo ? '#2fde35' : 'white',
+            opacity: shot.outVideo ? 1 : 0.2,
+            fontSize: '1.2rem', // match icon size
+          }}
+          title={shot.outVideo ? "Video available" : "No video"}
+        />
+
+        {/* Lipsync icon */}
+        <FontAwesomeIcon
+          icon={faFaceSurprise}
+          style={{
+            color: shot.outVideoLipsync ? '#ff61e2' : 'white', // red-ish if lipsync exists
+            opacity: shot.outVideoLipsync ? 1 : 0.2,
+            fontSize: '1.2rem',
+          }}
+          title={shot.outVideoLipsync ? "Lipsync available" : "No lipsync"}
+        />
+      </div>
+
+
+
+
       {/* Finished toggle overlay */}
       <div
         className="position-absolute"
         style={{
-          top: 2,
-          right: 2,
+          top: 4,
+          right: 4,
         }}
         onClick={(e) => e.stopPropagation()} // prevent parent onClick
       >

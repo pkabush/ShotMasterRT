@@ -12,6 +12,7 @@ import { LocalVideo } from './fileSystem/LocalVideo';
 import { MediaFolder } from './MediaFolder';
 import type { LocalAudio } from './fileSystem/LocalAudio';
 import { LocalFolder } from './fileSystem/LocalFile';
+import type { LocalMedia } from './fileSystem/LocalMedia';
 
 
 
@@ -61,6 +62,15 @@ export class Shot extends LocalFolder {
   }
 
   // GETTERS FOR CONVINIENCE
+  get previewMedia(): LocalMedia | null {
+    return this.outVideo ||
+    this.srcImage || 
+    this.MediaFolder_genVideo?.media[0] || 
+    this.MediaFolder_results?.media[0] || 
+    null;
+
+  }
+
   get srcImage(): LocalImage | null {
     return this.MediaFolder_results!.getFirstMediaWithTag("start_frame") as LocalImage;
   }
