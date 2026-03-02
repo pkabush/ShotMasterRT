@@ -84,7 +84,6 @@ export const MediaFolderGallery: React.FC<MediaFolderGalleryProps> = observer(
                                         <>
                                             <VideoEditWindow
                                                 localVideo={mediaFolder.selectedMedia as LocalVideo} // must be LocalVideo
-                                                initialText="Notes for this video"
                                                 onVideoTaskCreated={async (task_info) => {
                                                     console.log("Video task created:", task_info);
 
@@ -96,6 +95,7 @@ export const MediaFolderGallery: React.FC<MediaFolderGalleryProps> = observer(
                                                     task.check_status();
                                                 }}
                                                 onClose={() => mediaFolder.setSelectedMedia(null)}
+                                                reference_images={ (mediaFolder.parentFolder as Shot).MediaFolder_results!.getMediaWithTag("ref_frame") as LocalImage[] }
                                             />
                                         </>
                                     ) : null

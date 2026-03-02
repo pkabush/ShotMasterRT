@@ -12,6 +12,7 @@ import type { MediaFolder } from "../classes/MediaFolder";
 import type { LocalFolder } from "../classes/fileSystem/LocalFile";
 import MediaGalleryPreview from "./MediaComponents/MediaGallerPreview";
 import BottomCenterLabel from "./Atomic/MediaElements/BottomCenterLabel";
+import RefImagesPreview from "./MediaComponents/RefImagesPreview";
 
 
 
@@ -130,28 +131,7 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
                     maxWidth: "100%",
                   }}
                 />
-
-                {/* Bottom-center text overlay */}
-                <div
-                  className="
-                    position-absolute 
-                    bottom-0
-                    start-50
-                    translate-middle-x
-                    mb-2
-                    px-2
-                    py-1
-                    text-white
-                    bg-dark
-                    bg-opacity-50
-                    rounded
-                    small
-                    text-nowrap
-                  "
-                  style={{ pointerEvents: "none" }}
-                >
-                  (Source Image)
-                </div>
+                <BottomCenterLabel label="Source Image" />
               </>
             ) : (
               <div>Loading image…</div>
@@ -175,65 +155,8 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
               tabs={{
                 ImageEdit:
                   < div className="flex-grow-1 d-flex flex-column">
-                    {/**
-              <MediaFolderGallery mediaFolder={localImage.shot?.MediaFolder_results || null } showEditWindow={false} itemHeight={200} label="Reference Images"/>              
-              */}
 
-                    {/** REFERENCE IMAGES */}
-                    {reference_images.length > 0 && (
-                      <div className="d-flex gap-2 mb-2 flex-wrap">
-                        {reference_images.map((img, i) => {
-                          if (!img.urlObject) {
-                            img.getUrlObject();
-                            return null;
-                          }
-
-                          return (
-                            <div
-                              key={i}
-                              style={{
-                                position: "relative",
-                                width: 100,
-                                height: 100,
-                              }}
-                            >
-                              <img
-                                src={img.urlObject}
-                                alt={`ref-${i}`}
-                                style={{
-                                  width: "100%",
-                                  height: "100%",
-                                  objectFit: "cover",
-                                  borderRadius: 4,
-                                  border: "1px solid #444",
-                                  display: "block",
-                                }}
-                              />
-
-                              {/* Bottom-center overlay text */}
-                              <div
-                                style={{
-                                  position: "absolute",
-                                  bottom: 4,
-                                  left: "50%",
-                                  transform: "translateX(-50%)",
-                                  background: "rgba(0,0,0,0.6)",
-                                  color: "#fff",
-                                  fontSize: 12,
-                                  padding: "2px 6px",
-                                  borderRadius: 3,
-                                  pointerEvents: "none",
-                                  whiteSpace: "nowrap",
-                                }}
-                              >
-                                ref{i + 1}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-
+                    <RefImagesPreview images={reference_images}/>
 
                     {localImage.shot && (
                       <label className="d-flex align-items-center gap-2 mb-2">
@@ -281,9 +204,9 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
                           const mf = localImage.sourceImage?.parentFolder as MediaFolder;
                           mf.setSelectedMedia(localImage.sourceImage);
                         }}
-                      > 
-                      <BottomCenterLabel label="SOURCE"/>
-                      </MediaGalleryPreview>  
+                      >
+                        <BottomCenterLabel label="SOURCE" />
+                      </MediaGalleryPreview>
                     </>
                   )}
 
@@ -300,8 +223,8 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
                             mf.setSelectedMedia(media);
                           }}
                         >
-                      <BottomCenterLabel label="Child"/>
-                      </MediaGalleryPreview>
+                          <BottomCenterLabel label="Child" />
+                        </MediaGalleryPreview>
                       ))}
                     </>
                   )}

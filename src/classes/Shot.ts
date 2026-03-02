@@ -86,7 +86,7 @@ export class Shot extends LocalFolder {
   get outVideoLipsync(): LocalVideo | null {
     return this.MediaFolder_genVideo!.getFirstMediaWithTag("lipsync") as LocalVideo;
   }
-
+  
   get unreal_frame(): LocalImage | null {
     return this.MediaFolder_results!.getFirstMediaWithTag("unreal_frame") as LocalImage;
   }

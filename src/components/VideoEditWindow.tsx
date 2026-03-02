@@ -9,12 +9,15 @@ import TabsContainer from "./TabsContainer";
 import MediaGalleryPreview from "./MediaComponents/MediaGallerPreview";
 import BottomCenterLabel from "./Atomic/MediaElements/BottomCenterLabel";
 import type { MediaFolder } from "../classes/MediaFolder";
+import EditableJsonTextField from "./EditableJsonTextField";
+import type { LocalImage } from "../classes/fileSystem/LocalImage";
+import RefImagesPreview from "./MediaComponents/RefImagesPreview";
 
 interface VideoEditWindowProps {
     localVideo: LocalVideo;
-    initialText?: string;
     onVideoTaskCreated?: (result: any) => void;
     onClose?: () => void;
+    reference_images?: LocalImage[];
 }
 
 type OmniMode = typeof KlingAI.options.omni_video.mode[keyof typeof KlingAI.options.omni_video.mode];
@@ -22,12 +25,12 @@ type KeepOriginalSound = typeof KlingAI.options.omni_video.video.keep_original_s
 
 const VideoEditWindow: React.FC<VideoEditWindowProps> = ({
     localVideo,
-    initialText = "",
     onVideoTaskCreated,
     onClose,
+    reference_images = [],
 }) => {
-    const [text, setText] = useState(initialText);
     const [generating, setGenerating] = useState(false);
+    const [useReferences, setUseReferences] = useState(false);
     const [mode, setMode] = useState<OmniMode>(KlingAI.options.omni_video.mode.pro);
     const [keepSound, setKeepSound] = useState<KeepOriginalSound>(KlingAI.options.omni_video.video.keep_original_sound.yes);
 
@@ -35,9 +38,20 @@ const VideoEditWindow: React.FC<VideoEditWindowProps> = ({
         setGenerating(true);
         try {
             const webUrl = await localVideo.getWebUrl();
+            const prompt = localVideo.mediaJson?.getField("video_edit_prompt");
+            const image_list = [];
+
+            if (useReferences) {
+                for( const refImage of reference_images) {
+                    image_list.push({
+                        image_url: (await refImage.getBase64()).rawBase64,
+                    });
+                }
+            }
+            
 
             const result = await KlingAI.omniVideo({
-                prompt: text,
+                prompt: prompt,
                 model: KlingAI.options.omni_video.model.o1,
                 mode,
                 video_list: [
@@ -47,13 +61,15 @@ const VideoEditWindow: React.FC<VideoEditWindowProps> = ({
                         keep_original_sound: keepSound,
                     },
                 ],
+                image_list: image_list.length ? image_list : undefined,
             });
 
             (result as any).geninfo = {
                 workflow: "kling_VideoEditO1",
-                prompt: text,
+                prompt: prompt,
                 model: KlingAI.options.omni_video.model.o1,
                 source: localVideo.path,
+                refs: useReferences ? reference_images.map(img => img.path) : undefined,
                 kling: {
                     mode: mode,
                     keep_original_sound: keepSound,
@@ -95,10 +111,7 @@ const VideoEditWindow: React.FC<VideoEditWindowProps> = ({
                 {/* Left panel — video preview */}
                 <Panel defaultSize={500} minSize={10}>
                     <div className="d-flex align-items-center justify-content-center h-100">
-                        <MediaGalleryVideo
-                            localVideo={localVideo}
-                            fillParent
-                        />
+                        <MediaGalleryVideo localVideo={localVideo} fillParent />
                     </div>
                 </Panel>
 
@@ -117,18 +130,25 @@ const VideoEditWindow: React.FC<VideoEditWindowProps> = ({
                             tabs={{
                                 VideoEdit:
                                     <div className="flex-grow-1 d-flex flex-column">
-                                        <textarea
-                                            value={text}
-                                            onChange={(e) => setText(e.target.value)}
-                                            placeholder="[@Video] make the character smile"
-                                            style={{
-                                                flexGrow: 1,
-                                                resize: "none",
-                                                padding: "8px",
-                                                fontSize: "14px",
-                                                height: "300px",
-                                            }}
-                                        />
+
+                                        {/** REFS Toggle */}
+                                        <label className="d-flex align-items-center gap-2 mb-2">
+                                            <input
+                                                type="checkbox"
+                                                checked={useReferences}
+                                                onChange={(e) => setUseReferences(e.target.checked)}
+                                            />
+                                            Use References
+                                        </label>
+                                        <RefImagesPreview images={reference_images} />
+
+
+
+                                        <>
+                                            <>Prompt : </>
+                                            <EditableJsonTextField localJson={localVideo.mediaJson} field={"video_edit_prompt"} fitHeight />
+                                        </>
+
 
                                         <SimpleSelect
                                             label="Mode:"
