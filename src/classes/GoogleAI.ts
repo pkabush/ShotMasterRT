@@ -16,7 +16,8 @@ export class GoogleAI {
   public static options = {
     img_models: {
       flash_image: "gemini-2.5-flash-image",
-      pro_image: "gemini-3-pro-image-preview"
+      pro_image: "gemini-3-pro-image-preview",
+      flash_3_1: "gemini-3.1-flash-image-preview",
     }
   }
 
