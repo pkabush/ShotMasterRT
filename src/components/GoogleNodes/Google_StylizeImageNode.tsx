@@ -2,7 +2,7 @@ import React from "react";
 import { observer } from "mobx-react-lite";
 import SettingsButton from "../Atomic/SettingsButton";
 import { WorkflowOptionSelect } from "../WorkflowOptionSelect";
-import { img_models } from "../../classes/GoogleAI";
+import { GoogleAI } from "../../classes/GoogleAI";
 import LoadingSpinner from "../Atomic/LoadingSpinner";
 import MediaGalleryPreview from "../MediaComponents/MediaGallerPreview";
 import { MediaFolderGallery } from "../MediaFolderGallery";
@@ -41,7 +41,7 @@ export const Google_StylizeImageNode: React.FC<Google_StylizeImageNodeProps> = o
                         project={project}
                         workflowName="stylize_image_google"
                         optionName="model"
-                        values={img_models}
+                        values={Object.values(GoogleAI.options.img_models)}
                     />
 
                     {/* Loading Spinner */}

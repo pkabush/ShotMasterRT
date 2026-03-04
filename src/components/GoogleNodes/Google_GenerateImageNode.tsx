@@ -2,7 +2,7 @@ import React from "react";
 import { observer } from "mobx-react-lite";
 import SettingsButton from "../Atomic/SettingsButton";
 import { WorkflowOptionSelect } from "../WorkflowOptionSelect";
-import { img_models } from "../../classes/GoogleAI";
+import { GoogleAI } from "../../classes/GoogleAI";
 import LoadingSpinner from "../Atomic/LoadingSpinner";
 import type { Shot } from "../../classes/Shot";
 import EditableJsonTextField from "../EditableJsonTextField";
@@ -38,7 +38,7 @@ export const Google_GenerateImageNode: React.FC<Google_GenerateImageNodeProps> =
                         project={project}
                         workflowName="generate_shot_image"
                         optionName="model"
-                        values={img_models}
+                        values={Object.values(GoogleAI.options.img_models)}
                     />
 
                     {/* Loading Spinner */}

@@ -65,7 +65,7 @@ export class GoogleAI {
   // ---------- img2img function ----------
   public static async img2img(
     prompt: string,
-    model: string = img_models[0],
+    model: string = GoogleAI.options.img_models.flash_image,
     images?: { rawBase64: string; mime: string; description: string }[]
   ) {
     try {
