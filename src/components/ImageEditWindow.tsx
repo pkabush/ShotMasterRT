@@ -13,6 +13,7 @@ import type { LocalFolder } from "../classes/fileSystem/LocalFile";
 import MediaGalleryPreview from "./MediaComponents/MediaGallerPreview";
 import BottomCenterLabel from "./Atomic/MediaElements/BottomCenterLabel";
 import RefImagesPreview from "./MediaComponents/RefImagesPreview";
+import { ChatGPT } from "../classes/ChatGPT";
 
 
 
@@ -55,7 +56,9 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
           ? await localImage.shot.getImageTags()
           : [];
 
-      const result = await GoogleAI.img2img(prompt || "", model, [
+      let genImage: LocalImage | null = null;
+
+      const images = [
         {
           rawBase64: base64Obj.rawBase64,
           mime: base64Obj.mime,
@@ -67,10 +70,23 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
           description: `ref${index + 1}`,
         })),
         ...tagImages,
-      ]);
+      ]
 
-      console.log("Image generated:", result);
-      const genImage: LocalImage | null = await GoogleAI.saveResultImage(result, localImage.parentFolder as LocalFolder);
+      // Check IF Google
+      if (Object.values(GoogleAI.options.img_models).includes(model)) {
+        const result = await GoogleAI.img2img(prompt || "", model, images);
+        console.log("Image generated:", result);
+        genImage = await GoogleAI.saveResultImage(result, localImage.parentFolder as LocalFolder);
+      }
+
+      if (Object.values(ChatGPT.options.models).includes(model)) {
+        console.log("GPT Model", model);
+        const result = await ChatGPT.img2img(prompt || "", model, images);
+        console.log("Image generated:", result);
+        genImage = await GoogleAI.saveResultImage(result, localImage.parentFolder as LocalFolder);
+      }
+
+
       if (genImage) {
         const loadedLocalImage = await localImage.mediaFolder?.loadFile(genImage?.handle);
 
@@ -82,8 +98,9 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
           art_refs: useShotTags && localImage.shot ? localImage.shot.getFilteredTags().map(tag => tag.path) : [],
           source: localImage.path,
         })
-
       }
+
+
     } catch (err) {
       console.error("GenerateImage failed:", err);
     } finally {
@@ -156,7 +173,7 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
                 ImageEdit:
                   < div className="flex-grow-1 d-flex flex-column">
 
-                    <RefImagesPreview images={reference_images}/>
+                    <RefImagesPreview images={reference_images} />
 
                     {localImage.shot && (
                       <label className="d-flex align-items-center gap-2 mb-2">
@@ -180,7 +197,10 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
 
                     <SimpleSelect
                       value={model}
-                      options={Object.values(GoogleAI.options.img_models)}
+                      options={[
+                        ...Object.values(ChatGPT.options.models),
+                        ...Object.values(GoogleAI.options.img_models)
+                      ]}
                       label={"Model:"}
                       onChange={(val: string) => {
                         setModel(val);
