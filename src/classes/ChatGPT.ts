@@ -17,10 +17,11 @@ export class ChatGPT {
   public static options = {
     models: {
       gpt_4o_mini: "gpt-4o-mini",
-      gpt_5_1: "gpt-5.1",
+      //gpt_5_1: "gpt-5.1",
       gpt_5_mini: "gpt-5-mini",
-      gpt_5_nano: "gpt-5-nano",
+      //gpt_5_nano: "gpt-5-nano",
       gpt_5: "gpt-5",
+      gpt_5_4: "gpt-5.4",
     }
   }
 
@@ -75,7 +76,8 @@ export class ChatGPT {
 
       const payload = {
         model: model,
-        input: messages
+        input: messages,
+        tools: [{type: "image_generation" as const, action: "edit" as const}],
       }
 
       console.log("GPT Payload:", payload)
@@ -187,6 +189,5 @@ export class ChatGPT {
       throw err;
     }
   }
-
 
 }
