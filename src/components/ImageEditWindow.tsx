@@ -33,6 +33,7 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
   const [generating, setGenerating] = useState(false);
   const [model, setModel] = useState<string>(GoogleAI.options.img_models.flash_image);
   const [useShotTags, setUseShotTags] = useState<boolean>(!!localImage.shot);
+  const [aspectRatio, setAspectRatio] = useState<string>(GoogleAI.options.aspect_ratios.r9x16);
 
   useEffect(() => {
     let mounted = true;
@@ -74,7 +75,7 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
 
       // Check IF Google
       if (Object.values(GoogleAI.options.img_models).includes(model)) {
-        const result = await GoogleAI.img2img(prompt || "", model, images);
+        const result = await GoogleAI.img2img(prompt || "", model, images,aspectRatio);
         console.log("Image generated:", result);
         genImage = await GoogleAI.saveResultImage(result, localImage.parentFolder as LocalFolder);
       }
@@ -193,6 +194,16 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
                       <>Prompt : </>
                       <EditableJsonTextField localJson={localImage.mediaJson} field={"image_edit_prompt"} fitHeight />
                     </>
+
+
+                    <SimpleSelect
+                      value={aspectRatio}
+                      options={[
+                        ...Object.values(GoogleAI.options.aspect_ratios)
+                      ]}
+                      label={"Aspect Ratio:"}
+                      onChange={(val: string) => { setAspectRatio(val);  }}
+                    />
 
 
                     <SimpleSelect

@@ -18,6 +18,18 @@ export class GoogleAI {
       flash_image: "gemini-2.5-flash-image",
       pro_image: "gemini-3-pro-image-preview",
       flash_3_1: "gemini-3.1-flash-image-preview",
+    },
+    aspect_ratios: {
+      r1x1: "1:1",
+      r2x3: "2:3",
+      r3x2: "3:2",
+      r3x4: "3:4",
+      r4x3: "4:3",
+      r4x5: "4:5",
+      r5x4: "5:4",
+      r9x16: "9:16",
+      r16x9: "16:9",
+      r21x9: "21:9",
     }
   }
 
@@ -66,7 +78,8 @@ export class GoogleAI {
   public static async img2img(
     prompt: string,
     model: string = GoogleAI.options.img_models.flash_image,
-    images?: { rawBase64: string; mime: string; description: string }[]
+    images?: { rawBase64: string; mime: string; description: string }[],
+    aspect_ratio: string = GoogleAI.options.aspect_ratios.r9x16,
   ) {
     try {
       const genAI = this.getGenAI();
@@ -86,9 +99,9 @@ export class GoogleAI {
         model: model,
         contents,
         config: {
+          response_modalities: ["Image"],
           imageConfig: {
-            aspectRatio: "9:16",
-            response_modalities: ["Image"],
+            aspectRatio: aspect_ratio,            
           },
         },
       };
