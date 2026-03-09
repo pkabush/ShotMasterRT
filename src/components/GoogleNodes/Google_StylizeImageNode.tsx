@@ -44,6 +44,15 @@ export const Google_StylizeImageNode: React.FC<Google_StylizeImageNodeProps> = o
                         values={Object.values(GoogleAI.options.img_models)}
                     />
 
+                    <WorkflowOptionSelect
+                        project={project}
+                        workflowName="stylize_image_google"
+                        optionName="aspect_ratio"
+                        values={Object.values(GoogleAI.options.aspect_ratios)}
+                        defaultValue={GoogleAI.options.aspect_ratios.r9x16}
+                    />
+
+
                     {/* Loading Spinner */}
                     <LoadingSpinner isLoading={shot.is_generating} asButton />
                 </>

@@ -465,7 +465,7 @@ export class Shot extends LocalFolder {
       images.push({
         rawBase64: base64Obj.rawBase64,
         mime: base64Obj.mime,
-        description: "Base Image",
+        description: "Base Image",        
       });
 
       // Tag images
@@ -478,7 +478,8 @@ export class Shot extends LocalFolder {
       const result = await GoogleAI.img2img(
         prompt,
         this.scene.project.workflows.stylize_image_google.model,
-        images
+        images,
+        this.scene.project.workflows.stylize_image_google.aspect_ratio || GoogleAI.options.aspect_ratios.r9x16,        
       );
 
       const localImage: LocalImage | null =
