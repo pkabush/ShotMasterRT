@@ -3,7 +3,6 @@ import { Group, Panel, Separator } from "react-resizable-panels";
 import { LocalImage } from "../classes/fileSystem/LocalImage";
 import LoadingButton from "./Atomic/LoadingButton";
 import { GoogleAI } from "../classes/GoogleAI";
-import SimpleSelect from "./Atomic/SimpleSelect";
 import { observer } from "mobx-react-lite";
 import EditableJsonTextField from "./EditableJsonTextField";
 import TagsToggleList from "./TagsToggleList";
@@ -14,6 +13,7 @@ import MediaGalleryPreview from "./MediaComponents/MediaGallerPreview";
 import BottomCenterLabel from "./Atomic/MediaElements/BottomCenterLabel";
 import RefImagesPreview from "./MediaComponents/RefImagesPreview";
 import { ChatGPT } from "../classes/ChatGPT";
+import { WorkflowOptionSelect } from "./WorkflowOptionSelect";
 
 
 
@@ -31,9 +31,7 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
 }) => {
   const [url, setUrl] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
-  const [model, setModel] = useState<string>(GoogleAI.options.img_models.flash_image);
   const [useShotTags, setUseShotTags] = useState<boolean>(!!localImage.shot);
-  const [aspectRatio, setAspectRatio] = useState<string>(GoogleAI.options.aspect_ratios.r9x16);
 
   useEffect(() => {
     let mounted = true;
@@ -73,9 +71,12 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
         ...tagImages,
       ]
 
+      const model = localImage.shot!.scene.project.workflows.edit_image.model || GoogleAI.options.img_models.flash_image
+      const aspectRatio = localImage.shot!.scene.project.workflows.edit_image.aspectRatio || GoogleAI.options.aspect_ratios.r9x16
+
       // Check IF Google
       if (Object.values(GoogleAI.options.img_models).includes(model)) {
-        const result = await GoogleAI.img2img(prompt || "", model, images,aspectRatio);
+        const result = await GoogleAI.img2img(prompt || "", model, images, aspectRatio);
         console.log("Image generated:", result);
         genImage = await GoogleAI.saveResultImage(result, localImage.parentFolder as LocalFolder);
       }
@@ -196,32 +197,43 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
                     </>
 
 
-                    <SimpleSelect
-                      value={aspectRatio}
-                      options={[
-                        ...Object.values(GoogleAI.options.aspect_ratios)
-                      ]}
-                      label={"Aspect Ratio:"}
-                      onChange={(val: string) => { setAspectRatio(val);  }}
-                    />
+                    {/** Generate Settings */}
+                    <div
+                      className={`w-100`}
+                      style={{ display: 'inline-block' }}
+                    >
 
+                      <LoadingButton
+                        onClick={handleGenerate}
+                        label="Generate"
+                        is_loading={generating}
+                      />
 
-                    <SimpleSelect
-                      value={model}
-                      options={[
-                        ...Object.values(ChatGPT.options.models),
-                        ...Object.values(GoogleAI.options.img_models)
-                      ]}
-                      label={"Model:"}
-                      onChange={(val: string) => {
-                        setModel(val);
-                      }}
-                    />
-                    <LoadingButton
-                      onClick={handleGenerate}
-                      label="Generate"
-                      is_loading={generating}
-                    />
+                      {/** Select Aspect Ratio */}
+                      <WorkflowOptionSelect
+                        project={localImage.shot!.scene!.project}
+                        workflowName="edit_image"
+                        optionName="aspect_ratio"
+                        values={Object.values(GoogleAI.options.aspect_ratios)}
+                        defaultValue={GoogleAI.options.aspect_ratios.r9x16}
+                        label="Aspect Ratio:"
+                      />
+
+                      {/** Select Model */}
+                      <WorkflowOptionSelect
+                        project={localImage.shot!.scene!.project}
+                        workflowName="edit_image"
+                        optionName="model"
+                        values={[
+                          ...Object.values(ChatGPT.options.models),
+                          ...Object.values(GoogleAI.options.img_models)
+                        ]}
+                        defaultValue={GoogleAI.options.img_models.flash_image}
+                        label="Model:"
+                      />
+
+                    </div>
+
 
                   </div>,
                 GenerateInfo: <>
