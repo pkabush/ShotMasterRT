@@ -72,7 +72,7 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
       ]
 
       const model = localImage.shot!.scene.project.workflows.edit_image.model || GoogleAI.options.img_models.flash_image
-      const aspectRatio = localImage.shot!.scene.project.workflows.edit_image.aspectRatio || GoogleAI.options.aspect_ratios.r9x16
+      const aspectRatio = localImage.shot!.scene.project.workflows.edit_image.aspect_ratio || GoogleAI.options.aspect_ratios.r9x16
 
       // Check IF Google
       if (Object.values(GoogleAI.options.img_models).includes(model)) {
