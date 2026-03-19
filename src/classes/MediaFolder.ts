@@ -13,7 +13,7 @@ export class MediaFolder extends LocalFolder {
     selectedMedia: LocalMedia | null = null;
     // Named Media Array
     tags: string[] = ["picked", "start_frame", "end_frame", "motion_ref"];
-    multi_tags: string[] = ["ref_frame"];
+    multi_tags: string[] = ["ref_frame","picked_extra"];
     shot: Shot | null = null;
 
     // Callbacks
@@ -102,7 +102,7 @@ export class MediaFolder extends LocalFolder {
 
     log() { console.log(toJS(this)); }
 
-    async downloadFromUrl(url: string): Promise<LocalMedia | null> {
+    async downloadFromUrl(url: string, filename?: string): Promise<LocalMedia | null> {
         if (!this.handle) { throw new Error("MediaFolder not loaded"); }
 
         try {
@@ -110,19 +110,36 @@ export class MediaFolder extends LocalFolder {
             if (!response.ok) { throw new Error(`Failed to fetch: ${response.statusText}`); }
 
             const blob = await response.blob();
-
-            // Extract filename from URL
             const urlObj = new URL(url);
+            // Extract filename from URL
+            /*            
             let filename = urlObj.pathname.split("/").pop() || "download";
 
             // Fallback extension from MIME type if missing
             if (!filename.includes(".")) {
                 const ext = blob.type.split("/")[1];
                 if (ext) filename += `.${ext}`;
+            }*/
+
+            // Extract extension from URL
+            const urlName = urlObj.pathname.split("/").pop() || "";
+            const urlExt = urlName.includes(".") ? urlName.split(".").pop() : "";
+
+            // Fallback extension from MIME type
+            const mimeExt = blob.type?.split("/")[1];
+            const ext = urlExt || mimeExt || "bin";
+            let finalName: string;
+            if (filename) {
+                finalName = `${filename}.${ext}`;
+            } else {
+                // Use filename from URL or fallback
+                const base = urlName || "download";
+                finalName = base.includes(".") ? base : `${base}.${ext}`;
             }
 
+
             // Create file in folder
-            const fileHandle = await this.handle.getFileHandle(filename, { create: true });
+            const fileHandle = await this.handle.getFileHandle(finalName, { create: true });
             const writable = await fileHandle.createWritable();
             await writable.write(blob);
             await writable.close();

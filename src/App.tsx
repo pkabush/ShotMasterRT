@@ -6,6 +6,7 @@ import { Project } from './classes/Project';
 import { ContentView } from "./components/ContentView";
 import { NotificationContainer } from './components/NotificationContainer';
 import { UserSettingsDB } from './classes/UserSettingsDB';
+import { ProjectContext } from './contexts/ProjectContext';
 
 const App: React.FC = observer(() => {
   const [project, setProject] = useState<Project | null>(null);
@@ -15,7 +16,7 @@ const App: React.FC = observer(() => {
   const handleOpenFolder = async () => {
     try {
       const handle = await (window as any).showDirectoryPicker();
-      const newProject = new Project(handle,userSettingsDB.current);
+      const newProject = new Project(handle, userSettingsDB.current);
       await newProject!.loadFromFolder(handle);
       setProject(newProject);
     } catch (err) {
@@ -29,7 +30,7 @@ const App: React.FC = observer(() => {
       permission = await handle.requestPermission({ mode: 'readwrite' });
     }
     if (permission === 'granted') {
-      const newProject = new Project(handle,userSettingsDB.current);
+      const newProject = new Project(handle, userSettingsDB.current);
       await newProject!.loadFromFolder(handle);
       setProject(newProject);
     }
@@ -48,7 +49,7 @@ const App: React.FC = observer(() => {
           permission = await lastFolder.requestPermission({ mode: 'readwrite' });
         }
         if (permission === 'granted') {
-          const newProject = new Project(lastFolder,userSettingsDB.current);
+          const newProject = new Project(lastFolder, userSettingsDB.current);
           await newProject!.loadFromFolder(lastFolder);
           setProject(newProject);
         }
@@ -59,32 +60,34 @@ const App: React.FC = observer(() => {
   }, []);
 
   return (
-    <div style={{ minHeight: '100vh' }}>
-      <MenuBar
-        onOpenFolder={handleOpenFolder}
-        recentFolders={userSettingsDB.current.data.recentFolders}
-        onOpenRecent={handleOpenRecent}
-        project={project}
-      />
-      {/* Main layout */}
-      <div
-        className="d-flex"
-        style={{ height: 'calc(100vh - 56px)', overflow: 'hidden' }}
-      >
-        {/* Sidebar */}
-        <FolderList project={project} />
+    <ProjectContext.Provider value={{ project }}>
+      <div style={{ minHeight: '100vh' }}>
+        <MenuBar
+          onOpenFolder={handleOpenFolder}
+          recentFolders={userSettingsDB.current.data.recentFolders}
+          onOpenRecent={handleOpenRecent}
+          project={project}
+        />
+        {/* Main layout */}
+        <div
+          className="d-flex"
+          style={{ height: 'calc(100vh - 56px)', overflow: 'hidden' }}
+        >
+          {/* Sidebar */}
+          <FolderList project={project} />
 
-        {/* Content column */}
-        <div className="flex-grow-1 d-flex flex-column overflow-hidden">
-          {/* Scrollable content */}
-          <div className="flex-grow-1 overflow-auto p-3">
-            <ContentView project={project} />
+          {/* Content column */}
+          <div className="flex-grow-1 d-flex flex-column overflow-hidden">
+            {/* Scrollable content */}
+            <div className="flex-grow-1 overflow-auto p-3">
+              <ContentView project={project} />
+            </div>
           </div>
         </div>
-      </div>
 
-      <NotificationContainer />
-    </div>
+        <NotificationContainer />
+      </div>
+    </ProjectContext.Provider>
   );
 });
 

@@ -64,10 +64,10 @@ export class Shot extends LocalFolder {
   // GETTERS FOR CONVINIENCE
   get previewMedia(): LocalMedia | null {
     return this.outVideo ||
-    this.srcImage || 
-    this.MediaFolder_genVideo?.media[0] || 
-    this.MediaFolder_results?.media[0] || 
-    null;
+      this.srcImage ||
+      this.MediaFolder_genVideo?.media[0] ||
+      this.MediaFolder_results?.media[0] ||
+      null;
 
   }
 
@@ -83,10 +83,14 @@ export class Shot extends LocalFolder {
   get outVideo(): LocalVideo | null {
     return this.MediaFolder_genVideo!.getFirstMediaWithTag("picked") as LocalVideo;
   }
+  get pickedExtraVideo() : LocalVideo[] | []  {
+    return this.MediaFolder_genVideo!.getMediaWithTag("picked_extra") as LocalVideo[];
+  }
+
   get outVideoLipsync(): LocalVideo | null {
     return this.MediaFolder_genVideo!.getFirstMediaWithTag("lipsync") as LocalVideo;
   }
-  
+
   get unreal_frame(): LocalImage | null {
     return this.MediaFolder_results!.getFirstMediaWithTag("unreal_frame") as LocalImage;
   }
@@ -105,7 +109,7 @@ export class Shot extends LocalFolder {
 
 
       this.MediaFolder_genVideo = await MediaFolder.create(this, "genVideo");
-      this.MediaFolder_genVideo.tags = ["picked","lipsync"];
+      this.MediaFolder_genVideo.tags = ["picked", "lipsync","picked_extra"];
 
       this.MediaFolder_refVideo = await MediaFolder.create(this, "refVideo");
       this.MediaFolder_refVideo.tags = ["motion_ref"];
@@ -136,6 +140,7 @@ export class Shot extends LocalFolder {
 
   addTask(id: string, data?: any | null): Task {
     const task = new Task(this, id);
+    data.task_name = `${this.scene.name}_${this.name}_${getCurrentTimestampUTC()}${data.geninfo?.workflow ? `_${data.geninfo.workflow}` : ''}`;
     runInAction(() => { this.tasks.push(task); });
     task.update(data);
     return task;
@@ -465,7 +470,7 @@ export class Shot extends LocalFolder {
       images.push({
         rawBase64: base64Obj.rawBase64,
         mime: base64Obj.mime,
-        description: "Base Image",        
+        description: "Base Image",
       });
 
       // Tag images
@@ -479,7 +484,7 @@ export class Shot extends LocalFolder {
         prompt,
         this.scene.project.workflows.stylize_image_google.model,
         images,
-        this.scene.project.workflows.stylize_image_google.aspect_ratio || GoogleAI.options.aspect_ratios.r9x16,        
+        this.scene.project.workflows.stylize_image_google.aspect_ratio || GoogleAI.options.aspect_ratios.r9x16,
       );
 
       const localImage: LocalImage | null =
@@ -511,17 +516,6 @@ export class Shot extends LocalFolder {
     }
   }
 
-  /*
-  // Probably can delete this part??
-  async saveGoogleResultImage(result: any, select: boolean = false) {
-    const localImage: LocalImage | null = await GoogleAI.saveResultImage(result, this.MediaFolder_results?.folder as FileSystemDirectoryHandle);
-    if (localImage) {
-      const media_item = await this.MediaFolder_results!.loadFile(localImage.handle);
-      await media_item?.load()
-      if (select) this.MediaFolder_results?.setSelectedMedia(media_item);
-    }
-  }*/
-
   getSkippedTags(): string[] {
     return this.shotJson?.data?.skippedTags || [];
   }
@@ -552,7 +546,20 @@ export class Shot extends LocalFolder {
 
   log() { console.log(toJS(this)); }
 
-  
+}
 
 
+
+export function getCurrentTimestampUTC(): string {
+  const now = new Date();
+  const pad = (n: number, z = 2) => n.toString().padStart(z, '0');
+  return (
+    now.getUTCFullYear() + '.' +
+    pad(now.getUTCMonth() + 1) + '.' +
+    pad(now.getUTCDate()) + '_' +
+    pad(now.getUTCHours()) + '.' +
+    pad(now.getUTCMinutes()) + '_' +
+    pad(now.getUTCSeconds()) +
+    pad(now.getUTCMilliseconds(), 3)
+  );
 }

@@ -110,7 +110,7 @@ export class Scene extends LocalFolder {
   // create Shot
   async createShot(shotName?: string): Promise<Shot | null> {
     console.log(shotName);
-    if (!shotName) shotName = this.nextShotName;    
+    if (!shotName) shotName = this.nextShotName;
 
     if (!this.handle) {
       console.error("No scene folder available");
@@ -381,11 +381,22 @@ ${JSON.stringify(this.project?.artbook?.getJson(), null, 2)}
         timeline.appendClip(vod_id, "vodLS_" + name, durationFrames, offsetFrames, 2);
       }
 
+      // Add Black Frame or Image If Generated
+      timeline.appendClip(id, name, durationFrames, offsetFrames);      
 
-      timeline.appendClip(id, name, durationFrames, offsetFrames);
-      timeline.appendText(name, durationFrames, offsetFrames, 3);
+      let extra = 1;
+      for (const extra_vod of shot.pickedExtraVideo) {
+        const new_vod = await extra_vod.copyToFolder(timelineFolder, "vod_" + name + "_extraVod_" + `${extra}`);
+        const vod_path = this.project.projinfo?.getField("project_path") + new_vod.path;
+        const vod_id = timeline.addAsset(vod_path, "vod_" + name, true, durationFrames)!;
+        timeline.appendClip(vod_id, "vod_" + name, durationFrames, offsetFrames + extra*durationFrames, 1);        
+        extra += 1;
+      }
 
-      offsetFrames += durationFrames;
+      // Label
+      timeline.appendText(name, durationFrames + (extra-1)*durationFrames, offsetFrames, 3);
+      offsetFrames += durationFrames + (extra-1)*durationFrames;    
+    
     }
 
     timeline.log()

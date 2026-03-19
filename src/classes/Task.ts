@@ -97,10 +97,9 @@ export class Task {
 
     async downloadResults() {
         const url = this.data?.url;
-        const res_media = await this.shot.MediaFolder_genVideo?.downloadFromUrl(url);
+        const res_media = await this.shot.MediaFolder_genVideo?.downloadFromUrl(url, this.data?.task_name);
 
         if( !res_media ) return;
-
 
         // Save Res Media GenINFO
         if (this.data.geninfo) res_media?.mediaJson?.updateField("geninfo", this.data.geninfo)
@@ -111,7 +110,6 @@ export class Task {
             onClick: () => { this.navigate(); } ,
             media: res_media,
         })
-
     }
 
     navigate() {
