@@ -11,7 +11,7 @@ import { ai_providers } from './AI_providers';
 import { LocalVideo } from './fileSystem/LocalVideo';
 import { MediaFolder } from './MediaFolder';
 import type { LocalAudio } from './fileSystem/LocalAudio';
-import { LocalFolder } from './fileSystem/LocalFile';
+import { LocalFolder } from './fileSystem/LocalFolder';
 import type { LocalMedia } from './fileSystem/LocalMedia';
 
 

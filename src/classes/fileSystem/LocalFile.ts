@@ -1,11 +1,12 @@
 import { action, makeObservable, observable, runInAction } from "mobx";
+import type { LocalFolder } from "./LocalFolder";
 
 // LocalItem.ts
 export abstract class LocalItem {
   path: string = "";
   parentFolder: LocalFolder | null;
 
-  private children: LocalItem[] = [];
+  children: LocalItem[] = [];
 
   constructor(parentFolder: LocalFolder | null = null) {
     this.parentFolder = parentFolder;
@@ -56,6 +57,11 @@ export class LocalFile extends LocalItem {
 
   get name(): string {
     return this.handle.name;
+  }
+
+  get name_no_extension(): string {
+    const dotIndex = this.name.lastIndexOf(".");
+    return dotIndex !== -1 ? this.name.slice(0, dotIndex) : this.name;
   }
 
   async getFile(forceRefresh = false): Promise<File> {
@@ -111,39 +117,3 @@ export class LocalFile extends LocalItem {
   }
 }
 
-
-export class LocalFolder extends LocalItem {
-  handle: FileSystemDirectoryHandle;
-
-  static async open(
-    parentFolder: LocalFolder | null,
-    folderName: string
-  ): Promise<LocalFolder> {
-    if (!folderName) { throw new Error("Folder name cannot be empty"); }
-
-    let handle: FileSystemDirectoryHandle;
-
-    if (parentFolder) {
-      // Get or create the folder inside parent
-      handle = await parentFolder.handle.getDirectoryHandle(folderName, { create: true, });
-    } else {
-      // If no parent, assume root access is provided externally (browser permission required)
-      throw new Error("Root folder access required. Provide a parent folder handle.");
-    }
-
-    return new LocalFolder(parentFolder, handle);
-  }
-
-  constructor(
-    parentFolder: LocalFolder | null = null,
-    handle: FileSystemDirectoryHandle
-  ) {
-    super(parentFolder);
-    this.handle = handle;
-    this.path = (parentFolder?.path || "") + "/" + (handle?.name || "");
-  }
-
-  get name(): string {
-    return this.handle?.name;
-  }
-}

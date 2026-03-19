@@ -1,17 +1,56 @@
 // ArtbookView.tsx
 import React, { useState, useEffect } from "react";
 import { observer } from "mobx-react-lite";
-import { Row, Col, Card, Spinner } from "react-bootstrap";
+import { Row, Col, Card, Spinner, Accordion, Button } from "react-bootstrap";
 import TabsContainer from "./TabsContainer";
 import { Artbook } from "../classes/Artbook";
 import { Art } from "../classes/Art";
 import ArtInfoCard from "./ArtInfoCard";
+import { ArtbookCharacterView } from "./Artbook/ArtboookCharacterView";
+import { LocalFolder } from "../classes/fileSystem/LocalFolder";
+import { MediaFolder } from "../classes/MediaFolder";
+import SimpleButton from "./Atomic/SimpleButton";
+import { Character } from "../classes/Artbook/Character";
+
+
+
 
 interface ArtbookViewProps {
   artbook: Artbook;
 }
 
 export const ArtbookView: React.FC<ArtbookViewProps> = observer(({ artbook }) => {
+
+  return (
+    <div style={{ padding: "1rem" }}>
+      <h2 className="mb-3">Artbook</h2>
+      <TabsContainer
+        tabs={Object.fromEntries(artbook.getType(LocalFolder).map(child => [
+          child.name,
+          <>
+            <Button variant="primary" onClick={() => { console.log("Add char") }} >Add Character</Button>
+
+
+            <Accordion alwaysOpen={false}
+              //defaultActiveKey={child.getType(MediaFolder).map(c => c.path)}
+            >
+
+              {child.getType(Character).map(character => (
+                <ArtbookCharacterView character={character} key={character.path} />
+
+
+              ))}
+
+            </Accordion>
+          </>
+        ])
+        )}
+      />
+    </div>
+  );
+
+  // OLD CODE
+
   const [openArt, setOpenArt] = useState<Art | null>(null);
 
   if (!Object.keys(artbook.data).length) {
@@ -72,18 +111,18 @@ export const ArtbookView: React.FC<ArtbookViewProps> = observer(({ artbook }) =>
     );
   };
 
-const createArtTab = (items: Record<string, Art[]>) => {
-  return (
-    <div style={{ padding: "1rem" }}>
-      {Object.entries(items).map(([itemName, arts]) =>
-        createArtItemContainer(itemName, arts)
-      )}
+  const createArtTab = (items: Record<string, Art[]>) => {
+    return (
+      <div style={{ padding: "1rem" }}>
+        {Object.entries(items).map(([itemName, arts]) =>
+          createArtItemContainer(itemName, arts)
+        )}
 
-      {/* Spacer at the bottom to prevent page jump when opening ArtInfoCard */}
-      <div style={{ height: "500px" }} />
-    </div>
-  );
-};
+        {/* Spacer at the bottom to prevent page jump when opening ArtInfoCard */}
+        <div style={{ height: "500px" }} />
+      </div>
+    );
+  };
 
   const tabs: Record<string, React.ReactNode> = {};
   for (const typeName in artbook.data) {

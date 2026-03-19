@@ -1,5 +1,5 @@
 import { LocalMedia } from './LocalMedia';
-import type { LocalFolder } from './LocalFile';
+import type { LocalFolder } from './LocalFolder';
 
 // LocalImage.ts
 export class LocalImage extends LocalMedia{
@@ -52,7 +52,7 @@ export class LocalImage extends LocalMedia{
       await writable.close();
 
       // Return LocalImage with cached base64Data
-      const image = new LocalImage(fileHandle,folder);
+      const image = new LocalImage(folder,fileHandle);
       image.base64Data = base64Obj; // cache
       return image;
     } catch (err) {

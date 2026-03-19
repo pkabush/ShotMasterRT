@@ -1,5 +1,5 @@
 import { LocalMedia } from './LocalMedia';
-import type { LocalFolder } from './LocalFile';
+import type { LocalFolder } from './LocalFolder';
 
 // LocalVideo.ts
 export class LocalVideo extends LocalMedia {
@@ -24,7 +24,7 @@ export class LocalVideo extends LocalMedia {
       await writable.write(bytes);
       await writable.close();
 
-      return new LocalVideo(fileHandle, folder);
+      return new LocalVideo(folder,fileHandle);
     } catch (err) {
       console.error('Failed to create LocalVideo from Base64:', err);
       throw err;

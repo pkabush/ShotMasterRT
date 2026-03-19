@@ -1,10 +1,11 @@
-import { LocalFile, LocalFolder } from "./LocalFile";
+import { LocalFile } from "./LocalFile";
 import type { LocalImage } from "./LocalImage";
 import { LocalJson } from "../LocalJson";
 import type { MediaFolder } from "../MediaFolder";
 import type { Shot } from "../Shot";
 import * as webFileStorage from '../webFileStorage';
 import { runInAction, toJS, makeObservable, observable, action, computed } from "mobx";
+import type { LocalFolder } from "./LocalFolder";
 
 // LocalMediaInterface.ts
 export class LocalMedia extends LocalFile {
@@ -19,7 +20,7 @@ export class LocalMedia extends LocalFile {
   // internal promise
   private _urlPromise: Promise<string> | null = null;
 
-  constructor(handle: FileSystemFileHandle, parentFolder: LocalFolder) {
+  constructor(parentFolder: LocalFolder,handle: FileSystemFileHandle) {
     super(parentFolder, handle)
     this.handle = handle;
 
@@ -122,7 +123,7 @@ export class LocalMedia extends LocalFile {
       await writable.write(blob);
       await writable.close();
 
-      return new LocalMedia(fileHandle, folder);
+      return new LocalMedia(folder,fileHandle);
     } catch (err) {
       console.error('Failed to create LocalVideo from URL:', err);
       throw err;

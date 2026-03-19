@@ -9,6 +9,7 @@ interface TagsToggleListProps {
 }
 
 const TagsToggleList: React.FC<TagsToggleListProps> = observer(({ shot }) => {
+  if (!(shot instanceof Shot)) return;
   const scene = shot.scene;
   if (!scene.sceneJson || !scene.sceneJson.data) return null;
 

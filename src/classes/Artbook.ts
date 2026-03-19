@@ -1,11 +1,13 @@
 // Artbook.ts
-import { action, makeObservable, observable, runInAction,toJS } from "mobx";
+import { action, makeObservable, observable, runInAction, toJS } from "mobx";
 import { Art } from "./Art";
 import { Project } from "./Project";
-import { LocalFolder } from "./fileSystem/LocalFile";
+import { LocalFolder } from "./fileSystem/LocalFolder";
+import { MediaFolder } from "./MediaFolder";
+import { Character } from "./Artbook/Character";
 
-export class Artbook extends LocalFolder{
-  project: Project | null = null; 
+export class Artbook extends LocalFolder {
+  project: Project | null = null;
   data: Record<string, Record<string, Art[]>> = {};
 
   constructor(handle: FileSystemDirectoryHandle, parentFolder: LocalFolder) {
@@ -14,12 +16,28 @@ export class Artbook extends LocalFolder{
     makeObservable(this, {
       project: observable.ref,   // observe reference only
       data: observable,          // deep observable
-      load: action,      
+      load: action,
     });
   }
 
-  async load() {
+  async load() {    
+    // Load all subfolders and images    
+    await this.load_subfolders();
+    for( const artSubfolder of this.subfolders){
+      await artSubfolder.load_subfolders(Character);
+
+      for( const characterFolder of artSubfolder.getType(MediaFolder)){
+        //await characterFolder.load_files();
+        characterFolder.load(); 
+      }
+    }
+
+    console.log(this);
+
+    /*
     try {
+     
+
       const result: Record<string, Record<string, Art[]>> = {};
 
       for await (const typeEntry of this.handle.values()) {
@@ -58,12 +76,17 @@ export class Artbook extends LocalFolder{
       runInAction(() => {
         this.data = result;
       });
+
+      
+
+
     } catch (err) {
       console.error("Error loading artbook:", err);
       runInAction(() => {
         this.data = {};
       });
     }
+      */
   }
 
   getTag(path: string): Art | null {

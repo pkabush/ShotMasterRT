@@ -5,7 +5,7 @@ import { LocalVideo } from './fileSystem/LocalVideo';
 import type { LocalMedia } from "./fileSystem/LocalMedia";
 import type { Shot } from "./Shot";
 import { LocalAudio } from "./fileSystem/LocalAudio";
-import { LocalFolder } from "./fileSystem/LocalFile";
+import { LocalFolder } from "./fileSystem/LocalFolder";
 
 export class MediaFolder extends LocalFolder {
     media: LocalMedia[] = []; // unified array
@@ -159,11 +159,11 @@ export class MediaFolder extends LocalFolder {
         let mediaItem: LocalMedia | null = null;
 
         if (name.match(/\.(png|jpe?g|gif|webp)$/i)) {
-            mediaItem = new LocalImage(fileHandle, this);
+            mediaItem = new LocalImage(this,fileHandle);
         } else if (name.match(/\.(mp4|mov|webm|avi)$/i)) {
-            mediaItem = new LocalVideo(fileHandle, this);
+            mediaItem = new LocalVideo(this,fileHandle);
         } else if (name.match(/\.(mp3|wav|m4a)$/i)) {
-            mediaItem = new LocalAudio(fileHandle, this);
+            mediaItem = new LocalAudio(this,fileHandle);
         }
 
         return await this.addMediaItem(mediaItem);
@@ -189,7 +189,6 @@ export class MediaFolder extends LocalFolder {
         runInAction(() => { this.media.push(mediaItem); });
         return mediaItem;
     }
-
 
     async saveFiles(files: File[]) {
         if (!this.handle) { throw new Error("MediaFolder not loaded"); }

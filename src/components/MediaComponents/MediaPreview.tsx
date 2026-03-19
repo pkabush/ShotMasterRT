@@ -7,11 +7,11 @@ import MediaVideo from "./MediaVideo";
 import MediaImage from "./MediaImage";
 
 type MediaPreviewProps = {
-  media: LocalMedia;
+  media: LocalMedia | null;
 } & React.ImgHTMLAttributes<HTMLImageElement> &
   React.VideoHTMLAttributes<HTMLVideoElement>;
 
-const MediaPreview: React.FC<MediaPreviewProps> = observer(({ media, ...props }) => {
+const MediaPreview: React.FC<MediaPreviewProps> = observer(({ media, ...props }) => {  
   if (media instanceof LocalVideo) {
     return <MediaVideo localVideo={media} {...props} />;
   } else if (media instanceof LocalImage) {

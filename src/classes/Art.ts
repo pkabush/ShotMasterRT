@@ -3,7 +3,7 @@ import { LocalImage } from "./fileSystem/LocalImage";
 import { LocalJson } from "./LocalJson";
 import { makeAutoObservable, runInAction } from "mobx";
 import { Artbook } from "./Artbook";
-import type { LocalFolder } from "./fileSystem/LocalFile";
+import type { LocalFolder } from "./fileSystem/LocalFolder";
 
 export class Art {
   handle: FileSystemFileHandle;
@@ -22,7 +22,7 @@ export class Art {
   ) {
     this.handle = handle;
     this.folder = folder.handle;
-    this.image = new LocalImage(handle,folder);
+    this.image = new LocalImage(folder,handle);
     this.path = path;
     this.artbook = artbook;
     makeAutoObservable(this); // make artInfo observable

@@ -8,12 +8,13 @@ import EditableJsonTextField from "./EditableJsonTextField";
 import TagsToggleList from "./TagsToggleList";
 import TabsContainer from "./TabsContainer";
 import type { MediaFolder } from "../classes/MediaFolder";
-import type { LocalFolder } from "../classes/fileSystem/LocalFile";
+import type { LocalFolder } from "../classes/fileSystem/LocalFolder";
 import MediaGalleryPreview from "./MediaComponents/MediaGallerPreview";
 import BottomCenterLabel from "./Atomic/MediaElements/BottomCenterLabel";
 import RefImagesPreview from "./MediaComponents/RefImagesPreview";
 import { ChatGPT } from "../classes/ChatGPT";
 import { WorkflowOptionSelect } from "./WorkflowOptionSelect";
+import { useProject } from "../contexts/ProjectContext";
 
 
 
@@ -30,8 +31,11 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
   reference_images = [],
 }) => {
   const [url, setUrl] = useState<string | null>(null);
-  const [generating, setGenerating] = useState(false);
+  const [generating, setGenerating] = useState(false); 
+
   const [useShotTags, setUseShotTags] = useState<boolean>(!!localImage.shot);
+
+  const {project} = useProject();
 
   useEffect(() => {
     let mounted = true;
@@ -71,8 +75,8 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
         ...tagImages,
       ]
 
-      const model = localImage.shot!.scene.project.workflows.edit_image.model || GoogleAI.options.img_models.flash_image
-      const aspectRatio = localImage.shot!.scene.project.workflows.edit_image.aspect_ratio || GoogleAI.options.aspect_ratios.r9x16
+      const model = project!.workflows.edit_image.model || GoogleAI.options.img_models.flash_image
+      const aspectRatio = project!.workflows.edit_image.aspect_ratio || GoogleAI.options.aspect_ratios.r9x16
 
       // Check IF Google
       if (Object.values(GoogleAI.options.img_models).includes(model)) {
@@ -190,7 +194,6 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
 
                     {localImage.shot && useShotTags && (<TagsToggleList shot={localImage.shot} />)}
 
-
                     <>
                       <>Prompt : </>
                       <EditableJsonTextField localJson={localImage.mediaJson} field={"image_edit_prompt"} fitHeight />
@@ -211,7 +214,7 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
 
                       {/** Select Aspect Ratio */}
                       <WorkflowOptionSelect
-                        project={localImage.shot!.scene!.project}
+                        project={project!}
                         workflowName="edit_image"
                         optionName="aspect_ratio"
                         values={Object.values(GoogleAI.options.aspect_ratios)}
@@ -221,7 +224,7 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
 
                       {/** Select Model */}
                       <WorkflowOptionSelect
-                        project={localImage.shot!.scene!.project}
+                        project={project!}
                         workflowName="edit_image"
                         optionName="model"
                         values={[

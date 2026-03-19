@@ -1,5 +1,5 @@
 import { LocalMedia } from './LocalMedia';
-import type { LocalFolder } from './LocalFile';
+import type { LocalFolder } from './LocalFolder';
 
 // LocalAudio.ts
 export class LocalAudio extends LocalMedia {
@@ -52,7 +52,7 @@ export class LocalAudio extends LocalMedia {
       await writable.close();
 
       // Return LocalAudio with cached base64Data
-      const audio = new LocalAudio(fileHandle, folder);
+      const audio = new LocalAudio(folder,fileHandle);
       audio.base64Data = base64Obj; // cache
       return audio;
     } catch (err) {
