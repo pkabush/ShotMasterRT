@@ -28,19 +28,23 @@ export const ArtbookView: React.FC<ArtbookViewProps> = observer(({ artbook }) =>
         tabs={Object.fromEntries(artbook.getType(LocalFolder).map(child => [
           child.name,
           <>
-            <Button variant="primary" onClick={() => { console.log("Add char") }} >Add Character</Button>
+            <Button variant="primary" onClick={() => {
+              console.log("Add char")
+              artbook.createCharacter(child);
+            }} >Add Character</Button>
 
 
             <Accordion alwaysOpen={false}
               //defaultActiveKey={child.getType(MediaFolder).map(c => c.path)}
+              onSelect={(key) => {
+                for (const char of child.getType(Character)) {
+                    char.MediaFolder_results?.setSelectedMedia(null);
+                }
+              }}
             >
-
               {child.getType(Character).map(character => (
                 <ArtbookCharacterView character={character} key={character.path} />
-
-
               ))}
-
             </Accordion>
           </>
         ])

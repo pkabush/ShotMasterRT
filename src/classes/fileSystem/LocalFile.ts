@@ -1,4 +1,4 @@
-import { action, makeObservable, observable, runInAction } from "mobx";
+import { action, makeObservable, observable, runInAction, toJS } from "mobx";
 import type { LocalFolder } from "./LocalFolder";
 
 // LocalItem.ts
@@ -10,10 +10,21 @@ export abstract class LocalItem {
 
   constructor(parentFolder: LocalFolder | null = null) {
     this.parentFolder = parentFolder;
-    this.parentFolder?.children.push(this);
+
+    makeObservable(this, {
+      children: observable, // <-- add this
+    });
+
+    runInAction(() => {
+      this.parentFolder?.children.push(this);
+    })
+
   }
 
   abstract get name(): string;
+  async load(): Promise<void> {
+
+  }
 
   getByPath(targetPath: string): LocalItem | null {
     if (this.path === targetPath) return this;
@@ -34,6 +45,8 @@ export abstract class LocalItem {
     while (current.parentFolder) { current = current.parentFolder; }
     return current;
   }
+
+  log() { console.log(toJS(this)); }
 }
 
 export class LocalFile extends LocalItem {
@@ -52,6 +65,7 @@ export class LocalFile extends LocalItem {
     makeObservable(this, {
       lastModified: observable,
       getFile: action.bound, // action.bound ensures proper this context
+      delete: action.bound,
     });
   }
 
@@ -74,7 +88,6 @@ export class LocalFile extends LocalItem {
       });
 
     }
-
     return this._file!;
   }
 
@@ -113,7 +126,36 @@ export class LocalFile extends LocalItem {
     await writable.close();
 
     // Return a new LocalFile instance
-    return new LocalFile(targetFolder, newHandle);
+    return targetFolder.load_file(newHandle);
   }
+
+
+  async delete(show_dialogue = false): Promise<void> {
+    if (!this.parentFolder) {
+      throw new Error("Cannot delete file without parent folder");
+    }
+
+    // Ask user for confirmation
+    if (show_dialogue) {
+      const confirmed = window.confirm(`Are you sure you want to delete "${this.name}"?`);
+      if (!confirmed) return; // user canceled
+    }
+
+    // Remove from filesystem
+    await this.parentFolder.handle.removeEntry(this.name);
+
+    // Remove from in-memory tree
+    runInAction(() => {
+      const index = this.parentFolder!.children.indexOf(this);
+      if (index !== -1) {
+        this.parentFolder!.children.splice(index, 1);
+      }
+    });
+  }
+
+  async load(): Promise<void> {
+
+  }
+
 }
 

@@ -59,8 +59,9 @@ export const MediaFolderGallery: React.FC<MediaFolderGalleryProps> = observer(
                                         alert("Failed to access clipboard.");
                                     }
                                 }} />
-                            <SimpleButton label="Paste" className="btn-outline-secondary btn-sm"
-                                onClick={() => { mediaFolder.copyFromClipboard(); }} />
+                            {false &&
+                                <SimpleButton label="Paste" className="btn-outline-secondary btn-sm"
+                                    onClick={() => { mediaFolder!.copyFromClipboard(); }} />}
 
                         </>
 
@@ -95,7 +96,7 @@ export const MediaFolderGallery: React.FC<MediaFolderGalleryProps> = observer(
                                                     task.check_status();
                                                 }}
                                                 onClose={() => mediaFolder.setSelectedMedia(null)}
-                                                reference_images={ (mediaFolder.parentFolder as Shot).MediaFolder_results!.getMediaWithTag("ref_frame") as LocalImage[] }
+                                                reference_images={(mediaFolder.parentFolder as Shot).MediaFolder_results!.getMediaWithTag("ref_frame") as LocalImage[]}
                                             />
                                         </>
                                     ) : null
@@ -114,7 +115,7 @@ export const MediaFolderGallery: React.FC<MediaFolderGalleryProps> = observer(
                                             label="Delete"
                                             className="btn-outline-danger btn-sm"
                                             onClick={async () => {
-                                                await mediaFolder.deleteMedia(mediaItem);
+                                                await mediaItem.delete()
                                             }}
                                         />
                                         <SimpleButton

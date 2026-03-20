@@ -31,11 +31,11 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
   reference_images = [],
 }) => {
   const [url, setUrl] = useState<string | null>(null);
-  const [generating, setGenerating] = useState(false); 
+  const [generating, setGenerating] = useState(false);
 
   const [useShotTags, setUseShotTags] = useState<boolean>(!!localImage.shot);
 
-  const {project} = useProject();
+  const { project } = useProject();
 
   useEffect(() => {
     let mounted = true;
@@ -92,11 +92,9 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
         genImage = await GoogleAI.saveResultImage(result, localImage.parentFolder as LocalFolder);
       }
 
-
+      console.log("GENERATED IMAGE", genImage);
       if (genImage) {
-        const loadedLocalImage = await localImage.mediaFolder?.loadFile(genImage?.handle);
-
-        loadedLocalImage?.mediaJson?.updateField("geninfo", {
+        genImage?.mediaJson?.updateField("geninfo", {
           workflow: "image_edit",
           prompt: prompt,
           model: model,

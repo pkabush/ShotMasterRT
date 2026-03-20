@@ -83,7 +83,7 @@ export class Shot extends LocalFolder {
   get outVideo(): LocalVideo | null {
     return this.MediaFolder_genVideo!.getFirstMediaWithTag("picked") as LocalVideo;
   }
-  get pickedExtraVideo() : LocalVideo[] | []  {
+  get pickedExtraVideo(): LocalVideo[] | [] {
     return this.MediaFolder_genVideo!.getMediaWithTag("picked_extra") as LocalVideo[];
   }
 
@@ -109,7 +109,7 @@ export class Shot extends LocalFolder {
 
 
       this.MediaFolder_genVideo = await MediaFolder.create(this, "genVideo");
-      this.MediaFolder_genVideo.tags = ["picked", "lipsync","picked_extra"];
+      this.MediaFolder_genVideo.tags = ["picked", "lipsync", "picked_extra"];
 
       this.MediaFolder_refVideo = await MediaFolder.create(this, "refVideo");
       this.MediaFolder_refVideo.tags = ["motion_ref"];
@@ -439,17 +439,14 @@ export class Shot extends LocalFolder {
         );
 
       if (localImage) {
-        const generatedImage = await this.MediaFolder_results?.addMediaItem(localImage);
-
-        // Save Generation Info
-        generatedImage?.mediaJson?.updateField("geninfo", {
+        localImage?.mediaJson?.updateField("geninfo", {
           workflow: "shot_generate_image",
           prompt: prompt,
           model: this.scene.project.workflows.generate_shot_image.model,
           art_refs: this.getFilteredTags().map(tag => tag.path),
         })
-
       }
+
     } catch (err) {
       console.error("GenerateImage failed:", err);
     } finally {
@@ -494,10 +491,8 @@ export class Shot extends LocalFolder {
         );
 
       if (localImage) {
-        const loadedLocalImage = await this.MediaFolder_results?.addMediaItem(localImage);
-
         // Save Generation Info
-        loadedLocalImage?.mediaJson?.updateField("geninfo", {
+        localImage?.mediaJson?.updateField("geninfo", {
           workflow: "stylize_image_google",
           global_prompt: this.scene.project.workflows.stylize_image_google.prompt || "",
           prompt: this.shotJson?.data.stylize_prompt || "",

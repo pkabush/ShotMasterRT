@@ -4,34 +4,37 @@ import { LocalJson } from "../LocalJson";
 import type { MediaFolder } from "../MediaFolder";
 import type { Shot } from "../Shot";
 import * as webFileStorage from '../webFileStorage';
-import { runInAction, toJS, makeObservable, observable, action, computed } from "mobx";
+import { runInAction, toJS, makeObservable, observable, action, computed, override } from "mobx";
 import type { LocalFolder } from "./LocalFolder";
 
 // LocalMediaInterface.ts
 export class LocalMedia extends LocalFile {
-  shot: Shot | null;
   urlObject: string | null = null;
   web_url: string = "";
-  mediaFolder: MediaFolder | null = null;
   mediaJson: LocalJson | null = null;
-  onTagChanged?: (media: LocalMedia, tag: string, added: boolean) => void;
   file: File | null = null;
 
   // internal promise
   private _urlPromise: Promise<string> | null = null;
 
-  constructor(parentFolder: LocalFolder,handle: FileSystemFileHandle) {
+  get mediaFolder(): MediaFolder {
+    return this.parentFolder as MediaFolder;
+  }
+
+  get shot(): Shot | null {
+    return this.parentFolder?.parentFolder as Shot;
+  }
+
+  constructor(parentFolder: LocalFolder, handle: FileSystemFileHandle) {
     super(parentFolder, handle)
     this.handle = handle;
-
-    this.shot = parentFolder.parentFolder as Shot;
 
     makeObservable(this, {
       urlObject: observable,
       web_url: observable,
 
       revokeUrl: action,
-      delete: action,
+      delete: override,
       getUrlObject: action,
       //Tags
       tags: computed,
@@ -55,9 +58,10 @@ export class LocalMedia extends LocalFile {
   async delete(): Promise<void> {
     try {
       this.revokeUrl();
-      await this.parentFolder?.handle.removeEntry(this.handle.name);
+      if (this.mediaJson) { await this.mediaJson.updateField("", undefined); }
+      await super.delete();
     } catch (err) {
-      console.error('Failed to delete video file:', err);
+      console.error('Failed to delete media file:', err);
       throw err;
     }
   }
@@ -84,10 +88,8 @@ export class LocalMedia extends LocalFile {
     this._urlPromise = (async () => {
       try {
         const file = await this.getFile();
-
         // Revoke old URL if any
         if (this.urlObject) URL.revokeObjectURL(this.urlObject);
-
         const objectUrl = URL.createObjectURL(file);
         runInAction(() => { this.urlObject = objectUrl; });
       } catch (err) {
@@ -97,41 +99,9 @@ export class LocalMedia extends LocalFile {
         // clear the promise so next call can retry if needed
         this._urlPromise = null;
       }
-
       return this.urlObject!;
     })();
-
     return this._urlPromise;
-  }
-
-
-  // Create a LocalVideo from a URL
-  static async fromUrl(url: string, folder: LocalFolder): Promise<LocalMedia> {
-    try {
-      const response = await fetch(url);
-      if (!response.ok) throw new Error(`Failed to fetch video: ${response.statusText}`);
-
-      const blob = await response.blob();
-
-      // Extract filename from URL (remove query params)
-      const urlParts = url.split('/');
-      const filename = urlParts[urlParts.length - 1].split("?")[0];
-
-      // Create file handle and write blob
-      const fileHandle = await folder.handle.getFileHandle(filename, { create: true });
-      const writable = await fileHandle.createWritable();
-      await writable.write(blob);
-      await writable.close();
-
-      return new LocalMedia(folder,fileHandle);
-    } catch (err) {
-      console.error('Failed to create LocalVideo from URL:', err);
-      throw err;
-    }
-  }
-
-  log() {
-    console.log(toJS(this));
   }
 
   get tags(): string[] {
@@ -151,14 +121,14 @@ export class LocalMedia extends LocalFile {
     const current = this.tags;
     if (current.includes(tag)) return;
     await this.setTags([...current, tag]);
-    this.onTagChanged?.(this, tag, true);
+    this.onTagChanged(tag, true);
   }
 
   async removeTag(tag: string) {
     const current = this.tags;
     if (!current.includes(tag)) return;
     await this.setTags(current.filter(t => t !== tag));
-    this.onTagChanged?.(this, tag, false);
+    this.onTagChanged(tag, false);
   }
 
   hasTag(tag: string): boolean {
@@ -183,8 +153,15 @@ export class LocalMedia extends LocalFile {
     }
   }
 
-
-
+  onTagChanged(tag: string, added: boolean) {
+    if (added && !this.mediaFolder.multi_tags.includes(tag)) {
+      for (const otherMedia of this.mediaFolder.media) {
+        if (otherMedia !== this && otherMedia.hasTag(tag)) {
+          otherMedia.removeTag(tag);
+        }
+      }
+    }
+  }
 
   // Gen Info
   get genInfo(): any | null {
@@ -206,7 +183,6 @@ export class LocalMedia extends LocalFile {
       if (media.genInfo && media.genInfo.source) {
         if (media.genInfo.source == this.path) generated_images.push(media);
       }
-
     }
 
     return generated_images;

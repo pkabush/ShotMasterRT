@@ -54,13 +54,13 @@ export class LocalImage extends LocalMedia{
       // Return LocalImage with cached base64Data
       const image = new LocalImage(folder,fileHandle);
       image.base64Data = base64Obj; // cache
+      await image.load();
       return image;
     } catch (err) {
       console.error("Failed to create LocalImage from Base64:", err);
       throw err;
     }
   }
-
 }
 
 // Utility

@@ -7,6 +7,7 @@ interface DropAreaProps {
     height?: string | number;
     onDrop: (file: File[]) => void;
     children?: ReactNode; // optional content inside the box
+    label? : string;
 }
 
 const DropArea: FC<DropAreaProps> = ({
@@ -14,6 +15,8 @@ const DropArea: FC<DropAreaProps> = ({
     height = 200,
     onDrop,
     children,
+    label = "Drag and Drop Here",
+
 }) => {
     const [isDragging, setIsDragging] = useState(false);
 
@@ -57,7 +60,7 @@ const DropArea: FC<DropAreaProps> = ({
         >
             {children || (
                 <span style={{ display: "block", textAlign: "center", width: "100%",color:"#5e727e" }}>
-                    Drag and Drop Here
+                    {label}
                 </span>
             )}
         </div>
@@ -65,7 +68,7 @@ const DropArea: FC<DropAreaProps> = ({
 
 }
 
-    export default DropArea;
+export default DropArea;
 
 
 

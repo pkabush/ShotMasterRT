@@ -1,24 +1,14 @@
 // MediaFolder.ts
 import { action, computed, makeObservable, observable, runInAction, toJS } from "mobx";
-import { LocalImage } from './fileSystem/LocalImage';
-import { LocalVideo } from './fileSystem/LocalVideo';
-import type { LocalMedia } from "./fileSystem/LocalMedia";
+import { LocalMedia } from "./fileSystem/LocalMedia";
 import type { Shot } from "./Shot";
-import { LocalAudio } from "./fileSystem/LocalAudio";
 import { LocalFolder } from "./fileSystem/LocalFolder";
 
 export class MediaFolder extends LocalFolder {
-    media: LocalMedia[] = []; // unified array
-    pickedMedia: LocalMedia | null = null;
     selectedMedia: LocalMedia | null = null;
     // Named Media Array
     tags: string[] = ["picked", "start_frame", "end_frame", "motion_ref"];
-    multi_tags: string[] = ["ref_frame","picked_extra"];
-    shot: Shot | null = null;
-
-    // Callbacks
-    onPicked?: (media: LocalMedia | null) => void;
-    onSelected?: (media: LocalMedia | null) => void;
+    multi_tags: string[] = ["ref_frame", "picked_extra"];
 
     static async create(
         parentFolder: LocalFolder,
@@ -26,49 +16,16 @@ export class MediaFolder extends LocalFolder {
     ): Promise<MediaFolder> {
         const handle = await parentFolder.handle.getDirectoryHandle(name, { create: true });
         const mediaFodler = new MediaFolder(parentFolder, handle);
-        await mediaFodler.load();
+        await mediaFodler.load_files();
         return mediaFodler;
     }
 
-    constructor(parentFolder: LocalFolder, handle: FileSystemDirectoryHandle) {
-        super(parentFolder, handle)
-
-        this.shot = parentFolder as Shot;
-        makeObservable(this, {
-            // observables
-            media: observable,
-            pickedMedia: observable,
-            selectedMedia: observable,
-            tags: observable,
-            multi_tags: observable,
-            shot: observable,
-
-            // actions
-            load: action,
-            deleteMedia: action,
-            setSelectedMedia: action,
-            downloadFromUrl: action,
-            loadFile: action,
-            saveFiles: action,
-            copyFromClipboard: action,
-            // computed
-            mediaOrdered: computed,
-
-        });
+    get shot(): Shot {
+        return this.parentFolder as Shot;
     }
 
-    async load(): Promise<void> {
-        try {
-            for await (const [, handle] of this.handle.entries()) {
-                if (handle.kind === "file") { await this.loadFile(handle as FileSystemFileHandle); }
-            }
-
-        } catch (err) {
-            console.error(`Failed to load MediaFolder '${this.name}':`, err);
-            runInAction(() => {
-                this.media = [];
-            });
-        }
+    get media(): LocalMedia[] {
+        return this.getType(LocalMedia)
     }
 
     get mediaOrdered(): LocalMedia[] {
@@ -77,17 +34,21 @@ export class MediaFolder extends LocalFolder {
         );
     }
 
-    async deleteMedia(mediaItem: LocalMedia, showConfirm: boolean = true): Promise<void> {
-        if (!this.handle) throw new Error("Folder not loaded");
-        if (showConfirm && !window.confirm(`Delete this ${mediaItem instanceof LocalImage ? "image" : "video"}?`)) { return; }
+    constructor(parentFolder: LocalFolder | null, handle: FileSystemDirectoryHandle) {
+        super(parentFolder, handle)
 
-        try {
-            await mediaItem.delete();
-            runInAction(() => { this.media = this.media.filter(i => i !== mediaItem); });
-        } catch (err) {
-            console.error("Failed to delete media:", err);
-            alert(`Failed to delete ${mediaItem instanceof LocalImage ? "image" : "video"}.`);
-        }
+        makeObservable(this, {
+            // observables
+            selectedMedia: observable,
+            tags: observable,
+            multi_tags: observable,
+            // actions
+            setSelectedMedia: action,
+            // computed
+            mediaOrdered: computed,
+            shot: computed,
+            media: computed,
+        });
     }
 
     setSelectedMedia(media: LocalMedia | null) {
@@ -97,145 +58,6 @@ export class MediaFolder extends LocalFolder {
             else
                 this.selectedMedia = media;
         });
-        this.onSelected?.(media);
-    }
-
-    log() { console.log(toJS(this)); }
-
-    async downloadFromUrl(url: string, filename?: string): Promise<LocalMedia | null> {
-        if (!this.handle) { throw new Error("MediaFolder not loaded"); }
-
-        try {
-            const response = await fetch(url);
-            if (!response.ok) { throw new Error(`Failed to fetch: ${response.statusText}`); }
-
-            const blob = await response.blob();
-            const urlObj = new URL(url);
-            // Extract filename from URL
-            /*            
-            let filename = urlObj.pathname.split("/").pop() || "download";
-
-            // Fallback extension from MIME type if missing
-            if (!filename.includes(".")) {
-                const ext = blob.type.split("/")[1];
-                if (ext) filename += `.${ext}`;
-            }*/
-
-            // Extract extension from URL
-            const urlName = urlObj.pathname.split("/").pop() || "";
-            const urlExt = urlName.includes(".") ? urlName.split(".").pop() : "";
-
-            // Fallback extension from MIME type
-            const mimeExt = blob.type?.split("/")[1];
-            const ext = urlExt || mimeExt || "bin";
-            let finalName: string;
-            if (filename) {
-                finalName = `${filename}.${ext}`;
-            } else {
-                // Use filename from URL or fallback
-                const base = urlName || "download";
-                finalName = base.includes(".") ? base : `${base}.${ext}`;
-            }
-
-
-            // Create file in folder
-            const fileHandle = await this.handle.getFileHandle(finalName, { create: true });
-            const writable = await fileHandle.createWritable();
-            await writable.write(blob);
-            await writable.close();
-
-            const newMedia = this.loadFile(fileHandle);
-
-            return newMedia;
-        } catch (err) {
-            console.error("Failed to download media from URL:", err);
-            throw err;
-        }
-    }
-
-    async loadFile(fileHandle: FileSystemFileHandle): Promise<LocalMedia | null> {
-        const name = fileHandle.name;
-
-        let mediaItem: LocalMedia | null = null;
-
-        if (name.match(/\.(png|jpe?g|gif|webp)$/i)) {
-            mediaItem = new LocalImage(this,fileHandle);
-        } else if (name.match(/\.(mp4|mov|webm|avi)$/i)) {
-            mediaItem = new LocalVideo(this,fileHandle);
-        } else if (name.match(/\.(mp3|wav|m4a)$/i)) {
-            mediaItem = new LocalAudio(this,fileHandle);
-        }
-
-        return await this.addMediaItem(mediaItem);
-    }
-
-    async addMediaItem(mediaItem: LocalMedia | null): Promise<LocalMedia | null> {
-        if (!mediaItem) return null;
-
-        await mediaItem.load();
-        mediaItem.mediaFolder = this;
-
-        // Update tags for Single Select Tags
-        mediaItem.onTagChanged = (currentMedia, tag, added) => {
-            if (added && !this.multi_tags.includes(tag)) {
-                for (const otherMedia of this.media) {
-                    if (otherMedia !== currentMedia && otherMedia.hasTag(tag)) {
-                        otherMedia.removeTag(tag);
-                    }
-                }
-            }
-        }
-
-        runInAction(() => { this.media.push(mediaItem); });
-        return mediaItem;
-    }
-
-    async saveFiles(files: File[]) {
-        if (!this.handle) { throw new Error("MediaFolder not loaded"); }
-
-        for (const file of files) {
-            try {
-                // Create / overwrite file
-                const fileHandle = await this.handle.getFileHandle(file.name, { create: true, });
-                const writable = await fileHandle.createWritable();
-                await writable.write(file);
-                await writable.close();
-                // Load + register media
-                this.loadFile(fileHandle);
-            } catch (err) {
-                console.error(`Failed to save file '${file.name}':`, err);
-            }
-        }
-    }
-
-    async copyFromClipboard() {
-        if (!this.handle) { throw new Error("MediaFolder not loaded"); }
-        if (!navigator.clipboard || !navigator.clipboard.read) { console.warn("Clipboard API not supported"); return; }
-
-        const files: File[] = [];
-
-        try {
-            const items = await navigator.clipboard.read();
-            console.log(items);
-
-            for (const item of items) {
-                for (const type of item.types) {
-                    if (!type.startsWith("image/") && !type.startsWith("video/")) { continue; }
-
-                    const blob = await item.getType(type);
-
-                    // Preserve original filename if present
-                    const filename = (blob as File).name || `clipboard-${Date.now()}.${type.split("/")[1]}`;
-                    files.push(blob instanceof File ? blob : new File([blob], filename, { type }));
-                }
-            }
-
-            if (files.length === 0) { console.info("Clipboard does not contain files"); return; }
-            await this.saveFiles(files);
-        } catch (err) {
-            console.error("Failed to read from clipboard:", err);
-            return;
-        }
     }
 
     getMediaWithTag(tag: string): LocalMedia[] {

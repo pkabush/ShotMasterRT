@@ -1,82 +1,43 @@
 import { observer } from "mobx-react-lite";
 import type { MediaFolder } from "../../classes/MediaFolder";
 import MediaPreview from "../MediaComponents/MediaPreview";
-import { Accordion, Button, Card, CardGroup, Col, Image, Row } from "react-bootstrap";
+import { Accordion, Badge, Button, Card, CardGroup, CloseButton, Col, Container, Image, Navbar, Row, Spinner, Stack } from "react-bootstrap";
 import type { LocalImage } from "../../classes/fileSystem/LocalImage";
 import { useMemo, useState } from "react";
 import { Group, Panel, Separator } from "react-resizable-panels";
 import type { Character } from "../../classes/Artbook/Character";
 import EditableJsonTextField from "../EditableJsonTextField";
+import DropArea from "../Atomic/DropArea";
+import LoadingSpinner from "../Atomic/LoadingSpinner";
+import SettingsButton from "../Atomic/SettingsButton";
+import { WorkflowOptionSelect } from "../WorkflowOptionSelect";
+import { useProject } from "../../contexts/ProjectContext";
+import { GoogleAI } from "../../classes/GoogleAI";
+import { MediaFolderGallery } from "../MediaFolderGallery";
+import { AddVariationCard, CharVariationView } from "./CharVariationView";
 
 
 interface ArtbookCharacterViewProps {
     character: Character;
 }
 
-// <MediaPreview media={value} />
-
 export const ArtbookCharacterView: React.FC<ArtbookCharacterViewProps> = observer(({ character }) => {
-    const [selectedImage, setSelectedImage] = useState<LocalImage | null>(null)
     const [selectedVariation, setSelectedVariation] = useState<string | null>(null)
+    const { project } = useProject();
 
     return (
-        <Accordion.Item eventKey={character.path} key={character.path}>
+        <Accordion.Item eventKey={character.path} key={character.path} >
             <Accordion.Header>{character.name}            </Accordion.Header>
             <Accordion.Body>
                 {false && <>
-                    <Button variant="primary" onClick={() => { console.log(character) }} >LOG</Button>
+                    <Button variant="primary" onClick={() => { character.log() }} >LOG</Button>
                     <Button variant="primary" onClick={() => { character.addVariation() }} >Add Variation</Button>
                 </>
                 }
 
                 <CardGroup>
-                    {character.media.map((image, index) => (
-
-                        <Col xs={8} md={3} lg={2} style={{ marginBottom: "1rem" }} key={image.path}>
-                            <Card onClick={() => {
-                                setSelectedImage(image as LocalImage);
-                            }} style={{ cursor: "pointer" }}
-                                bg={selectedImage == image ? "success" : ""}
-                            >
-                                <MediaPreview media={image} />
-                                <Card.Body>
-                                    <Card.Title>{image.handle.name}</Card.Title>
-                                    {false && <Card.Text style={{ fontSize: "0.8rem" }}>{image.handle.name}</Card.Text>}
-                                </Card.Body>
-                            </Card>
-                        </Col>
-                    ))}
-                </CardGroup>
-
-                {selectedImage &&
-                    <>
-                        <Group orientation="horizontal" style={{ height: "100%" }}>
-                            {/* Left panel — image */}
-                            <Panel defaultSize={500} minSize={10}>
-                                <MediaPreview media={selectedImage} style={{ width: "100%", height: "auto" }} />
-                            </Panel>
-
-                            {/* Split / drag handle */}
-                            <Separator
-                                style={{
-                                    cursor: "ew-resize",
-                                    backgroundColor: "#8f8f8fff",
-                                    width: "10px",
-                                }}
-                            />
-
-                            {/* Right panel — settings */}
-                            <Panel minSize={10}>
-                                <Card.Title> {selectedImage.name}</Card.Title>
-                            </Panel>
-                        </Group>
-                    </>
-                }
-
-
-                <CardGroup>
                     {Object.keys(character.variations).map((variationName, index) => (
-
+                        // CHARACTER CARD
                         <Col xs={8} md={3} lg={2} style={{ marginBottom: "1rem" }} key={index}>
                             <Card
                                 onClick={() => {
@@ -110,66 +71,72 @@ export const ArtbookCharacterView: React.FC<ArtbookCharacterViewProps> = observe
                         </Col>
                     ))}
 
-                    <Col xs={8} md={3} lg={2} style={{ marginBottom: "1rem" }} key={"Settings"}>
-                        <Card
-                            onClick={() => { character.addVariation() }}
-                            style={{ cursor: "pointer" }}
-                        >
-                            <Card.Body>
-                                <Card.Title>+Add</Card.Title>
-                                <Button variant="primary" onClick={(e) => {
-                                    e.stopPropagation();
-                                    console.log(character)
-                                }} >LOG</Button>
-
-                            </Card.Body>
-                        </Card>
-                    </Col>
-
+                    {/** ADD CARD */}
+                    <AddVariationCard character={character} />
 
                 </CardGroup>
 
 
 
                 {selectedVariation &&
-                    <>
-                        <Group orientation="horizontal" style={{ height: "100%" }}>
-                            {/* Left panel — image */}
-                            <Panel defaultSize={500} minSize={10}>
-                                <MediaPreview media={character.getVariationImage(selectedVariation)} style={{ width: "100%", height: "auto" }} />
-                            </Panel>
+                    <> 
+                        <Card style={{ height: "100%" }}>
+                            <Card.Body style={{ height: "100%" }}>
+                                <Row style={{ height: "100%" }}>
+                                    {/* Left panel — image (top-aligned) */}
+                                    <Col
+                                        md={5}
+                                        style={{
+                                            height: "100%",
+                                            overflow: "hidden",
+                                        }}
+                                    >
+                                        <div
+                                            style={{
+                                                height: "300px",
+                                                width: "100%",
+                                            }}
+                                        >
+                                            <MediaPreview
+                                                media={character.getVariationImage(selectedVariation)}
+                                                style={{
+                                                    width: "100%",
+                                                    height: "100%",
+                                                    objectFit: "contain",
+                                                }}
+                                            />
+                                        </div>
+                                    </Col>
 
-                            {/* Split / drag handle */}
-                            <Separator
-                                style={{
-                                    cursor: "ew-resize",
-                                    backgroundColor: "#8f8f8fff",
-                                    width: "10px",
-                                }}
-                            />
+                                    {/* Right panel — settings */}
+                                    <Col
+                                        md={7}
+                                        style={{
+                                            height: "100%",
+                                            overflowY: "auto",
+                                        }}
+                                    >
+                                        <CharVariationView
+                                            character={character}
+                                            variationName={selectedVariation}
+                                            onClose={() => setSelectedVariation(null)}
+                                        />
+                                    </Col>
 
-                            {/* Right panel — settings */}
-                            <Panel minSize={10}>
-                                <div className="mx-2">
-                                    <Card.Title className="m-2"> {selectedVariation}</Card.Title>
-                                    
-                                    <EditableJsonTextField localJson={character.charJson} field={`variations/${selectedVariation}/promt`} />
-                                </div>
-                            </Panel>
-                        </Group>
+                                </Row>
+
+                                <MediaFolderGallery mediaFolder={character.MediaFolder_results} />
+                            </Card.Body>
+                        </Card>
+
+
+
+
                     </>
                 }
 
-
-
-
             </Accordion.Body>
-        </Accordion.Item>
-
-
-
-
-
+        </Accordion.Item >
     );
 })
 

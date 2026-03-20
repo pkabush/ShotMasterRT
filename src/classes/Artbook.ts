@@ -17,18 +17,35 @@ export class Artbook extends LocalFolder {
       project: observable.ref,   // observe reference only
       data: observable,          // deep observable
       load: action,
+      createCharacter: action,
     });
   }
 
-  async load() {    
+  async createCharacter(parent: LocalFolder, name?: string) {
+    // Use prompt if name is not provided
+    const finalName = name || prompt("Please enter something:");
+
+    if (!finalName || finalName.trim() === "") {
+      console.log("No name provided, exiting function.");
+      return;
+    }
+
+    const new_char = await LocalFolder.open(parent, finalName, Character)
+    await new_char.load();
+
+  }
+
+
+
+  async load() {
     // Load all subfolders and images    
     await this.load_subfolders();
-    for( const artSubfolder of this.subfolders){
+    for (const artSubfolder of this.subfolders) {
       await artSubfolder.load_subfolders(Character);
 
-      for( const characterFolder of artSubfolder.getType(MediaFolder)){
+      for (const characterFolder of artSubfolder.getType(MediaFolder)) {
         //await characterFolder.load_files();
-        characterFolder.load(); 
+        characterFolder.load();
       }
     }
 

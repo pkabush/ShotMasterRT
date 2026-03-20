@@ -9,6 +9,7 @@ import { ChatGPT } from "./ChatGPT";
 import { LocalJson } from './LocalJson';
 import { KlingAI } from "./KlingAI";
 import { LocalFolder } from "./fileSystem/LocalFolder";
+import { Character } from "./Artbook/Character";
 
 export type ProjectView =
   | { type: "none" }
@@ -95,23 +96,34 @@ const default_projinfo = {
       model: KlingAI.options.img2video.model.v2_6,
       mode: KlingAI.options.img2video.mode.std,
       duration: KlingAI.options.img2video.duration.five,
-      sound:KlingAI.options.img2video.sound.off,
+      sound: KlingAI.options.img2video.sound.off,
     },
     kling_motion_control: {
       mode: KlingAI.options.motion_control.mode.std,
       character_orientation: KlingAI.options.motion_control.character_orientation.image,
       keep_original_sound: KlingAI.options.motion_control.keep_original_sound.no,
-    }
+    },    
+
+
   },
 
 }
 
 
 export class Project extends LocalFolder {
+  private static _instance: Project | null = null;
+
+  static getProject(): Project {
+    if (!Project._instance) {
+      throw new Error("Project instance not initialized. Call constructor first.");
+    }
+    return Project._instance;
+  }
+
   scenes: Scene[] = [];
   artbook: Artbook | null = null;
   script: Script | null = null;         // <--- Added
-  userSettingsDB : UserSettingsDB;
+  userSettingsDB: UserSettingsDB;
   projinfo: LocalJson | null = null;
   currentView: ProjectView = { type: "none" };
   selectedScene: Scene | null = null;
@@ -119,8 +131,10 @@ export class Project extends LocalFolder {
 
   scenesLocalFolder: LocalFolder | null = null;
 
-  constructor(parentFolder: FileSystemDirectoryHandle,userSettingsDB : UserSettingsDB) {
-    super( null, parentFolder);
+  constructor(parentFolder: FileSystemDirectoryHandle, userSettingsDB: UserSettingsDB) {
+    super(null, parentFolder);
+
+    Project._instance = this;
 
     this.userSettingsDB = userSettingsDB;
 
@@ -136,7 +150,7 @@ export class Project extends LocalFolder {
       setScene: action,
     });
   }
-  
+
 
   async loadFromFolder(handle: FileSystemDirectoryHandle) {
     if (!handle) return;
@@ -144,7 +158,7 @@ export class Project extends LocalFolder {
     // Set root directory
     this.handle = handle;
     this.path = "";
-    this.timelinesDirHandle = await LocalFolder.open( this, 'Timelines' );
+    this.timelinesDirHandle = await LocalFolder.open(this, 'Timelines');
     //await this.handle.getDirectoryHandle('Timelines', { create: true });
 
     //console.log(handle);
@@ -322,7 +336,7 @@ export class Project extends LocalFolder {
     this.selectedScene = scene;
   }
 
-  setScene( scene:Scene )  {
+  setScene(scene: Scene) {
     this.setView({ type: "scene" }, scene);
   }
 

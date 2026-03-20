@@ -158,7 +158,7 @@ export class GoogleAI {
         },
         folder,
         `${result.id}.${result.base64Obj.mime.split("/")[1]}`
-      );
+      );      
       return localImage;
     } else {
       console.warn("No valid image returned from GoogleAI.img2img");

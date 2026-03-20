@@ -97,7 +97,7 @@ export class Task {
 
     async downloadResults() {
         const url = this.data?.url;
-        const res_media = await this.shot.MediaFolder_genVideo?.downloadFromUrl(url, this.data?.task_name);
+        const res_media = await this.shot.MediaFolder_genVideo?.downloadFromUrl(url, this.data?.task_name) as LocalMedia;
 
         if( !res_media ) return;
 
