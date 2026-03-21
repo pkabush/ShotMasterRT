@@ -6,10 +6,10 @@ import { Project } from './Project';
 import { toJS } from "mobx";
 //import { GoogleAI } from './GoogleAI';
 import { ChatGPT } from './ChatGPT';
-import { Art } from "./Art";
 import Prompt from './Prompt';
 import * as ResolveUtils from './ResolveUtils';
 import { LocalFolder } from './fileSystem/LocalFolder';
+import { Tags } from './Tags';
 
 const default_sceneInfoJson = {
   tags: [],
@@ -29,6 +29,7 @@ export class Scene extends LocalFolder {
   is_generating_all_shot_images = false;
   split_shots_prompt: Prompt | null = null;
   selectedShot: Shot | null = null;
+  references: Tags | null = null;
 
   constructor(handle: FileSystemDirectoryHandle, project: Project, parentFolder: LocalFolder) {
     super(parentFolder, handle);
@@ -43,8 +44,8 @@ export class Scene extends LocalFolder {
       is_generating_all_shot_images: observable,
       split_shots_prompt: observable,
       selectedShot: observable,
+      references: observable,
       finishedShotsNum: computed,
-      tags: computed,
       selectShot: action,
     });
   }
@@ -59,6 +60,7 @@ export class Scene extends LocalFolder {
   async load(): Promise<void> {
     try {
       this.sceneJson = await LocalJson.create(this.handle, 'sceneinfo.json', default_sceneInfoJson);
+      this.references = new Tags(this, this.sceneJson);
 
       this.shots = [];
       for await (const handle of this.handle.values()) {
@@ -73,17 +75,6 @@ export class Scene extends LocalFolder {
       this.sceneJson = null;
       this.shots = [];
     }
-  }
-
-  removeTag(path: string) {
-    if (!this.sceneJson?.data?.tags) return;
-
-    // Directly mutate the observable array
-    this.sceneJson.data.tags = this.sceneJson.data.tags.filter(
-      (tag: string) => tag !== path
-    );
-
-    this.sceneJson.save();
   }
 
   async delete(): Promise<void> {
@@ -257,83 +248,6 @@ ${scriptText}
     }
   }
 
-  log() {
-    console.log(toJS(this));
-  }
-
-  getTags(): Art[] {
-    if (!this.sceneJson?.data?.tags || !this.project?.artbook) return [];
-
-    const arts: Art[] = [];
-
-    for (const tagPath of this.sceneJson.data.tags) {
-      const art = this.project.artbook.getTag(tagPath);
-      if (art) arts.push(art);
-    }
-    return arts;
-  }
-
-  get tags(): Art[] {
-    return this.getTags();
-  }
-
-  async generateTags() {
-
-    runInAction(() => { this.is_generating_tags = true; });
-
-    const prompt = `
-${this.project?.projinfo?.data?.generate_tags_prompt}
-
-SCRIPT:
-${this.sceneJson?.data.script}
-
-SHOTS JSON:
-${this.sceneJson?.data.shotsjson}
-
-REFS DICTIONARY:
-${JSON.stringify(this.project?.artbook?.getJson(), null, 2)}
-
-`;
-
-    const system_msg = "You are a helpful assistant. " +
-      "Do not write explanations. "
-
-    try {
-      const res = await ChatGPT.txt2txt(prompt, system_msg, this.project?.projinfo?.data.gpt_model);
-      //console.log(res);
-
-      for (const tag_str of res?.split("\n") || []) {
-        const trimmedTag = tag_str.trim();   // <-- remove leading/trailing whitespace
-        if (!trimmedTag) continue;           // skip empty lines
-        console.log("Adding Tag: ", trimmedTag);
-        this.addTag(trimmedTag);
-      }
-
-      return res;
-    } catch (err) {
-      console.error("Error generating tags:", err);
-      return null;
-    } finally {
-      runInAction(() => { this.is_generating_tags = false; });
-    }
-
-  }
-
-  addTag(tag_str: string) {
-    runInAction(() => {
-      //console.log(tag_str, this.sceneJson?.data.tags);
-
-      if (!this.sceneJson?.data.tags.includes(tag_str)) {
-        if (this.project?.artbook?.getTag(tag_str)) {
-          this.sceneJson?.data.tags.push(tag_str);
-          this.sceneJson?.save();
-        } else {
-          console.log("Tag not found: ", tag_str);
-        }
-      }
-    });
-  }
-
   async generateAllShotImages() {
     runInAction(() => {
       this.is_generating_all_shot_images = true;
@@ -382,25 +296,70 @@ ${JSON.stringify(this.project?.artbook?.getJson(), null, 2)}
       }
 
       // Add Black Frame or Image If Generated
-      timeline.appendClip(id, name, durationFrames, offsetFrames);      
+      timeline.appendClip(id, name, durationFrames, offsetFrames);
 
       let extra = 1;
       for (const extra_vod of shot.pickedExtraVideo) {
         const new_vod = await extra_vod.copyToFolder(timelineFolder, "vod_" + name + "_extraVod_" + `${extra}`);
         const vod_path = this.project.projinfo?.getField("project_path") + new_vod.path;
         const vod_id = timeline.addAsset(vod_path, "vod_" + name, true, durationFrames)!;
-        timeline.appendClip(vod_id, "vod_" + name, durationFrames, offsetFrames + extra*durationFrames, 1);        
+        timeline.appendClip(vod_id, "vod_" + name, durationFrames, offsetFrames + extra * durationFrames, 1);
         extra += 1;
       }
 
       // Label
-      timeline.appendText(name, durationFrames + (extra-1)*durationFrames, offsetFrames, 3);
-      offsetFrames += durationFrames + (extra-1)*durationFrames;    
-    
+      timeline.appendText(name, durationFrames + (extra - 1) * durationFrames, offsetFrames, 3);
+      offsetFrames += durationFrames + (extra - 1) * durationFrames;
+
     }
 
     timeline.log()
     timeline.save(this.project.timelinesDirHandle?.handle!);
   }
+
+  /*
+  async generateTags() {
+
+    runInAction(() => { this.is_generating_tags = true; });
+
+    const prompt = `
+${this.project?.projinfo?.data?.generate_tags_prompt}
+
+SCRIPT:
+${this.sceneJson?.data.script}
+
+SHOTS JSON:
+${this.sceneJson?.data.shotsjson}
+
+REFS DICTIONARY:
+${JSON.stringify(this.project?.artbook?.getJson(), null, 2)}
+
+`;
+
+    const system_msg = "You are a helpful assistant. " +
+      "Do not write explanations. "
+
+    try {
+      const res = await ChatGPT.txt2txt(prompt, system_msg, this.project?.projinfo?.data.gpt_model);
+      //console.log(res);
+
+      for (const tag_str of res?.split("\n") || []) {
+        const trimmedTag = tag_str.trim();   // <-- remove leading/trailing whitespace
+        if (!trimmedTag) continue;           // skip empty lines
+        console.log("Adding Tag: ", trimmedTag);
+        this.addTag(trimmedTag);
+      }
+
+      return res;
+    } catch (err) {
+      console.error("Error generating tags:", err);
+      return null;
+    } finally {
+      runInAction(() => { this.is_generating_tags = false; });
+    }
+
+  }
+*/
+
 
 }

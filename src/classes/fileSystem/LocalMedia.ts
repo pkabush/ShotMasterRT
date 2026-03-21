@@ -4,8 +4,9 @@ import { LocalJson } from "../LocalJson";
 import type { MediaFolder } from "../MediaFolder";
 import type { Shot } from "../Shot";
 import * as webFileStorage from '../webFileStorage';
-import { runInAction, toJS, makeObservable, observable, action, computed, override } from "mobx";
+import { runInAction, makeObservable, observable, action, computed, override } from "mobx";
 import type { LocalFolder } from "./LocalFolder";
+import { Tags } from "../Tags";
 
 // LocalMediaInterface.ts
 export class LocalMedia extends LocalFile {
@@ -13,6 +14,7 @@ export class LocalMedia extends LocalFile {
   web_url: string = "";
   mediaJson: LocalJson | null = null;
   file: File | null = null;
+  references: Tags | null = null;
 
   // internal promise
   private _urlPromise: Promise<string> | null = null;
@@ -48,6 +50,7 @@ export class LocalMedia extends LocalFile {
 
   async load(): Promise<void> {
     this.mediaJson = await LocalJson.create(this.parentFolder!.handle, this.name + '.json');
+    this.references = new Tags(this,this.mediaJson);
   }
 
   get name(): string {

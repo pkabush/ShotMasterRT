@@ -26,18 +26,29 @@ export abstract class LocalItem {
 
   }
 
-  getByPath(targetPath: string): LocalItem | null {
-    if (this.path === targetPath) return this;
+  /** Generic recursive search */
+  getByPath<T extends LocalItem>(
+    targetPath: string,
+    type?: new (...args: any[]) => T
+  ): T | null {
+    if (this.path === targetPath) {
+      if (!type || this instanceof type) return this as unknown as T;
+      return null;
+    }
 
     for (const child of this.children) {
-      const found = child.getByPath(targetPath);
+      const found = child.getByPath(targetPath, type);
       if (found) return found;
     }
     return null;
   }
 
-  getByAbsPath(targetPath: string): LocalItem | null {
-    return this.root.getByPath(targetPath);
+  /** Search from the root */
+  getByAbsPath<T extends LocalItem>(
+    targetPath: string,
+    type?: new (...args: any[]) => T
+  ): T | null {
+    return this.root.getByPath(targetPath, type);
   }
 
   get root(): LocalItem {

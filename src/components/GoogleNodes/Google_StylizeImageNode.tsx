@@ -9,8 +9,9 @@ import { MediaFolderGallery } from "../MediaFolderGallery";
 import type { LocalMedia } from "../../classes/fileSystem/LocalMedia";
 import type { Shot } from "../../classes/Shot";
 import EditableJsonTextField from "../EditableJsonTextField";
-import TagsToggleList from "../TagsToggleList";
 import BottomCenterLabel from "../Atomic/MediaElements/BottomCenterLabel";
+import { TagsFolderContainer } from "../FolderTags/FolderTagsVide";
+import { Project } from "../../classes/Project";
 
 
 interface Google_StylizeImageNodeProps {
@@ -28,10 +29,7 @@ export const Google_StylizeImageNode: React.FC<Google_StylizeImageNodeProps> = o
                     {/* Stylize Image Button */}
                     <button
                         className="btn btn-sm btn-outline-success"
-                        onClick={async () => {
-                            //console.log("Stylize Image")
-                            shot.StylizeImage();
-                        }}
+                        onClick={async () => { shot.StylizeImage(); }}
                     >
                         Stylize Image
                     </button>
@@ -72,7 +70,8 @@ export const Google_StylizeImageNode: React.FC<Google_StylizeImageNodeProps> = o
 
                     {/* Media folder gallery for results */}
                     <MediaFolderGallery mediaFolder={shot.MediaFolder_results} label="pick reference Frame" itemHeight={300} />
-                    <TagsToggleList shot={shot} />
+
+                    <TagsFolderContainer tags={shot.references} local_folder={Project.getProject().artbook} />
                 </>
             }
         />

@@ -117,13 +117,25 @@ export class LocalFolder extends LocalItem {
             (child): child is LocalFile => child instanceof LocalFile
         );
     }
-
+    
     getType<T extends LocalItem>(
-        type: new (...args: any[]) => T
+        type: new (...args: any[]) => T,
+        options?: { deep?: boolean }
     ): T[] {
-        return this.children.filter(
-            (child): child is T => child instanceof type
-        );
+        const results: T[] = [];
+
+        for (const child of this.children) {
+            if (child instanceof type) {
+                results.push(child);
+            }
+
+            // Recursive search in subfolders
+            if (options?.deep && child instanceof LocalFolder) {
+                results.push(...child.getType(type, options));
+            }
+        }
+
+        return results;
     }
 
     async downloadFromUrl(url: string, filename?: string): Promise<LocalFile | null> {

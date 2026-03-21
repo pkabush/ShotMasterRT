@@ -161,8 +161,6 @@ export class Project extends LocalFolder {
     this.timelinesDirHandle = await LocalFolder.open(this, 'Timelines');
     //await this.handle.getDirectoryHandle('Timelines', { create: true });
 
-    //console.log(handle);
-
     // Update database (recent folders, last opened)
     runInAction(async () => {
       this.userSettingsDB.data.lastOpenedFolder = handle;
@@ -325,10 +323,6 @@ export class Project extends LocalFolder {
       console.error("Failed to create scene:", err);
       return null;
     }
-  }
-
-  log() {
-    console.log(toJS(this));
   }
 
   setView(view: ProjectView, scene: Scene | null = null) {

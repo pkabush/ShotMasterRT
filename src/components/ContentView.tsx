@@ -3,7 +3,7 @@ import { observer } from "mobx-react-lite";
 import { Project } from "../classes/Project";
 import { SettingsView } from "./SettingsView";
 import { ScriptView } from "./ScriptView";
-import { ArtbookView } from "./ArtbookView";
+import { ArtbookView } from "./Artbook/ArtbookView";
 import TabsContainer from "./TabsContainer";
 import SceneInfoCard from "./SceneInfoCard";
 import ShotsInfoStrip from "./ShotsInfoStrip";

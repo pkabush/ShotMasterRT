@@ -34,10 +34,8 @@ const TaskView: React.FC<Props> = observer(({ project }) => {
 
 
             <SimpleButton label={"Notify "} onClick={() => {                
-                notificationManager.add('Project loaded', notificationManager.types.success, {onClick: () => {
-                    console.log("test")                    
-                    project.setScene(project.scenes[3]);
-                    
+                notificationManager.add('Project loaded', notificationManager.types.success, {onClick: () => {            
+                    project.setScene(project.scenes[3]);                    
                 }});
             }}></SimpleButton>
             

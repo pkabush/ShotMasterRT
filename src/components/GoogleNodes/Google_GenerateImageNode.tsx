@@ -6,8 +6,9 @@ import { GoogleAI } from "../../classes/GoogleAI";
 import LoadingSpinner from "../Atomic/LoadingSpinner";
 import type { Shot } from "../../classes/Shot";
 import EditableJsonTextField from "../EditableJsonTextField";
-import TagsToggleList from "../TagsToggleList";
-
+import { Project } from "../../classes/Project";
+import { TagsFolderContainer } from "../FolderTags/FolderTagsVide";
+import type { LocalFolder } from "../../classes/fileSystem/LocalFolder";
 
 interface Google_GenerateImageNodeProps {
     shot: Shot;
@@ -56,7 +57,9 @@ export const Google_GenerateImageNode: React.FC<Google_GenerateImageNodeProps> =
 
 
                     {/* Media folder gallery for results */}
-                    <TagsToggleList shot={shot} />
+                    
+                    <TagsFolderContainer tags={shot.references} folders={[Project.getProject(),Project.getProject().artbook as LocalFolder]} />
+
                 </>
             }
         />

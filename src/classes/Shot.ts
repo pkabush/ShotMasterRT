@@ -2,7 +2,7 @@
 import { Scene } from './Scene';
 import { LocalJson } from './LocalJson';
 import { LocalImage } from './fileSystem/LocalImage';
-import { makeObservable, observable, runInAction, toJS } from "mobx";
+import { makeObservable, observable, runInAction } from "mobx";
 import { GoogleAI, type AIImageInput } from './GoogleAI';
 import { KlingAI, type LipSyncFaceChoose } from './KlingAI';
 import { Task } from './Task';
@@ -13,12 +13,14 @@ import { MediaFolder } from './MediaFolder';
 import type { LocalAudio } from './fileSystem/LocalAudio';
 import { LocalFolder } from './fileSystem/LocalFolder';
 import type { LocalMedia } from './fileSystem/LocalMedia';
+import { Tags } from './Tags';
 
 
 
 export class Shot extends LocalFolder {
   shotJson: LocalJson | null = null;
   tasks: Task[] = [];
+  references:Tags | null = null;
 
   // Processes
   is_submitting_video = false;
@@ -50,6 +52,7 @@ export class Shot extends LocalFolder {
       MediaFolder_genVideo: observable,
       MediaFolder_refVideo: observable,
       MediaFolder_Audio: observable,
+      references: observable,
     });
   }
 
@@ -68,9 +71,7 @@ export class Shot extends LocalFolder {
       this.MediaFolder_genVideo?.media[0] ||
       this.MediaFolder_results?.media[0] ||
       null;
-
   }
-
   get srcImage(): LocalImage | null {
     return this.MediaFolder_results!.getFirstMediaWithTag("start_frame") as LocalImage;
   }
@@ -86,11 +87,9 @@ export class Shot extends LocalFolder {
   get pickedExtraVideo(): LocalVideo[] | [] {
     return this.MediaFolder_genVideo!.getMediaWithTag("picked_extra") as LocalVideo[];
   }
-
   get outVideoLipsync(): LocalVideo | null {
     return this.MediaFolder_genVideo!.getFirstMediaWithTag("lipsync") as LocalVideo;
   }
-
   get unreal_frame(): LocalImage | null {
     return this.MediaFolder_results!.getFirstMediaWithTag("unreal_frame") as LocalImage;
   }
@@ -101,7 +100,8 @@ export class Shot extends LocalFolder {
 
   async load(): Promise<void> {
     try {
-      this.shotJson = await LocalJson.create(this.handle, 'shotinfo.json');
+      this.shotJson = await LocalJson.create(this.handle, 'shotinfo.json');      
+      this.references = new Tags(this, this.shotJson);
 
       // Load Media Folders
       this.MediaFolder_results = await MediaFolder.create(this, "results");
@@ -391,39 +391,13 @@ export class Shot extends LocalFolder {
     }
   }
 
-  getFilteredTags() {
-    return this.scene.getTags().filter(tag =>
-      !this.getSkippedTags().includes(tag.path)
-    );
-  }
 
-  async getImageTags(): Promise<AIImageInput[]> {
-    const skipped = this.getSkippedTags();
-    const images: AIImageInput[] = [];
-
-    for (const art of this.scene.getTags()) {
-      if (skipped.includes(art.path)) continue;
-
-      try {
-        const base64Obj = await art.image.getBase64();
-        images.push({
-          rawBase64: base64Obj.rawBase64,
-          mime: base64Obj.mime,
-          description: art.path,
-        });
-      } catch (err) {
-        console.warn("Failed to load tag image:", art.path, err);
-      }
-    }
-
-    return images;
-  }
 
   async GenerateImage() {
     runInAction(() => { this.is_generating = true; });
 
     try {
-      const images = await this.getImageTags();
+      const images = await this.references?.GetAI_Images() ?? [];
       const prompt = this.shotJson?.data.prompt || "";
 
       const result = await GoogleAI.img2img(
@@ -443,7 +417,7 @@ export class Shot extends LocalFolder {
           workflow: "shot_generate_image",
           prompt: prompt,
           model: this.scene.project.workflows.generate_shot_image.model,
-          art_refs: this.getFilteredTags().map(tag => tag.path),
+          art_refs: this.references?.get_active_tags ?? [],
         })
       }
 
@@ -471,7 +445,7 @@ export class Shot extends LocalFolder {
       });
 
       // Tag images
-      images.push(...await this.getImageTags());
+      images.push(...await this.references?.GetAI_Images() ?? []);
 
       const prompt =
         (this.scene.project.workflows.stylize_image_google.prompt || "") +
@@ -497,7 +471,7 @@ export class Shot extends LocalFolder {
           global_prompt: this.scene.project.workflows.stylize_image_google.prompt || "",
           prompt: this.shotJson?.data.stylize_prompt || "",
           model: this.scene.project.workflows.stylize_image_google.model,
-          art_refs: this.getFilteredTags().map(tag => tag.path),
+          art_refs: this.references?.get_active_tags ?? [],
           source: this.unreal_frame.path,
         })
 
@@ -538,8 +512,6 @@ export class Shot extends LocalFolder {
     // persist to JSON after mutation
     this.shotJson.save();
   }
-
-  log() { console.log(toJS(this)); }
 
 }
 

@@ -5,7 +5,6 @@ import LoadingButton from "./Atomic/LoadingButton";
 import { GoogleAI } from "../classes/GoogleAI";
 import { observer } from "mobx-react-lite";
 import EditableJsonTextField from "./EditableJsonTextField";
-import TagsToggleList from "./TagsToggleList";
 import TabsContainer from "./TabsContainer";
 import type { MediaFolder } from "../classes/MediaFolder";
 import type { LocalFolder } from "../classes/fileSystem/LocalFolder";
@@ -15,9 +14,8 @@ import RefImagesPreview from "./MediaComponents/RefImagesPreview";
 import { ChatGPT } from "../classes/ChatGPT";
 import { WorkflowOptionSelect } from "./WorkflowOptionSelect";
 import { useProject } from "../contexts/ProjectContext";
-
-
-
+import { TagsFolderContainer } from "./FolderTags/FolderTagsVide";
+import { Project } from "../classes/Project";
 
 interface ImageEditWindowProps {
   localImage: LocalImage;
@@ -32,9 +30,6 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
 }) => {
   const [url, setUrl] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
-
-  const [useShotTags, setUseShotTags] = useState<boolean>(!!localImage.shot);
-
   const { project } = useProject();
 
   useEffect(() => {
@@ -54,11 +49,8 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
       const refs = await Promise.all(reference_images.map(img => img.getBase64()));
       const prompt = localImage.mediaJson?.getField("image_edit_prompt");
 
-      const tagImages =
-        useShotTags && localImage.shot
-          ? await localImage.shot.getImageTags()
-          : [];
 
+      const ref_images = await localImage.references?.GetAI_Images() ?? [];
       let genImage: LocalImage | null = null;
 
       const images = [
@@ -72,13 +64,13 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
           mime: r.mime,
           description: `ref${index + 1}`,
         })),
-        ...tagImages,
+        ...ref_images,
       ]
 
       const model = project!.workflows.edit_image.model || GoogleAI.options.img_models.flash_image
       const aspectRatio = project!.workflows.edit_image.aspect_ratio || GoogleAI.options.aspect_ratios.r9x16
 
-      // Check IF Google
+      // Check IF Google      
       if (Object.values(GoogleAI.options.img_models).includes(model)) {
         const result = await GoogleAI.img2img(prompt || "", model, images, aspectRatio);
         console.log("Image generated:", result);
@@ -99,7 +91,7 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
           prompt: prompt,
           model: model,
           refs: reference_images.map(img => img.path),
-          art_refs: useShotTags && localImage.shot ? localImage.shot.getFilteredTags().map(tag => tag.path) : [],
+          art_refs: localImage.references?.get_active_tags ?? [],
           source: localImage.path,
         })
       }
@@ -178,19 +170,11 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
                   < div className="flex-grow-1 d-flex flex-column">
 
                     <RefImagesPreview images={reference_images} />
-
-                    {localImage.shot && (
-                      <label className="d-flex align-items-center gap-2 mb-2">
-                        <input
-                          type="checkbox"
-                          checked={useShotTags}
-                          onChange={(e) => setUseShotTags(e.target.checked)}
-                        />
-                        Use shot tags
-                      </label>
-                    )}
-
-                    {localImage.shot && useShotTags && (<TagsToggleList shot={localImage.shot} />)}
+                    <TagsFolderContainer tags={localImage.references} folders={[
+                      Project.getProject(),
+                      Project.getProject().artbook as LocalFolder,
+                      localImage.parentFolder! as LocalFolder,
+                    ]} />
 
                     <>
                       <>Prompt : </>
@@ -205,6 +189,7 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
                     >
 
                       <LoadingButton
+                        className="btn-outline-success"
                         onClick={handleGenerate}
                         label="Generate"
                         is_loading={generating}

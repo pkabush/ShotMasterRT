@@ -130,8 +130,6 @@ export const ArtbookCharacterView: React.FC<ArtbookCharacterViewProps> = observe
                         </Card>
 
 
-
-
                     </>
                 }
 

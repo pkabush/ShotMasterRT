@@ -2,12 +2,13 @@ import React from "react";
 import { observer } from "mobx-react-lite"; // <--- important
 import { Scene } from "../classes/Scene";
 import EditableJsonTextField from "./EditableJsonTextField";
-import TagsContainer from "./TagsContainer";
 import SimpleButton from "./Atomic/SimpleButton";
 import SimpleSelect from "./Atomic/SimpleSelect";
 import LoadingSpinner from "./Atomic/LoadingSpinner";
 import { models } from "../classes/ChatGPT";
 import SettingsButton from "./Atomic/SettingsButton";
+import { TagsFolderContainer } from "./FolderTags/FolderTagsVide";
+import type { LocalFolder } from "../classes/fileSystem/LocalFolder";
 
 interface Props {
   scene: Scene;
@@ -77,7 +78,8 @@ const SceneInfoCard: React.FC<Props> = observer(({ scene }) => { // <--- observe
       <EditableJsonTextField localJson={scene.sceneJson} field="shotsjson" fitHeight headerExtra={
         <SimpleButton onClick={handleCreateShots} label="Create Shots" />
       } />
-      <TagsContainer scene={scene} />
+
+      <TagsFolderContainer tags={scene.references} folders={[scene.project,scene.project.artbook as LocalFolder, scene]}/>
       <div style={{ height: "500px" }}></div>
     </div>
   );

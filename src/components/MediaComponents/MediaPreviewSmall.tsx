@@ -5,10 +5,11 @@ import MediaGalleryPreview from "./MediaGallerPreview";
 
 interface MediaPreviewSmallProps {
   media: LocalMedia;
-  previewHeight?: number;        // hover preview height
-  inlinePreviewHeight?: number;  // small inline thumbnail
-  filenameVisibleChars?: number; // number of chars to show at the end
-  hoverPosition?: "top" | "bottom"; // position of hover preview
+  previewHeight?: number;
+  inlinePreviewHeight?: number;
+  filenameVisibleChars?: number;
+  hoverPosition?: "top" | "bottom";
+  openOnClick?: boolean;
 }
 
 export const MediaPreviewSmall: React.FC<MediaPreviewSmallProps> = ({
@@ -17,6 +18,7 @@ export const MediaPreviewSmall: React.FC<MediaPreviewSmallProps> = ({
   inlinePreviewHeight = 25,
   filenameVisibleChars = 8,
   hoverPosition = "bottom",
+  openOnClick = true,
 }) => {
   if (!media) return null;
 
@@ -41,8 +43,8 @@ export const MediaPreviewSmall: React.FC<MediaPreviewSmallProps> = ({
         {/* Clickable text */}
         <span
           className="text-muted"
-          style={{ cursor: "pointer" }}
-          onClick={() => media.openInNewTab()}
+          style={{ cursor: openOnClick ? "pointer" : "default" }}          
+          onClick={openOnClick ? () => media.openInNewTab() : undefined}
           title={media.name} // full filename on hover
         >
           {displayName}
