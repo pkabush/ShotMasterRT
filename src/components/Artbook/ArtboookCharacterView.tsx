@@ -1,18 +1,8 @@
 import { observer } from "mobx-react-lite";
-import type { MediaFolder } from "../../classes/MediaFolder";
 import MediaPreview from "../MediaComponents/MediaPreview";
-import { Accordion, Badge, Button, Card, CardGroup, CloseButton, Col, Container, Image, Navbar, Row, Spinner, Stack } from "react-bootstrap";
-import type { LocalImage } from "../../classes/fileSystem/LocalImage";
-import { useMemo, useState } from "react";
-import { Group, Panel, Separator } from "react-resizable-panels";
+import { Accordion,  Button, Card, CardGroup,  Col,    Row,   } from "react-bootstrap";
+import {  useState } from "react";
 import type { Character } from "../../classes/Artbook/Character";
-import EditableJsonTextField from "../EditableJsonTextField";
-import DropArea from "../Atomic/DropArea";
-import LoadingSpinner from "../Atomic/LoadingSpinner";
-import SettingsButton from "../Atomic/SettingsButton";
-import { WorkflowOptionSelect } from "../WorkflowOptionSelect";
-import { useProject } from "../../contexts/ProjectContext";
-import { GoogleAI } from "../../classes/GoogleAI";
 import { MediaFolderGallery } from "../MediaFolderGallery";
 import { AddVariationCard, CharVariationView } from "./CharVariationView";
 
@@ -23,7 +13,6 @@ interface ArtbookCharacterViewProps {
 
 export const ArtbookCharacterView: React.FC<ArtbookCharacterViewProps> = observer(({ character }) => {
     const [selectedVariation, setSelectedVariation] = useState<string | null>(null)
-    const { project } = useProject();
 
     return (
         <Accordion.Item eventKey={character.path} key={character.path} >

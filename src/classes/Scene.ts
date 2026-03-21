@@ -3,7 +3,6 @@ import { LocalJson } from './LocalJson';
 import { Shot } from './Shot';
 import { action, computed, makeObservable, observable, runInAction } from "mobx";
 import { Project } from './Project';
-import { toJS } from "mobx";
 //import { GoogleAI } from './GoogleAI';
 import { ChatGPT } from './ChatGPT';
 import Prompt from './Prompt';

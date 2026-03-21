@@ -1,5 +1,5 @@
 // MediaFolder.ts
-import { action, computed, makeObservable, observable, runInAction, toJS } from "mobx";
+import { action, computed, makeObservable, observable, runInAction } from "mobx";
 import { LocalMedia } from "./fileSystem/LocalMedia";
 import type { Shot } from "./Shot";
 import { LocalFolder } from "./fileSystem/LocalFolder";

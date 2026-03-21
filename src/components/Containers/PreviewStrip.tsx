@@ -1,6 +1,4 @@
-import { observer } from "mobx-react-lite";
 import ResizableContainer from "../ResizableContainer";
-import SimpleButton from "../Atomic/SimpleButton";
 import type { PropsWithChildren } from "react";
 
 

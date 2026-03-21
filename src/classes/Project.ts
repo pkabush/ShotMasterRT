@@ -2,14 +2,13 @@
 import { Scene } from "./Scene";
 import { Artbook } from "./Artbook";
 import { UserSettingsDB } from "./UserSettingsDB";
-import { action, makeObservable, observable, runInAction, toJS } from "mobx";
+import { action, makeObservable, observable, runInAction } from "mobx";
 import { Script } from "./Script";
 import { GoogleAI } from "./GoogleAI";
 import { ChatGPT } from "./ChatGPT";
 import { LocalJson } from './LocalJson';
 import { KlingAI } from "./KlingAI";
 import { LocalFolder } from "./fileSystem/LocalFolder";
-import { Character } from "./Artbook/Character";
 
 export type ProjectView =
   | { type: "none" }

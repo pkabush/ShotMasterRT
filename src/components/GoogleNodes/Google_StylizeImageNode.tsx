@@ -12,6 +12,7 @@ import EditableJsonTextField from "../EditableJsonTextField";
 import BottomCenterLabel from "../Atomic/MediaElements/BottomCenterLabel";
 import { TagsFolderContainer } from "../FolderTags/FolderTagsVide";
 import { Project } from "../../classes/Project";
+import type { LocalFolder } from "../../classes/fileSystem/LocalFolder";
 
 
 interface Google_StylizeImageNodeProps {
@@ -71,7 +72,7 @@ export const Google_StylizeImageNode: React.FC<Google_StylizeImageNodeProps> = o
                     {/* Media folder gallery for results */}
                     <MediaFolderGallery mediaFolder={shot.MediaFolder_results} label="pick reference Frame" itemHeight={300} />
 
-                    <TagsFolderContainer tags={shot.references} local_folder={Project.getProject().artbook} />
+                    <TagsFolderContainer tags={shot.references} folders={[Project.getProject(),Project.getProject().artbook as LocalFolder,shot]} />
                 </>
             }
         />
