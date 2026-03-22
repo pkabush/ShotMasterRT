@@ -1,11 +1,12 @@
 import { observer } from "mobx-react-lite";
 import SimpleSelect from "./Atomic/SimpleSelect";
-import { Project } from "../classes/Project";
+import { Project, type Workflow } from "../classes/Project";
+import EditableJsonTextField from "./EditableJsonTextField";
 
 type WorkflowOptionSelectProps = {
     workflowName: string;
-    project: Project;
-    optionName: string;
+    project?: Project;
+    optionName: keyof Workflow;
     label?: string;
     values: string[];
     defaultValue?: string;
@@ -14,18 +15,18 @@ type WorkflowOptionSelectProps = {
 // Wrap the component with observer so it reacts to MobX state changes
 export const WorkflowOptionSelect = observer(function WorkflowOptionSelect({
     workflowName,
-    project,
+    project = Project.getProject(),
     optionName,
     label,
     values,
     defaultValue,
 }: WorkflowOptionSelectProps) {
     // Get the current value from the observable project workflow
-    const value = project?.workflows?.[workflowName]?.[optionName] ?? defaultValue;
-
+    const value = Project.getProject().workflows[workflowName]?.[optionName] ?? defaultValue;  
+   
     return (
         <SimpleSelect
-            value={value}
+            value={value ?? values[0]}
             options={values}
             label={label}
             onChange={(val: string) => {
@@ -34,3 +35,25 @@ export const WorkflowOptionSelect = observer(function WorkflowOptionSelect({
         />
     );
 });
+
+
+type WorkflowTextFieldProps = {
+    workflowName: string;
+    optionName: keyof Workflow;
+};
+
+export const WorkflowTextField = observer(function WorkflowOptionSelect({
+    workflowName,
+    optionName,
+}: WorkflowTextFieldProps) {
+
+    return (
+        <EditableJsonTextField
+            localJson={Project.getProject().projinfo}
+            field={`workflows/${workflowName}/${optionName}`}
+            fitHeight />
+    );
+});
+
+
+

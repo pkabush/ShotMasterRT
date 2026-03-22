@@ -200,15 +200,15 @@ export class KlingAI {
     image: string;
     prompt?: string;
     model?: string;
-    duration?: "5" | "10";
-    mode?: "std" | "pro";
+    duration?: string;
+    mode?: string;
     cfg_scale?: number;
     static_mask?: string;
     dynamic_masks?: Array<{ mask: string; trajectories: { x: number; y: number }[] }>;
     image_tail?: string;
     camera_control?: { type?: string; config?: { horizontal?: number; vertical?: number; pan?: number; tilt?: number; roll?: number; zoom?: number } };
     voice_list?: { voice_id: string }[];
-    sound?: "on" | "off";
+    sound?: string;
     negative_prompt?: string;
     callback_url?: string;
     external_task_id?: string;
@@ -252,9 +252,9 @@ export class KlingAI {
     image: string; // base64 or URL
     video_url: string; // URL
     prompt?: string;
-    mode?: "std" | "pro";
-    character_orientation: "image" | "video";
-    keep_original_sound?: "yes" | "no";
+    mode?: string;
+    character_orientation?: string;
+    keep_original_sound?: string;
     callback_url?: string;
     external_task_id?: string;
   }) {
@@ -263,7 +263,7 @@ export class KlingAI {
       video_url,
       prompt,
       mode = KlingAI.options.motion_control.mode.std,
-      character_orientation,
+      character_orientation = KlingAI.options.motion_control.character_orientation.image,
       keep_original_sound = KlingAI.options.motion_control.keep_original_sound.yes,
       callback_url,
       external_task_id,
@@ -324,10 +324,10 @@ export class KlingAI {
   // ================= OMNI VIDEO (O1) =================
   public static async omniVideo(options: {
     prompt: string;
-    model?: "kling-video-o1" | "kling-v3-omni";
-    mode?: "std" | "pro";
-    aspect_ratio?: "16:9" | "9:16" | "1:1";
-    duration?: "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10";
+    model?: string;
+    mode?: string;
+    aspect_ratio?: string;
+    duration?: string;
     image_list?: Array<{
       image_url: string; // base64 or URL
       type?: "first_frame" | "end_frame";

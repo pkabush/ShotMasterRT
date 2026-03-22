@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import type { AIGenerateParms, AIProvider, ImageResult } from "./AI_provider";
 
 
 // Custom error types for clarity
@@ -13,10 +14,10 @@ export const models = [
   "gpt-5",
 ]
 
-export class ChatGPT {
+export class ChatGPT implements AIProvider {
   public static options = {
     models: {
-      gpt_4o_mini: "gpt-4o-mini",
+      //gpt_4o_mini: "gpt-4o-mini",
       //gpt_5_1: "gpt-5.1",
       gpt_5_mini: "gpt-5-mini",
       //gpt_5_nano: "gpt-5-nano",
@@ -40,7 +41,7 @@ export class ChatGPT {
     input?: string,
     system_msg?: string,
     model: string = "gpt-4o-mini",  // default value    
-    images?: { handle: File }[]
+    images?: { rawBase64: string; mime: string; description?: string }[]
   ) {
     try {
       const client = this.getClient();
@@ -53,31 +54,41 @@ export class ChatGPT {
       }
 
       // Add user text message if provided
+      const content: any[] = [];
+
       if (input) {
-        messages.push({
-          role: "user",
-          content: [{ type: "input_text", text: input }]
+        content.push({
+          type: "input_text",
+          text: input,
         });
       }
 
-      if (images) console.log(images);
-      // Add images as user messages
-      /*
-      if (images && images.length > 0) {
-        for (const image of images) {
-          const { dataUrl } = await fileToBase64(image.handle); // you'll need this helper
-          messages.push({
-            role: "user",
-            content: [{ type: "image_url", image_url: { url: dataUrl } }]
+      if (images?.length) {
+        for (const img of images) {
+          if (!img?.rawBase64 || !img?.mime) continue;
+
+          if (img.description) {
+            content.push({
+              type: "input_text",
+              text: img.description,
+            });
+          }
+
+          content.push({
+            type: "input_image",
+            image_url: `data:${img.mime};base64,${img.rawBase64}`,
           });
         }
       }
-     */
+
+      messages.push({
+        role: "user",
+        content
+      });
 
       const payload = {
         model: model,
         input: messages,
-        tools: [{type: "image_generation" as const, action: "edit" as const}],
       }
 
       console.log("GPT Payload:", payload)
@@ -108,16 +119,16 @@ export class ChatGPT {
 
   // ---------- img2img function ----------
   public static async img2img(
-    prompt: string,
+    prompt?: string,
     model: string = ChatGPT.options.models.gpt_5,
     images?: { rawBase64: string; mime: string; description: string }[]
   ) {
     try {
       const openai = this.getClient();
 
-      const content: any[] = [
-        { type: "input_text", text: prompt }
-      ];
+      const content: any[] = [];
+      if (prompt) content.push( { type: "input_text", text: prompt });
+
 
       // Add images
       if (images?.length) {
@@ -180,7 +191,7 @@ export class ChatGPT {
         message.includes("invalid_api_key") ||
         err instanceof MissingApiKeyError
       ) {
-        console.log( "INPUT GPT KEY!");
+        console.log("INPUT GPT KEY!");
         //this.showKeyPromptWindow();
         return null;
       }
@@ -188,6 +199,30 @@ export class ChatGPT {
       console.error("img2img error", err);
       throw err;
     }
+  }
+
+
+  async generateText(params: AIGenerateParms): Promise<string | null> {
+    const text = await ChatGPT.txt2txt(
+      params.prompt,
+      params.system,
+      params.model,
+      params.images
+    );
+
+    return text
+  }
+
+  async generateImage(params: AIGenerateParms): Promise<ImageResult | null> {
+    const res = await ChatGPT.img2img(
+      params.prompt,
+      params.model,
+      params.images
+    );
+
+    if (!res) return null;
+
+    return res;
   }
 
 }

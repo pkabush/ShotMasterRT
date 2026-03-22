@@ -1,7 +1,7 @@
 // Task.ts
 import { makeAutoObservable, toJS, runInAction } from "mobx";
 import { Shot } from "./Shot";
-import { ai_providers } from "./AI_providers";
+import { ai_providers } from "./AI_provider";
 import { KlingAI } from "./KlingAI";
 import { notificationManager } from "./NotificationManager";
 import type { LocalMedia } from "./fileSystem/LocalMedia";

@@ -2,17 +2,14 @@
 import { GoogleGenAI as GoogleSDK } from "@google/genai";
 import { LocalImage } from "./fileSystem/LocalImage";
 import type { LocalFolder } from "./fileSystem/LocalFolder";
+import type { AIGenerateParms, AIImageInput, AIProvider,   ImageResult } from "./AI_provider";
 
 // Custom error types for clarity
 export class MissingApiKeyError extends Error { }
 export class InvalidApiKeyError extends Error { }
 
-export const img_models = [
-  "gemini-2.5-flash-image",
-  "gemini-3-pro-image-preview"
-]
 
-export class GoogleAI {
+export class GoogleAI implements AIProvider {
   public static options = {
     img_models: {
       flash_image: "gemini-2.5-flash-image",
@@ -30,6 +27,12 @@ export class GoogleAI {
       r9x16: "9:16",
       r16x9: "16:9",
       r21x9: "21:9",
+    },
+
+    text_models: {
+      gemini_3_1_flash_lite: "gemini-3.1-flash-lite-preview",
+      gemini_3_1_pro_preview: "gemini-3.1-pro-preview",
+      gemini_3_flash_preview: "gemini-3-flash-preview",
     }
   }
 
@@ -44,49 +47,19 @@ export class GoogleAI {
     return new GoogleSDK({ apiKey: key });
   }
 
-  public static async txt2txt(prompt: string) {
-    try {
-      const genAI = this.getGenAI();
-
-      const config: any = {};
-
-      const response = await genAI.models.generateContent({
-        model: "gemini-2.5-flash",
-        contents: prompt,
-        config,
-      });
-
-      console.log("RES TEXT", response.text);
-      return response.text; // fallback to raw text if no schema
-
-    } catch (err: any) {
-      console.error("Goo Err Response", err);
-
-      // Detect missing or invalid API key
-      const message = err?.message || "";
-      if (message.includes("API key not valid") || message.includes("API_KEY_INVALID") || err instanceof MissingApiKeyError) {
-        this.showKeyPromptWindow()
-        return null;
-      }
-
-      // Rethrow any other unexpected errors
-      throw err;
-    }
-  }
-
   // ---------- img2img function ----------
   public static async img2img(
-    prompt: string,
+    prompt?: string,
     model: string = GoogleAI.options.img_models.flash_image,
-    images?: { rawBase64: string; mime: string; description: string }[],
+    images?: AIImageInput[],
     aspect_ratio: string = GoogleAI.options.aspect_ratios.r9x16,
   ) {
     try {
       const genAI = this.getGenAI();
-
-      // Prepare contents array
-      const contents: any[] = [{ text: prompt }];
-
+      // Add prompt Text
+      const contents: any[] = [];
+      if (prompt) contents.push({ text: prompt });
+      // Add Images
       if (images?.length) {
         for (const img of images) {
           if (!img?.rawBase64 || !img?.mime) continue;
@@ -94,41 +67,43 @@ export class GoogleAI {
           contents.push({ inlineData: { data: img.rawBase64, mimeType: img.mime }, });
         }
       }
-
+      // Generate Payload
+      const isImageModel = Object.values(GoogleAI.options.img_models).includes(model);
+      const config: any = {};
+      if (isImageModel) {
+        config.response_modalities = ["Image"];
+        config.imageConfig = { aspectRatio: aspect_ratio };
+      }
       const payload = {
-        model: model,
+        model,
         contents,
-        config: {
-          response_modalities: ["Image"],
-          imageConfig: {
-            aspectRatio: aspect_ratio,            
-          },
-        },
+        config,
       };
-
       console.log("Gemini Payload", payload);
-
+      // Get Response
       const response = await genAI.models.generateContent(payload);
       console.log("GEMINI RES", response);
-
       // Iterate response parts
-      const candidates = response?.candidates ?? [];
-      const parts = candidates[0]?.content?.parts ?? [];
-      for (const part of parts) {
-        if (part.inlineData) {
-          const base64 = part.inlineData.data;
-          const mime = part.inlineData.mimeType || "image/png";
-          return {
-            base64Obj: { rawBase64: base64, mime },
-            id: response.responseId,
-          };
+      // If IMAGE Modesl
+      if (isImageModel) {
+        const candidates = response?.candidates ?? [];
+        const parts = candidates[0]?.content?.parts ?? [];
+        for (const part of parts) {
+          if (part.inlineData) {
+            return {
+              base64Obj: {
+                rawBase64: part.inlineData.data,
+                mime: part.inlineData.mimeType || "image/png",
+              },
+              id: response.responseId,
+            };
+          }
         }
       }
+      // IF TEXT Model
+      return response.text;
 
-      // If no image returned, fallback
-      return null;
     } catch (err: any) {
-      // Detect missing or invalid API key
       const message = err?.message || "";
       if (message.includes("API key not valid") || message.includes("API_KEY_INVALID") || err instanceof MissingApiKeyError) {
         this.showKeyPromptWindow()
@@ -158,18 +133,38 @@ export class GoogleAI {
         },
         folder,
         `${result.id}.${result.base64Obj.mime.split("/")[1]}`
-      );      
+      );
       return localImage;
     } else {
       console.warn("No valid image returned from GoogleAI.img2img");
       return null;
     }
   }
+
+  async generateText(params: AIGenerateParms): Promise<string | null> {
+    const res = await GoogleAI.img2img(
+      params.prompt,
+      params.model
+    );
+    if (!res) return null;
+    return res as string;
+  }
+
+  async generateImage(params: AIGenerateParms): Promise<ImageResult | null> {
+    const res = await GoogleAI.img2img(
+      params.prompt,
+      params.model,
+      params.images
+    );
+    if (!res) return null;
+    return res as ImageResult;
+  }
+
+
+
+
+
+
+
 }
 
-
-export type AIImageInput = {
-  rawBase64: string;
-  mime: string;
-  description: string;
-};

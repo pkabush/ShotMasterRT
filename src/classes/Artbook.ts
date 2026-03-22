@@ -5,8 +5,17 @@ import { LocalFolder } from "./fileSystem/LocalFolder";
 import { MediaFolder } from "./MediaFolder";
 import { Character } from "./Artbook/Character";
 
+
 export class Artbook extends LocalFolder {
   project: Project | null = null;
+
+  characters_folder : LocalFolder | null = null;
+  environment_folder : LocalFolder | null = null;
+
+  workflows = {
+    gen_char_names : "artbook_generate_character_names",
+  }
+
 
   constructor(handle: FileSystemDirectoryHandle, parentFolder: LocalFolder) {
     super(parentFolder, handle);
@@ -34,6 +43,11 @@ export class Artbook extends LocalFolder {
   async load() {
     // Load all subfolders and images    
     await this.load_subfolders();
+    console.log("AB",this)
+
+    this.characters_folder = await LocalFolder.open(this,"ПЕРСОНАЖИ")
+    this.environment_folder = await LocalFolder.open(this,"ЛОКАЦИИ")
+
     for (const artSubfolder of this.subfolders) {
       await artSubfolder.load_subfolders(Character);
 

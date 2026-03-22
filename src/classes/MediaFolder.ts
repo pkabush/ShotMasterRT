@@ -8,7 +8,7 @@ export class MediaFolder extends LocalFolder {
     selectedMedia: LocalMedia | null = null;
     // Named Media Array
     tags: string[] = ["picked", "start_frame", "end_frame", "motion_ref"];
-    multi_tags: string[] = ["ref_frame", "picked_extra"];
+    multi_tags: string[] = ["ref_frame", "picked_extra"];    
 
     static async create(
         parentFolder: LocalFolder,

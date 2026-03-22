@@ -102,6 +102,21 @@ const default_projinfo = {
       character_orientation: KlingAI.options.motion_control.character_orientation.image,
       keep_original_sound: KlingAI.options.motion_control.keep_original_sound.no,
     },    
+    generate_character_variation_data: {
+      "model": "gemini-3.1-flash-image-preview",
+      "aspect_ratio": "16:9",
+      "prompt": "Generate outfit Names and descriptions for image generation for my character based on my script, output them in a proper json like this:\n{\nOutfit_Name:\"description\"\nOutfit_Name:\"description\"\nOutfit_Name:\"description\"\n}\nCharacter to Use:"
+    },
+    artbook_generate_character_names: {
+      "undefined": "Test",
+      "prompt": "Based on my script Generate Chracter Names, output a simple list like this:\nCHARACTER1\nCHARACTER2\nCHARACTER3",
+      "model": "gpt-5-mini"
+    },
+    generate_character_variation_image: {
+      "prompt": "Based on my Script Generate an image for my character based on description",
+      "aspect_ratio": "16:9",
+      "model": "gemini-3-pro-image-preview"
+    },
 
 
   },
@@ -347,10 +362,10 @@ export class Project extends LocalFolder {
   }
 
   get workflows() {
-    return this.projinfo?.data.workflows;
+    return this.projinfo?.data.workflows as Record<string,Workflow>;
   }
 
-  updateWorkflow(workflow: string, key: string, value: string) {
+  updateWorkflow(workflow: string, key: keyof Workflow, value: string) {
     runInAction(() => {
       if (!this.workflows[workflow]) { this.workflows[workflow] = {}; }
       this.workflows[workflow][key] = value;
@@ -369,12 +384,20 @@ export class Project extends LocalFolder {
     document.body.removeChild(link);
   }
 
-
-
-
 }
 
 
+export type Workflow = {
+  model?: string;
+  prompt?: string;
+  aspect_ratio?:string;
+  duration?:string;
+  mode?:string;
+  sound?:string;
+  character_orientation?:string;
+  keep_original_sound?:string;
+  system_message?:string;
+};
 
 
 

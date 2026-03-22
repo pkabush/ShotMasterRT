@@ -5,6 +5,7 @@ import { LocalJson } from "../LocalJson";
 import { MediaFolder } from "../MediaFolder";
 import { Project } from "../Project";
 import { GoogleAI } from "../GoogleAI";
+import { Tags } from "../Tags";
 
 
 
@@ -14,9 +15,11 @@ export class Character extends MediaFolder {
     // MediaFolders
     MediaFolder_results: MediaFolder | null = null;
     generating_variations: string[] = [];
+    references: Tags | null = null;
 
     workflows = {
-        generate_variation: "generate_character_variation",
+        generate_variation_data: "generate_character_variation_data",
+        generate_variation_image: "generate_character_variation_image",
 
     }
 
@@ -45,6 +48,7 @@ export class Character extends MediaFolder {
             this.charJson = await LocalJson.create(this.handle, 'charinfo.json');
             this.MediaFolder_results = await MediaFolder.create(this, "results");
             this.MediaFolder_results.tags = ["ref_frame"];
+            this.references = new Tags(this, this.charJson);
 
             await this.load_files()
 
@@ -60,7 +64,7 @@ export class Character extends MediaFolder {
     }
 
 
-    addVariation(name?: string) {
+    addVariation(name?: string, descrition = "") {
         // Use prompt if name is not provided
         const finalName = name || prompt("Please enter something:");
 
@@ -70,7 +74,7 @@ export class Character extends MediaFolder {
         }
 
         console.log("Variation:", finalName);
-        this.charJson?.updateField("variations/" + finalName, { prompt: "" });
+        this.charJson?.updateField("variations/" + finalName, { prompt: descrition });
     }
 
     getVariationImage(variationName: string): LocalImage | null {
@@ -98,22 +102,18 @@ export class Character extends MediaFolder {
         }
     }
 
-    async setVariationImage(variationName: string) {
-        const selectedImage = this.MediaFolder_results?.selectedMedia;
+    async setVariationImage(variationName: string, image?: LocalImage) {
+        const selectedImage = image ?? this.MediaFolder_results?.selectedMedia;
         if (!selectedImage) return;
 
         await selectedImage.copyToFolder(this, variationName);
         console.log(variationName);
-
-
-
-
     }
 
     async generateLook(variationName: string) {
         this.generating_variations.push(variationName)
         const project = Project.getProject()
-        const workflow = project.workflows[this.workflows.generate_variation]
+        const workflow = project.workflows[this.workflows.generate_variation_image]
 
         const script_text = project.script?.text
         const workflow_prompt = workflow.prompt
@@ -123,15 +123,21 @@ export class Character extends MediaFolder {
         ${script_text}
 
         ${workflow_prompt}
-
+        Character:
+        ${this.name}
+        Description:
         ${var_prompt}
         `
+
+        console.log(workflow_prompt, var_prompt);
+
+        const reference_images = await this.references?.GetAI_Images();
 
         // Send Request
         const result = await GoogleAI.img2img(
             prompt,
             workflow.model,
-            [],
+            reference_images,
             workflow.aspect_ratio
         );
 
@@ -146,14 +152,16 @@ export class Character extends MediaFolder {
 
         if (localImage) {
             // Save Generation Info
-            /*
+
             localImage?.mediaJson?.updateField("geninfo", {
-                workflow: "shot_generate_image",
-                prompt: prompt,
-                model: this.scene.project.workflows.generate_shot_image.model,
-                art_refs: this.getFilteredTags().map(tag => tag.path),
+                workflow: this.workflows.generate_variation_image,
+                prompt: var_prompt,
+                model: workflow.model,
+                //art_refs: this.getFilteredTags().map(tag => tag.path),
             })
-            */
+
+            this.setVariationImage(variationName, localImage);
+
         }
 
 

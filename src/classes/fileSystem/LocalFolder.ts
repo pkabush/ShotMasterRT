@@ -33,9 +33,8 @@ export class LocalFolder extends LocalItem {
         parentFolder: LocalFolder | null = null,
         handle: FileSystemDirectoryHandle
     ) {
-        super(parentFolder);
-        this.handle = handle;
-        this.path = (parentFolder?.path || "") + "/" + (handle?.name || "");
+        super(parentFolder,handle);          
+        this.handle = handle;      
     }
 
     get name(): string {

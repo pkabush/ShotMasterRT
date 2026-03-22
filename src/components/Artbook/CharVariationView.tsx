@@ -8,6 +8,7 @@ import { GoogleAI } from "../../classes/GoogleAI";
 import { useProject } from "../../contexts/ProjectContext";
 import type { Character } from "../../classes/Artbook/Character";
 import DropArea from "../Atomic/DropArea";
+import { TagsFolderContainer } from "../FolderTags/FolderTagsVide";
 
 interface CharVariationViewProps {
     character: Character;
@@ -46,6 +47,8 @@ export const CharVariationView: React.FC<CharVariationViewProps> = observer(({
                 field={`variations/${variationName}/prompt`}
             />
 
+            <TagsFolderContainer tags={character.references} folders={[character]} />
+
             <SettingsButton
                 className="mb-2"
                 buttons={
@@ -58,19 +61,17 @@ export const CharVariationView: React.FC<CharVariationViewProps> = observer(({
                         </button>
 
                         <WorkflowOptionSelect
-                            project={project!}
-                            workflowName={character.workflows.generate_variation}
+                            workflowName={character.workflows.generate_variation_image}
                             optionName="model"
                             values={Object.values(GoogleAI.options.img_models)}
                         />
 
                         <WorkflowOptionSelect
-                            project={project!}
-                            workflowName={character.workflows.generate_variation}
+                            workflowName={character.workflows.generate_variation_image}
                             optionName="aspect_ratio"
                             values={Object.values(GoogleAI.options.aspect_ratios)}
                             defaultValue={GoogleAI.options.aspect_ratios.r16x9}
-                        />
+                        />                        
 
                         <LoadingSpinner
                             isLoading={character.generating_variations.includes(variationName)}
@@ -82,10 +83,9 @@ export const CharVariationView: React.FC<CharVariationViewProps> = observer(({
                     <>
                         <EditableJsonTextField
                             localJson={project!.projinfo}
-                            field={`workflows/${character.workflows.generate_variation}/prompt`}
+                            field={`workflows/${character.workflows.generate_variation_image}/prompt`}
                             fitHeight
                         />
-                        content
                     </>
                 }
             />
@@ -111,7 +111,6 @@ export const AddVariationCard: React.FC<AddVariationCardProps> = ({ character })
     return (
         <Col xs={8} md={3} lg={2} style={{ marginBottom: "1rem" }}>
             <Card
-                onClick={() => character.addVariation()}
                 style={{ cursor: "pointer" }}
             >
                 <DropArea
@@ -125,19 +124,33 @@ export const AddVariationCard: React.FC<AddVariationCardProps> = ({ character })
 
                 <Card.Body>
                     <Stack direction="horizontal" gap={1}>
-                        <Button variant="success">
+                        <Button variant="success" onClick={() => character.addVariation()}>
                             Add Look
                         </Button>
 
-                        <Button
-                            variant="outline-secondary"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                character.log();
-                            }}
-                        >
-                            LOG
-                        </Button>
+                        {false && (<>
+                            <Button
+                                variant="outline-secondary"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    character.log();
+                                }}
+                            >
+                                LOG
+                            </Button>
+
+                            <Button
+                                variant="danger"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    character.log();
+                                }}
+                            >
+                                Delete
+                            </Button>
+                        </>
+                        )}
+
                     </Stack>
                 </Card.Body>
             </Card>

@@ -28,7 +28,7 @@ export class Scene extends LocalFolder {
   is_generating_all_shot_images = false;
   split_shots_prompt: Prompt | null = null;
   selectedShot: Shot | null = null;
-  references: Tags | null = null;
+  references:Tags | null = null;
 
   constructor(handle: FileSystemDirectoryHandle, project: Project, parentFolder: LocalFolder) {
     super(parentFolder, handle);

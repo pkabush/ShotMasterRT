@@ -5,19 +5,34 @@ import type { LocalFolder } from "./LocalFolder";
 export abstract class LocalItem {
   path: string = "";
   parentFolder: LocalFolder | null;
+  handle: FileSystemHandle;
 
   children: LocalItem[] = [];
 
-  constructor(parentFolder: LocalFolder | null = null) {
+  constructor(parentFolder: LocalFolder | null = null, handle: FileSystemHandle) {
     this.parentFolder = parentFolder;
+    this.path = (parentFolder?.path || "") + "/" + (handle?.name || "");
+    this.handle = handle;
 
     makeObservable(this, {
       children: observable, // <-- add this
     });
 
-    runInAction(() => {
-      this.parentFolder?.children.push(this);
-    })
+    if (this.parentFolder) {
+      runInAction(() => {
+        // Check if a child with the same path already exists
+        const existingIndex = this.parentFolder!.children.findIndex(
+          child => child.path === this.path
+        );
+        if (existingIndex !== -1) {
+          // Replace the existing child
+          this.parentFolder!.children[existingIndex] = this;
+        } else {
+          // Add normally
+          this.parentFolder!.children.push(this);
+        }
+      });
+    }
 
   }
 
@@ -58,6 +73,24 @@ export abstract class LocalItem {
   }
 
   log() { console.log(toJS(this)); }
+
+  async delete(show_dialogue = false): Promise<void> {
+    if (show_dialogue) {
+      const confirmed = window.confirm(`Are you sure you want to delete "${this.name}"?`);
+      if (!confirmed) return;
+    }
+
+    if (this.parentFolder) {
+      await this.parentFolder.handle.removeEntry(this.name, { recursive: true });
+
+      runInAction(() => {
+        const index = this.parentFolder!.children.indexOf(this);
+        if (index !== -1) {
+          this.parentFolder!.children.splice(index, 1);
+        }
+      });
+    }
+  }
 }
 
 export class LocalFile extends LocalItem {
@@ -69,9 +102,9 @@ export class LocalFile extends LocalItem {
     parentFolder: LocalFolder | null = null,
     handle: FileSystemFileHandle
   ) {
-    super(parentFolder);
+    super(parentFolder, handle);
     this.handle = handle;
-    this.path = (parentFolder?.path || "") + "/" + (handle?.name || "");
+
 
     makeObservable(this, {
       lastModified: observable,
@@ -138,30 +171,6 @@ export class LocalFile extends LocalItem {
 
     // Return a new LocalFile instance
     return targetFolder.load_file(newHandle);
-  }
-
-
-  async delete(show_dialogue = false): Promise<void> {
-    if (!this.parentFolder) {
-      throw new Error("Cannot delete file without parent folder");
-    }
-
-    // Ask user for confirmation
-    if (show_dialogue) {
-      const confirmed = window.confirm(`Are you sure you want to delete "${this.name}"?`);
-      if (!confirmed) return; // user canceled
-    }
-
-    // Remove from filesystem
-    await this.parentFolder.handle.removeEntry(this.name);
-
-    // Remove from in-memory tree
-    runInAction(() => {
-      const index = this.parentFolder!.children.indexOf(this);
-      if (index !== -1) {
-        this.parentFolder!.children.splice(index, 1);
-      }
-    });
   }
 
   async load(): Promise<void> {

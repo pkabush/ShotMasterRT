@@ -13,7 +13,7 @@ import SimpleDropdown from "./Atomic/SimpleDropdown";
 import { LocalVideo } from "../classes/fileSystem/LocalVideo";
 import VideoEditWindow from "./VideoEditWindow";
 import type { Shot } from "../classes/Shot";
-import { ai_providers } from "../classes/AI_providers";
+import { ai_providers } from "../classes/AI_provider";
 import GrayscaleOverlay from "./Atomic/MediaElements/GrayscaleOverlay";
 import AddOutline from "./Atomic/MediaElements/AddOutline";
 import MediaItemTags from "./Atomic/MediaElements/MediaItemTags";

@@ -54,7 +54,7 @@ const SceneInfoCard: React.FC<Props> = observer(({ scene }) => { // <--- observe
             }}> Split Into Shots </button>
             {/**Model Selector */}
             <SimpleSelect
-              value={scene.project.workflows.split_scene_into_shots.model}
+              value={scene.project.workflows.split_scene_into_shots.model ?? models[0]}
               options={models}
               onChange={(val) => { scene.project.updateWorkflow("split_scene_into_shots", "model", val); }}
             />
