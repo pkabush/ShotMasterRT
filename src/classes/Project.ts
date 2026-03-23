@@ -101,7 +101,7 @@ const default_projinfo = {
       mode: KlingAI.options.motion_control.mode.std,
       character_orientation: KlingAI.options.motion_control.character_orientation.image,
       keep_original_sound: KlingAI.options.motion_control.keep_original_sound.no,
-    },    
+    },
     generate_character_variation_data: {
       "model": "gemini-3.1-flash-image-preview",
       "aspect_ratio": "16:9",
@@ -117,7 +117,14 @@ const default_projinfo = {
       "aspect_ratio": "16:9",
       "model": "gemini-3-pro-image-preview"
     },
-
+    artbook_generate_location_names: {
+      "prompt": "Based on my script Generate Location Names, output a simple list like this:\nLocation1\nLocation2\nLocation3",
+      "model": "gpt-5-mini"
+    },
+    generate_tags_for_scene: {
+      "prompt": "Based on my scene and tags Generate TagsList to be use in this scene, output a simple list like this:\nTagPath1\nTagPath2\nTagPath3",
+      "model": "gpt-5-mini"
+    }
 
   },
 
@@ -362,7 +369,7 @@ export class Project extends LocalFolder {
   }
 
   get workflows() {
-    return this.projinfo?.data.workflows as Record<string,Workflow>;
+    return this.projinfo?.data.workflows as Record<string, Workflow>;
   }
 
   updateWorkflow(workflow: string, key: keyof Workflow, value: string) {
@@ -390,13 +397,13 @@ export class Project extends LocalFolder {
 export type Workflow = {
   model?: string;
   prompt?: string;
-  aspect_ratio?:string;
-  duration?:string;
-  mode?:string;
-  sound?:string;
-  character_orientation?:string;
-  keep_original_sound?:string;
-  system_message?:string;
+  aspect_ratio?: string;
+  duration?: string;
+  mode?: string;
+  sound?: string;
+  character_orientation?: string;
+  keep_original_sound?: string;
+  system_message?: string;
 };
 
 

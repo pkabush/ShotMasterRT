@@ -148,7 +148,8 @@ interface GenVariationsProps {
 export const GenVariations: React.FC<GenVariationsProps> = observer(({ character }) => {
     const project = Project.getProject()
     const charlist_field = "looklist"
-    const wf_name = character.workflows.generate_variation_data
+    const is_env = character.parentFolder?.name == "ЛОКАЦИИ" 
+    const wf_name = is_env ? character.workflows.generate_location_data : character.workflows.generate_variation_data
 
 
     return <div>

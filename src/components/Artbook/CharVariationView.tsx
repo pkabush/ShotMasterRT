@@ -1,6 +1,6 @@
 import { observer } from "mobx-react-lite";
 import { Badge, Button, Card, CloseButton, Col, Stack } from "react-bootstrap";
-import EditableJsonTextField from "../EditableJsonTextField";
+import EditableJsonTextField, { EditableJsonToggleField } from "../EditableJsonTextField";
 import SettingsButton from "../Atomic/SettingsButton";
 import { WorkflowOptionSelect } from "../WorkflowOptionSelect";
 import LoadingSpinner from "../Atomic/LoadingSpinner";
@@ -42,13 +42,6 @@ export const CharVariationView: React.FC<CharVariationViewProps> = observer(({
                 <CloseButton onClick={onClose} />
             </Stack>
 
-            <EditableJsonTextField
-                localJson={character.charJson}
-                field={`variations/${variationName}/prompt`}
-            />
-
-            <TagsFolderContainer tags={character.references} folders={[character]} />
-
             <SettingsButton
                 className="mb-2"
                 buttons={
@@ -71,7 +64,7 @@ export const CharVariationView: React.FC<CharVariationViewProps> = observer(({
                             optionName="aspect_ratio"
                             values={Object.values(GoogleAI.options.aspect_ratios)}
                             defaultValue={GoogleAI.options.aspect_ratios.r16x9}
-                        />                        
+                        />
 
                         <LoadingSpinner
                             isLoading={character.generating_variations.includes(variationName)}
@@ -81,6 +74,7 @@ export const CharVariationView: React.FC<CharVariationViewProps> = observer(({
                 }
                 content={
                     <>
+                        <EditableJsonToggleField localJson={character.charJson} field={character.use_script_field} label="use_script"/>
                         <EditableJsonTextField
                             localJson={project!.projinfo}
                             field={`workflows/${character.workflows.generate_variation_image}/prompt`}
@@ -89,6 +83,14 @@ export const CharVariationView: React.FC<CharVariationViewProps> = observer(({
                     </>
                 }
             />
+
+
+            <EditableJsonTextField
+                localJson={character.charJson}
+                field={`variations/${variationName}/prompt`}
+            />
+
+            <TagsFolderContainer tags={character.references} folders={[character]} />
 
             <Button
                 onClick={() => character.setVariationImage(variationName)}

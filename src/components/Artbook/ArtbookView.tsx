@@ -11,7 +11,7 @@ import SettingsButton from "../Atomic/SettingsButton";
 import { WorkflowOptionSelect, WorkflowTextField } from "../WorkflowOptionSelect";
 import { Project } from "../../classes/Project";
 import LoadingSpinner from "../Atomic/LoadingSpinner";
-import { AI,  AllTextModels } from "../../classes/AI_provider";
+import { AI, AllTextModels } from "../../classes/AI_provider";
 import EditableJsonTextField from "../EditableJsonTextField";
 
 
@@ -73,7 +73,7 @@ export const ArtbookView: React.FC<ArtbookViewProps> = observer(({ artbook }) =>
 
 export const ArtbookGenView: React.FC<ArtbookViewProps> = observer(({ artbook }) => {
   const project = Project.getProject()
-  const charlist_field = "artbook/charlist"
+
 
 
   return <div>
@@ -99,7 +99,7 @@ export const ArtbookGenView: React.FC<ArtbookViewProps> = observer(({ artbook })
               model: workflow.model!,
             })
 
-            project.projinfo?.updateField(charlist_field, res)
+            project.projinfo?.updateField(artbook.fields.charlist, res)
 
           }} >
             Generate Character Names
@@ -119,22 +119,66 @@ export const ArtbookGenView: React.FC<ArtbookViewProps> = observer(({ artbook })
       content={
         <>
           <WorkflowTextField workflowName={artbook.workflows.gen_char_names} optionName={"prompt"} />
-          <EditableJsonTextField localJson={project.projinfo} field={charlist_field} />
+          <EditableJsonTextField localJson={project.projinfo} field={artbook.fields.charlist} />
           <Button onClick={() => {
-            project.projinfo?.getField(charlist_field).split("\n").map((char_name:string) => {              
-              artbook.createCharacter( artbook.characters_folder!, char_name.replace(" ","_") )
-
-
+            project.projinfo?.getField(artbook.fields.charlist).split("\n").map((char_name: string) => {
+              artbook.createCharacter(artbook.characters_folder!, char_name.replace(" ", "_"))
             })
-
-            //artbook.createCharacter()
-
-
           }}>Create Characters</Button>
         </>
       }
     />
 
+
+    <SettingsButton
+      className="mb-2"
+      buttons={
+        <>
+          {/* Stylize Image Button */}
+          <button className="btn btn-sm btn-outline-success" onClick={async () => {
+
+            const workflow = project.workflows[artbook.workflows.gen_location_names] ?? ""
+            console.log("Model", workflow.model);
+            const prompt = `
+            SCRIPT:
+            ${project.script?.text}
+
+            ${workflow.prompt}            
+            `
+            const res = await AI.GenerateText({
+              prompt: prompt,
+              model: workflow.model!,
+            })
+
+            project.projinfo?.updateField(artbook.fields.location_list, res)
+
+          }} >
+            Generate Location Names
+          </button>
+
+          {/* Model Selector */}
+          <WorkflowOptionSelect
+            workflowName={artbook.workflows.gen_location_names}
+            optionName={"model"}
+            values={AllTextModels}
+          />
+
+          {/* Loading Spinner */}
+          <LoadingSpinner isLoading={false} asButton />
+        </>
+      }
+      content={
+        <>
+          <WorkflowTextField workflowName={artbook.workflows.gen_location_names} optionName={"prompt"} />
+          <EditableJsonTextField localJson={project.projinfo} field={artbook.fields.location_list} />
+          <Button onClick={() => {
+            project.projinfo?.getField(artbook.fields.location_list).split("\n").map((char_name: string) => {
+              artbook.createCharacter(artbook.environment_folder!, char_name.replace(" ", "_"))
+            })
+          }}>Create Locations</Button>
+        </>
+      }
+    />
 
 
   </div>;

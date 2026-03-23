@@ -2,7 +2,7 @@
 import { GoogleGenAI as GoogleSDK } from "@google/genai";
 import { LocalImage } from "./fileSystem/LocalImage";
 import type { LocalFolder } from "./fileSystem/LocalFolder";
-import type { AIGenerateParms, AIImageInput, AIProvider,   ImageResult } from "./AI_provider";
+import type { AIGenerateParms, AIImageInput, AIProvider, ImageResult } from "./AI_provider";
 
 // Custom error types for clarity
 export class MissingApiKeyError extends Error { }
@@ -27,6 +27,7 @@ export class GoogleAI implements AIProvider {
       r9x16: "9:16",
       r16x9: "16:9",
       r21x9: "21:9",
+      none: "none",
     },
 
     text_models: {
@@ -52,7 +53,7 @@ export class GoogleAI implements AIProvider {
     prompt?: string,
     model: string = GoogleAI.options.img_models.flash_image,
     images?: AIImageInput[],
-    aspect_ratio: string = GoogleAI.options.aspect_ratios.r9x16,
+    aspect_ratio?: string,
   ) {
     try {
       const genAI = this.getGenAI();
@@ -72,7 +73,9 @@ export class GoogleAI implements AIProvider {
       const config: any = {};
       if (isImageModel) {
         config.response_modalities = ["Image"];
-        config.imageConfig = { aspectRatio: aspect_ratio };
+        if (aspect_ratio && aspect_ratio != "none") {
+          config.imageConfig = { aspectRatio: aspect_ratio };
+        }
       }
       const payload = {
         model,

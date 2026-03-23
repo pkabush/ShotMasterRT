@@ -19,10 +19,12 @@ export class Character extends MediaFolder {
 
     workflows = {
         generate_variation_data: "generate_character_variation_data",
+        generate_location_data: "generate_character_location_data",
         generate_variation_image: "generate_character_variation_image",
 
     }
 
+    use_script_field = "use_script_for_gen_image"
 
     constructor(parentFolder: LocalFolder | null, handle: FileSystemDirectoryHandle) {
         super(parentFolder, handle)
@@ -111,63 +113,65 @@ export class Character extends MediaFolder {
     }
 
     async generateLook(variationName: string) {
-        this.generating_variations.push(variationName)
-        const project = Project.getProject()
-        const workflow = project.workflows[this.workflows.generate_variation_image]
+        this.generating_variations.push(variationName);
 
-        const script_text = project.script?.text
-        const workflow_prompt = workflow.prompt
-        const var_prompt = this.variations[variationName].prompt
+        try {
+            const project = Project.getProject();
+            const workflow = project.workflows[this.workflows.generate_variation_image];
 
-        const prompt = `Сценарий: 
-        ${script_text}
+            const script_text = project.script?.text;
+            const workflow_prompt = workflow.prompt;
+            const var_prompt = this.variations[variationName].prompt;
 
-        ${workflow_prompt}
-        Character:
-        ${this.name}
-        Description:
-        ${var_prompt}
-        `
+            const use_script = this.charJson?.getField(this.use_script_field) ?? true;
 
-        console.log(workflow_prompt, var_prompt);
+            const prompt = `${use_script ?
+                    `Сценарий: 
+${script_text}` : ``}
 
-        const reference_images = await this.references?.GetAI_Images();
+${workflow_prompt}
+Character:
+${this.name}
+Description:
+${var_prompt}
+`;
 
-        // Send Request
-        const result = await GoogleAI.img2img(
-            prompt,
-            workflow.model,
-            reference_images,
-            workflow.aspect_ratio
-        );
+            console.log(workflow_prompt, var_prompt);
 
-        // Save Result Image
-        const localImage: LocalImage | null =
-            await GoogleAI.saveResultImage(
-                result,
-                this.MediaFolder_results as LocalFolder
+            const reference_images = await this.references?.GetAI_Images();
+
+            const result = await GoogleAI.img2img(
+                prompt,
+                workflow.model,
+                reference_images,
+                workflow.aspect_ratio
             );
 
-        // Store Data
+            const localImage: LocalImage | null =
+                await GoogleAI.saveResultImage(
+                    result,
+                    this.MediaFolder_results as LocalFolder
+                );
 
-        if (localImage) {
-            // Save Generation Info
+            if (localImage) {
+                localImage?.mediaJson?.updateField("geninfo", {
+                    workflow: this.workflows.generate_variation_image,
+                    prompt: var_prompt,
+                    model: workflow.model,
+                });
 
-            localImage?.mediaJson?.updateField("geninfo", {
-                workflow: this.workflows.generate_variation_image,
-                prompt: var_prompt,
-                model: workflow.model,
-                //art_refs: this.getFilteredTags().map(tag => tag.path),
-            })
+                this.setVariationImage(variationName, localImage);
+            }
 
-            this.setVariationImage(variationName, localImage);
-
+        } finally {
+            // ✅ ALWAYS remove it
+            this.generating_variations =
+                this.generating_variations.filter(v => v !== variationName);
         }
-
-
     }
 
-
-
-
 }
+
+
+
+

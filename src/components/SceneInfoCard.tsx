@@ -9,6 +9,9 @@ import { models } from "../classes/ChatGPT";
 import SettingsButton from "./Atomic/SettingsButton";
 import { TagsFolderContainer } from "./FolderTags/FolderTagsVide";
 import type { LocalFolder } from "../classes/fileSystem/LocalFolder";
+import { WorkflowOptionSelect, WorkflowTextField } from "./WorkflowOptionSelect";
+import { AllTextModels } from "../classes/AI_provider";
+import { Button } from "react-bootstrap";
 
 interface Props {
   scene: Scene;
@@ -79,10 +82,54 @@ const SceneInfoCard: React.FC<Props> = observer(({ scene }) => { // <--- observe
         <SimpleButton onClick={handleCreateShots} label="Create Shots" />
       } />
 
-      <TagsFolderContainer tags={scene.references} folders={[scene.project,scene.project.artbook as LocalFolder, scene]}/>
+      
+      <TagsFolderContainer tags={scene.references} folders={[scene.project, scene.project.artbook as LocalFolder, scene]} />
+      <GenTagsButton scene={scene}/>
       <div style={{ height: "500px" }}></div>
     </div>
   );
 });
 
 export default SceneInfoCard;
+
+
+
+
+
+export const GenTagsButton: React.FC<Props> = observer(({ scene }) => {
+  const wf_name = scene.workflows.generate_tags
+
+  return <div>
+    <SettingsButton
+      className="mb-2"
+      buttons={
+        <>
+          <button className="btn btn-sm btn-outline-success" onClick={async () => {
+            scene.generateTags();
+          }} >
+            Generate Tags
+          </button>
+
+          {/* Model Selector */}
+          <WorkflowOptionSelect
+            workflowName={wf_name}
+            optionName={"model"}
+            values={AllTextModels}
+          />
+          {/* Loading Spinner */}
+          <LoadingSpinner isLoading={scene.is_generating_tags} asButton />
+        </>
+      }
+      content={
+        <>
+          <WorkflowTextField workflowName={wf_name} optionName={"prompt"} />
+          <EditableJsonTextField localJson={scene.sceneJson} field={scene.fields.generated_tags_list} />
+          <Button size="sm" onClick={() => {scene.addGeneratedTags()}}>Add Generated Tags</Button>
+        </>
+      }
+    />
+
+
+
+  </div>;
+});

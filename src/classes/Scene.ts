@@ -9,6 +9,7 @@ import Prompt from './Prompt';
 import * as ResolveUtils from './ResolveUtils';
 import { LocalFolder } from './fileSystem/LocalFolder';
 import { Tags } from './Tags';
+import { AI } from './AI_provider';
 
 const default_sceneInfoJson = {
   tags: [],
@@ -28,7 +29,15 @@ export class Scene extends LocalFolder {
   is_generating_all_shot_images = false;
   split_shots_prompt: Prompt | null = null;
   selectedShot: Shot | null = null;
-  references:Tags | null = null;
+  references: Tags | null = null;
+
+  workflows = {
+    generate_tags: "generate_tags_for_scene"
+  }
+
+  fields = {
+    generated_tags_list: "generated_tags_list"
+  }
 
   constructor(handle: FileSystemDirectoryHandle, project: Project, parentFolder: LocalFolder) {
     super(parentFolder, handle);
@@ -316,13 +325,13 @@ ${scriptText}
     timeline.save(this.project.timelinesDirHandle?.handle!);
   }
 
-  /*
-  async generateTags() {
 
+  async generateTags() {
     runInAction(() => { this.is_generating_tags = true; });
+    const workflow = this.project.workflows[this.workflows.generate_tags]
 
     const prompt = `
-${this.project?.projinfo?.data?.generate_tags_prompt}
+${workflow.prompt ?? ""}
 
 SCRIPT:
 ${this.sceneJson?.data.script}
@@ -331,34 +340,29 @@ SHOTS JSON:
 ${this.sceneJson?.data.shotsjson}
 
 REFS DICTIONARY:
-${JSON.stringify(this.project?.artbook?.getJson(), null, 2)}
+${this.project.artbook?.tags_list.join("\n")}
 
 `;
 
-    const system_msg = "You are a helpful assistant. " +
-      "Do not write explanations. "
-
-    try {
-      const res = await ChatGPT.txt2txt(prompt, system_msg, this.project?.projinfo?.data.gpt_model);
-      //console.log(res);
-
-      for (const tag_str of res?.split("\n") || []) {
-        const trimmedTag = tag_str.trim();   // <-- remove leading/trailing whitespace
-        if (!trimmedTag) continue;           // skip empty lines
-        console.log("Adding Tag: ", trimmedTag);
-        this.addTag(trimmedTag);
-      }
-
-      return res;
-    } catch (err) {
-      console.error("Error generating tags:", err);
-      return null;
-    } finally {
-      runInAction(() => { this.is_generating_tags = false; });
-    }
-
+    const res = await AI.GenerateText({
+      prompt: prompt,
+      model: workflow.model!,
+    })
+    this.sceneJson?.updateField(this.fields.generated_tags_list, res);
+    runInAction(() => { this.is_generating_tags = false; });
   }
-*/
+
+
+  addGeneratedTags() {
+    this.sceneJson?.getField(this.fields.generated_tags_list).split("\n").map(
+      (tag:string) => {        
+        if (this.getByAbsPath(tag)) {
+          this.references?.addTag(tag);
+        } else {
+          console.log("MISSING TAG: ", tag)
+        }
+      })
+  }
 
 
 }
