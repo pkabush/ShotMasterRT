@@ -12,6 +12,7 @@ import type { LocalFolder } from "../classes/fileSystem/LocalFolder";
 import { WorkflowOptionSelect, WorkflowTextField } from "./WorkflowOptionSelect";
 import { AllTextModels } from "../classes/AI_provider";
 import { Button } from "react-bootstrap";
+import { CollapsibleContainerAccordion } from "./Atomic/CollapsibleContainer";
 
 interface Props {
   scene: Scene;
@@ -67,24 +68,29 @@ const SceneInfoCard: React.FC<Props> = observer(({ scene }) => { // <--- observe
         }
         content={
           <>
-            <EditableJsonTextField localJson={scene.sceneJson} field="split_prompt" fitHeight />
-            <EditableJsonTextField localJson={scene.project.projinfo} field="workflows/split_scene_into_shots/system_message" fitHeight />
-            <EditableJsonTextField localJson={scene.project.projinfo} field="workflows/split_scene_into_shots/prompt" fitHeight />
+            <Button onClick={handleCreateShots} size="sm" className="mb-2">Create Shots From Json</Button>
+            <CollapsibleContainerAccordion label="Prompt">
+              <div className="p-2">
+
+                <EditableJsonTextField localJson={scene.project.projinfo} field="workflows/split_scene_into_shots/system_message" fitHeight />
+                <EditableJsonTextField localJson={scene.project.projinfo} field="workflows/split_scene_into_shots/prompt" fitHeight />
+                <EditableJsonTextField localJson={scene.sceneJson} field="split_prompt" fitHeight />
+              </div>
+            </CollapsibleContainerAccordion>
+            <EditableJsonTextField localJson={scene.sceneJson} field="shotsjson" fitHeight />
           </>
         }
       />
 
-
+      <GenTagsButton scene={scene} />
 
 
       <EditableJsonTextField localJson={scene.sceneJson} field="script" fitHeight />
-      <EditableJsonTextField localJson={scene.sceneJson} field="shotsjson" fitHeight headerExtra={
-        <SimpleButton onClick={handleCreateShots} label="Create Shots" />
-      } />
 
-      
+
+
       <TagsFolderContainer tags={scene.references} folders={[scene.project, scene.project.artbook as LocalFolder, scene]} />
-      <GenTagsButton scene={scene}/>
+
       <div style={{ height: "500px" }}></div>
     </div>
   );
@@ -124,7 +130,7 @@ export const GenTagsButton: React.FC<Props> = observer(({ scene }) => {
         <>
           <WorkflowTextField workflowName={wf_name} optionName={"prompt"} />
           <EditableJsonTextField localJson={scene.sceneJson} field={scene.fields.generated_tags_list} />
-          <Button size="sm" onClick={() => {scene.addGeneratedTags()}}>Add Generated Tags</Button>
+          <Button size="sm" onClick={() => { scene.addGeneratedTags() }}>Add Generated Tags</Button>
         </>
       }
     />

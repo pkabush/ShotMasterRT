@@ -11,6 +11,8 @@ import { Project } from "../../classes/Project";
 import { MediaPreviewSmall } from "../MediaComponents/MediaPreviewSmall";
 import { LocalMedia } from "../../classes/fileSystem/LocalMedia";
 import type { Tags } from "../../classes/Tags";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faImages } from "@fortawesome/free-solid-svg-icons";
 
 interface TagsContainerProps {
     tags: Tags | null;
@@ -27,10 +29,15 @@ export const TagsFolderContainer: React.FC<TagsContainerProps> = observer(({
     const project = Project.getProject();
 
     return (
-        <Accordion defaultActiveKey="TAGS">
+        <Accordion defaultActiveKey="TAGS" className="mb-2">
             <AccordionCard eventKey="TAGS">
                 <AccordionCard.Header>
-                    References
+                    <>
+                        References
+                        <FontAwesomeIcon icon={faImages} className="mx-2" style={{
+                            color: '#e2eb3a',
+                        }} />
+                    </>
                     <AccordionCard.Controls>
                         <Stack direction="horizontal" gap={3}>
                             <Form.Switch label="Use Refs" checked={tags.use_tags} onChange={(e) => { tags.use_tags = e.target.checked }} />
@@ -42,19 +49,18 @@ export const TagsFolderContainer: React.FC<TagsContainerProps> = observer(({
                     </AccordionCard.Controls>
 
                 </AccordionCard.Header>
-
-                {tags.use_tags &&
-                    <AccordionCard.Body>
-                        <ListGroup >
+                <AccordionCard.Body>
+                    {tags.use_tags ?
+                        <ListGroup>
                             <ListGroup.Item key={tags.owner.path} className="py-0 px-0">
                                 {folders.map((local_folder) => (
                                     <FolderDropdownNode
                                         key={local_folder.path}
                                         folder={local_folder}
-                                        selected_paths={ tags.tags }
+                                        selected_paths={tags.tags}
                                         onSelect={(item) => {
                                             if (item instanceof LocalImage) {
-                                                tags.addTag(item,true)                                                
+                                                tags.addTag(item, true)
                                             }
                                         }} />)
                                 )}
@@ -112,8 +118,11 @@ export const TagsFolderContainer: React.FC<TagsContainerProps> = observer(({
 
 
                         </ListGroup>
-                    </AccordionCard.Body>
-                }
+                        :
+                        <>Tags Are Toggled Off</>
+                    }
+                </AccordionCard.Body>
+
 
             </AccordionCard>
         </Accordion>

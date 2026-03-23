@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import CollapsibleContainer from './Atomic/CollapsibleContainer';
+import CollapsibleContainer, { CollapsibleContainerAccordion } from './Atomic/CollapsibleContainer';
 
 export interface GenericTextEditorProps {
   label: string;
@@ -69,7 +69,7 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
   );
 
   return (
-    <CollapsibleContainer label={label} headerExtra={defaultHeaderExtra}>
+    <CollapsibleContainerAccordion label={label} headerExtra={defaultHeaderExtra}>
       <textarea
         ref={textareaRef}
         className="form-control"
@@ -82,7 +82,7 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
         onChange={(e) => handleChange(e.target.value)}
         onBlur={handleSave}   
       />
-    </CollapsibleContainer>
+    </CollapsibleContainerAccordion>
   );
 };
 

@@ -1,5 +1,7 @@
 // CollapsibleContainer.tsx
 import React, { useState } from 'react';
+import { Accordion } from 'react-bootstrap';
+import { AccordionCard } from '../Containers/AccordionCard';
 
 interface CollapsibleContainerProps {
   label?: string;
@@ -42,3 +44,31 @@ const CollapsibleContainer: React.FC<CollapsibleContainerProps> = ({
 };
 
 export default CollapsibleContainer;
+
+
+
+export const CollapsibleContainerAccordion: React.FC<CollapsibleContainerProps> = ({
+  label = 'Section',
+  children,
+  headerExtra,
+}) => {
+
+  return (
+    <Accordion defaultActiveKey={label} className='mb-2'>
+      <AccordionCard eventKey={label}>
+        <AccordionCard.Header>
+          {label}
+          <AccordionCard.Controls>
+            {headerExtra}
+          </AccordionCard.Controls>
+        </AccordionCard.Header>
+        <AccordionCard.Body>
+          {children}
+        </AccordionCard.Body>
+      </AccordionCard>
+    </Accordion>
+
+  );
+};
+
+

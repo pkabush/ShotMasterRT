@@ -4,6 +4,8 @@ import AccordionContext from "react-bootstrap/AccordionContext";
 import Card from "react-bootstrap/Card";
 import Stack from "react-bootstrap/Stack";
 import { useAccordionButton } from "react-bootstrap";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCaretRight } from "@fortawesome/free-solid-svg-icons";
 
 const OPEN_COLOR = "rgba(59, 115, 171, 0.57)";
 const CLOSED_COLOR = "rgba(0, 0, 0, 0)";
@@ -72,7 +74,19 @@ const Header: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
                 borderRadius: 4,
             }}
         >
-            <div onClick={toggle} style={{ flex: 1, paddingLeft: 10 }}>
+            <div style={{
+                paddingLeft: 5,
+            }}>
+                <FontAwesomeIcon
+                    icon={faCaretRight}
+                    style={{
+                        width: 16,
+                        transition: "transform 0.2s ease",
+                        transform: isOpen ? "rotate(90deg)" : "rotate(0deg)",
+                    }}
+                />
+            </div>
+            <div onClick={toggle} style={{ flex: 1, paddingLeft: 5 }}>
                 {headerContent ?? eventKey}
             </div>
 
