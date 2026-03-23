@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import CollapsibleContainer, { CollapsibleContainerAccordion } from './Atomic/CollapsibleContainer';
+import { CollapsibleContainerAccordion } from './Atomic/CollapsibleContainer';
+import { Button } from 'react-bootstrap';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faArrowsDownToLine } from '@fortawesome/free-solid-svg-icons';
 
 export interface GenericTextEditorProps {
   label: string;
@@ -8,6 +11,7 @@ export interface GenericTextEditorProps {
   onEdit?: (newValue: string) => void;
   fitHeight?: boolean;
   headerExtra?: React.ReactNode; // new optional prop
+  collapsed?: boolean;
 }
 
 const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
@@ -16,7 +20,8 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
   onSave,
   onEdit,
   fitHeight = false,
-  headerExtra, // accept optional header extra
+  headerExtra, // accept optional header extra  
+  collapsed = false,
 }) => {
   const [text, setText] = useState(initialText);
   const [originalText, setOriginalText] = useState(initialText);
@@ -58,6 +63,13 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
   const defaultHeaderExtra = (
     <div className="d-flex align-items-center gap-2">
       {headerExtra && <>{headerExtra}</>}
+      <Button size='sm' variant='outline-primary' onClick={() => {
+        if (fitHeight && textareaRef.current) {
+          textareaRef.current.style.height = 'auto';
+          textareaRef.current.style.height = `${textareaRef.current.scrollHeight + 1}px`;
+        }
+      }}><FontAwesomeIcon icon={faArrowsDownToLine} /></Button>
+
       <button
         className="btn btn-primary btn-sm"
         disabled={saving || !hasChanges || !onSave}
@@ -65,11 +77,11 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
       >
         {saving ? 'Saving...' : hasChanges ? 'Save*' : 'Save'}
       </button>
-    </div>
+    </div >
   );
 
   return (
-    <CollapsibleContainerAccordion label={label} headerExtra={defaultHeaderExtra}>
+    <CollapsibleContainerAccordion label={label} headerExtra={defaultHeaderExtra} defaultCollapsed={collapsed}>
       <textarea
         ref={textareaRef}
         className="form-control"
@@ -80,7 +92,7 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
         }}
         value={text}
         onChange={(e) => handleChange(e.target.value)}
-        onBlur={handleSave}   
+        onBlur={handleSave}
       />
     </CollapsibleContainerAccordion>
   );

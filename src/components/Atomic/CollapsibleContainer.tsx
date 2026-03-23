@@ -9,6 +9,9 @@ interface CollapsibleContainerProps {
   defaultCollapsed?: boolean; // optional: start collapsed
   className?: string; // optional: extra classes for container
   headerExtra?: React.ReactNode; // optional: extra content in header (right side)
+  openColor?: string;
+  closedColor?: string;  
+  header?: React.ReactNode;
 }
 
 const CollapsibleContainer: React.FC<CollapsibleContainerProps> = ({
@@ -48,16 +51,20 @@ export default CollapsibleContainer;
 
 
 export const CollapsibleContainerAccordion: React.FC<CollapsibleContainerProps> = ({
-  label = 'Section',
+  label = 'Section',  
   children,
   headerExtra,
+  defaultCollapsed = false,
+  openColor,
+  closedColor,
+  header
 }) => {
 
   return (
-    <Accordion defaultActiveKey={label} className='mb-2'>
+    <Accordion defaultActiveKey={defaultCollapsed ? "" : label} className='mb-2'>
       <AccordionCard eventKey={label}>
-        <AccordionCard.Header>
-          {label}
+        <AccordionCard.Header closedColor={closedColor} openColor={openColor}>
+          {header ?? label}
           <AccordionCard.Controls>
             {headerExtra}
           </AccordionCard.Controls>

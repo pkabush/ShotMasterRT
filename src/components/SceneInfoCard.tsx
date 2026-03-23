@@ -38,14 +38,7 @@ const SceneInfoCard: React.FC<Props> = observer(({ scene }) => { // <--- observe
       <div style={{ marginBottom: "10px" }}>
         <SimpleButton onClick={handleDelete} label="Delete Scene" className="btn-outline-danger" />
         <SimpleButton onClick={() => scene.log()} label="LOG" />
-
       </div>
-
-      {/*<LoadingButton onClick={handleSplitIntoShotsAI} className="btn-outline-success" label="Split Into Shots GPT" is_loading={scene.is_generating_shotsjson}/>*/}
-      {/*
-      <PromptEditButton initialPrompt={scene.split_shots_prompt} promptLabel="Split Into Shots"/>
-      */}
-
 
       {/** GENERATE SHOTS JSON */}
       <SettingsButton className="mb-2"
@@ -69,25 +62,22 @@ const SceneInfoCard: React.FC<Props> = observer(({ scene }) => { // <--- observe
         content={
           <>
             <Button onClick={handleCreateShots} size="sm" className="mb-2">Create Shots From Json</Button>
-            <CollapsibleContainerAccordion label="Prompt">
+            <CollapsibleContainerAccordion label="Prompt" defaultCollapsed={true}>
               <div className="p-2">
 
-                <EditableJsonTextField localJson={scene.project.projinfo} field="workflows/split_scene_into_shots/system_message" fitHeight />
-                <EditableJsonTextField localJson={scene.project.projinfo} field="workflows/split_scene_into_shots/prompt" fitHeight />
+                <EditableJsonTextField localJson={scene.project.projinfo} field="workflows/split_scene_into_shots/system_message" fitHeight collapsed={true}/>
+                <EditableJsonTextField localJson={scene.project.projinfo} field="workflows/split_scene_into_shots/prompt" fitHeight collapsed={true}/>
                 <EditableJsonTextField localJson={scene.sceneJson} field="split_prompt" fitHeight />
               </div>
             </CollapsibleContainerAccordion>
-            <EditableJsonTextField localJson={scene.sceneJson} field="shotsjson" fitHeight />
+            <EditableJsonTextField localJson={scene.sceneJson} field="shotsjson" fitHeight collapsed={true}/>
           </>
         }
       />
 
       <GenTagsButton scene={scene} />
 
-
-      <EditableJsonTextField localJson={scene.sceneJson} field="script" fitHeight />
-
-
+      <EditableJsonTextField localJson={scene.sceneJson} field="script" fitHeight collapsed={true}/>
 
       <TagsFolderContainer tags={scene.references} folders={[scene.project, scene.project.artbook as LocalFolder, scene]} />
 
@@ -97,10 +87,6 @@ const SceneInfoCard: React.FC<Props> = observer(({ scene }) => { // <--- observe
 });
 
 export default SceneInfoCard;
-
-
-
-
 
 export const GenTagsButton: React.FC<Props> = observer(({ scene }) => {
   const wf_name = scene.workflows.generate_tags
@@ -134,8 +120,5 @@ export const GenTagsButton: React.FC<Props> = observer(({ scene }) => {
         </>
       }
     />
-
-
-
   </div>;
 });

@@ -8,6 +8,7 @@ import TabsContainer from "./TabsContainer";
 import SceneInfoCard from "./SceneInfoCard";
 import ShotsInfoStrip from "./ShotsInfoStrip";
 import TaskView from "./TaskView";
+import { Badge } from "react-bootstrap";
 
 interface ContentViewProps {
   project: Project | null;
@@ -31,8 +32,8 @@ export const ContentView: React.FC<ContentViewProps> = observer(({ project }) =>
       if (!project.selectedScene) return null;
       const scene = project.selectedScene;
       return (
-        <div>
-          <h2>{scene.name}</h2>
+        <div>          
+          <h2><Badge  bg="secondary">{scene.name}</Badge></h2>
           <TabsContainer
             tabs={{
               Scene: <SceneInfoCard scene={scene} />,

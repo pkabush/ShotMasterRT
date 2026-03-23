@@ -27,7 +27,7 @@ const ShotsInfoStrip: React.FC<Props> = observer(({ scene }) => {
   };
 
   return (
-    <div className="d-flex flex-column gap-3">
+    <div className="d-flex flex-column gap-2">
       {/* Resizable strip for shot previews */}
       <ResizableContainer initialHeight={200}>
         <div className="d-flex overflow-auto gap-2 h-100">
@@ -47,7 +47,7 @@ const ShotsInfoStrip: React.FC<Props> = observer(({ scene }) => {
       </ResizableContainer>
 
       {/* Buttons */}
-      <div>
+      <div className='my-0'>
         <LoadingButton onClick={() => { scene.generateAllShotImages() }} label="Generate ALL" is_loading={scene.is_generating_all_shot_images} />
         <SimpleButton label="Export Resolve XML" onClick={() => { scene.createResolveXML() }} />
 

@@ -13,6 +13,7 @@ import { Google_StylizeImageNode } from './GoogleNodes/Google_StylizeImageNode';
 import { Google_GenerateImageNode } from './GoogleNodes/Google_GenerateImageNode';
 import { Kling_LipSync } from './Kling/Kling_LipSync';
 import MultiStateToggle from './Atomic/MultiStateToggle';
+import { Badge } from 'react-bootstrap';
 
 interface Props {
   shot: Shot;
@@ -30,7 +31,7 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
   return (
     <>
       <div className="d-flex align-items-center justify-content-between mb-0">
-        <strong>{shot.name}</strong>
+        <h3><Badge  bg="secondary">{shot.name}</Badge></h3>
         <div className="d-flex gap-2">
 
           {/* Pick shot type - crude implementation, fix later */}

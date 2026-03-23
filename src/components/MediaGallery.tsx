@@ -1,5 +1,7 @@
 import React from 'react';
-import CollapsibleContainer from './Atomic/CollapsibleContainer'; // adjust path if needed
+import { CollapsibleContainerAccordion } from './Atomic/CollapsibleContainer'; // adjust path if needed
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faPhotoFilm } from '@fortawesome/free-solid-svg-icons';
 
 interface Props {
   label?: string;
@@ -19,11 +21,19 @@ const MediaGallery: React.FC<Props> = ({
   editWindow, // receive it
 }) => {
   return (
-    <CollapsibleContainer
+    <CollapsibleContainerAccordion
       label={label}
       defaultCollapsed={defaultCollapsed}
       className={className}
-      headerExtra={headerExtra} // pass it down
+      headerExtra={headerExtra} // pass it down   
+      openColor="#1f402c"
+      closedColor="#1b2d22"
+      header={
+        <>
+          {label}
+          <FontAwesomeIcon icon={faPhotoFilm} className="mx-2" style={{ color: '#3aaaeb', }} />
+        </>
+      }
     >
 
       {/* Children */}
@@ -38,7 +48,7 @@ const MediaGallery: React.FC<Props> = ({
         </div>
       )}
 
-    </CollapsibleContainer>
+    </CollapsibleContainerAccordion>
   );
 };
 

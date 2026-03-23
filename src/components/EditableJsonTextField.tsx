@@ -9,6 +9,7 @@ interface EditableJsonTextFieldProps {
   field: string;
   fitHeight?: boolean;
   headerExtra?: React.ReactNode;
+  collapsed?: boolean; 
 }
 
 const EditableJsonTextField: React.FC<EditableJsonTextFieldProps> = observer(({
@@ -16,6 +17,7 @@ const EditableJsonTextField: React.FC<EditableJsonTextFieldProps> = observer(({
   field,
   fitHeight = false,
   headerExtra,
+  collapsed = false,
 }) => {
   if (!localJson) return;
 
@@ -29,7 +31,8 @@ const EditableJsonTextField: React.FC<EditableJsonTextFieldProps> = observer(({
       initialText={localJson.getField(field) ?? ''} // <-- use getField instead of direct access
       onSave={handleSave}
       fitHeight={fitHeight}
-      headerExtra={headerExtra}
+      headerExtra={headerExtra}     
+      collapsed={collapsed} 
     />
   );
 });

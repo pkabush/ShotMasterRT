@@ -177,7 +177,6 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
                     ]} />
 
                     <>
-                      <>Prompt : </>
                       <EditableJsonTextField localJson={localImage.mediaJson} field={"image_edit_prompt"} fitHeight />
                     </>
 

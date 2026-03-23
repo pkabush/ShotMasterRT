@@ -46,7 +46,17 @@ const AccordionCardRoot: React.FC<AccordionCardProps> = ({
 
 /* -------------------- Header -------------------- */
 
-const Header: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
+interface HeaderProps {
+    children?: React.ReactNode;
+    openColor?: string;
+    closedColor?: string;
+}
+
+const Header: React.FC<HeaderProps> = ({
+    children,
+    openColor = OPEN_COLOR,
+    closedColor = CLOSED_COLOR,
+}) => {
     const { eventKey } = useAccordionCard();
     const { activeEventKey } = useContext(AccordionContext);
 
@@ -69,14 +79,12 @@ const Header: React.FC<{ children?: React.ReactNode }> = ({ children }) => {
             direction="horizontal"
             className="w-100 align-items-center py-0"
             style={{
-                backgroundColor: isOpen ? OPEN_COLOR : CLOSED_COLOR,
+                backgroundColor: isOpen ? openColor : closedColor,
                 cursor: "pointer",
                 borderRadius: 4,
             }}
         >
-            <div style={{
-                paddingLeft: 5,
-            }}>
+            <div onClick={toggle} style={{ paddingLeft: 5, }}>
                 <FontAwesomeIcon
                     icon={faCaretRight}
                     style={{

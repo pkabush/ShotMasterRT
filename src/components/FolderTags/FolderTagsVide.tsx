@@ -31,7 +31,7 @@ export const TagsFolderContainer: React.FC<TagsContainerProps> = observer(({
     return (
         <Accordion defaultActiveKey="TAGS" className="mb-2">
             <AccordionCard eventKey="TAGS">
-                <AccordionCard.Header>
+                <AccordionCard.Header closedColor="#544228" openColor="#a97428">
                     <>
                         References
                         <FontAwesomeIcon icon={faImages} className="mx-2" style={{
