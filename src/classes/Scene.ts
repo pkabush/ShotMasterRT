@@ -23,13 +23,13 @@ const default_sceneInfoJson = {
 
 export class Scene extends LocalFolder {
   sceneJson: LocalJson | null = null;
-  project: Project; // <--- new pointer to parent project
   is_generating_shotsjson = false;
   is_generating_tags = false;
   is_generating_all_shot_images = false;
   split_shots_prompt: Prompt | null = null;
   selectedShot: Shot | null = null;
   references: Tags | null = null;
+  storyboard: Storyboard | null = null;
 
   workflows = {
     generate_tags: "generate_tags_for_scene"
@@ -39,10 +39,13 @@ export class Scene extends LocalFolder {
     generated_tags_list: "generated_tags_list"
   }
 
+  get project(){
+    return Project.getProject(); 
+  }
+
   constructor(parentFolder: LocalFolder|null,handle: FileSystemDirectoryHandle) {
     super(parentFolder, handle);
-
-    this.project = Project.getProject(); // assign parent project
+    
     // makeObservable instead of makeAutoObservable
     makeObservable(this, {
       sceneJson: observable,
@@ -55,6 +58,7 @@ export class Scene extends LocalFolder {
       finishedShotsNum: computed,
       selectShot: action,
       shots: computed,
+      project:computed,
     });
   }
 
@@ -70,9 +74,9 @@ export class Scene extends LocalFolder {
     try {
       this.sceneJson = await LocalJson.create(this.handle, 'sceneinfo.json', default_sceneInfoJson);
       this.references = new Tags(this, this.sceneJson);
-      this.load_subfolders(Shot);
+      await this.load_subfolders(Shot);
       // Load StoryBoard Later to overwrite
-      LocalFolder.open(this,"Storyboard",Storyboard);
+      this.storyboard = await LocalFolder.open(this,"Storyboard",Storyboard);
     } catch (err) {
       console.error('Error loading scene:', err);
       this.sceneJson = null;
@@ -140,6 +144,10 @@ export class Scene extends LocalFolder {
         return shotIndex >= targetIndex;
       }
     }).length;
+  }
+
+  get script() {
+    return this.sceneJson?.data?.script;
   }
 
   async generateShotsJson(): Promise<string | null> {

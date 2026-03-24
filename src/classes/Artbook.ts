@@ -50,7 +50,7 @@ export class Artbook extends LocalFolder {
   async load() {
     // Load all subfolders and images    
     await this.load_subfolders();
-    console.log("AB", this)
+    //console.log("AB", this)
 
     this.characters_folder = await LocalFolder.open(this, "ПЕРСОНАЖИ")
     this.environment_folder = await LocalFolder.open(this, "ЛОКАЦИИ")

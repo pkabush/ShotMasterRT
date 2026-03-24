@@ -18,6 +18,7 @@ export type AIGenerateParms = {
     system?: string;
     images?: AIImageInput[];
     model: string;
+    aspect_ratio?: string;
 };
 
 export type ImageResult = {
@@ -56,8 +57,7 @@ export interface AIProvider {
 }
 
 
-export class AI {
-    
+export class AI {   
 
   public static async GenerateText(params: AIGenerateParms): Promise<string | null> {
     const provider: AIProvider | null = resolveModel(params.model);

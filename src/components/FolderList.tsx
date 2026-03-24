@@ -9,7 +9,9 @@ type FolderListProps = {
 };
 
 const FolderList: React.FC<FolderListProps> = observer(({ project }) => {
+ 
   if (!project) return <div>No Project Opened</div>;
+
 
   const handleAddScene = async () => {
     const sceneName = prompt("Enter new scene name");

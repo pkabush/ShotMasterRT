@@ -155,7 +155,7 @@ export const MediaFolderGallery: React.FC<MediaFolderGalleryProps> = observer(
                         </HoverContainer>
                     ))}
 
-                    <DropArea width={100} height={itemHeight} onDrop={async (files) => { await mediaFolder.saveFiles(files); }}>
+                    <DropArea width={100} height={itemHeight} onDropFiles={async (files) => { await mediaFolder.saveFiles(files); }}>
                     </DropArea>
                 </MediaGallery>
             </>

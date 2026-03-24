@@ -8,7 +8,7 @@ export const PreviewStrip = ({ children }: PropsWithChildren) => {
     return (
         <div className="d-flex flex-column gap-3">
             <ResizableContainer initialHeight={200}>
-                <div className="d-flex overflow-auto gap-2 h-100">
+                <div className="d-flex overflow-auto gap-0 h-100">
                     {children}
                 </div>
             </ResizableContainer>
@@ -26,7 +26,7 @@ export const ShotStripItem = ({ children, isSelected = false, onClick }: ShotStr
     return (
         <div
             onClick={onClick}
-            className="flex-shrink-0 position-relative d-flex align-items-center justify-content-center"
+            className="flex-shrink-0 position-relative d-flex align-items-center justify-content-center overflow-hidden"
             style={{
                 height: '100%',
                 cursor: 'pointer',

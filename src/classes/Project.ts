@@ -134,7 +134,7 @@ export class Project extends LocalFolder {
   private static _instance: Project | null = null;
 
   static getProject(): Project {
-    if (!Project._instance) {
+    if (!Project._instance) {      
       throw new Error("Project instance not initialized. Call constructor first.");
     }
     return Project._instance;
@@ -147,14 +147,14 @@ export class Project extends LocalFolder {
   currentView: ProjectView = { type: "none" };
   selectedScene: Scene | null = null;
   timelinesDirHandle: LocalFolder | null = null;
+  id = 0;
 
   scenesLocalFolder: LocalFolder | null = null;
 
   constructor(parentFolder: FileSystemDirectoryHandle, userSettingsDB: UserSettingsDB) {
     super(null, parentFolder);
-
+    if(Project._instance) this.id = Project._instance.id+1;
     Project._instance = this;
-
     this.userSettingsDB = userSettingsDB;
 
     makeObservable(this, {
@@ -164,6 +164,7 @@ export class Project extends LocalFolder {
       currentView: observable,
       selectedScene: observable,
       loadFromFolder: action,
+      loadScenes:action,
       setView: action,
       setScene: action,
       scenes:computed
@@ -171,9 +172,9 @@ export class Project extends LocalFolder {
   }
 
   get scenes(){
-    return this.scenesLocalFolder?.getType(Scene) ;
+    //console.log("Get Scenes",this.scenesLocalFolder?.getType(Scene));
+    return this.scenesLocalFolder?.getType(Scene);
   }
-
 
   async loadFromFolder(handle: FileSystemDirectoryHandle) {
     if (!handle) return;
@@ -224,8 +225,7 @@ export class Project extends LocalFolder {
     try {
       const scenesFolder = await this.handle.getDirectoryHandle("SCENES", { create: true });
       this.scenesLocalFolder = new LocalFolder(this, scenesFolder);
-      this.scenesLocalFolder.load_subfolders(Scene);
-
+      await this.scenesLocalFolder.load_subfolders(Scene);
     } catch (err) {
       console.error("Error loading scenes:", err);
     }
@@ -303,6 +303,7 @@ export class Project extends LocalFolder {
   }
 
   setView(view: ProjectView, scene: Scene | null = null) {
+    //console.log("SET VIEW",scene,view)
     this.currentView = view;
     this.selectedScene = scene;
   }
@@ -354,6 +355,3 @@ export type Workflow = {
   keep_original_sound?: string;
   system_message?: string;
 };
-
-
-

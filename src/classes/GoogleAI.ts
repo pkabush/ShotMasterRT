@@ -157,7 +157,8 @@ export class GoogleAI implements AIProvider {
     const res = await GoogleAI.img2img(
       params.prompt,
       params.model,
-      params.images
+      params.images,
+      params.aspect_ratio,      
     );
     if (!res) return null;
     return res as ImageResult;

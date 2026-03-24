@@ -12,7 +12,6 @@ const App: React.FC = observer(() => {
   const [project, setProject] = useState<Project | null>(null);
   const userSettingsDB = useRef<UserSettingsDB>(new UserSettingsDB())
 
-
   const handleOpenFolder = async () => {
     try {
       const handle = await (window as any).showDirectoryPicker();
@@ -56,7 +55,8 @@ const App: React.FC = observer(() => {
       }
     };
 
-    init();
+    if(!project) init();
+
   }, []);
 
   return (

@@ -73,7 +73,7 @@ export abstract class LocalItem {
     getByAbsPath<T extends LocalItem>(
         targetPath: string,
         type?: new (...args: any[]) => T
-    ): T | null {
+    ): T | null {        
         return this.root.getByPath(targetPath, type);
     }
 

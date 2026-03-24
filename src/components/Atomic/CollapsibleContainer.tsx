@@ -74,7 +74,30 @@ export const CollapsibleContainerAccordion: React.FC<CollapsibleContainerProps> 
         </AccordionCard.Body>
       </AccordionCard>
     </Accordion>
+  );
+};
 
+export const CollapsibleAccordionCard: React.FC<CollapsibleContainerProps> = ({
+  label = 'Section',  
+  children,
+  headerExtra,
+  openColor,
+  closedColor,
+  header
+}) => {
+
+  return (
+      <AccordionCard eventKey={label}>
+        <AccordionCard.Header closedColor={closedColor} openColor={openColor}>
+          {header ?? label}
+          <AccordionCard.Controls>
+            {headerExtra}
+          </AccordionCard.Controls>
+        </AccordionCard.Header>
+        <AccordionCard.Body>
+          {children}
+        </AccordionCard.Body>
+      </AccordionCard>
   );
 };
 

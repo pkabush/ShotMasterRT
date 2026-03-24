@@ -36,7 +36,6 @@ export class Character extends MediaFolder {
             generateLook: action,
             load: action,
             addVariation: action,
-
             variations: computed,
         });
     }

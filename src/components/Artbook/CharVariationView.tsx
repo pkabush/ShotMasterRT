@@ -118,7 +118,7 @@ export const AddVariationCard: React.FC<AddVariationCardProps> = ({ character })
                 <DropArea
                     height={'100px'}
                     width={"100%"}
-                    onDrop={(files) => {
+                    onDropFiles={(files) => {
                         console.log("test", files);
                         // future: character.addVariationFromFiles(files)
                     }}

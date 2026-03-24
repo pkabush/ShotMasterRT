@@ -30,7 +30,10 @@ const MediaImage: React.FC<Props> = observer(({ localImage, ...props }) => {
     return <div>Loading...</div>;
   }
 
-  return <img src={localImage.urlObject!} {...props} />;
+  return <img src={localImage.urlObject!} {...props}
+    onDragStart={(e) => {
+      e.dataTransfer.setData("LocalFilePath", localImage.path);
+    }} />;
 });
 
 export default MediaImage;

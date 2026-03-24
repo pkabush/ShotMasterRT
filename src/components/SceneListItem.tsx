@@ -10,8 +10,10 @@ type Props = {
 
 // Wrap component in observer
 const SceneListItem: React.FC<Props> = observer(({ scene }) => {
-  const handleClick = () => {
-    if (!scene || !scene.sceneJson) return;
+  const handleClick = () => {    
+    console.log("SCENE CLICKED: ",scene, scene.project)
+
+    if (!scene || !scene.sceneJson) return;    
     scene.project?.setView({ type: "scene" }, scene);
   };
 

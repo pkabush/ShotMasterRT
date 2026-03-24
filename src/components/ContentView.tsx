@@ -4,12 +4,9 @@ import { Project } from "../classes/Project";
 import { SettingsView } from "./SettingsView";
 import { ScriptView } from "./ScriptView";
 import { ArtbookView } from "./Artbook/ArtbookView";
-import TabsContainer from "./TabsContainer";
-import SceneInfoCard from "./SceneInfoCard";
-import ShotsInfoStrip from "./ShotsInfoStrip";
 import TaskView from "./TaskView";
-import { Badge, Stack } from "react-bootstrap";
-import SimpleButton from "./Atomic/SimpleButton";
+import {  Button } from "react-bootstrap";
+import { SceneView } from "./SceneView";
 
 interface ContentViewProps {
   project: Project | null;
@@ -30,29 +27,13 @@ export const ContentView: React.FC<ContentViewProps> = observer(({ project }) =>
         <div>No Artbook found.</div>
       );
     case "scene":
-      if (!project.selectedScene) return null;
-      const scene = project.selectedScene;
-      return (
-        <div>
-          <Stack direction="horizontal">
-            <h2><Badge bg="secondary">{scene.name}</Badge></h2>
-            <SimpleButton onClick={() => {scene.delete()}} label="Delete Scene" className="btn-outline-danger ms-auto" />
-            <SimpleButton onClick={() => scene.log()} label="LOG" />
-          </Stack>
-
-          <TabsContainer
-            tabs={{
-              Scene: <SceneInfoCard scene={scene} />,
-              Shots: <ShotsInfoStrip scene={scene} />,
-            }}
-          />
-        </div>
-      );
+      if (!project.selectedScene) return null;      
+      return <SceneView scene={project.selectedScene}/>;
     case "taskview":
       return <TaskView project={project} />;
 
 
     default:
-      return null;
+      return <Button onClick={() => console.log("Project:",project)}>LOG</Button>;
   }
 });

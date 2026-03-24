@@ -1,7 +1,7 @@
 import React, { type ReactNode, useState } from "react";
 
 interface HoverContainerProps {
-    children: ReactNode;       // Main content
+    children?: ReactNode;       // Main content
     hoverElements?: ReactNode; // Elements to show on hover
 }
 
@@ -41,3 +41,31 @@ const HoverContainer: React.FC<HoverContainerProps> = ({
 };
 
 export default HoverContainer;
+
+
+
+export const HoverContainerFill: React.FC<HoverContainerProps> = ({
+    children,
+}) => {
+    const [hovered, setHovered] = useState(false);
+    if (!children) return null;
+
+    return (
+        <div
+            style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+            }} // wrap children
+            onMouseEnter={() => setHovered(true)}
+            onMouseLeave={() => setHovered(false)}
+        >
+            {/* Hover elements: cover the whole container */}
+            {hovered &&  children }
+        </div>
+    );
+};
+
+
