@@ -142,7 +142,7 @@ const ShotStripPreview: React.FC<Props> = observer(({ shot, isSelected, onClick 
 
         <MultiStateToggle
           states={Shot.shot_states}
-          value={shot.shotJson!.data?.shot_state || Object.keys(Shot.shot_states)[0]}
+          value={shot.shotJson?.data?.shot_state || Object.keys(Shot.shot_states)[0]}
           onChange={(newState) => { if (shot.shotJson) { shot.shotJson.updateField("shot_state", newState); } }}
           useIndicator={true}
         />

@@ -2,7 +2,7 @@
 import { Scene } from './Scene';
 import { LocalJson } from './LocalJson';
 import { LocalImage } from './fileSystem/LocalImage';
-import { makeObservable, observable, runInAction } from "mobx";
+import { action, makeObservable, observable, runInAction } from "mobx";
 import { GoogleAI } from './GoogleAI';
 import { KlingAI, type LipSyncFaceChoose } from './KlingAI';
 import { Task } from './Task';
@@ -20,7 +20,7 @@ import { Tags } from './Tags';
 export class Shot extends LocalFolder {
   shotJson: LocalJson | null = null;
   tasks: Task[] = [];
-  references:Tags | null = null;
+  references: Tags | null = null;
 
   // Processes
   is_submitting_video = false;
@@ -33,14 +33,17 @@ export class Shot extends LocalFolder {
     "Finished": "#007118",
   }
 
+  public static shot_states_keys = Object.keys(Shot.shot_states);
+
   // MediaFolders
   MediaFolder_results: MediaFolder | null = null;
   MediaFolder_genVideo: MediaFolder | null = null;
   MediaFolder_refVideo: MediaFolder | null = null;
   MediaFolder_Audio: MediaFolder | null = null;
 
-  constructor(handle: FileSystemDirectoryHandle, scene: Scene) {
-    super(scene, handle);
+
+  constructor(parent: LocalFolder | null, handle: FileSystemDirectoryHandle) {
+    super(parent, handle);
 
     // Use makeObservable because we extend LocalFolder
     makeObservable(this, {
@@ -53,18 +56,57 @@ export class Shot extends LocalFolder {
       MediaFolder_refVideo: observable,
       MediaFolder_Audio: observable,
       references: observable,
+      load: action,
     });
   }
 
+  async load(): Promise<void> {
+    try {
+      const shotJson = await LocalJson.create(this.handle, 'shotinfo.json');
+      const references = new Tags(this, shotJson);
+
+      const results = await MediaFolder.create(this, "results");
+      results.tags = ["start_frame", "end_frame", "ref_frame", "unreal_frame"];
+
+      const genVideo = await MediaFolder.create(this, "genVideo");
+      genVideo.tags = ["picked", "lipsync", "picked_extra"];
+
+      const refVideo = await MediaFolder.create(this, "refVideo");
+      refVideo.tags = ["motion_ref"];
+
+      const audio = await MediaFolder.create(this, "audio");
+      audio.tags = ["ID-0", "ID-1", "ID-2"];
+
+      runInAction(() => {
+        this.shotJson = shotJson;
+        this.references = references;
+        this.MediaFolder_results = results;
+        this.MediaFolder_genVideo = genVideo;
+        this.MediaFolder_refVideo = refVideo;
+        this.MediaFolder_Audio = audio;
+      });
+
+      this.loadTasks();
+
+    } catch (err) {
+      console.error('Error loading shot:', this.name, err);
+
+      runInAction(() => {
+        this.shotJson = null;
+      });
+    }
+  }
+
+  // ----- GETTERS ---------------------
+  get state() {
+    return this.shotJson?.data.shot_state ?? Shot.shot_states_keys[0]
+  }
   get scene(): Scene {
     return this.parentFolder as Scene;
   }
-
   get mediafolders() {
     return [this.MediaFolder_results, this.MediaFolder_Audio, this.MediaFolder_genVideo, this.MediaFolder_refVideo]
   }
-
-  // GETTERS FOR CONVINIENCE
   get previewMedia(): LocalMedia | null {
     return this.outVideo ||
       this.srcImage ||
@@ -73,60 +115,32 @@ export class Shot extends LocalFolder {
       null;
   }
   get srcImage(): LocalImage | null {
-    return this.MediaFolder_results!.getFirstMediaWithTag("start_frame") as LocalImage;
+    return this.MediaFolder_results?.getFirstMediaWithTag("start_frame") as LocalImage;
   }
   get end_frame(): LocalImage | null {
-    return this.MediaFolder_results!.getFirstMediaWithTag("end_frame") as LocalImage;
+    return this.MediaFolder_results?.getFirstMediaWithTag("end_frame") as LocalImage;
   }
   get kling_motion_video(): LocalVideo | null {
-    return this.MediaFolder_refVideo!.getFirstMediaWithTag("motion_ref") as LocalVideo;
+    return this.MediaFolder_refVideo?.getFirstMediaWithTag("motion_ref") as LocalVideo;
   }
   get outVideo(): LocalVideo | null {
-    return this.MediaFolder_genVideo!.getFirstMediaWithTag("picked") as LocalVideo;
+    return this.MediaFolder_genVideo?.getFirstMediaWithTag("picked") as LocalVideo;
   }
   get pickedExtraVideo(): LocalVideo[] | [] {
-    return this.MediaFolder_genVideo!.getMediaWithTag("picked_extra") as LocalVideo[];
+    return this.MediaFolder_genVideo?.getMediaWithTag("picked_extra") as LocalVideo[];
   }
   get outVideoLipsync(): LocalVideo | null {
-    return this.MediaFolder_genVideo!.getFirstMediaWithTag("lipsync") as LocalVideo;
+    return this.MediaFolder_genVideo?.getFirstMediaWithTag("lipsync") as LocalVideo;
   }
   get unreal_frame(): LocalImage | null {
-    return this.MediaFolder_results!.getFirstMediaWithTag("unreal_frame") as LocalImage;
+    return this.MediaFolder_results?.getFirstMediaWithTag("unreal_frame") as LocalImage;
   }
   get kling_face_id_data(): any | null {
     if (!this.outVideo) return null;
     return this.shotJson?.getField("KlingFaceID/" + this.outVideo.name);
   }
 
-  async load(): Promise<void> {
-    try {
-      this.shotJson = await LocalJson.create(this.handle, 'shotinfo.json');      
-      this.references = new Tags(this, this.shotJson);
-
-      // Load Media Folders
-      this.MediaFolder_results = await MediaFolder.create(this, "results");
-      this.MediaFolder_results.tags = ["start_frame", "end_frame", "ref_frame", "unreal_frame"];
-
-
-      this.MediaFolder_genVideo = await MediaFolder.create(this, "genVideo");
-      this.MediaFolder_genVideo.tags = ["picked", "lipsync", "picked_extra"];
-
-      this.MediaFolder_refVideo = await MediaFolder.create(this, "refVideo");
-      this.MediaFolder_refVideo.tags = ["motion_ref"];
-
-
-      this.MediaFolder_Audio = await MediaFolder.create(this, "audio");
-      this.MediaFolder_Audio.tags = ["ID-0", "ID-1", "ID-2"];
-
-      // Load Tasks      
-      this.loadTasks();
-
-    } catch (err) {
-      console.error('Error loading shot:', this.name, err);
-      this.shotJson = null;
-    }
-  }
-
+  // --- TASKS -----------
   loadTasks(): void {
     const tasksData = this.shotJson?.getField("tasks");
     runInAction(() => {
@@ -156,20 +170,97 @@ export class Shot extends LocalFolder {
     this.shotJson?.updateField("tasks", tasks);
   }
 
-  async delete(): Promise<void> {
-    if (!this.scene?.handle) {
-      console.error("Cannot delete shot: scene folder not set");
-      return;
-    }
+  // --- GENERATIONS -----------
+
+  async GenerateImage() {
+    runInAction(() => { this.is_generating = true; });
 
     try {
-      await this.scene.handle.removeEntry(this.name, { recursive: true });
+      const images = await this.references?.GetAI_Images() ?? [];
+      const prompt = this.shotJson?.data.prompt || "";
 
-      runInAction(() => {
-        this.scene.shots = this.scene.shots.filter(s => s !== this);
-      });
+      const result = await GoogleAI.img2img(
+        prompt,
+        this.scene.project.workflows.generate_shot_image.model,
+        images
+      );
+
+      const localImage: LocalImage | null =
+        await GoogleAI.saveResultImage(
+          result,
+          this.MediaFolder_results as LocalFolder
+        );
+
+      if (localImage) {
+        localImage?.mediaJson?.updateField("geninfo", {
+          workflow: "shot_generate_image",
+          prompt: prompt,
+          model: this.scene.project.workflows.generate_shot_image.model,
+          art_refs: this.references?.get_active_tags ?? [],
+        })
+      }
+
     } catch (err) {
-      console.error("Failed to delete shot:", err);
+      console.error("GenerateImage failed:", err);
+    } finally {
+      runInAction(() => { this.is_generating = false; });
+    }
+  }
+
+  async StylizeImage() {
+    if (!this.unreal_frame) { console.error("No Reference Frame"); return; }
+
+    runInAction(() => { this.is_generating = true; });
+
+    try {
+      const images: AIImageInput[] = [];
+
+      // Base image first
+      const base64Obj = await this.unreal_frame.getBase64();
+      images.push({
+        rawBase64: base64Obj.rawBase64,
+        mime: base64Obj.mime,
+        description: "Base Image",
+      });
+
+      // Tag images
+      images.push(...await this.references?.GetAI_Images() ?? []);
+
+      const prompt =
+        (this.scene.project.workflows.stylize_image_google.prompt || "") +
+        (this.shotJson?.data.stylize_prompt || "");
+
+      const result = await GoogleAI.img2img(
+        prompt,
+        this.scene.project.workflows.stylize_image_google.model,
+        images,
+        this.scene.project.workflows.stylize_image_google.aspect_ratio || GoogleAI.options.aspect_ratios.r9x16,
+      );
+
+      const localImage: LocalImage | null =
+        await GoogleAI.saveResultImage(
+          result,
+          this.MediaFolder_results as LocalFolder
+        );
+
+      if (localImage) {
+        // Save Generation Info
+        localImage?.mediaJson?.updateField("geninfo", {
+          workflow: "stylize_image_google",
+          global_prompt: this.scene.project.workflows.stylize_image_google.prompt || "",
+          prompt: this.shotJson?.data.stylize_prompt || "",
+          model: this.scene.project.workflows.stylize_image_google.model,
+          art_refs: this.references?.get_active_tags ?? [],
+          source: this.unreal_frame.path,
+        })
+
+      }
+    } catch (err) {
+      console.error("StylizeImage failed:", err);
+    } finally {
+      runInAction(() => {
+        this.is_generating = false;
+      });
     }
   }
 
@@ -391,131 +482,7 @@ export class Shot extends LocalFolder {
     }
   }
 
-
-
-  async GenerateImage() {
-    runInAction(() => { this.is_generating = true; });
-
-    try {
-      const images = await this.references?.GetAI_Images() ?? [];
-      const prompt = this.shotJson?.data.prompt || "";
-
-      const result = await GoogleAI.img2img(
-        prompt,
-        this.scene.project.workflows.generate_shot_image.model,
-        images
-      );
-
-      const localImage: LocalImage | null =
-        await GoogleAI.saveResultImage(
-          result,
-          this.MediaFolder_results as LocalFolder
-        );
-
-      if (localImage) {
-        localImage?.mediaJson?.updateField("geninfo", {
-          workflow: "shot_generate_image",
-          prompt: prompt,
-          model: this.scene.project.workflows.generate_shot_image.model,
-          art_refs: this.references?.get_active_tags ?? [],
-        })
-      }
-
-    } catch (err) {
-      console.error("GenerateImage failed:", err);
-    } finally {
-      runInAction(() => { this.is_generating = false; });
-    }
-  }
-
-  async StylizeImage() {
-    if (!this.unreal_frame) { console.error("No Reference Frame"); return; }
-
-    runInAction(() => { this.is_generating = true; });
-
-    try {
-      const images: AIImageInput[] = [];
-
-      // Base image first
-      const base64Obj = await this.unreal_frame.getBase64();
-      images.push({
-        rawBase64: base64Obj.rawBase64,
-        mime: base64Obj.mime,
-        description: "Base Image",
-      });
-
-      // Tag images
-      images.push(...await this.references?.GetAI_Images() ?? []);
-
-      const prompt =
-        (this.scene.project.workflows.stylize_image_google.prompt || "") +
-        (this.shotJson?.data.stylize_prompt || "");
-
-      const result = await GoogleAI.img2img(
-        prompt,
-        this.scene.project.workflows.stylize_image_google.model,
-        images,
-        this.scene.project.workflows.stylize_image_google.aspect_ratio || GoogleAI.options.aspect_ratios.r9x16,
-      );
-
-      const localImage: LocalImage | null =
-        await GoogleAI.saveResultImage(
-          result,
-          this.MediaFolder_results as LocalFolder
-        );
-
-      if (localImage) {
-        // Save Generation Info
-        localImage?.mediaJson?.updateField("geninfo", {
-          workflow: "stylize_image_google",
-          global_prompt: this.scene.project.workflows.stylize_image_google.prompt || "",
-          prompt: this.shotJson?.data.stylize_prompt || "",
-          model: this.scene.project.workflows.stylize_image_google.model,
-          art_refs: this.references?.get_active_tags ?? [],
-          source: this.unreal_frame.path,
-        })
-
-      }
-    } catch (err) {
-      console.error("StylizeImage failed:", err);
-    } finally {
-      runInAction(() => {
-        this.is_generating = false;
-      });
-    }
-  }
-
-  getSkippedTags(): string[] {
-    return this.shotJson?.data?.skippedTags || [];
-  }
-
-  setTagSkipped(tag_path: string, status: boolean) {
-    if (!this.shotJson?.data) return;
-
-    // ensure skippedTags is initialized
-    if (!Array.isArray(this.shotJson.data.skippedTags)) {
-      this.shotJson.data.skippedTags = [];
-    }
-
-    runInAction(() => {
-      const tags = this.shotJson!.data!.skippedTags;
-
-      if (status) {
-        if (!tags.includes(tag_path)) {
-          tags.push(tag_path);
-        }
-      } else {
-        this.shotJson!.data!.skippedTags = tags.filter((t: string) => t !== tag_path);
-      }
-    });
-
-    // persist to JSON after mutation
-    this.shotJson.save();
-  }
-
 }
-
-
 
 export function getCurrentTimestampUTC(): string {
   const now = new Date();

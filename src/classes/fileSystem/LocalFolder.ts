@@ -1,6 +1,7 @@
 import { LocalAudio } from "./LocalAudio";
-import { LocalFile, LocalItem } from "./LocalFile";
+import { LocalFile } from "./LocalFile";
 import { LocalImage } from "./LocalImage";
+import { LocalItem } from "./LocalItem";
 import { LocalVideo } from "./LocalVideo";
 
 export class LocalFolder extends LocalItem {
@@ -26,7 +27,9 @@ export class LocalFolder extends LocalItem {
         }
 
         const FolderClass = FolderType || LocalFolder;
-        return new FolderClass(parentFolder, handle) as T;
+        const folder=  new FolderClass(parentFolder, handle) as T;
+        await folder.load();
+        return folder;
     }
 
     constructor(
@@ -37,23 +40,18 @@ export class LocalFolder extends LocalItem {
         this.handle = handle;      
     }
 
-    get name(): string {
-        return this.handle?.name;
-    }
-
     async load_subfolders<T extends LocalFolder = LocalFolder>(SubfolderType?: new (parent: LocalFolder, handle: FileSystemDirectoryHandle) => T) {
         const FolderClass = SubfolderType || LocalFolder;
         for await (const [_, entry] of this.handle.entries()) {
             if (entry.kind === "directory") {
-                new FolderClass(this, entry as FileSystemDirectoryHandle);
+                const loaded_folder = new FolderClass(this, entry as FileSystemDirectoryHandle);
+                await loaded_folder.load();
             }
         }
     }
 
     get subfolders(): LocalFolder[] {
-        return this.children.filter(
-            (child): child is LocalFolder => child instanceof LocalFolder
-        );
+        return this.getType(LocalFolder);
     }
 
     async load_file(fileHandle: FileSystemFileHandle): Promise<LocalFile> {
@@ -75,7 +73,6 @@ export class LocalFolder extends LocalItem {
         return localFile;
     }
 
-
     async load_files() {
         for await (const [_, entry] of this.handle.entries()) {
             if (entry.kind === "file") {
@@ -83,7 +80,6 @@ export class LocalFolder extends LocalItem {
             }
         }
     }
-
 
     async save_file(file: File): Promise<LocalFile> {
         if (!this.handle) { throw new Error("Folder not loaded"); }
@@ -112,9 +108,7 @@ export class LocalFolder extends LocalItem {
     }
 
     get files(): LocalFile[] {
-        return this.children.filter(
-            (child): child is LocalFile => child instanceof LocalFile
-        );
+        return this.getType(LocalFile);
     }
     
     getType<T extends LocalItem>(
@@ -233,6 +227,8 @@ export class LocalFolder extends LocalItem {
         }
     }
 }
+
+
 
 export const file_type_map: [typeof LocalFile, string[]][] = [
     [LocalImage, ["png", "jpg", "jpeg", "gif", "webp"]],

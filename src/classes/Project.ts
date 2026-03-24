@@ -127,7 +127,6 @@ const default_projinfo = {
     }
 
   },
-
 }
 
 
@@ -141,7 +140,6 @@ export class Project extends LocalFolder {
     return Project._instance;
   }
 
-  scenes: Scene[] = [];
   artbook: Artbook | null = null;
   script: Script | null = null;         // <--- Added
   userSettingsDB: UserSettingsDB;
@@ -161,7 +159,6 @@ export class Project extends LocalFolder {
 
     makeObservable(this, {
       parentFolder: observable,
-      scenes: observable,
       artbook: observable,
       script: observable,
       currentView: observable,
@@ -170,6 +167,10 @@ export class Project extends LocalFolder {
       setView: action,
       setScene: action,
     });
+  }
+
+  get scenes(){
+    return this.scenesLocalFolder?.getType(Scene);
   }
 
 
@@ -222,26 +223,10 @@ export class Project extends LocalFolder {
     try {
       const scenesFolder = await this.handle.getDirectoryHandle("SCENES", { create: true });
       this.scenesLocalFolder = new LocalFolder(this, scenesFolder);
-
-      const loadedScenes: Scene[] = [];
-
-      for await (const entry of (scenesFolder as any).values()) {
-        if (entry.kind === "directory") {
-          const scene = new Scene(entry, this, this.scenesLocalFolder);
-          await scene.load();
-          loadedScenes.push(scene);
-        }
-      }
-
-      runInAction(() => {
-        this.scenes = loadedScenes;
-      });
+      this.scenesLocalFolder.load_subfolders(Scene);
 
     } catch (err) {
       console.error("Error loading scenes:", err);
-      runInAction(() => {
-        this.scenes = [];
-      });
     }
   }
 
@@ -312,54 +297,21 @@ export class Project extends LocalFolder {
       return null;
     }
 
-    const existingScene = this.scenes.find(s => s.handle.name === sceneName);
-    if (existingScene) return existingScene;
-
-    try {
-      const scenesFolder = await this.handle.getDirectoryHandle("SCENES", {
-        create: true,
-      });
-
-      const newSceneFolder = await scenesFolder.getDirectoryHandle(sceneName, {
-        create: true,
-      });
-
-      const scene = new Scene(newSceneFolder, this, this.scenesLocalFolder!);
-      await scene.load();
-
-      runInAction(() => {
-        const index = this.scenes.findIndex(
-          (s) => s.name.localeCompare(scene.name) > 0
-        );
-        if (index === -1) {
-          this.scenes.push(scene);
-        } else {
-          this.scenes.splice(index, 0, scene);
-        }
-      });
-
-      return scene;
-
-    } catch (err) {
-      console.error("Failed to create scene:", err);
-      return null;
-    }
+    const scene = LocalFolder.open(this.scenesLocalFolder,sceneName,Scene);
+    return scene;
   }
 
   setView(view: ProjectView, scene: Scene | null = null) {
     this.currentView = view;
     this.selectedScene = scene;
   }
-
   setScene(scene: Scene) {
     this.setView({ type: "scene" }, scene);
   }
-
   get promptPresets() {
     if (!this.projinfo) return {};
     return this.projinfo.data.prompt_presets;
   }
-
   savePromptPreset(data: any) {
     runInAction(() => {
       if (!this.projinfo) return;
@@ -367,11 +319,9 @@ export class Project extends LocalFolder {
       this.projinfo?.save();
     })
   }
-
   get workflows() {
     return this.projinfo?.data.workflows as Record<string, Workflow>;
   }
-
   updateWorkflow(workflow: string, key: keyof Workflow, value: string) {
     runInAction(() => {
       if (!this.workflows[workflow]) { this.workflows[workflow] = {}; }
@@ -379,7 +329,6 @@ export class Project extends LocalFolder {
       this.projinfo?.save();
     })
   }
-
   download_asset(path: string, name: string) {
     const link = document.createElement("a");
 
@@ -390,7 +339,6 @@ export class Project extends LocalFolder {
     link.click();
     document.body.removeChild(link);
   }
-
 }
 
 

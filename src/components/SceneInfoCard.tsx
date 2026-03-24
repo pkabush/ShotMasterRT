@@ -2,7 +2,6 @@ import React from "react";
 import { observer } from "mobx-react-lite"; // <--- important
 import { Scene } from "../classes/Scene";
 import EditableJsonTextField from "./EditableJsonTextField";
-import SimpleButton from "./Atomic/SimpleButton";
 import SimpleSelect from "./Atomic/SimpleSelect";
 import LoadingSpinner from "./Atomic/LoadingSpinner";
 import { models } from "../classes/ChatGPT";
@@ -23,23 +22,12 @@ const SceneInfoCard: React.FC<Props> = observer(({ scene }) => { // <--- observe
     return <div>No scene data available.</div>;
   }
 
-  const handleDelete = async () => {
-    const confirmed = window.confirm(`Are you sure you want to delete scene "${scene.name}"?`);
-    if (!confirmed) return;
-
-    await scene.delete();
-  };
   const handleCreateShots = async () => {
     scene.createShotsFromShotsJson();
   };
 
   return (
     <div>
-      <div style={{ marginBottom: "10px" }}>
-        <SimpleButton onClick={handleDelete} label="Delete Scene" className="btn-outline-danger" />
-        <SimpleButton onClick={() => scene.log()} label="LOG" />
-      </div>
-
       {/** GENERATE SHOTS JSON */}
       <SettingsButton className="mb-2"
         buttons={

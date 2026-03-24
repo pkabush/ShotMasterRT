@@ -10,6 +10,7 @@ import * as ResolveUtils from './ResolveUtils';
 import { LocalFolder } from './fileSystem/LocalFolder';
 import { Tags } from './Tags';
 import { AI } from './AI_provider';
+import { Storyboard } from './Storyboard';
 
 const default_sceneInfoJson = {
   tags: [],
@@ -22,7 +23,6 @@ const default_sceneInfoJson = {
 
 export class Scene extends LocalFolder {
   sceneJson: LocalJson | null = null;
-  shots: Shot[] = [];
   project: Project; // <--- new pointer to parent project
   is_generating_shotsjson = false;
   is_generating_tags = false;
@@ -39,14 +39,13 @@ export class Scene extends LocalFolder {
     generated_tags_list: "generated_tags_list"
   }
 
-  constructor(handle: FileSystemDirectoryHandle, project: Project, parentFolder: LocalFolder) {
+  constructor(parentFolder: LocalFolder|null,handle: FileSystemDirectoryHandle) {
     super(parentFolder, handle);
 
-    this.project = project; // assign parent project
+    this.project = Project.getProject(); // assign parent project
     // makeObservable instead of makeAutoObservable
     makeObservable(this, {
       sceneJson: observable,
-      shots: observable,
       is_generating_shotsjson: observable,
       is_generating_tags: observable,
       is_generating_all_shot_images: observable,
@@ -55,9 +54,11 @@ export class Scene extends LocalFolder {
       references: observable,
       finishedShotsNum: computed,
       selectShot: action,
+      shots: computed,
     });
   }
 
+  get shots() { return this.getType(Shot); }
 
   selectShot(shot: Shot) {
     if (this.shots.includes(shot)) {
@@ -69,46 +70,17 @@ export class Scene extends LocalFolder {
     try {
       this.sceneJson = await LocalJson.create(this.handle, 'sceneinfo.json', default_sceneInfoJson);
       this.references = new Tags(this, this.sceneJson);
-
-      this.shots = [];
-      for await (const handle of this.handle.values()) {
-        if (handle.kind === 'directory') {
-          const shot = new Shot(handle as FileSystemDirectoryHandle, this);
-          await shot.load(); // load shotinfo.json
-          this.shots.push(shot);
-        }
-      }
+      this.load_subfolders(Shot);
+      // Load StoryBoard Later to overwrite
+      LocalFolder.open(this,"Storyboard",Storyboard);
     } catch (err) {
       console.error('Error loading scene:', err);
       this.sceneJson = null;
-      this.shots = [];
-    }
-  }
-
-  async delete(): Promise<void> {
-    if (!this.project?.handle) {
-      console.error("Cannot delete scene: project root not set");
-      return;
-    }
-
-    try {
-      const scenesFolder = await this.project.handle.getDirectoryHandle("SCENES");
-      await scenesFolder.removeEntry(this.name, { recursive: true });
-
-      runInAction(() => {
-        if (this.project) {
-          this.project.scenes = this.project.scenes.filter(s => s !== this);
-        }
-      });
-
-    } catch (err) {
-      console.error("Failed to delete scene:", err);
     }
   }
 
   // create Shot
   async createShot(shotName?: string): Promise<Shot | null> {
-    console.log(shotName);
     if (!shotName) shotName = this.nextShotName;
 
     if (!this.handle) {
@@ -123,17 +95,7 @@ export class Scene extends LocalFolder {
     }
 
     try {
-      const shotFolder = await this.handle.getDirectoryHandle(shotName, { create: true });
-      const shot = new Shot(shotFolder, this);
-      await shot.load();
-
-      // Insert shot alphabetically by folder name
-      runInAction(() => {
-        const index = this.shots.findIndex(s => s.name.localeCompare(shotName) > 0);
-        if (index === -1) this.shots.push(shot);
-        else this.shots.splice(index, 0, shot);
-      });
-
+      const shot = LocalFolder.open(this, shotName, Shot);
       return shot;
     } catch (err) {
       console.error("Failed to create shot:", err);
@@ -163,21 +125,18 @@ export class Scene extends LocalFolder {
   }
 
   getShotsWithStatus(status: string, exact = false): number {
-    const keys = Object.keys(Shot.shot_states);
+    const keys = Shot.shot_states_keys;
     const targetIndex = keys.indexOf(status);
 
     if (targetIndex === -1) return 0;
 
     return this.shots.filter((shot) => {
-      // Use first key as default if shot_state is missing
-      const shotState = shot.shotJson?.data?.shot_state ?? keys[0];
+      const shotState = shot.state;
       const shotIndex = keys.indexOf(shotState);
 
       if (exact) {
-        // only count shots exactly matching the target status
         return shotIndex === targetIndex;
       } else {
-        // inclusive: count shots with status >= target status
         return shotIndex >= targetIndex;
       }
     }).length;
@@ -325,7 +284,6 @@ ${scriptText}
     timeline.save(this.project.timelinesDirHandle?.handle!);
   }
 
-
   async generateTags() {
     runInAction(() => { this.is_generating_tags = true; });
     const workflow = this.project.workflows[this.workflows.generate_tags]
@@ -352,10 +310,9 @@ ${this.project.artbook?.tags_list.join("\n")}
     runInAction(() => { this.is_generating_tags = false; });
   }
 
-
   addGeneratedTags() {
     this.sceneJson?.getField(this.fields.generated_tags_list).split("\n").map(
-      (tag:string) => {        
+      (tag: string) => {
         if (this.getByAbsPath(tag)) {
           this.references?.addTag(tag);
         } else {
@@ -364,5 +321,11 @@ ${this.project.artbook?.tags_list.join("\n")}
       })
   }
 
+  async delete(show_dialogue= false) {
+    await super.delete(show_dialogue);
+
+    if (this.project.selectedScene == this)
+      this.project.setView( {type:"none"} );
+  }
 
 }

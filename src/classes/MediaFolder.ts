@@ -23,11 +23,9 @@ export class MediaFolder extends LocalFolder {
     get shot(): Shot {
         return this.parentFolder as Shot;
     }
-
     get media(): LocalMedia[] {
         return this.getType(LocalMedia)
     }
-
     get mediaOrdered(): LocalMedia[] {
         return [...this.media].sort(
             (a, b) => a.lastModified - b.lastModified

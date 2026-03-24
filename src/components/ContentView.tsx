@@ -8,15 +8,16 @@ import TabsContainer from "./TabsContainer";
 import SceneInfoCard from "./SceneInfoCard";
 import ShotsInfoStrip from "./ShotsInfoStrip";
 import TaskView from "./TaskView";
-import { Badge } from "react-bootstrap";
+import { Badge, Stack } from "react-bootstrap";
+import SimpleButton from "./Atomic/SimpleButton";
 
 interface ContentViewProps {
   project: Project | null;
 }
 
-export const ContentView: React.FC<ContentViewProps> = observer(({ project }) => {  
-  if(!project) return null;
-  
+export const ContentView: React.FC<ContentViewProps> = observer(({ project }) => {
+  if (!project) return null;
+
   switch (project.currentView.type) {
     case "settings":
       return <SettingsView project={project} />;
@@ -32,8 +33,13 @@ export const ContentView: React.FC<ContentViewProps> = observer(({ project }) =>
       if (!project.selectedScene) return null;
       const scene = project.selectedScene;
       return (
-        <div>          
-          <h2><Badge  bg="secondary">{scene.name}</Badge></h2>
+        <div>
+          <Stack direction="horizontal">
+            <h2><Badge bg="secondary">{scene.name}</Badge></h2>
+            <SimpleButton onClick={() => {scene.delete()}} label="Delete Scene" className="btn-outline-danger ms-auto" />
+            <SimpleButton onClick={() => scene.log()} label="LOG" />
+          </Stack>
+
           <TabsContainer
             tabs={{
               Scene: <SceneInfoCard scene={scene} />,
@@ -43,7 +49,7 @@ export const ContentView: React.FC<ContentViewProps> = observer(({ project }) =>
         </div>
       );
     case "taskview":
-      return  <TaskView project={project} />;
+      return <TaskView project={project} />;
 
 
     default:
