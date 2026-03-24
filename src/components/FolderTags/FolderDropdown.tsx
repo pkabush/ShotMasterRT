@@ -2,11 +2,11 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import React from "react";
 import { observer } from "mobx-react-lite";
 import { LocalFolder } from "../../classes/fileSystem/LocalFolder";
-import type { LocalItem } from "../../classes/fileSystem/LocalFile";
 import { LocalImage } from "../../classes/fileSystem/LocalImage";
 import { MediaPreviewSmall } from "../MediaComponents/MediaPreviewSmall";
 import "../../css/Dropdown.css";
 import { Stack } from "react-bootstrap";
+import type { LocalItem } from "../../classes/fileSystem/LocalItem";
 
 interface FolderDropdownProps {
     folder: LocalFolder;

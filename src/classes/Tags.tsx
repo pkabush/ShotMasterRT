@@ -1,8 +1,8 @@
 import { makeObservable, observable, action, computed, toJS } from "mobx";
-import type { LocalItem } from "./fileSystem/LocalFile";
 import type { LocalJson } from "./LocalJson";
 import { Project } from "./Project";
 import type { LocalImage } from "./fileSystem/LocalImage";
+import type { LocalItem } from "./fileSystem/LocalItem";
 
 export class Tags {
     dataJson: LocalJson | null = null;

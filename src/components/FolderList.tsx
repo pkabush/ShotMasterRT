@@ -47,7 +47,7 @@ const FolderList: React.FC<FolderListProps> = observer(({ project }) => {
           maxHeight: 'calc(100vh - 100px)',
         }}
       >
-        {project.scenes.map((scene, idx) => (
+        {project.scenes && project.scenes.map((scene, idx) => (
           <SceneListItem key={idx} scene={scene} />
         ))}
       </ul>

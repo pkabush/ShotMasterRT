@@ -2,7 +2,7 @@
 import { Scene } from "./Scene";
 import { Artbook } from "./Artbook";
 import { UserSettingsDB } from "./UserSettingsDB";
-import { action, makeObservable, observable, runInAction } from "mobx";
+import { action, computed, makeObservable, observable, runInAction } from "mobx";
 import { Script } from "./Script";
 import { GoogleAI } from "./GoogleAI";
 import { ChatGPT } from "./ChatGPT";
@@ -166,11 +166,12 @@ export class Project extends LocalFolder {
       loadFromFolder: action,
       setView: action,
       setScene: action,
+      scenes:computed
     });
   }
 
   get scenes(){
-    return this.scenesLocalFolder?.getType(Scene);
+    return this.scenesLocalFolder?.getType(Scene) ;
   }
 
 

@@ -12,11 +12,11 @@ interface Props {
 
 const TaskView: React.FC<Props> = observer(({ project }) => {
     // Flatten all tasks from all shots in all scenes
-    const allTasks = project.scenes.flatMap(scene =>
+    const allTasks = project.scenes ? project.scenes.flatMap(scene =>
         scene.shots.flatMap(shot =>
             shot.tasks.map(task => (task))
         )
-    );
+    ) : [];
 
     return (
         <>
@@ -32,17 +32,10 @@ const TaskView: React.FC<Props> = observer(({ project }) => {
                 for (const task of allTasks) { if (task.status == "submitted" || task.status == "processing") task.check_status(); }
             }}></SimpleButton>
 
-
-            <SimpleButton label={"Notify "} onClick={() => {                
-                notificationManager.add('Project loaded', notificationManager.types.success, {onClick: () => {            
-                    project.setScene(project.scenes[3]);                    
-                }});
-            }}></SimpleButton>
             
             <SimpleButton label={"Notify 2 "} onClick={() => {                
                 notificationManager.add('Project loaded V2', notificationManager.types.error);                
             }}></SimpleButton>
-
 
 
             <CollapsibleContainer
