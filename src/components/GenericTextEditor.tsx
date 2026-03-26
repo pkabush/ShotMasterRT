@@ -52,11 +52,15 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
     setSaving(false);
   };
 
-  useEffect(() => {
-    if (fitHeight && textareaRef.current) {
+  const updateSize = () => {
+    if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight + 1}px`;
     }
+  }
+
+  useEffect(() => {
+    if (fitHeight && textareaRef.current) { updateSize(); }
   }, [text, fitHeight]);
 
   // Merge default controls with optional headerExtra
@@ -81,7 +85,9 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
   );
 
   return (
-    <CollapsibleContainerAccordion label={label} headerExtra={defaultHeaderExtra} defaultCollapsed={collapsed}>
+    <CollapsibleContainerAccordion label={label} headerExtra={defaultHeaderExtra} defaultCollapsed={collapsed} onToggle={(_) => {
+      requestAnimationFrame(() => { updateSize(); });
+    }}>
       <textarea
         ref={textareaRef}
         className="form-control"

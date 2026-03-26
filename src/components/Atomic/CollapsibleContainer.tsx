@@ -12,6 +12,7 @@ interface CollapsibleContainerProps {
   openColor?: string;
   closedColor?: string;  
   header?: React.ReactNode;
+  onToggle?: (isOpen: boolean) => void;
 }
 
 const CollapsibleContainer: React.FC<CollapsibleContainerProps> = ({
@@ -57,7 +58,8 @@ export const CollapsibleContainerAccordion: React.FC<CollapsibleContainerProps> 
   defaultCollapsed = false,
   openColor,
   closedColor,
-  header
+  header,
+  onToggle
 }) => {
 
   return (
@@ -69,7 +71,7 @@ export const CollapsibleContainerAccordion: React.FC<CollapsibleContainerProps> 
             {headerExtra}
           </AccordionCard.Controls>
         </AccordionCard.Header>
-        <AccordionCard.Body>
+        <AccordionCard.Body onToggle={onToggle}>
           {children}
         </AccordionCard.Body>
       </AccordionCard>
@@ -83,7 +85,8 @@ export const CollapsibleAccordionCard: React.FC<CollapsibleContainerProps> = ({
   headerExtra,
   openColor,
   closedColor,
-  header
+  header,
+  onToggle
 }) => {
 
   return (
@@ -94,7 +97,7 @@ export const CollapsibleAccordionCard: React.FC<CollapsibleContainerProps> = ({
             {headerExtra}
           </AccordionCard.Controls>
         </AccordionCard.Header>
-        <AccordionCard.Body>
+        <AccordionCard.Body onToggle={onToggle}>
           {children}
         </AccordionCard.Body>
       </AccordionCard>

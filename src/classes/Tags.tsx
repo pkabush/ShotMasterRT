@@ -71,9 +71,8 @@ export class Tags {
 
     get get_active_tags(): any[] {
         if (!this.use_tags) return [];
-
         const ownTags = this.tags;
-        const parentTags = this.parent_tags_obj?.tags ?? [];
+        const parentTags = this.parent_tags_obj?.get_active_tags ?? [];
         const combinedTags = Array.from(new Set([...ownTags, ...parentTags]));
         return combinedTags.filter(tag => this.isActive(tag));
     }

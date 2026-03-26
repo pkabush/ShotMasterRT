@@ -34,6 +34,7 @@ export class LocalMedia extends LocalFile {
     makeObservable(this, {
       urlObject: observable,
       web_url: observable,
+      mediaJson:observable,
 
       revokeUrl: action,
       delete: override,

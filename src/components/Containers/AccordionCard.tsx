@@ -1,4 +1,4 @@
-import React, { createContext, useContext } from "react";
+import React, { createContext, useContext, useEffect } from "react";
 import Accordion from "react-bootstrap/Accordion";
 import AccordionContext from "react-bootstrap/AccordionContext";
 import Card from "react-bootstrap/Card";
@@ -116,9 +116,20 @@ const Controls: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 };
 
 /* -------------------- Body -------------------- */
+interface BodyProps {
+    children: React.ReactNode;
+    onToggle?: (isOpen: boolean) => void;
+}
 
-const Body: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const Body: React.FC<BodyProps> = ({ children, onToggle }) => {
     const { eventKey } = useAccordionCard();
+    const { activeEventKey } = useContext(AccordionContext);
+
+    const isOpen = activeEventKey === eventKey;
+
+    useEffect(() => {
+        onToggle?.(isOpen);
+    }, [isOpen, onToggle]);
 
     return (
         <Accordion.Collapse eventKey={eventKey}>
