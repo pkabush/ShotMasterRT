@@ -44,15 +44,18 @@ export class LocalMedia extends LocalFile {
       addTag: action,
       removeTag: action,
       setTags: action,
-      load:action,
+      load: action,
     });
 
     this._urlPromise = null; // initialize
   }
 
   async load(): Promise<void> {
-    this.mediaJson = await LocalJson.create(this.parentFolder!.handle, this.name + '.json');
-    this.references = new Tags(this, this.mediaJson);
+    const mediaJson = await LocalJson.create(this.parentFolder!.handle, this.name + '.json');
+    runInAction(() => {
+      this.mediaJson = mediaJson;
+      this.references = new Tags(this, this.mediaJson);
+    })
   }
 
   get name(): string {
@@ -195,18 +198,18 @@ export class LocalMedia extends LocalFile {
 
   async copyToClipboard(): Promise<void> {
     try {
-      const file = await this.getFile();
-      const blob = file;
+      console.log("Copy to clipboard", this.path);
 
-      console.log("Copy to clipboard", this.path, file,blob,blob.type);
+      await navigator.clipboard.writeText(
+        JSON.stringify({ local_path: this.path })
+      );
 
-      await navigator.clipboard.write([
-        new ClipboardItem({
-          [blob.type]: blob
-        })
-      ]);
+      const items = await navigator.clipboard.read();
+      console.log("Clipboard items:", items);
     } catch (err) {
+      console.error("Copy To Clipboard Error", err);
     }
   }
+
 
 }

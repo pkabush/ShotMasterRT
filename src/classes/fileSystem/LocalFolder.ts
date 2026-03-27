@@ -27,7 +27,7 @@ export class LocalFolder extends LocalItem {
         }
 
         const FolderClass = FolderType || LocalFolder;
-        const folder=  new FolderClass(parentFolder, handle) as T;
+        const folder = new FolderClass(parentFolder, handle) as T;
         await folder.load();
         return folder;
     }
@@ -36,8 +36,8 @@ export class LocalFolder extends LocalItem {
         parentFolder: LocalFolder | null = null,
         handle: FileSystemDirectoryHandle
     ) {
-        super(parentFolder,handle);          
-        this.handle = handle;      
+        super(parentFolder, handle);
+        this.handle = handle;
     }
 
     async load_subfolders<T extends LocalFolder = LocalFolder>(SubfolderType?: new (parent: LocalFolder, handle: FileSystemDirectoryHandle) => T) {
@@ -110,7 +110,7 @@ export class LocalFolder extends LocalItem {
     get files(): LocalFile[] {
         return this.getType(LocalFile);
     }
-    
+
     getType<T extends LocalItem>(
         type: new (...args: any[]) => T,
         options?: { deep?: boolean }
@@ -193,41 +193,84 @@ export class LocalFolder extends LocalItem {
             throw err;
         }
     }
-
     async copyFromClipboard() {
         if (!this.handle) { throw new Error("MediaFolder not loaded"); }
-        if (!navigator.clipboard || !navigator.clipboard.read) {
+        if (!navigator.clipboard) {
             console.warn("Clipboard API not supported");
             return;
         }
 
-        const files: File[] = [];
-
         try {
-            const items = await navigator.clipboard.read();
-            console.log("Clipboard items:", items);
+            // --- 1. Try reading clipboard items ---
+            if (navigator.clipboard.read) {
+                const items = await navigator.clipboard.read();
+                console.log("Clipboard items:", items);
 
-            for (const item of items) {
-                for (const type of item.types) {
-                    const blob = await item.getType(type);
-                    const filename = (blob as File).name || `clipboard-${Date.now()}.${type.split("/")[1]}`;
-                    files.push(blob instanceof File ? blob : new File([blob], filename, { type }));
+                const pngFiles: File[] = [];
+                for (const item of items) {
+                    if (item.types.includes("image/png")) {
+                        try {
+                            const blob = await item.getType("image/png");
+                            const file = new File([blob], `clipboard-${Date.now()}.png`, { type: "image/png" });
+                            pngFiles.push(file);
+                        } catch (err) {
+                            console.warn("Failed to read image/png from clipboard:", err);
+                        }
+                    }
+                }
+
+                if (pngFiles.length > 0) {
+                    await this.saveFiles(pngFiles);
+                    console.info(`Saved ${pngFiles.length} PNG image(s) to ${this.path}`);
+                    return;
                 }
             }
 
-            if (files.length === 0) {
-                console.info("Clipboard does not contain files");
+            if (!navigator.clipboard.readText) {
+                console.info("Text clipboard API not available");
                 return;
             }
 
-            await this.saveFiles(files);
-            console.info(`Saved ${files.length} file(s) from clipboard to ${this.path}`);
+            const text = await navigator.clipboard.readText();
+            if (!text) {
+                console.info("Clipboard is empty");
+                return;
+            }
+
+            // --- 4. Parse JSON only from plain text ---
+            let data: any;
+            try {
+                data = JSON.parse(text);
+            } catch {
+                console.info("Clipboard text is not valid JSON");
+                return;
+            }
+
+            // --- 5. Handle local_path ---
+            if (data?.local_path) {
+                console.info("Detected local file reference:", data.local_path);
+
+                try {
+                    const file = this.getByAbsPath?.(data.local_path) as LocalFile;
+                    if (!file) {
+                        console.warn("File not found for path:", data.local_path);
+                        return;
+                    }
+
+                    await file.copyToFolder(this);
+                    console.log("Copied", file, "to", this);
+                } catch (err) {
+                    console.error("Failed handling local_path clipboard:", err);
+                }
+                return;
+            }
+
+            console.info("Clipboard JSON not recognized:", data);
         } catch (err) {
             console.error("Failed to read from clipboard:", err);
         }
     }
 }
-
 
 
 export const file_type_map: [typeof LocalFile, string[]][] = [
