@@ -193,6 +193,16 @@ export const MediaFolderGallery: React.FC<MediaFolderGalleryProps> = observer(
                                         Log
                                     </ContextMenu.Item>
 
+                                    <ContextMenu.Item className="ContextMenuItem" onClick={async () => { await mediaItem.copyToClipboard() }}>
+                                        <MenuItemIcon><FontAwesomeIcon icon={faClipboard} /></MenuItemIcon>
+                                        Copy
+                                    </ContextMenu.Item>
+
+                                    <ContextMenu.Item className="ContextMenuItem" onClick={() => mediaItem.openInNewTab()}>
+                                        <MenuItemIcon><FontAwesomeIcon icon={faClipboard} /></MenuItemIcon>
+                                        Open in new Tab
+                                    </ContextMenu.Item>
+
                                     <ContextMenu.Item className="ContextMenuItem danger" onClick={() => { mediaItem.delete() }}>
                                         <MenuItemIcon><FontAwesomeIcon icon={faTrashCan} /></MenuItemIcon>
                                         Delete

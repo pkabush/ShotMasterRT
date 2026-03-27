@@ -34,7 +34,7 @@ export class LocalMedia extends LocalFile {
     makeObservable(this, {
       urlObject: observable,
       web_url: observable,
-      mediaJson:observable,
+      mediaJson: observable,
 
       revokeUrl: action,
       delete: override,
@@ -44,6 +44,7 @@ export class LocalMedia extends LocalFile {
       addTag: action,
       removeTag: action,
       setTags: action,
+      load:action,
     });
 
     this._urlPromise = null; // initialize
@@ -51,7 +52,7 @@ export class LocalMedia extends LocalFile {
 
   async load(): Promise<void> {
     this.mediaJson = await LocalJson.create(this.parentFolder!.handle, this.name + '.json');
-    this.references = new Tags(this,this.mediaJson);
+    this.references = new Tags(this, this.mediaJson);
   }
 
   get name(): string {
@@ -190,6 +191,22 @@ export class LocalMedia extends LocalFile {
     }
 
     return generated_images;
+  }
+
+  async copyToClipboard(): Promise<void> {
+    try {
+      const file = await this.getFile();
+      const blob = file;
+
+      console.log("Copy to clipboard", this.path, file,blob,blob.type);
+
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          [blob.type]: blob
+        })
+      ]);
+    } catch (err) {
+    }
   }
 
 }

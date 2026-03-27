@@ -2,7 +2,7 @@ import { LocalMedia } from './LocalMedia';
 import type { LocalFolder } from './LocalFolder';
 
 // LocalImage.ts
-export class LocalImage extends LocalMedia{
+export class LocalImage extends LocalMedia {
   base64Data: { rawBase64: string; mime: string } | null = null; // cache for Base64 + MIME
 
   // Returns Base64 string and MIME, caching it
@@ -23,7 +23,7 @@ export class LocalImage extends LocalMedia{
     }
   }
 
-    // **New static factory from Base64 string**
+  // **New static factory from Base64 string**
   static async fromBase64(
     base64Obj: { rawBase64: string; mime: string },
     folder: LocalFolder,
@@ -52,7 +52,7 @@ export class LocalImage extends LocalMedia{
       await writable.close();
 
       // Return LocalImage with cached base64Data
-      const image = new LocalImage(folder,fileHandle);
+      const image = new LocalImage(folder, fileHandle);
       image.base64Data = base64Obj; // cache
       await image.load();
       return image;
