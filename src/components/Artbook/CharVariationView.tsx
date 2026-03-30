@@ -113,10 +113,10 @@ export const AddVariationCard: React.FC<AddVariationCardProps> = ({ character })
     return (
         <Col xs={8} md={3} lg={2} style={{ marginBottom: "1rem" }}>
             <Card
-                style={{ cursor: "pointer" }}
+                style={{ cursor: "pointer" ,width:"100px"}}
             >
                 <DropArea
-                    height={'100px'}
+                    height={'150px'}
                     width={"100%"}
                     onDropFiles={(files) => {
                         console.log("test", files);

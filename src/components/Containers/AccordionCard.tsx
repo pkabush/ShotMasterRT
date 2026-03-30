@@ -77,11 +77,12 @@ const Header: React.FC<HeaderProps> = ({
     return (
         <Stack
             direction="horizontal"
-            className="w-100 align-items-center py-0"
+            className="w-100 align-items-center py-0 "
             style={{
                 backgroundColor: isOpen ? openColor : closedColor,
                 cursor: "pointer",
                 borderRadius: 4,
+                height:31
             }}
         >
             <div onClick={toggle} style={{ paddingLeft: 5, }}>
@@ -133,7 +134,7 @@ const Body: React.FC<BodyProps> = ({ children, onToggle }) => {
 
     return (
         <Accordion.Collapse eventKey={eventKey}>
-            <Card.Body className="p-0">
+            <Card.Body className="p-0" >
                 {children}
             </Card.Body>
         </Accordion.Collapse>

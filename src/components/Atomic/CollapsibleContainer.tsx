@@ -5,7 +5,7 @@ import { AccordionCard } from '../Containers/AccordionCard';
 
 interface CollapsibleContainerProps {
   label?: string;
-  children: React.ReactNode;
+  children?: React.ReactNode;
   defaultCollapsed?: boolean; // optional: start collapsed
   className?: string; // optional: extra classes for container
   headerExtra?: React.ReactNode; // optional: extra content in header (right side)

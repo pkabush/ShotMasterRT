@@ -22,6 +22,9 @@ interface ArtbookViewProps {
 
 export const ArtbookView: React.FC<ArtbookViewProps> = observer(({ artbook }) => {
 
+
+
+
   return (
     <div style={{ padding: "1rem" }}>
       <h2 className="mb-3">Artbook</h2>
@@ -50,10 +53,20 @@ export const ArtbookView: React.FC<ArtbookViewProps> = observer(({ artbook }) =>
                   }}
                 >
                   {child.getType(Character).map(character => (
-                    <ArtbookCharacterView
-                      character={character}
-                      key={character.path}
-                    />
+
+                    <Accordion.Item eventKey={character.path} key={character.path} >
+                      <Accordion.Header>{character.name}            </Accordion.Header>
+                      <Accordion.Body className="pt-2 px-3">
+
+
+                        <ArtbookCharacterView
+                          character={character}
+                          key={character.path}
+                        />
+                      </Accordion.Body>
+                    </Accordion.Item >
+
+
                   ))}
                 </Accordion>
               </>
@@ -63,7 +76,7 @@ export const ArtbookView: React.FC<ArtbookViewProps> = observer(({ artbook }) =>
           // 👇 NEW TAB
           Generation: (
             <ArtbookGenView artbook={artbook} />
-          )
+          ),
         }}
       />
     </div>

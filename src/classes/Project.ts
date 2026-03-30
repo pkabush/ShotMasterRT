@@ -16,7 +16,8 @@ export type ProjectView =
   | { type: "script" }
   | { type: "artbook" }
   | { type: "scene" }
-  | { type: "taskview" };
+  | { type: "taskview" }
+  | { type: "charview" };
 
 const default_projinfo = {
   "gpt_model": "gpt-4o-mini",
@@ -134,7 +135,7 @@ export class Project extends LocalFolder {
   private static _instance: Project | null = null;
 
   static getProject(): Project {
-    if (!Project._instance) {      
+    if (!Project._instance) {
       throw new Error("Project instance not initialized. Call constructor first.");
     }
     return Project._instance;
@@ -146,6 +147,7 @@ export class Project extends LocalFolder {
   projinfo: LocalJson | null = null;
   currentView: ProjectView = { type: "none" };
   selectedScene: Scene | null = null;
+  selectedPath: string = ""
   timelinesDirHandle: LocalFolder | null = null;
   id = 0;
 
@@ -153,7 +155,7 @@ export class Project extends LocalFolder {
 
   constructor(parentFolder: FileSystemDirectoryHandle, userSettingsDB: UserSettingsDB) {
     super(null, parentFolder);
-    if(Project._instance) this.id = Project._instance.id+1;
+    if (Project._instance) this.id = Project._instance.id + 1;
     Project._instance = this;
     this.userSettingsDB = userSettingsDB;
 
@@ -163,15 +165,17 @@ export class Project extends LocalFolder {
       script: observable,
       currentView: observable,
       selectedScene: observable,
+      selectedPath: observable,
       loadFromFolder: action,
-      loadScenes:action,
+      loadScenes: action,
       setView: action,
       setScene: action,
-      scenes:computed
+      setArtbookItem: action,
+      scenes: computed
     });
   }
 
-  get scenes(){
+  get scenes() {
     //console.log("Get Scenes",this.scenesLocalFolder?.getType(Scene));
     return this.scenesLocalFolder?.getType(Scene);
   }
@@ -298,7 +302,7 @@ export class Project extends LocalFolder {
       return null;
     }
 
-    const scene = LocalFolder.open(this.scenesLocalFolder,sceneName,Scene);
+    const scene = LocalFolder.open(this.scenesLocalFolder, sceneName, Scene);
     return scene;
   }
 
@@ -307,6 +311,12 @@ export class Project extends LocalFolder {
     this.currentView = view;
     this.selectedScene = scene;
   }
+
+  setArtbookItem(path: string) {
+    this.currentView = { type: "charview" };
+    this.selectedPath = path;
+  }
+
   setScene(scene: Scene) {
     this.setView({ type: "scene" }, scene);
   }

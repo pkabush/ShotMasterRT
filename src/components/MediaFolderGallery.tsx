@@ -28,10 +28,11 @@ interface MediaFolderGalleryProps {
     label?: string;
     itemHeight?: number;
     showEditWindow?: boolean;
+    defaultCollapsed?: boolean;
 }
 
 export const MediaFolderGallery: React.FC<MediaFolderGalleryProps> = observer(
-    ({ mediaFolder, label = null, itemHeight = 300, showEditWindow = true }) => {
+    ({ mediaFolder, label = null, itemHeight = 300, showEditWindow = true ,defaultCollapsed=false}) => {
         const [highlightGenParents, setHighlightGenParents] = useState<boolean>(true);
         const [currentItemHeight, setCurrentItemHeight] = useState<number>(itemHeight);
 
@@ -41,6 +42,7 @@ export const MediaFolderGallery: React.FC<MediaFolderGalleryProps> = observer(
         return (
             <>
                 <MediaGallery label={label}
+                    defaultCollapsed={defaultCollapsed}
                     headerExtra={
                         <>
                             <Stack direction="horizontal">
@@ -239,9 +241,6 @@ export const MediaFolderGallery: React.FC<MediaFolderGalleryProps> = observer(
                                     <MenuItemIcon><FontAwesomeIcon icon={faClipboard} /></MenuItemIcon>
                                     Log
                                 </ContextMenu.Item>
-
-
-
 
 
                             </ContextMenu.Content>
