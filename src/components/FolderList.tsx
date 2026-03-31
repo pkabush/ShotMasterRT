@@ -31,23 +31,29 @@ const FolderList: React.FC<FolderListProps> = observer(({ project }) => {
   return (
     <div
       style={{
-        width: '200px',
-        minWidth: '200px',
+        width: '100%',        
         borderRight: '1px solid #ced4da',
         padding: '10px',
+        paddingBottom: '60px',
         display: 'flex',
         flexDirection: 'column',
+        height: "100%",
+        overflow: 'hidden',
       }}
     >
       {/* Project Name */}
       <h5 style={{ flexShrink: 0, marginBottom: 8 }}>{currentFolderName}</h5>
 
-      <Accordion defaultActiveKey="Scenes">
+      <Accordion defaultActiveKey="Scenes" style={{
+        flex: 1,
+        overflowY: 'auto',
+        minHeight: 0, // 👈 critical for flexbox scrolling
+      }}>
         <CollapsibleAccordionCard label='Artbook'>
           <Accordion>
             {project.artbook?.subfolders.map((subfolder) => {
               return <CollapsibleAccordionCard label={subfolder.name} key={subfolder.path} headerExtra={
-                <SimpleButton label="+" onClick={() => {project.artbook?.createCharacter(subfolder)}} />
+                <SimpleButton label="+" onClick={() => { project.artbook?.createCharacter(subfolder) }} />
               }>
                 <ListGroup>
                   {subfolder.subfolders.map((character) => {
@@ -111,6 +117,7 @@ const FolderList: React.FC<FolderListProps> = observer(({ project }) => {
         <CollapsibleAccordionCard label='Scenes' headerExtra={
           <SimpleButton label="+" onClick={handleAddScene} />}>
           <div>
+
             <ListGroup>
               {project.scenes && project.scenes.map((scene, idx) => (
                 <SceneListItem key={idx} scene={scene} />

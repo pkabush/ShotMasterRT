@@ -7,6 +7,7 @@ import { ContentView } from "./components/ContentView";
 import { NotificationContainer } from './components/NotificationContainer';
 import { UserSettingsDB } from './classes/UserSettingsDB';
 import { ProjectContext } from './contexts/ProjectContext';
+import { Group, Panel, Separator } from 'react-resizable-panels';
 
 const App: React.FC = observer(() => {
   const [project, setProject] = useState<Project | null>(null);
@@ -55,7 +56,7 @@ const App: React.FC = observer(() => {
       }
     };
 
-    if(!project) init();
+    if (!project) init();
 
   }, []);
 
@@ -69,20 +70,32 @@ const App: React.FC = observer(() => {
           project={project}
         />
         {/* Main layout */}
-        <div
-          className="d-flex"
-          style={{ height: 'calc(100vh - 56px)', overflow: 'hidden' }}
-        >
-          {/* Sidebar */}
-          <FolderList project={project} />
+        <div style={{ height: 'calc(100vh - 56px)' }}>
+          <Group orientation="horizontal" style={{ height: "100%" }}>
 
-          {/* Content column */}
-          <div className="flex-grow-1 d-flex flex-column overflow-hidden">
-            {/* Scrollable content */}
-            <div className="flex-grow-1 overflow-auto p-3">
-              <ContentView project={project} />
-            </div>
-          </div>
+            {/* Sidebar */}
+            <Panel defaultSize={250} minSize={10}>
+              <FolderList project={project} />
+            </Panel>
+
+            {/* Resizable separator */}
+            <Separator
+              style={{
+                width: "3px",
+                backgroundColor: "#8f8f8f",
+                cursor: "ew-resize",
+              }}
+            />
+
+            {/* Content */}
+            <Panel minSize={20}>
+              <div className="d-flex flex-column h-100 overflow-hidden">
+                <div className="flex-grow-1 overflow-auto p-3">
+                  <ContentView project={project} />
+                </div>
+              </div>
+            </Panel>
+          </Group>
         </div>
 
         <NotificationContainer />
