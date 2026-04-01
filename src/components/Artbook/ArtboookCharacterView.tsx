@@ -19,7 +19,7 @@ interface ArtbookCharacterViewProps {
 
 export const ArtbookCharacterView: React.FC<ArtbookCharacterViewProps> = observer(({ character }) => {
     const [selectedVariation, setSelectedVariation] = useState<string | null>(null)
- 
+
 
 
     return (
@@ -146,7 +146,7 @@ export const ArtbookCharacterView: React.FC<ArtbookCharacterViewProps> = observe
 
 
 
-            {selectedVariation &&     (selectedVariation in character.variations) && 
+            {selectedVariation && (selectedVariation in character.variations) &&
                 <>
                     <Card >
                         <Card.Body >
@@ -241,7 +241,10 @@ export const GenVariations: React.FC<GenVariationsProps> = observer(({ character
                             model: workflow.model!,
                         })
 
-                        character.charJson!.updateField(charlist_field, res)
+                        if (res) {
+                            const clean = res.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
+                            character.charJson!.updateField(charlist_field, clean)
+                        }
 
                     }} >
                         Generate Character Looks Json

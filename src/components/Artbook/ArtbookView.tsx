@@ -135,7 +135,7 @@ export const ArtbookGenView: React.FC<ArtbookViewProps> = observer(({ artbook })
           <EditableJsonTextField localJson={project.projinfo} field={artbook.fields.charlist} />
           <Button onClick={() => {
             project.projinfo?.getField(artbook.fields.charlist).split("\n").map((char_name: string) => {
-              artbook.createCharacter(artbook.characters_folder!, char_name.replace(" ", "_"))
+              artbook.createCharacter(artbook.characters_folder!, char_name.replace(/\s+/g, "_").replace(/[^\p{L}\p{N}_]/gu, "").replace(/^_+|_+$/g, "")  )
             })
           }}>Create Characters</Button>
         </>
@@ -186,7 +186,7 @@ export const ArtbookGenView: React.FC<ArtbookViewProps> = observer(({ artbook })
           <EditableJsonTextField localJson={project.projinfo} field={artbook.fields.location_list} />
           <Button onClick={() => {
             project.projinfo?.getField(artbook.fields.location_list).split("\n").map((char_name: string) => {
-              artbook.createCharacter(artbook.environment_folder!, char_name.replace(" ", "_"))
+              artbook.createCharacter(artbook.environment_folder!, char_name.replace(/\s+/g, "_").replace(/[^\p{L}\p{N}_]/gu, "").replace(/^_+|_+$/g, "") )
             })
           }}>Create Locations</Button>
         </>

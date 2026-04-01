@@ -67,8 +67,8 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
         ...ref_images,
       ]
 
-      const model = project!.workflows.edit_image.model || GoogleAI.options.img_models.flash_image
-      const aspectRatio = project!.workflows.edit_image.aspect_ratio || GoogleAI.options.aspect_ratios.r9x16
+      const model = project?.workflows?.edit_image?.model ?? GoogleAI.options.img_models.flash_image
+      const aspectRatio = project?.workflows?.edit_image?.aspect_ratio ?? GoogleAI.options.aspect_ratios.r9x16
 
       // Check IF Google      
       if (Object.values(GoogleAI.options.img_models).includes(model)) {

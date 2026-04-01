@@ -63,6 +63,7 @@ const FolderList: React.FC<FolderListProps> = observer(({ project }) => {
                           className="d-flex justify-content-between align-items-center py-1 px-2"
                           style={{ cursor: 'pointer' }}
                           onClick={() => { project.setArtbookItem(character.path) }}
+                          onContextMenu={() => project.setArtbookItem(character.path)}
                           key={character.path}
                         >
                           {/* Scene name */}
@@ -83,10 +84,6 @@ const FolderList: React.FC<FolderListProps> = observer(({ project }) => {
 
                       <ContextMenu.Portal>
                         <ContextMenu.Content className="ContextMenuContent">
-
-                          <ContextMenu.Item className="ContextMenuItem">
-                            {character.name}
-                          </ContextMenu.Item>
 
                           <ContextMenu.Item className="ContextMenuItem" onClick={() => character.log()}>
                             <MenuItemIcon><FontAwesomeIcon icon={faClipboard} /></MenuItemIcon>

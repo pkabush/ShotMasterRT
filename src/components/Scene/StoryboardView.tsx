@@ -135,9 +135,9 @@ export const StoryboardView: React.FC<StoryboardViewProps> = observer(({ storybo
             </PreviewStrip >
         </div >
 
-        <MediaFolderGallery mediaFolder={storyboard} />
+        <MediaFolderGallery mediaFolder={storyboard} defaultCollapsed={true} />
 
-        <CollapsibleContainerAccordion label="Generate">
+        <CollapsibleContainerAccordion label="Generate" defaultCollapsed={true}>
             <div className="p-2">
                 <StoryBoardGenView storyboard={storyboard} />
                 <TagsFolderContainer tags={storyboard.references} folders={[project, project.artbook as LocalFolder, storyboard.scene]} />
@@ -164,7 +164,9 @@ export const StoryboardView: React.FC<StoryboardViewProps> = observer(({ storybo
             </div>
         </CollapsibleContainerAccordion>
 
-        <Button size="sm" onClick={() => {storyboard.createShotsFromStoryboard()}}>Create Shots</Button>
+        <Button size="sm" onClick={() => { storyboard.createShotsFromStoryboard() }}>Create Shots</Button>
+
+
     </div >;
 });
 
