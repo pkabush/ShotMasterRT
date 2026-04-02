@@ -2,7 +2,7 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import { observer } from "mobx-react-lite";
 import { Project } from "../../classes/Project";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faAlignRight, faBookTanakh, faClipboard, faFileCirclePlus, faFolder, faFolderPlus, faGear, faTrashCan } from "@fortawesome/free-solid-svg-icons";
+import { faAlignRight, faBookTanakh,  faFileCirclePlus, faFolder, faFolderPlus, faGear, faTrashCan } from "@fortawesome/free-solid-svg-icons";
 import type { JSX } from "react";
 import { MenuItemIcon } from "../MediaFolderGallery";
 import EditableJsonTextField from "../EditableJsonTextField";
@@ -63,12 +63,8 @@ export const PromptDropdownButton = observer(() => {
                             <EditableJsonTextField localJson={data} field={`${currentPath}/contents`}
                                 headerExtra={
                                     <>
-                                        <Button size="sm" onClick={() => {
-                                            if (content) navigator.clipboard.writeText(content);
-                                        }}>
-                                            <FontAwesomeIcon icon={faClipboard} />
-                                        </Button>
-                                        <Button size="sm" onClick={() => {
+
+                                        <Button variant="outline-danger" size="sm" onClick={() => {
                                             if (!currentPath) return;
                                             if (confirm(`Delete "${currentPath}"?`)) {
                                                 data.updateField(currentPath, undefined);
@@ -168,9 +164,9 @@ export const PromptDropdownButton = observer(() => {
 
     return (
         <DropdownMenu.Root>
-            <DropdownMenu.Trigger asChild className="btn btn-warning btn-sm">
+            <DropdownMenu.Trigger asChild className="btn btn-warning btn-sm px-1">
                 <button>
-                    <FontAwesomeIcon icon={faBookTanakh} style={{ fontSize: '20px' }} />
+                    <FontAwesomeIcon icon={faBookTanakh} style={{ fontSize: '18px'}} />
                 </button>
             </DropdownMenu.Trigger>
 

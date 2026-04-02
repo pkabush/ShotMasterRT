@@ -91,12 +91,12 @@ export const PromptFolder = observer(({ path = "", label }: Props) => {
                             });
                         }}
                     >
-                       <FontAwesomeIcon icon={faFileCirclePlus} />
+                        <FontAwesomeIcon icon={faFileCirclePlus} />
                     </Button>
 
                     {path && (
                         <Button
-                        variant="outline-danger"
+                            variant="outline-danger"
                             size="sm"
                             onClick={() => {
                                 data.updateField(path, undefined);
@@ -138,14 +138,14 @@ export const PromptFolder = observer(({ path = "", label }: Props) => {
                                 collapsed={true}
                                 headerExtra={
                                     <>
-                                    <Button
-                                        size="sm"
-                                        onClick={() => {
-                                            data.updateField(currentPath, undefined);
-                                        }}
-                                    >
-                                        delete
-                                    </Button>
+                                        <Button
+                                            size="sm"
+                                            onClick={() => {
+                                                data.updateField(currentPath, undefined);
+                                            }}
+                                        >
+                                            delete
+                                        </Button>
                                         <PromptDropdownButton />
                                     </>
                                 }

@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { CollapsibleContainerAccordion } from './Atomic/CollapsibleContainer';
-import { Button } from 'react-bootstrap';
+import { Button, ButtonGroup, Spinner } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowsDownToLine } from '@fortawesome/free-solid-svg-icons';
+import { faArrowsDownToLine, faClipboard } from '@fortawesome/free-solid-svg-icons';
+import { PromptDropdownButton } from './PromptPresets/PromptDropdownButton';
+
 
 export interface GenericTextEditorProps {
   label: string;
@@ -67,24 +69,34 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
   const defaultHeaderExtra = (
     <div className="d-flex align-items-center gap-2">
       {headerExtra && <>{headerExtra}</>}
-      <Button size='sm' variant='outline-primary' onClick={() => {
-        if (fitHeight && textareaRef.current) {
-          textareaRef.current.style.height = 'auto';
-          textareaRef.current.style.height = `${textareaRef.current.scrollHeight + 1}px`;
-        }
-      }}><FontAwesomeIcon icon={faArrowsDownToLine} /></Button>
+      <ButtonGroup >
+        <Button size='sm' variant='outline-primary' onClick={() => {
+          if (fitHeight && textareaRef.current) {
+            textareaRef.current.style.height = 'auto';
+            textareaRef.current.style.height = `${textareaRef.current.scrollHeight + 1}px`;
+          }
+        }}><FontAwesomeIcon icon={faArrowsDownToLine} /></Button>
 
-      <button
-        className="btn btn-primary btn-sm"
-        disabled={saving || !hasChanges || !onSave}
-        onClick={handleSave}
-      >
-        {saving ? 'Saving...' : hasChanges ? 'Save*' : 'Save'}
-      </button>
+        <PromptDropdownButton />
+
+        <Button size="sm" variant="outline-warning" onClick={() => { navigator.clipboard.writeText(text); }}>
+          <FontAwesomeIcon icon={faClipboard} />
+        </Button>
+
+        <Button
+          className="btn btn-primary btn-sm"
+          disabled={saving || !hasChanges || !onSave}
+          onClick={handleSave}
+          style={{ width: 55 }}
+        >
+          {saving ? <Spinner size='sm' animation="border" role="status" /> : hasChanges ? 'Save*' : 'Save'}
+        </Button>
+      </ButtonGroup>
     </div >
   );
 
   return (
+
     <CollapsibleContainerAccordion label={label} headerExtra={defaultHeaderExtra} defaultCollapsed={collapsed} onToggle={(_) => {
       requestAnimationFrame(() => { updateSize(); });
     }}>
@@ -101,6 +113,7 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
         onBlur={handleSave}
       />
     </CollapsibleContainerAccordion>
+
   );
 };
 
