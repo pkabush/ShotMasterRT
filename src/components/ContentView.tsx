@@ -9,6 +9,7 @@ import { Button } from "react-bootstrap";
 import { SceneView } from "./SceneView";
 import { Character } from "../classes/Artbook/Character";
 import { ArtbookCharacterView } from "./Artbook/ArtboookCharacterView";
+import { PromptView } from "./PromptView";
 
 interface ContentViewProps {
   project: Project | null;
@@ -40,7 +41,7 @@ export const ContentView: React.FC<ContentViewProps> = observer(({ project }) =>
           <h2 className="mb-3">
             <span
               style={{
-                color: "rgba(0,0,0,0.6)", // makes it less bright / lighter
+                color: "rgba(161, 161, 161, 0.6)", // makes it less bright / lighter
                 fontSize: "0.75em",       // slightly smaller than the main text
                 fontWeight: 400,          // optional: lighter weight
               }}
@@ -53,6 +54,8 @@ export const ContentView: React.FC<ContentViewProps> = observer(({ project }) =>
         </>
       else
         return <>"Selected Item IS not A charactrer"</>
+    case "promptview":
+      return <PromptView/>
 
 
 

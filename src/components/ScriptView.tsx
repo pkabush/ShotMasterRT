@@ -4,6 +4,7 @@ import { Project } from "../classes/Project";
 import GenericTextEditor from "./GenericTextEditor";
 import TabsContainer from "./TabsContainer";
 import SimpleButton from "./Atomic/SimpleButton";
+import { ArtbookGenView } from "./Artbook/ArtbookView";
 
 interface ScriptViewProps {
   project: Project;
@@ -69,6 +70,7 @@ export const ScriptView: React.FC<ScriptViewProps> = observer(({ project }) => {
             />
           ),
           Scenes: <TabsContainer tabs={sceneTabs} />,
+          Generation:  <ArtbookGenView artbook={project.artbook!} />,
         }}
       />
     </div>

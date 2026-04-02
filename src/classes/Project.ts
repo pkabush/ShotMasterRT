@@ -17,7 +17,8 @@ export type ProjectView =
   | { type: "artbook" }
   | { type: "scene" }
   | { type: "taskview" }
-  | { type: "charview" };
+  | { type: "charview" }
+  | { type: "promptview" };
 
 const default_projinfo = {
   "gpt_model": "gpt-4o-mini",
@@ -145,6 +146,7 @@ export class Project extends LocalFolder {
   script: Script | null = null;         // <--- Added
   userSettingsDB: UserSettingsDB;
   projinfo: LocalJson | null = null;
+  promptinfo: LocalJson | null = null;
   currentView: ProjectView = { type: "none" };
   selectedScene: Scene | null = null;
   selectedPath: string = ""
@@ -212,6 +214,7 @@ export class Project extends LocalFolder {
       await this.userSettingsDB.save();
 
       this.projinfo = await LocalJson.create(this.handle as FileSystemDirectoryHandle, 'projinfo.json', default_projinfo);
+      this.promptinfo = await LocalJson.create(this.handle as FileSystemDirectoryHandle, 'promps.json');
     });
 
     // Load all project content

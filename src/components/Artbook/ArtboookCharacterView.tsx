@@ -20,8 +20,6 @@ interface ArtbookCharacterViewProps {
 export const ArtbookCharacterView: React.FC<ArtbookCharacterViewProps> = observer(({ character }) => {
     const [selectedVariation, setSelectedVariation] = useState<string | null>(null)
 
-
-
     return (
         <>
             {true && <>

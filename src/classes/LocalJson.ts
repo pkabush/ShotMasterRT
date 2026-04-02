@@ -1,4 +1,4 @@
-import { makeAutoObservable, observable, runInAction } from "mobx";
+import { makeAutoObservable, observable, runInAction, toJS } from "mobx";
 
 export class LocalJson {
   folderHandle: FileSystemDirectoryHandle;
@@ -121,5 +121,9 @@ export class LocalJson {
 
   private isEmptyObject(obj: Record<string, any>): boolean {
     return Object.keys(obj).length === 0;
+  }
+
+  log() {
+    console.log(toJS(this));
   }
 }

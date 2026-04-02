@@ -14,7 +14,7 @@ interface MenuBarProps {
   project: Project | null;
 }
 
-export const MenuBar: React.FC<MenuBarProps> = ({ onOpenFolder, recentFolders, onOpenRecent,project}) => {
+export const MenuBar: React.FC<MenuBarProps> = ({ onOpenFolder, recentFolders, onOpenRecent, project }) => {
 
   const fileMenuItems: Omit<SubmenuItemProps, 'parentKey'>[] = [
     { name: 'Open', onClick: onOpenFolder },
@@ -42,23 +42,30 @@ export const MenuBar: React.FC<MenuBarProps> = ({ onOpenFolder, recentFolders, o
           <MenuColumn title="Edit" items={editMenuItems} />
           <MenuColumn title="Help" items={helpMenuItems} />
 
-          { project && (<>
-          <MenuColumn
-            title="Settings"
-            onClick={() => project.setView({ type: "settings" })}
-          />
-          <MenuColumn
-            title="Script"
-            onClick={() => project.setView({ type: "script" })}
-          />
-          <MenuColumn
-            title="Artbook"
-            onClick={() => project.setView({ type: "artbook" })}
-          />
-          <MenuColumn
-            title="TaskView"
-            onClick={() => project.setView({ type: "taskview" })}
-          /></>
+          {project && (<>
+            <MenuColumn
+              title="Settings"
+              onClick={() => project.setView({ type: "settings" })}
+            />
+            <MenuColumn
+              title="Script"
+              onClick={() => project.setView({ type: "script" })}
+            />
+
+            {/**
+            <MenuColumn title="Artbook" onClick={() => project.setView({ type: "artbook" })} />
+             */}
+
+            <MenuColumn
+              title="TaskView"
+              onClick={() => project.setView({ type: "taskview" })}
+            />
+
+            <MenuColumn
+              title="PromptView"
+              onClick={() => project.setView({ type: "promptview" })}
+            />
+            </>
           )}
 
         </Nav>
