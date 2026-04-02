@@ -49,3 +49,9 @@
   background-color: rgba(0, 128, 255, 0.74) !important; /* stronger hover color */
   cursor: pointer;
 }
+
+.DropdownMenuSeparator {
+	height: 1px;
+	background-color: var(--violet-6);
+	margin: 5px;
+}

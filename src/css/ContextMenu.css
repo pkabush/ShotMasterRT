@@ -95,3 +95,29 @@
   color: var(--red-1);
 }
 
+/* SUCCESS */
+.ContextMenuItem.success {
+  color: #19a463; /* You can use a green scale from Radix if available */
+}
+.ContextMenuItem.success[data-highlighted] {
+  background-color: #198754;
+  color: #ffffff;
+}
+
+/* WARNING */
+.ContextMenuItem.warning {
+  color: #d19f0b; /* Radix yellow/orange scale */
+}
+.ContextMenuItem.warning[data-highlighted] {
+  background-color: #ffc107;
+  color: #212529;
+}
+
+/* SECONDARY */
+.ContextMenuItem.secondary {
+  color:#acacac; /* Or another muted color */
+}
+.ContextMenuItem.secondary[data-highlighted] {
+  background-color: var(--mauve-6);
+  color: #3f3f3f;;
+}
