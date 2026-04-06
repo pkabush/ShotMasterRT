@@ -1,10 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { CollapsibleContainerAccordion } from './Atomic/CollapsibleContainer';
-import { Button, ButtonGroup, Spinner } from 'react-bootstrap';
+import { Button, ButtonGroup,  Spinner } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowsDownToLine, faClipboard } from '@fortawesome/free-solid-svg-icons';
 import { PromptDropdownButton } from './PromptPresets/PromptDropdownButton';
-
 
 export interface GenericTextEditorProps {
   label: string;
@@ -14,6 +13,7 @@ export interface GenericTextEditorProps {
   fitHeight?: boolean;
   headerExtra?: React.ReactNode; // new optional prop
   collapsed?: boolean;
+  children?: React.ReactNode;
 }
 
 const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
@@ -24,6 +24,7 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
   fitHeight = false,
   headerExtra, // accept optional header extra  
   collapsed = false,
+  children,
 }) => {
   const [text, setText] = useState(initialText);
   const [originalText, setOriginalText] = useState(initialText);
@@ -47,7 +48,7 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
   };
 
   const handleSave = async () => {
-    if (!onSave) return;
+    if (!onSave || !hasChanges) return;
     setSaving(true);
     await onSave(text);
     setOriginalText(text);
@@ -91,6 +92,8 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
         >
           {saving ? <Spinner size='sm' animation="border" role="status" /> : hasChanges ? 'Save*' : 'Save'}
         </Button>
+
+
       </ButtonGroup>
     </div >
   );
@@ -112,6 +115,7 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
         onChange={(e) => handleChange(e.target.value)}
         onBlur={handleSave}
       />
+      {children}
     </CollapsibleContainerAccordion>
 
   );
