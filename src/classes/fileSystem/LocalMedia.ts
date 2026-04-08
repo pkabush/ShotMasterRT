@@ -51,7 +51,7 @@ export class LocalMedia extends LocalFile {
   }
 
   async load(): Promise<void> {
-    const mediaJson = await LocalJson.create(this.parentFolder!.handle, this.name + '.json');
+    const mediaJson = await LocalJson.create(this.parentFolder!, this.name + '.json');
     runInAction(() => {
       this.mediaJson = mediaJson;
       this.references = new Tags(this, this.mediaJson);

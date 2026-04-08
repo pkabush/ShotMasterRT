@@ -65,7 +65,8 @@ export const MenuBar: React.FC<MenuBarProps> = ({ onOpenFolder, recentFolders, o
               title="PromptView"
               onClick={() => project.setView({ type: "promptview" })}
             />
-            </>
+
+          </>
           )}
 
         </Nav>

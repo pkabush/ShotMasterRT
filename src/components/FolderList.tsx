@@ -9,6 +9,8 @@ import * as ContextMenu from "@radix-ui/react-context-menu";
 import { MenuItemIcon } from './MediaFolderGallery.tsx';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClipboard, faTrashCan } from '@fortawesome/free-solid-svg-icons';
+import { ScriptMaster } from '../classes/ScriptMaster.ts';
+import type { LocalFile } from '../classes/fileSystem/LocalFile.ts';
 
 type FolderListProps = {
   project: Project | null;
@@ -19,6 +21,7 @@ const FolderList: React.FC<FolderListProps> = observer(({ project }) => {
   if (!project) return <div>No Project Opened</div>;
 
 
+
   const handleAddScene = async () => {
     const sceneName = prompt("Enter new scene name");
     if (!sceneName) return;
@@ -27,6 +30,7 @@ const FolderList: React.FC<FolderListProps> = observer(({ project }) => {
   };
 
   const currentFolderName = project.name || 'No Project Opened';
+  const scriptmaster = project.getType(ScriptMaster)[0];
 
   return (
     <div
@@ -67,7 +71,7 @@ const FolderList: React.FC<FolderListProps> = observer(({ project }) => {
                             style={{ cursor: 'pointer' }}
                             onClick={() => { project.setArtbookItem(character.path) }}
                             onContextMenu={() => project.setArtbookItem(character.path)}
-                            key={character.path}                            
+                            key={character.path}
                           >
                             {/* Scene name */}
                             <span
@@ -116,13 +120,75 @@ const FolderList: React.FC<FolderListProps> = observer(({ project }) => {
 
         <CollapsibleAccordionCard label='Scenes' headerExtra={
           <SimpleButton label="+" onClick={handleAddScene} />}
-          openColor='#3564bc' closedColor='#425484'>            
+          openColor='#3564bc' closedColor='#425484'>
           <div>
 
             <ListGroup>
               {project.scenes && project.scenes.map((scene, idx) => (
                 <SceneListItem key={idx} scene={scene} />
               ))}
+            </ListGroup>
+
+          </div>
+        </CollapsibleAccordionCard>
+
+
+
+        <CollapsibleAccordionCard label='Scripts' headerExtra={
+          <SimpleButton label="+" onClick={() => scriptmaster.createScript()} />}
+          openColor='#a54797' closedColor='#603858'>
+          <div>
+
+
+            <ListGroup>
+              {scriptmaster.children.map((script) => {
+                return <ContextMenu.Root key={script.path}>
+                  <ContextMenu.Trigger>
+
+                    <li
+                      className="d-flex justify-content-between align-items-center py-1 px-2"
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => {
+                        project.setView({ type: "scriptmaster" });
+                        project.setSelectedPath(script.path);
+                      }}
+                      onContextMenu={() => { }}
+                      key={script.path}
+                    >
+                      {/* Scene name */}
+                      <span
+                        className={project.selectedPath == script.path ? 'text-success' : undefined}
+                        style={{
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          minWidth: 0,
+                        }}
+                      >
+                        {(script as LocalFile).name_no_extension}
+                      </span>
+                    </li>
+                  </ContextMenu.Trigger>
+
+                  <ContextMenu.Portal>
+                    <ContextMenu.Content className="ContextMenuContent">
+
+                      <ContextMenu.Item className="ContextMenuItem" onClick={() => script.log()}>
+                        <MenuItemIcon><FontAwesomeIcon icon={faClipboard} /></MenuItemIcon>
+                        Log
+                      </ContextMenu.Item>
+
+                      <ContextMenu.Item className="ContextMenuItem danger" onClick={() => { script.delete() }}>
+                        <MenuItemIcon><FontAwesomeIcon icon={faTrashCan} /></MenuItemIcon>
+                        Delete
+                      </ContextMenu.Item>
+
+                    </ContextMenu.Content>
+                  </ContextMenu.Portal>
+
+
+                </ContextMenu.Root>
+              })}
             </ListGroup>
 
           </div>

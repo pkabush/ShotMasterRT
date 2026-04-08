@@ -72,7 +72,7 @@ export class Scene extends LocalFolder {
 
   async load(): Promise<void> {
     try {
-      this.sceneJson = await LocalJson.create(this.handle, 'sceneinfo.json', default_sceneInfoJson);
+      this.sceneJson = await LocalJson.create(this, 'sceneinfo.json', default_sceneInfoJson);
       this.references = new Tags(this, this.sceneJson);
       await this.load_subfolders(Shot);
       // Load StoryBoard Later to overwrite

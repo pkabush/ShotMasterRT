@@ -84,7 +84,7 @@ export class Storyboard extends MediaFolder {
 
     async load(): Promise<void> {
         try {
-            this.data = await LocalJson.create(this.handle, 'data.json');
+            this.data = await LocalJson.create(this, 'data.json');
             this.references = new Tags(this, this.data);
             await this.load_files()
         } catch (err) {

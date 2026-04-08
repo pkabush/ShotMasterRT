@@ -9,6 +9,7 @@ import { ChatGPT } from "./ChatGPT";
 import { LocalJson } from './LocalJson';
 import { KlingAI } from "./KlingAI";
 import { LocalFolder } from "./fileSystem/LocalFolder";
+import { ScriptMaster } from "./ScriptMaster";
 
 export type ProjectView =
   | { type: "none" }
@@ -18,7 +19,8 @@ export type ProjectView =
   | { type: "scene" }
   | { type: "taskview" }
   | { type: "charview" }
-  | { type: "promptview" };
+  | { type: "promptview" }
+  | { type: "scriptmaster" };
 
 const default_projinfo = {
   "gpt_model": "gpt-4o-mini",
@@ -150,7 +152,7 @@ export class Project extends LocalFolder {
   currentView: ProjectView = { type: "none" };
   selectedScene: Scene | null = null;
   selectedPath: string = ""
-  timelinesDirHandle: LocalFolder | null = null;
+  timelinesDirHandle: LocalFolder | null = null;  
   id = 0;
 
   scenesLocalFolder: LocalFolder | null = null;
@@ -173,7 +175,8 @@ export class Project extends LocalFolder {
       setView: action,
       setScene: action,
       setArtbookItem: action,
-      scenes: computed
+      scenes: computed,
+      setSelectedPath:action,
     });
   }
 
@@ -213,8 +216,8 @@ export class Project extends LocalFolder {
 
       await this.userSettingsDB.save();
 
-      this.projinfo = await LocalJson.create(this.handle as FileSystemDirectoryHandle, 'projinfo.json', default_projinfo);
-      this.promptinfo = await LocalJson.create(this.handle as FileSystemDirectoryHandle, 'promps.json');
+      this.projinfo = await LocalJson.create(this, 'projinfo.json', default_projinfo);
+      this.promptinfo = await LocalJson.create(this, 'promps.json');
     });
 
     // Load all project content
@@ -222,8 +225,11 @@ export class Project extends LocalFolder {
       this.loadScenes(),
       this.loadArtbook(),
       this.loadScript(),
-      this.loadDB(),
+      this.loadDB(),      
     ]);
+
+    await LocalFolder.open(this,"Scripts",ScriptMaster);
+
   }
 
   async loadScenes() {
@@ -317,6 +323,10 @@ export class Project extends LocalFolder {
 
   setArtbookItem(path: string) {
     this.currentView = { type: "charview" };
+    this.selectedPath = path;
+  }
+
+  setSelectedPath(path:string){
     this.selectedPath = path;
   }
 

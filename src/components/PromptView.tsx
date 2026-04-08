@@ -8,11 +8,6 @@ import { faFileCirclePlus, faFolderPlus, faTrashCan } from "@fortawesome/free-so
 import { PromptDropdownButton } from "./PromptPresets/PromptDropdownButton";
 
 
-
-
-
-
-
 export const PromptView = observer(() => {
     const project = Project.getProject();
     const data = project.promptinfo;
@@ -27,8 +22,6 @@ export const PromptView = observer(() => {
         </>
     );
 });
-
-
 
 
 type Props = {

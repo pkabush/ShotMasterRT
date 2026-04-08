@@ -46,7 +46,7 @@ export class Character extends MediaFolder {
 
     async load(): Promise<void> {
         try {
-            this.charJson = await LocalJson.create(this.handle, 'charinfo.json');
+            this.charJson = await LocalJson.create(this, 'charinfo.json');
             this.MediaFolder_results = await MediaFolder.create(this, "results");
             this.MediaFolder_results.tags = ["ref_frame"];
             this.references = new Tags(this, this.charJson);

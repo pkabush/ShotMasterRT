@@ -62,7 +62,7 @@ export class Shot extends LocalFolder {
 
   async load(): Promise<void> {
     try {
-      const shotJson = await LocalJson.create(this.handle, 'shotinfo.json');
+      const shotJson = await LocalJson.create(this, 'shotinfo.json');
       const references = new Tags(this, shotJson);
 
       const results = await MediaFolder.create(this, "results");

@@ -1,46 +1,58 @@
-import { makeAutoObservable, observable, runInAction, toJS } from "mobx";
+import { makeObservable, observable, runInAction, toJS } from "mobx";
+import { LocalFile } from "./fileSystem/LocalFile";
+import type { LocalFolder } from "./fileSystem/LocalFolder";
 
-export class LocalJson {
-  folderHandle: FileSystemDirectoryHandle;
-  fileHandle: FileSystemFileHandle | null;
-  filename: string;
-  data: Record<string, any>;
+export class LocalJson extends LocalFile {
+  data: Record<string, any> = {};
 
-  private constructor(
-    folderHandle: FileSystemDirectoryHandle,
-    filename: string,
-    fileHandle: FileSystemFileHandle | null,
-    data: Record<string, any>
+  constructor(
+    parentFolder: LocalFolder,
+    handle: FileSystemFileHandle,
   ) {
-    this.folderHandle = folderHandle;
-    this.filename = filename;
-    this.fileHandle = fileHandle;
-    this.data = observable(data); // observable data
-    makeAutoObservable(this);
+    super(parentFolder, handle);
+
+    makeObservable(this, {
+      data: observable,
+    });
+
   }
 
-  /**
-   * Load an existing JSON file if it exists. 
-   * Does NOT create a new file by default.
-   */
+  async load() {
+    const file = await this.handle.getFile();
+    const text = await file.text();
+
+    let data = {};
+
+    if (text.trim() !== "") {
+      try {
+        data = JSON.parse(text);
+      } catch (err) {
+        console.warn("Invalid JSON, resetting:", err);
+      }
+    }
+
+    runInAction(() => {
+      this.data = data;
+    });
+  }
+
   static async create(
-    folderHandle: FileSystemDirectoryHandle,
+    folder: LocalFolder,
     filename: string,
     defaultData: Record<string, any> = {}
   ): Promise<LocalJson> {
-    try {
-      const fileHandle = await folderHandle.getFileHandle(filename, { create: false });
-      const file = await fileHandle.getFile();
-      const text = await file.text();
-      const data = text.trim() === ""
-        ? { ...defaultData }
-        : { ...defaultData, ...JSON.parse(text) };
-      return new LocalJson(folderHandle, filename, fileHandle, data);
-    } catch {
-      // File does not exist → start with in-memory data only
-      return new LocalJson(folderHandle, filename, null, { ...defaultData });
-    }
+    const handle = await folder.handle.getFileHandle(filename, { create: true });
+
+    const localJson = new LocalJson(folder, handle);
+    await localJson.load();
+
+    runInAction(() => {
+      localJson.data = { ...defaultData, ...localJson.data }
+    })
+
+    return localJson;
   }
+
 
   /**
    * Save JSON to disk. Creates the file if it doesn't exist yet.
@@ -50,25 +62,23 @@ export class LocalJson {
     try {
       // If data is empty → delete file if it exists
       if (this.isEmptyObject(this.data)) {
-        if (this.fileHandle) {
-          await this.folderHandle.removeEntry(this.filename);
-          this.fileHandle = null;
-        }
+        await this.delete();
         return;
       }
 
       // Lazy-create file if missing
-      if (!this.fileHandle) {
-        this.fileHandle = await this.folderHandle.getFileHandle(this.filename, { create: true });
-      }
+      /*
+      if (!this.handle) {
+        this.handle = await this.folderHandle.getFileHandle(this.filename, { create: true });
+      }*/
 
-      let permission = await this.fileHandle.queryPermission({ mode: "readwrite" });
+      let permission = await this.handle.queryPermission({ mode: "readwrite" });
       if (permission !== "granted") {
-        permission = await this.fileHandle.requestPermission({ mode: "readwrite" });
+        permission = await this.handle.requestPermission({ mode: "readwrite" });
       }
       if (permission !== "granted") throw new Error("No permission to write file");
 
-      const writable = await this.fileHandle.createWritable();
+      const writable = await this.handle.createWritable();
       await writable.write(JSON.stringify(this.data, null, 2));
       await writable.close();
     } catch (err) {

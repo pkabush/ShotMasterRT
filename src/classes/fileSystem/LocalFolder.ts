@@ -1,3 +1,4 @@
+import { LocalJson } from "../LocalJson";
 import { LocalAudio } from "./LocalAudio";
 import { LocalFile } from "./LocalFile";
 import { LocalImage } from "./LocalImage";
@@ -277,6 +278,7 @@ export const file_type_map: [typeof LocalFile, string[]][] = [
     [LocalImage, ["png", "jpg", "jpeg", "gif", "webp"]],
     [LocalVideo, ["mp4", "mov", "webm", "avi"]],
     [LocalAudio, ["mp3", "wav", "m4a"]],
+    [LocalJson, ["json"]]
 ];
 
 

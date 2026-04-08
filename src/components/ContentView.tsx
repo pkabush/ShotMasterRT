@@ -10,6 +10,7 @@ import { SceneView } from "./SceneView";
 import { Character } from "../classes/Artbook/Character";
 import { ArtbookCharacterView } from "./Artbook/ArtboookCharacterView";
 import { PromptView } from "./PromptView";
+import { ScriptMasterView } from "./ScriptMaster/ScriptMasterView";
 
 interface ContentViewProps {
   project: Project | null;
@@ -55,7 +56,9 @@ export const ContentView: React.FC<ContentViewProps> = observer(({ project }) =>
       else
         return <>"Selected Item IS not A charactrer"</>
     case "promptview":
-      return <PromptView/>
+      return <PromptView />
+    case "scriptmaster":
+      return <ScriptMasterView />
 
 
 
