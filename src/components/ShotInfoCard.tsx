@@ -14,6 +14,7 @@ import { Google_GenerateImageNode } from './GoogleNodes/Google_GenerateImageNode
 import { Kling_LipSync } from './Kling/Kling_LipSync';
 import MultiStateToggle from './Atomic/MultiStateToggle';
 import { Badge } from 'react-bootstrap';
+import { Google_GenerateKlingPrompt } from './GoogleNodes/Google_GenerateKlingPrompt';
 
 interface Props {
   shot: Shot;
@@ -31,7 +32,7 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
   return (
     <>
       <div className="d-flex align-items-center justify-content-between mb-0">
-        <h3><Badge  bg="secondary">{shot.name}</Badge></h3>
+        <h3><Badge bg="secondary">{shot.name}</Badge></h3>
         <div className="d-flex gap-2">
 
           {/* Pick shot type - crude implementation, fix later */}
@@ -111,12 +112,12 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
 
           ,
           Generate_VIDEO: <>
-            <Kling_GenerateVideo shot={shot}></Kling_GenerateVideo>
-            <Kling_MotionControl shot={shot}></Kling_MotionControl>
-
+            <Kling_GenerateVideo shot={shot} />
+            <Kling_MotionControl shot={shot} />
+            <Google_GenerateKlingPrompt shot={shot} />
 
             <TaskContainer shot={shot} />
-            <MediaFolderGallery mediaFolder={shot.MediaFolder_genVideo}></MediaFolderGallery>
+            <MediaFolderGallery mediaFolder={shot.MediaFolder_genVideo} />
           </>
           ,
           LipSync: <>
@@ -127,9 +128,9 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
 
 
           "Output": <>
-            <MediaFolderGallery mediaFolder={shot.MediaFolder_genVideo}></MediaFolderGallery>
-            <MediaFolderGallery mediaFolder={shot.MediaFolder_results}></MediaFolderGallery>
-            <MediaFolderGallery mediaFolder={shot.MediaFolder_refVideo}></MediaFolderGallery>
+            <MediaFolderGallery mediaFolder={shot.MediaFolder_genVideo} />
+            <MediaFolderGallery mediaFolder={shot.MediaFolder_results} />
+            <MediaFolderGallery mediaFolder={shot.MediaFolder_refVideo} />
           </>
           ,
 

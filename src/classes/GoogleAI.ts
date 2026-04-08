@@ -147,7 +147,8 @@ export class GoogleAI implements AIProvider {
   async generateText(params: AIGenerateParms): Promise<string | null> {
     const res = await GoogleAI.img2img(
       params.prompt,
-      params.model
+      params.model,
+      params.images,
     );
     if (!res) return null;
     return res as string;
