@@ -22,7 +22,7 @@ interface EditableJsonTextFieldProps {
 const EditableJsonTextField: React.FC<EditableJsonTextFieldProps> = observer(({
   localJson,
   field,
-  fitHeight = false,
+  fitHeight = true,
   headerExtra,
   collapsed = false,
   can_ask_ia = true,
