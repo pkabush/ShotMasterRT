@@ -31,6 +31,8 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
   const [saving, setSaving] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null!);
 
+  const needsResize = useRef(false);
+
   useEffect(() => {
     setText(initialText);
     setOriginalText(initialText);
@@ -59,7 +61,9 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
     if (!textareaRef.current) return;
 
     const observer = new ResizeObserver(() => {
-      updateSize();
+      if (needsResize.current) {
+        updateSize();
+      }
     });
 
     observer.observe(textareaRef.current);
@@ -70,9 +74,9 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
 
   const updateSize = () => {
     if (textareaRef.current) {
-      //console.log("Update Size", textareaRef.current.scrollHeight)
       textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight + 1}px`;
+      needsResize.current = (textareaRef.current.scrollHeight == 0);
     }
   }
 
@@ -125,7 +129,7 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
           fontFamily: "monospace",
           overflowY: "auto",
           maxHeight: "800px",
-          resize: "none"
+          //resize: "none"
         }}
         value={text}
         onChange={(e) => handleChange(e.target.value)}
