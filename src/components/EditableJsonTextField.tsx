@@ -16,6 +16,7 @@ interface EditableJsonTextFieldProps {
   headerExtra?: React.ReactNode;
   collapsed?: boolean;
   can_ask_ia?: boolean;
+  label? : string;
 }
 
 const EditableJsonTextField: React.FC<EditableJsonTextFieldProps> = observer(({
@@ -25,6 +26,7 @@ const EditableJsonTextField: React.FC<EditableJsonTextFieldProps> = observer(({
   headerExtra,
   collapsed = false,
   can_ask_ia = true,
+  label = null,
 }) => {
   if (!localJson) return;
 
@@ -36,7 +38,7 @@ const EditableJsonTextField: React.FC<EditableJsonTextFieldProps> = observer(({
 
   return (
     <GenericTextEditor
-      label={field}
+      label={label ?? field}
       initialText={localJson.getField(field) ?? ''} // <-- use getField instead of direct access
       onSave={handleSave}
       fitHeight={fitHeight}

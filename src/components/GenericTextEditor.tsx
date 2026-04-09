@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { CollapsibleContainerAccordion } from './Atomic/CollapsibleContainer';
-import { Button, ButtonGroup,  Spinner } from 'react-bootstrap';
+import { Button, ButtonGroup, Spinner } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowsDownToLine, faClipboard } from '@fortawesome/free-solid-svg-icons';
 import { PromptDropdownButton } from './PromptPresets/PromptDropdownButton';
@@ -29,14 +29,14 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
   const [text, setText] = useState(initialText);
   const [originalText, setOriginalText] = useState(initialText);
   const [saving, setSaving] = useState(false);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null!);
 
   useEffect(() => {
     setText(initialText);
     setOriginalText(initialText);
     if (fitHeight && textareaRef.current) {
       textareaRef.current.style.height = 'auto';
-      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight + 1}px`;
     }
   }, [initialText, fitHeight]);
 
@@ -55,8 +55,22 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
     setSaving(false);
   };
 
+  useEffect(() => {
+    if (!textareaRef.current) return;
+
+    const observer = new ResizeObserver(() => {
+      updateSize();
+    });
+
+    observer.observe(textareaRef.current);
+
+    return () => observer.disconnect();
+  }, []);
+
+
   const updateSize = () => {
     if (textareaRef.current) {
+      //console.log("Update Size", textareaRef.current.scrollHeight)
       textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight + 1}px`;
     }
@@ -71,12 +85,13 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
     <div className="d-flex align-items-center gap-2">
       {headerExtra && <>{headerExtra}</>}
       <ButtonGroup >
-        <Button size='sm' variant='outline-primary' onClick={() => {
+
+        {false && <Button size='sm' variant='outline-primary' onClick={() => {
           if (fitHeight && textareaRef.current) {
             textareaRef.current.style.height = 'auto';
             textareaRef.current.style.height = `${textareaRef.current.scrollHeight + 1}px`;
           }
-        }}><FontAwesomeIcon icon={faArrowsDownToLine} /></Button>
+        }}><FontAwesomeIcon icon={faArrowsDownToLine} /></Button>}
 
         <PromptDropdownButton />
 
@@ -110,6 +125,7 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
           fontFamily: "monospace",
           overflowY: "auto",
           maxHeight: "800px",
+          resize: "none"
         }}
         value={text}
         onChange={(e) => handleChange(e.target.value)}
