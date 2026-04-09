@@ -90,7 +90,7 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
       {headerExtra && <>{headerExtra}</>}
       <ButtonGroup >
 
-        {false && <Button size='sm' variant='outline-primary' onClick={() => {
+        {true && <Button size='sm' variant='outline-primary' onClick={() => {
           if (fitHeight && textareaRef.current) {
             textareaRef.current.style.height = 'auto';
             textareaRef.current.style.height = `${textareaRef.current.scrollHeight + 1}px`;
