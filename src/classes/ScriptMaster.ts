@@ -10,8 +10,8 @@ export class ScriptMaster extends LocalFolder {
     workflows = {
         gen_logline: "scriptmaster_generate_logline",
         gen_episodes: "scriptmaster_generate_episodes",
-        gen_scenes:"scriptmaster_generate_scenes",
-        gen_scene_script:"scriptmaster_generate_scene_script"
+        gen_scenes: "scriptmaster_generate_scenes",
+        gen_scene_script: "scriptmaster_generate_scene_script"
     }
 
     fields = {
@@ -19,7 +19,7 @@ export class ScriptMaster extends LocalFolder {
         gen_logline_output: "prompts/generate_logline_output",
         gen_episodes: "prompts/generate_episodes",
         gen_episodes_output: "prompts/generate_episodes_output",
-        episode_list: "episode_lists",        
+        episode_list: "episode_lists",
     }
 
     async load(): Promise<void> {
@@ -73,8 +73,8 @@ export class ModularScript extends LocalJson {
         const { [name]: _, ...rest } = this.episodeLists[episodeListName].episodes;
         this.updateField(`episode_lists/${episodeListName}/episodes`, rest);
     }
-    
-    addScene(episodeListName: string,episode: string, name?: string) {
+
+    addScene(episodeListName: string, episode: string, name?: string) {
         const finalName = name || prompt("Please enter ScriptName:");
 
         if (!finalName || finalName.trim() === "") {
@@ -85,8 +85,8 @@ export class ModularScript extends LocalJson {
         this.updateField(`episode_lists/${episodeListName}/episodes/${episode}/scenes/${finalName}`, {});
     }
 
-    
-    removeScene(episodeListName: string,episode: string, sceneName: string) {
+
+    removeScene(episodeListName: string, episode: string, sceneName: string) {
         // Get the current scenes object for this episode
         const scenes = this.getField(`episode_lists/${episodeListName}/episodes/${episode}/scenes`) ?? {};
         // Remove the scene
@@ -119,6 +119,16 @@ export class ModularScript extends LocalJson {
         }
 
         this.updateField(`episode_lists/${finalName}`, {});
+    }
+
+    
+
+    getEpisodes(episodeListName: string) {
+        return this.getField(`episode_lists/${episodeListName}/episodes`) ?? {}
+    }
+
+    getScenes(episodeListName: string,episodeName:string) {
+        return this.getField(`episode_lists/${episodeListName}/episodes/${episodeName}/scenes`) ?? {}
     }
 
 

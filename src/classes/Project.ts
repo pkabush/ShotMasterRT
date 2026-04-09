@@ -163,6 +163,7 @@ export class Project extends LocalFolder {
   currentView: ProjectView = { type: "none" };
   selectedScene: Scene | null = null;
   selectedPath: string = ""
+  selectedSubPath: string = ""
   timelinesDirHandle: LocalFolder | null = null;
   id = 0;
 
@@ -181,6 +182,7 @@ export class Project extends LocalFolder {
       currentView: observable,
       selectedScene: observable,
       selectedPath: observable,
+      selectedSubPath:observable,
       loadFromFolder: action,
       loadScenes: action,
       setView: action,
@@ -188,6 +190,7 @@ export class Project extends LocalFolder {
       setArtbookItem: action,
       scenes: computed,
       setSelectedPath: action,
+      setSelectedSubPath: action,
     });
   }
 
@@ -343,6 +346,10 @@ export class Project extends LocalFolder {
 
   setSelectedPath(path: string) {
     this.selectedPath = path;
+  }
+
+  setSelectedSubPath(path: string) {
+    this.selectedSubPath = path;
   }
 
   setScene(scene: Scene) {

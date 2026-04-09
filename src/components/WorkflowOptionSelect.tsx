@@ -40,18 +40,25 @@ export const WorkflowOptionSelect = observer(function WorkflowOptionSelect({
 type WorkflowTextFieldProps = {
     workflowName: string;
     optionName: keyof Workflow;
+    collapsed ?: boolean;
+    label?:string;
 };
 
 export const WorkflowTextField = observer(function WorkflowOptionSelect({
     workflowName,
     optionName,
+    collapsed=true,
+    label,
 }: WorkflowTextFieldProps) {
 
     return (
         <EditableJsonTextField
             localJson={Project.getProject().projinfo}
             field={`workflows/${workflowName}/${optionName}`}
-            fitHeight />
+            fitHeight 
+            collapsed={collapsed}
+            label={label}
+            />                    
     );
 });
 

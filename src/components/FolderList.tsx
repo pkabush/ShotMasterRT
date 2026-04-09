@@ -9,8 +9,7 @@ import * as ContextMenu from "@radix-ui/react-context-menu";
 import { MenuItemIcon } from './MediaFolderGallery.tsx';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClipboard, faTrashCan } from '@fortawesome/free-solid-svg-icons';
-import { ScriptMaster } from '../classes/ScriptMaster.ts';
-import type { LocalFile } from '../classes/fileSystem/LocalFile.ts';
+import { ModularScript, ScriptMaster } from '../classes/ScriptMaster.ts';
 
 type FolderListProps = {
   project: Project | null;
@@ -85,7 +84,6 @@ const FolderList: React.FC<FolderListProps> = observer(({ project }) => {
                             >
                               {character.name}
                             </span>
-
                           </li>
                         </ContextMenu.Trigger>
 
@@ -134,44 +132,182 @@ const FolderList: React.FC<FolderListProps> = observer(({ project }) => {
 
 
 
+
+
         <CollapsibleAccordionCard label='Scripts' headerExtra={
           <SimpleButton label="+" onClick={() => scriptmaster.createScript()} />}
           openColor='#a54797' closedColor='#603858'>
           <div>
 
 
-            <ListGroup>
-              {scriptmaster.children.map((script) => {
+            <Accordion style={{ marginLeft: '10px', }}>
+              {scriptmaster.children.map((_script) => {
+
+                const script = _script as ModularScript;
+
                 return <ContextMenu.Root key={script.path}>
                   <ContextMenu.Trigger>
+                    <CollapsibleAccordionCard label={script.name} key={script.path} onToggle={() => {
+                      project.setView({ type: "scriptmaster" });
+                      project.setSelectedPath(script.path);
+                      project.setSelectedSubPath(``)
+                    }}>
 
-                    <li
-                      className="d-flex justify-content-between align-items-center py-1 px-2"
-                      style={{ cursor: 'pointer' }}
-                      onClick={() => {
-                        project.setView({ type: "scriptmaster" });
-                        project.setSelectedPath(script.path);
-                      }}
-                      onContextMenu={() => { }}
-                      key={script.path}
-                    >
-                      {/* Scene name */}
-                      <span
-                        className={project.selectedPath == script.path ? 'text-success' : undefined}
-                        style={{
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          minWidth: 0,
-                        }}
-                      >
-                        {(script as LocalFile).name_no_extension}
-                      </span>
-                    </li>
+                      {/** Episode Lists */}
+                      <Accordion style={{ marginLeft: '10px', }}>
+                        {Object.entries(script.episodeLists).map(([episodeListName, _]) => {
+
+                          return <>
+                            <ContextMenu.Root key={script.path + "#" + episodeListName}>
+                              <ContextMenu.Trigger>
+                                <CollapsibleAccordionCard label={episodeListName} key={episodeListName} onToggle={() => {
+                                  project.setView({ type: "scriptmaster" });
+                                  project.setSelectedPath(script.path);
+                                  project.setSelectedSubPath(`${episodeListName}`)
+                                }}>
+                                  {/** Episodes */}
+                                  <Accordion style={{ marginLeft: '10px', }}>
+                                    {Object.entries(script.getEpisodes(episodeListName)).map(([episodeName, _]) => {
+
+                                      return <ContextMenu.Root key={`${script.path}"#"${episodeListName}/${episodeName}`}>
+                                        <ContextMenu.Trigger>
+                                          <CollapsibleAccordionCard label={episodeName} key={episodeName} onToggle={() => {
+                                            project.setView({ type: "scriptmaster" });
+                                            project.setSelectedPath(script.path);
+                                            project.setSelectedSubPath(`${episodeListName}/${episodeName}`)
+                                          }}>
+                                            {/** SCENES */}
+                                            <Accordion style={{ marginLeft: '10px', }}>
+                                              {Object.entries(script.getScenes(episodeListName, episodeName)).map(([sceneName, _]) => {
+
+                                                const path = `${script.path}"#"${episodeListName}/${episodeName}/${sceneName}`;
+                                                return <ContextMenu.Root key={path}>
+                                                  <ContextMenu.Trigger>
+                                                    <li
+                                                      className="d-flex justify-content-between align-items-center py-1 px-2"
+                                                      style={{ cursor: 'pointer' }}
+                                                      onClick={() => {
+                                                        project.setView({ type: "scriptmaster" });
+                                                        project.setSelectedPath(script.path);
+                                                        project.setSelectedSubPath(`${episodeListName}/${episodeName}/${sceneName}`)
+                                                      }}
+                                                      onContextMenu={() => {
+                                                        project.setView({ type: "scriptmaster" });
+                                                        project.setSelectedPath(script.path);
+                                                        project.setSelectedSubPath(`${episodeListName}/${episodeName}/${sceneName}`)
+                                                      }}
+                                                      key={path}
+                                                    >
+                                                      <span
+                                                        className={project.selectedPath == path ? 'text-success' : undefined}
+                                                        style={{
+                                                          whiteSpace: 'nowrap',
+                                                          overflow: 'hidden',
+                                                          textOverflow: 'ellipsis',
+                                                          minWidth: 0,
+                                                        }}
+                                                      >
+                                                        {sceneName}
+                                                      </span>
+                                                    </li>
+                                                  </ContextMenu.Trigger>
+
+                                                  {/** SCENE PORTAL */}
+                                                  <ContextMenu.Portal>
+                                                    <ContextMenu.Content className="ContextMenuContent">
+
+                                                      <ContextMenu.Item className="ContextMenuItem" onClick={() => {
+                                                        project.setView({ type: "scriptmaster" });
+                                                        project.setSelectedPath(script.path);
+                                                        project.setSelectedSubPath(`${episodeListName}/${episodeName}/${sceneName}`)
+                                                      }}>
+                                                        <MenuItemIcon><FontAwesomeIcon icon={faClipboard} /></MenuItemIcon>
+                                                        Open Scene
+                                                      </ContextMenu.Item>
+
+                                                    </ContextMenu.Content>
+                                                  </ContextMenu.Portal>
+
+                                                </ContextMenu.Root>
+                                              })}
+
+                                            </Accordion>
+
+                                          </CollapsibleAccordionCard>
+                                        </ContextMenu.Trigger>
+
+                                        {/** Episode Portal */}
+
+                                        <ContextMenu.Portal>
+                                          <ContextMenu.Content className="ContextMenuContent">
+
+                                            <ContextMenu.Item className="ContextMenuItem" onClick={() => {
+                                              project.setView({ type: "scriptmaster" });
+                                              project.setSelectedPath(script.path);
+                                              project.setSelectedSubPath(`${episodeListName}/${episodeName}`)
+                                            }}>
+                                              <MenuItemIcon><FontAwesomeIcon icon={faClipboard} /></MenuItemIcon>
+                                              Open Episode
+                                            </ContextMenu.Item>
+
+                                          </ContextMenu.Content>
+                                        </ContextMenu.Portal>
+
+                                      </ContextMenu.Root>
+
+                                    })}
+
+                                  </Accordion>
+
+                                </CollapsibleAccordionCard>
+                              </ContextMenu.Trigger>
+
+                              <ContextMenu.Portal>
+                                <ContextMenu.Content className="ContextMenuContent">
+
+                                  <ContextMenu.Item className="ContextMenuItem" onClick={() => {
+                                    project.setView({ type: "scriptmaster" });
+                                    project.setSelectedPath(script.path);
+                                    project.setSelectedSubPath(`${episodeListName}`)
+                                  }}>
+                                    <MenuItemIcon><FontAwesomeIcon icon={faClipboard} /></MenuItemIcon>
+                                    Open Episode List
+                                  </ContextMenu.Item>
+
+                                  <ContextMenu.Item className="ContextMenuItem danger" onClick={() => { }}>
+                                    <MenuItemIcon><FontAwesomeIcon icon={faTrashCan} /></MenuItemIcon>
+                                    Delete
+                                  </ContextMenu.Item>
+
+                                </ContextMenu.Content>
+                              </ContextMenu.Portal>
+
+
+                            </ContextMenu.Root>
+                          </>
+                        })}
+
+
+                      </Accordion>
+                    </CollapsibleAccordionCard>
+
+
+
+
                   </ContextMenu.Trigger>
 
                   <ContextMenu.Portal>
                     <ContextMenu.Content className="ContextMenuContent">
+
+                      <ContextMenu.Item className="ContextMenuItem" onClick={() => {
+                        project.setView({ type: "scriptmaster" });
+                        project.setSelectedPath(script.path);
+                        project.setSelectedSubPath("")
+                      }}>
+                        <MenuItemIcon><FontAwesomeIcon icon={faClipboard} /></MenuItemIcon>
+                        Open
+                      </ContextMenu.Item>
+
 
                       <ContextMenu.Item className="ContextMenuItem" onClick={() => script.log()}>
                         <MenuItemIcon><FontAwesomeIcon icon={faClipboard} /></MenuItemIcon>
@@ -183,13 +319,14 @@ const FolderList: React.FC<FolderListProps> = observer(({ project }) => {
                         Delete
                       </ContextMenu.Item>
 
+
                     </ContextMenu.Content>
                   </ContextMenu.Portal>
 
 
                 </ContextMenu.Root>
               })}
-            </ListGroup>
+            </Accordion>
 
           </div>
         </CollapsibleAccordionCard>

@@ -65,13 +65,13 @@ export const CollapsibleContainerAccordion: React.FC<CollapsibleContainerProps> 
   return (
     <Accordion defaultActiveKey={defaultCollapsed ? "" : label} className='mb-2'>
       <AccordionCard eventKey={label}>
-        <AccordionCard.Header closedColor={closedColor} openColor={openColor}>
+        <AccordionCard.Header closedColor={closedColor} openColor={openColor} onToggle={onToggle}>
           {header ?? label}
           <AccordionCard.Controls>
             {headerExtra}
           </AccordionCard.Controls>
         </AccordionCard.Header>
-        <AccordionCard.Body onToggle={onToggle}>
+        <AccordionCard.Body>
           {children}
         </AccordionCard.Body>
       </AccordionCard>
@@ -91,13 +91,13 @@ export const CollapsibleAccordionCard: React.FC<CollapsibleContainerProps> = ({
 
   return (
       <AccordionCard eventKey={label}>
-        <AccordionCard.Header closedColor={closedColor} openColor={openColor}>
+        <AccordionCard.Header closedColor={closedColor} openColor={openColor} onToggle={onToggle}>
           {header ?? label}
           <AccordionCard.Controls>
             {headerExtra}
           </AccordionCard.Controls>
         </AccordionCard.Header>
-        <AccordionCard.Body onToggle={onToggle}>
+        <AccordionCard.Body>
           {children}
         </AccordionCard.Body>
       </AccordionCard>
