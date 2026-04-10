@@ -304,6 +304,8 @@ export const GenerateEpisodesView: React.FC<GenerateLoglineViewProps> = observer
     const wf_name = project.scriptmaster.workflows.gen_episodes;
     const scriptmaster = project.scriptmaster
 
+    const model = project.workflows[project.scriptmaster.workflows.gen_logline].model ?? AllTextModels[0]
+
     return <div>
         <SettingsButton
             className="mb-2"
@@ -329,7 +331,7 @@ export const GenerateEpisodesView: React.FC<GenerateLoglineViewProps> = observer
 
                         const res = await AI.GenerateText({
                             prompt: prompt,
-                            model: workflow.model ?? AllTextModels[0],
+                            model: model,
                         })
 
                         if (!res) return;
@@ -386,6 +388,8 @@ export const GenerateScenesView: React.FC<GenerateScenesViewProps> = observer(({
     const wf_name = project.scriptmaster.workflows.gen_scenes;
 
     const gen_res_field = `episode_lists/${episodeList}/episodes/${episode}/gen_scenes_output`
+    const model = project.workflows[project.scriptmaster.workflows.gen_logline].model ?? AllTextModels[0]
+
 
     return <div>
         <SettingsButton
@@ -416,7 +420,7 @@ export const GenerateScenesView: React.FC<GenerateScenesViewProps> = observer(({
 
                         const res = await AI.GenerateText({
                             prompt: prompt,
-                            model: workflow.model ?? AllTextModels[0],
+                            model: model,
                         })
 
                         if (!res) return;
@@ -477,6 +481,8 @@ export const GenerateSceneScriptView: React.FC<GenerateSceneScriptViewProps> = o
     const gen_res_field = `episode_lists/${episodeList}/episodes/${episode}/scenes/${sceneName}/script`
     const gen_prompt_field = `episode_lists/${episodeList}/episodes/${episode}/scenes/${sceneName}/gen_script_prompt`
 
+    const model = project.workflows[project.scriptmaster.workflows.gen_logline].model ?? AllTextModels[0]
+
     return <div>
         <SettingsButton
             className="mb-2"
@@ -509,7 +515,7 @@ export const GenerateSceneScriptView: React.FC<GenerateSceneScriptViewProps> = o
 
                         const res = await AI.GenerateText({
                             prompt: prompt,
-                            model: workflow.model ?? AllTextModels[0],
+                            model: model,
                         })
 
                         if (!res) return;

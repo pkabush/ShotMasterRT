@@ -75,7 +75,7 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
   const updateSize = () => {
     console.log("update_size")    
     if (textareaRef.current) {
-      console.log("update_size",textareaRef.current.scrollHeight)    
+      //console.log("update_size",textareaRef.current.scrollHeight)    
       textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight + 1}px`;
       needsResize.current = (textareaRef.current.scrollHeight == 0);
