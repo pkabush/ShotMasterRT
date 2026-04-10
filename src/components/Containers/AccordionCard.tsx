@@ -102,7 +102,14 @@ const Header: React.FC<HeaderProps> = ({
                 />
             </div>
 
-            <div onClick={toggle} style={{ flex: 1, paddingLeft: 5 }}>
+            <div onClick={toggle} style={{
+                flex: 1,
+                paddingLeft: 5,
+                whiteSpace: "nowrap",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                minWidth: 0,
+            }}>
                 {headerContent ?? eventKey}
             </div>
 
