@@ -156,7 +156,8 @@ const FolderList: React.FC<FolderListProps> = observer(({ project }) => {
                       {/** Episode Lists */}
                       <Accordion style={{ marginLeft: '10px', }}>
                         {Object.entries(script.episodeLists).map(([episodeListName, _]) => {
-
+                          
+                          console.log( episodeListName,script.getEpisodes(episodeListName) )
                           return <>
                             <ContextMenu.Root key={script.path + "#" + episodeListName}>
                               <ContextMenu.Trigger>
@@ -168,7 +169,7 @@ const FolderList: React.FC<FolderListProps> = observer(({ project }) => {
                                   {/** Episodes */}
                                   <Accordion style={{ marginLeft: '10px', }}>
                                     {Object.entries(script.getEpisodes(episodeListName)).map(([episodeName, _]) => {
-
+                                      
                                       return <ContextMenu.Root key={`${script.path}"#"${episodeListName}/${episodeName}`}>
                                         <ContextMenu.Trigger>
                                           <CollapsibleAccordionCard label={episodeName} key={episodeName} onToggle={() => {

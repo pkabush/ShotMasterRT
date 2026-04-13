@@ -3,7 +3,7 @@ import { Project } from "../../classes/Project";
 import { Accordion, Badge, Button, Stack } from "react-bootstrap";
 import { ModularScript } from "../../classes/ScriptMaster";
 import { CollapsibleContainerAccordion } from "../Atomic/CollapsibleContainer";
-import EditableJsonTextField from "../EditableJsonTextField";
+import EditableJsonTextField, { EditableJsonToggleField } from "../EditableJsonTextField";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFileCirclePlus, faTrashCan } from "@fortawesome/free-solid-svg-icons";
 import SettingsButton from "../Atomic/SettingsButton";
@@ -480,6 +480,8 @@ export const GenerateSceneScriptView: React.FC<GenerateSceneScriptViewProps> = o
 
     const gen_res_field = `episode_lists/${episodeList}/episodes/${episode}/scenes/${sceneName}/script`
     const gen_prompt_field = `episode_lists/${episodeList}/episodes/${episode}/scenes/${sceneName}/gen_script_prompt`
+    const use_logline_field = `episode_lists/${episodeList}/episodes/${episode}/scenes/${sceneName}/gen_script_use_logline`
+    const use_episode_desc_field = `episode_lists/${episodeList}/episodes/${episode}/scenes/${sceneName}/gen_script_use_desc`
 
     const model = project.workflows[project.scriptmaster.workflows.gen_logline].model ?? AllTextModels[0]
 
@@ -497,14 +499,16 @@ export const GenerateSceneScriptView: React.FC<GenerateSceneScriptViewProps> = o
             ${workflow.prompt}  
 
 
-            logline:
-            ${script.getField("logline")}   
-            synopsys:
-            ${script.getField("synopsys")}  
+            ${script.getField(use_logline_field) ?
+            `logline:
+            ${script.getField("logline")}` : ""
+                            }
 
-
-            Episode description:
-            ${script.getField(`episode_lists/${episodeList}/episodes/${episode}/description`)}
+            ${
+            script.getField(use_episode_desc_field) ?
+            `Episode description:
+            ${script.getField(`episode_lists/${episodeList}/episodes/${episode}/description`)}` : ""
+            }
 
             Scene description:
             ${script.getField(`episode_lists/${episodeList}/episodes/${episode}/scenes/${sceneName}/description`)}
@@ -538,8 +542,12 @@ export const GenerateSceneScriptView: React.FC<GenerateSceneScriptViewProps> = o
             }
             content={
                 <>
+                    <EditableJsonToggleField label="Use Logline" localJson={script} field={use_logline_field} />
+                    <EditableJsonToggleField label="Use Episode Description" localJson={script} field={use_episode_desc_field} />
                     <WorkflowTextField workflowName={wf_name} optionName={"prompt"} />
                     <EditableJsonTextField label={"Prompt"} localJson={script} field={gen_prompt_field} />
+
+
 
                 </>
             }

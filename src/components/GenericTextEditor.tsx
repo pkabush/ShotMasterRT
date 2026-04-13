@@ -73,7 +73,7 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
 
 
   const updateSize = () => {
-    console.log("update_size")    
+    //console.log("update_size")    
     if (textareaRef.current) {
       //console.log("update_size",textareaRef.current.scrollHeight)    
       textareaRef.current.style.height = 'auto';
@@ -93,9 +93,9 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
       <ButtonGroup >
 
         {true && <Button size='sm' variant='outline-primary' onClick={() => {
-          console.log("Button Press",fitHeight)
+          console.log("Button Press", fitHeight)
           if (fitHeight && textareaRef.current) {
-             console.log("Button Press Inner")
+            console.log("Button Press Inner")
             textareaRef.current.style.height = 'auto';
             textareaRef.current.style.height = `${textareaRef.current.scrollHeight + 1}px`;
           }
@@ -134,11 +134,20 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
           overflowY: "auto",
           maxHeight: "800px",
           //resize: "none"
+          lineHeight: "20px",
+
+          backgroundImage: `
+      linear-gradient(to bottom, transparent 99%, rgba(255, 255, 255, 0.14) 100%)
+    `,
+          backgroundSize: "100% 800px",
+          backgroundAttachment: "local",
         }}
         value={text}
         onChange={(e) => handleChange(e.target.value)}
         onBlur={handleSave}
+
       />
+
       {children}
     </CollapsibleContainerAccordion>
 
