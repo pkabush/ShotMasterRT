@@ -2,7 +2,7 @@ import { observer } from "mobx-react-lite";
 import { Project } from "../../classes/Project";
 import { Accordion, Badge, Button, Stack } from "react-bootstrap";
 import { ModularScript } from "../../classes/ScriptMaster";
-import { CollapsibleContainerAccordion } from "../Atomic/CollapsibleContainer";
+import {  CollapsibleContainerAccordion } from "../Atomic/CollapsibleContainer";
 import EditableJsonTextField, { EditableJsonToggleField } from "../EditableJsonTextField";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFileCirclePlus, faTrashCan } from "@fortawesome/free-solid-svg-icons";
@@ -70,7 +70,6 @@ export const ScriptMasterView = observer(() => {
     return <div style={{ margin: "0px" }}>
         <h2><Badge bg="secondary">{script.name_no_extension}</Badge></h2>
 
-
         <EditableJsonTextField localJson={script} field="logline" label="Logline" />
         <GenerateLoglineView script={script} />
         <GenerateEpisodesView script={script} />
@@ -105,22 +104,80 @@ export const EpisodeListView: React.FC<EpisodeListViewProps> = observer(({
             </Stack>
 
 
+            <CollapsibleContainerAccordion label="Episode Descriptions">
+                {Object.entries(episodes ?? {}).map(([episodeName]) => (
+                    <EditableJsonTextField
+                        key={episodeName}
+                        label={episodeName}
+                        localJson={script}
+                        field={`episode_lists/${episodeListName}/episodes/${episodeName}/description`}
+                        headerExtra={
+                            <DeleteButton
+                                onClick={() => {
+                                    script.removeEpisode(episodeListName, episodeName);
+                                }}
+                            />
+                        }
+                    />
+                ))}
+            </CollapsibleContainerAccordion>
 
-            {Object.entries(episodes ?? {}).map(([episodeName]) => (
-                <EditableJsonTextField
-                    key={episodeName}
-                    label={episodeName}
-                    localJson={script}
-                    field={`episode_lists/${episodeListName}/episodes/${episodeName}/description`}
-                    headerExtra={
-                        <DeleteButton
-                            onClick={() => {
-                                script.removeEpisode(episodeListName, episodeName);
-                            }}
-                        />
-                    }
-                />
-            ))}
+
+            <CollapsibleContainerAccordion label="Script" defaultCollapsed={true} headerExtra={<>
+                <Button
+                    size="sm"
+                    onClick={async () => {
+                        const fullScript = Object.entries(episodes ?? {})
+                            .map(([episodeName], episodeIndex) => {
+                                const epNumber = episodeIndex + 1;
+                                const episodeHeader = `EPISODE_${epNumber}`;
+
+                                const scenes = Object.entries(
+                                    script.getScenes(episodeListName, episodeName) ?? {}
+                                )
+                                    .map(([sceneName], sceneIndex) => {
+                                        const scNumber = sceneIndex + 1;
+
+                                        const sceneScript = script.getField(
+                                            `episode_lists/${episodeListName}/episodes/${episodeName}/scenes/${sceneName}/script`
+                                        );
+
+                                        return `SC_${epNumber}_${scNumber}\n${sceneScript}`;
+                                    })
+                                    .join("\n\n");
+
+                                return `${episodeHeader}\n\n${scenes}`;
+                            })
+                            .join("\n\n");
+
+                        await navigator.clipboard.writeText(fullScript);
+                        alert("Copied!");
+                    }}
+                >
+                    copy
+                </Button>
+
+            </>}>
+                {Object.entries(episodes ?? {}).map(([episodeName]) => {
+                    return <>
+                        <h4><Badge bg="secondary"> {episodeName}</Badge></h4>
+                        {Object.entries(script.getScenes(episodeListName, episodeName) ?? {}).map(([sceneName]) => (
+                            <>
+                                <EditableJsonTextField
+                                    label={sceneName}
+                                    localJson={script}
+                                    field={`episode_lists/${episodeListName}/episodes/${episodeName}/scenes/${sceneName}/script`}
+                                    maxHeight="6000px"
+                                //fitHeight={false}
+                                />
+                            </>
+                        ))}
+
+                    </>
+                })}
+            </CollapsibleContainerAccordion>
+
+
         </div>
     );
 });
@@ -500,15 +557,14 @@ export const GenerateSceneScriptView: React.FC<GenerateSceneScriptViewProps> = o
 
 
             ${script.getField(use_logline_field) ?
-            `logline:
+                                `logline:
             ${script.getField("logline")}` : ""
                             }
 
-            ${
-            script.getField(use_episode_desc_field) ?
-            `Episode description:
+            ${script.getField(use_episode_desc_field) ?
+                                `Episode description:
             ${script.getField(`episode_lists/${episodeList}/episodes/${episode}/description`)}` : ""
-            }
+                            }
 
             Scene description:
             ${script.getField(`episode_lists/${episodeList}/episodes/${episode}/scenes/${sceneName}/description`)}

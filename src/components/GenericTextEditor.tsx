@@ -14,6 +14,7 @@ export interface GenericTextEditorProps {
   headerExtra?: React.ReactNode; // new optional prop
   collapsed?: boolean;
   children?: React.ReactNode;
+  maxHeight?: string;
 }
 
 const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
@@ -25,6 +26,7 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
   headerExtra, // accept optional header extra  
   collapsed = false,
   children,
+  maxHeight = '800px',
 }) => {
   const [text, setText] = useState(initialText);
   const [originalText, setOriginalText] = useState(initialText);
@@ -35,7 +37,8 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
 
   useEffect(() => {
     setText(initialText);
-    setOriginalText(initialText);
+    setOriginalText(initialText);    
+    
     if (fitHeight && textareaRef.current) {
       textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight + 1}px`;
@@ -76,7 +79,7 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
     //console.log("update_size")    
     if (textareaRef.current) {
       //console.log("update_size",textareaRef.current.scrollHeight)    
-      textareaRef.current.style.height = 'auto';
+      //textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight + 1}px`;
       needsResize.current = (textareaRef.current.scrollHeight == 0);
     }
@@ -132,7 +135,7 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
         style={{
           fontFamily: "monospace",
           overflowY: "auto",
-          maxHeight: "800px",
+          maxHeight: maxHeight,
           //resize: "none"
           lineHeight: "20px",
 
@@ -145,7 +148,6 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
         value={text}
         onChange={(e) => handleChange(e.target.value)}
         onBlur={handleSave}
-
       />
 
       {children}
