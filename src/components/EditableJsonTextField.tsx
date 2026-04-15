@@ -16,8 +16,10 @@ interface EditableJsonTextFieldProps {
   headerExtra?: React.ReactNode;
   collapsed?: boolean;
   can_ask_ia?: boolean;
-  label? : string;
+  label?: string;
   maxHeight?: string;
+  default_value?: string;
+
 }
 
 const EditableJsonTextField: React.FC<EditableJsonTextFieldProps> = observer(({
@@ -29,10 +31,12 @@ const EditableJsonTextField: React.FC<EditableJsonTextFieldProps> = observer(({
   can_ask_ia = true,
   label = null,
   maxHeight = '800px',
+  default_value = ''
 }) => {
   if (!localJson) return;
 
   const [useAskUI, setUseAskAI] = useState(false);
+
 
   const handleSave = async (newValue: string) => {
     await localJson.updateField(field, newValue); // uses nested path support
@@ -41,7 +45,7 @@ const EditableJsonTextField: React.FC<EditableJsonTextFieldProps> = observer(({
   return (
     <GenericTextEditor
       label={label ?? field}
-      initialText={localJson.getField(field) ?? ''} // <-- use getField instead of direct access
+      initialText={localJson.getField(field) ?? default_value} // <-- use getField instead of direct access
       onSave={handleSave}
       fitHeight={fitHeight}
       maxHeight={maxHeight}
@@ -51,7 +55,7 @@ const EditableJsonTextField: React.FC<EditableJsonTextFieldProps> = observer(({
             <Form.Switch label="AskAI" checked={useAskUI} onChange={(e) => { setUseAskAI(e.target.checked) }} />
             <Button size="sm" variant={useAskUI ? "success" : "secondary"} onClick={() => {
               setUseAskAI(!useAskUI);
-             }}>
+            }}>
               <FontAwesomeIcon icon={faBrain} />
             </Button>
           </>

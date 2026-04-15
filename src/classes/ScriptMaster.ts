@@ -1,3 +1,4 @@
+import { action, makeObservable, observable } from "mobx";
 import { LocalFolder } from "./fileSystem/LocalFolder";
 import { LocalJson } from "./LocalJson";
 
@@ -32,8 +33,9 @@ export class ScriptMaster extends LocalFolder {
 
             }
         }
-
     }
+
+
 
     async createScript(name?: string) {
         // Use prompt if name is not provided
@@ -57,6 +59,7 @@ export class ScriptMaster extends LocalFolder {
 
 export class ModularScript extends LocalJson {
 
+    generating = new GenerationProgressStore(); 
 
     addEpisode(EpisodeListName: string, name?: string) {
         const finalName = name || prompt("Please enter ScriptName:");
@@ -66,7 +69,7 @@ export class ModularScript extends LocalJson {
             return;
         }
 
-        this.updateField(`episode_lists/${EpisodeListName}/episodes/${finalName}`, {});
+        this.updateField(`episode_lists/${EpisodeListName}/episodes/${finalName}`, {       });
     }
 
     removeEpisode(episodeListName: string, name: string) {
@@ -119,9 +122,7 @@ export class ModularScript extends LocalJson {
         }
 
         this.updateField(`episode_lists/${finalName}`, {});
-    }
-
-    
+    }    
 
     getEpisodes(episodeListName: string) {
         return this.getField(`episode_lists/${episodeListName}/episodes`) ?? {}
@@ -141,3 +142,34 @@ export class ModularScript extends LocalJson {
 
 
 
+
+export class GenerationProgressStore {
+  generatingItems: string[] = [];
+
+  constructor() {
+    makeObservable(this, {
+      generatingItems: observable,
+      add: action,
+      remove: action,
+      clear: action,
+    });
+  }
+
+  add(id: string) {
+    if (!this.generatingItems.includes(id)) {
+      this.generatingItems.push(id);
+    }
+  }
+
+  remove(id: string) {
+    this.generatingItems = this.generatingItems.filter(i => i !== id);
+  }
+
+  clear() {
+    this.generatingItems = [];
+  }
+
+  isGenerating(id: string) {
+    return this.generatingItems.includes(id);
+  }
+}

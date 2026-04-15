@@ -2,7 +2,7 @@ import { observer } from "mobx-react-lite";
 import { Project } from "../../classes/Project";
 import { Accordion, Badge, Button, Stack } from "react-bootstrap";
 import { ModularScript } from "../../classes/ScriptMaster";
-import {  CollapsibleContainerAccordion } from "../Atomic/CollapsibleContainer";
+import { CollapsibleContainerAccordion } from "../Atomic/CollapsibleContainer";
 import EditableJsonTextField, { EditableJsonToggleField } from "../EditableJsonTextField";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFileCirclePlus, faTrashCan } from "@fortawesome/free-solid-svg-icons";
@@ -125,7 +125,7 @@ export const EpisodeListView: React.FC<EpisodeListViewProps> = observer(({
 
             <CollapsibleContainerAccordion label="Script" defaultCollapsed={true} headerExtra={<>
                 <Button
-                    size="sm"
+                    size="sm"                    
                     onClick={async () => {
                         const fullScript = Object.entries(episodes ?? {})
                             .map(([episodeName], episodeIndex) => {
@@ -154,7 +154,7 @@ export const EpisodeListView: React.FC<EpisodeListViewProps> = observer(({
                         alert("Copied!");
                     }}
                 >
-                    copy
+                    copy Full Script
                 </Button>
 
             </>}>
@@ -305,6 +305,7 @@ export const GenerateLoglineView: React.FC<GenerateLoglineViewProps> = observer(
     const project = Project.getProject()
     const wf_name = project.scriptmaster.workflows.gen_logline;
     const scriptmaster = project.scriptmaster
+    const gen_id = `${script.path}#gen_logline`
 
     return <div>
         <SettingsButton
@@ -314,21 +315,29 @@ export const GenerateLoglineView: React.FC<GenerateLoglineViewProps> = observer(
                     {/* Stylize Image Button */}
                     <button className="btn btn-sm btn-outline-success" onClick={async () => {
 
+                        script.generating.add(gen_id)
 
-                        const workflow = project.workflows[wf_name] ?? ""
-                        const prompt = `
+                        try {
+                            const workflow = project.workflows[wf_name] ?? ""
+                            const prompt = `
             ${workflow.prompt}  
 
 
             ${script.getField(scriptmaster.fields.gen_logline)}          
             `
 
-                        const res = await AI.GenerateText({
-                            prompt: prompt,
-                            model: workflow.model ?? AllTextModels[0],
-                        })
+                            const res = await AI.GenerateText({
+                                prompt: prompt,
+                                model: workflow.model ?? AllTextModels[0],
+                            })
 
-                        script.updateField(scriptmaster.fields.gen_logline_output, res)
+                            script.updateField(scriptmaster.fields.gen_logline_output, res)
+                        }
+                        catch (err) {
+                            console.error("Generation failed:", err);
+                        } finally {
+                            script.generating.remove(gen_id);
+                        }
 
                     }} >
                         Generate Logline And Synosys
@@ -342,7 +351,7 @@ export const GenerateLoglineView: React.FC<GenerateLoglineViewProps> = observer(
                     />
 
                     {/* Loading Spinner */}
-                    <LoadingSpinner isLoading={false} asButton />
+                    <LoadingSpinner isLoading={script.generating.isGenerating(gen_id)} asButton />
                 </>
             }
             content={
@@ -362,6 +371,7 @@ export const GenerateEpisodesView: React.FC<GenerateLoglineViewProps> = observer
     const scriptmaster = project.scriptmaster
 
     const model = project.workflows[project.scriptmaster.workflows.gen_logline].model ?? AllTextModels[0]
+    const gen_id = `${script.path}#gen_episodes`
 
     return <div>
         <SettingsButton
@@ -371,9 +381,11 @@ export const GenerateEpisodesView: React.FC<GenerateLoglineViewProps> = observer
                     {/* Stylize Image Button */}
                     <button className="btn btn-sm btn-outline-success" onClick={async () => {
 
+                        script.generating.add(gen_id)
 
-                        const workflow = project.workflows[wf_name] ?? ""
-                        const prompt = `
+                        try {
+                            const workflow = project.workflows[wf_name] ?? ""
+                            const prompt = `
             ${workflow.prompt}  
 
 
@@ -386,16 +398,21 @@ export const GenerateEpisodesView: React.FC<GenerateLoglineViewProps> = observer
             ${script.getField(scriptmaster.fields.gen_episodes)}          
             `
 
-                        const res = await AI.GenerateText({
-                            prompt: prompt,
-                            model: model,
-                        })
+                            const res = await AI.GenerateText({
+                                prompt: prompt,
+                                model: model,
+                            })
 
-                        if (!res) return;
-                        script.updateField(scriptmaster.fields.gen_episodes_output, res)
-                        //const clean = res.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
-                        //script.updateField(scriptmaster.fields.gen_episodes_output_json, JSON.parse(clean))
-
+                            if (!res) return;
+                            script.updateField(scriptmaster.fields.gen_episodes_output, res)
+                            //const clean = res.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
+                            //script.updateField(scriptmaster.fields.gen_episodes_output_json, JSON.parse(clean))
+                        }
+                        catch (err) {
+                            console.error("Generation failed:", err);
+                        } finally {
+                            script.generating.remove(gen_id);
+                        }
                     }} >
                         Generate Episodes
                     </button>
@@ -408,7 +425,7 @@ export const GenerateEpisodesView: React.FC<GenerateLoglineViewProps> = observer
                     />
 
                     {/* Loading Spinner */}
-                    <LoadingSpinner isLoading={false} asButton />
+                    <LoadingSpinner isLoading={script.generating.isGenerating(gen_id)} asButton />
                 </>
             }
             content={
@@ -447,6 +464,8 @@ export const GenerateScenesView: React.FC<GenerateScenesViewProps> = observer(({
     const gen_res_field = `episode_lists/${episodeList}/episodes/${episode}/gen_scenes_output`
     const model = project.workflows[project.scriptmaster.workflows.gen_logline].model ?? AllTextModels[0]
 
+    const gen_id = `${script.path}#${gen_res_field}`
+
 
     return <div>
         <SettingsButton
@@ -456,9 +475,11 @@ export const GenerateScenesView: React.FC<GenerateScenesViewProps> = observer(({
                     {/* Stylize Image Button */}
                     <button className="btn btn-sm btn-outline-success" onClick={async () => {
 
+                        script.generating.add(gen_id)
+                        try {
 
-                        const workflow = project.workflows[wf_name] ?? ""
-                        const prompt = `
+                            const workflow = project.workflows[wf_name] ?? ""
+                            const prompt = `
             ${workflow.prompt}  
 
 
@@ -475,13 +496,19 @@ export const GenerateScenesView: React.FC<GenerateScenesViewProps> = observer(({
             ${script.getField(`episode_lists/${episodeList}/episodes/${episode}/gen_scenes_prompt`)}          
             `
 
-                        const res = await AI.GenerateText({
-                            prompt: prompt,
-                            model: model,
-                        })
+                            const res = await AI.GenerateText({
+                                prompt: prompt,
+                                model: model,
+                            })
 
-                        if (!res) return;
-                        script.updateField(gen_res_field, res)
+                            if (!res) return;
+                            script.updateField(gen_res_field, res)
+                        }
+                        catch (err) {
+                            console.error("Generation failed:", err);
+                        } finally {
+                            script.generating.remove(gen_id);
+                        }
 
                     }} >
                         Generate Scenes
@@ -495,13 +522,20 @@ export const GenerateScenesView: React.FC<GenerateScenesViewProps> = observer(({
                     />
 
                     {/* Loading Spinner */}
-                    <LoadingSpinner isLoading={false} asButton />
+                    <LoadingSpinner isLoading={script.generating.isGenerating(gen_id)} asButton />
                 </>
             }
             content={
                 <>
                     <WorkflowTextField label="base prompt" workflowName={wf_name} optionName={"prompt"} />
-                    <EditableJsonTextField label="user prompt" localJson={script} field={`episode_lists/${episodeList}/episodes/${episode}/gen_scenes_prompt`} />
+                    <EditableJsonTextField
+                        label="user prompt"
+                        localJson={script}
+                        field={`episode_lists/${episodeList}/episodes/${episode}/gen_scenes_prompt`}
+                        default_value={project.promptinfo?.getOrCreateField(
+                            "script/contents/generate_scenes_preset",
+                            { type: "string", contents: "Место и Время:\nНастроение:" }).contents ?? ""}
+                    />
                     <EditableJsonTextField label="result" localJson={script} field={gen_res_field} />
 
                     <Button size="sm" onClick={() => {
@@ -510,7 +544,7 @@ export const GenerateScenesView: React.FC<GenerateScenesViewProps> = observer(({
 
                         const scenes_field = `episode_lists/${episodeList}/episodes/${episode}/scenes`
 
-                        script.updateField(scenes_field, { ...JSON.parse(clean), ...script.getField(scenes_field) });
+                        script.updateField(scenes_field, { ...script.getField(scenes_field),...JSON.parse(clean) });
                         //script.updateField(scriptmaster.fields.episode_list, JSON.parse(clean))
                     }}>
                         Create Scenes from list
@@ -542,6 +576,8 @@ export const GenerateSceneScriptView: React.FC<GenerateSceneScriptViewProps> = o
 
     const model = project.workflows[project.scriptmaster.workflows.gen_logline].model ?? AllTextModels[0]
 
+    const gen_id = `${script.path}#${gen_res_field}`
+
     return <div>
         <SettingsButton
             className="mb-2"
@@ -550,21 +586,23 @@ export const GenerateSceneScriptView: React.FC<GenerateSceneScriptViewProps> = o
                     {/* Stylize Image Button */}
                     <button className="btn btn-sm btn-outline-success" onClick={async () => {
 
+                        script.generating.add(gen_id)
 
-                        const workflow = project.workflows[wf_name] ?? ""
-                        const prompt = `
+                        try {
+                            const workflow = project.workflows[wf_name] ?? ""
+                            const prompt = `
             ${workflow.prompt}  
 
 
             ${script.getField(use_logline_field) ?
-                                `logline:
+                                    `logline:
             ${script.getField("logline")}` : ""
-                            }
+                                }
 
             ${script.getField(use_episode_desc_field) ?
-                                `Episode description:
+                                    `Episode description:
             ${script.getField(`episode_lists/${episodeList}/episodes/${episode}/description`)}` : ""
-                            }
+                                }
 
             Scene description:
             ${script.getField(`episode_lists/${episodeList}/episodes/${episode}/scenes/${sceneName}/description`)}
@@ -573,13 +611,20 @@ export const GenerateSceneScriptView: React.FC<GenerateSceneScriptViewProps> = o
             ${script.getField(gen_prompt_field)}          
             `
 
-                        const res = await AI.GenerateText({
-                            prompt: prompt,
-                            model: model,
-                        })
+                            const res = await AI.GenerateText({
+                                prompt: prompt,
+                                model: model,
+                            })
 
-                        if (!res) return;
-                        script.updateField(gen_res_field, res)
+                            if (!res) return;
+                            script.updateField(gen_res_field, res)
+                        }
+                        catch (err) {
+                            console.error("Generation failed:", err);
+                        } finally {
+                            script.generating.remove(gen_id);
+                        }
+
 
                     }} >
                         Generate Script
@@ -593,7 +638,7 @@ export const GenerateSceneScriptView: React.FC<GenerateSceneScriptViewProps> = o
                     />
 
                     {/* Loading Spinner */}
-                    <LoadingSpinner isLoading={false} asButton />
+                    <LoadingSpinner isLoading={script.generating.isGenerating(gen_id)} asButton />
                 </>
             }
             content={

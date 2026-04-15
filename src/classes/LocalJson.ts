@@ -129,6 +129,14 @@ export class LocalJson extends LocalFile {
     return current;
   }
 
+  getOrCreateField(fieldPath: string, defaultValue: any) {
+    const existing = this.getField(fieldPath);
+    if (existing !== undefined) return existing;
+
+    this.updateField(fieldPath, defaultValue, false);
+    return defaultValue;
+  }
+
   private isEmptyObject(obj: Record<string, any>): boolean {
     return Object.keys(obj).length === 0;
   }
