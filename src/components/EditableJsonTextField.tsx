@@ -19,7 +19,9 @@ interface EditableJsonTextFieldProps {
   label?: string;
   maxHeight?: string;
   default_value?: string;
-
+  openColor?: string;
+  closedColor?: string;
+  onSave?: (newValue: string) => void;
 }
 
 const EditableJsonTextField: React.FC<EditableJsonTextFieldProps> = observer(({
@@ -31,7 +33,10 @@ const EditableJsonTextField: React.FC<EditableJsonTextFieldProps> = observer(({
   can_ask_ia = true,
   label = null,
   maxHeight = '800px',
-  default_value = ''
+  default_value = '',
+  openColor,
+  closedColor, 
+  onSave, 
 }) => {
   if (!localJson) return;
 
@@ -39,7 +44,8 @@ const EditableJsonTextField: React.FC<EditableJsonTextFieldProps> = observer(({
 
 
   const handleSave = async (newValue: string) => {
-    await localJson.updateField(field, newValue); // uses nested path support
+    await localJson.updateField(field, newValue); 
+    if(onSave) await(onSave(newValue));    
   };
 
   return (
@@ -49,10 +55,13 @@ const EditableJsonTextField: React.FC<EditableJsonTextFieldProps> = observer(({
       onSave={handleSave}
       fitHeight={fitHeight}
       maxHeight={maxHeight}
+      openColor={openColor}
+      closedColor={closedColor}
       headerExtra={<>
+        {headerExtra}
         {can_ask_ia &&
           <>
-            <Form.Switch label="AskAI" checked={useAskUI} onChange={(e) => { setUseAskAI(e.target.checked) }} />
+            {false && <Form.Switch label="AskAI" checked={useAskUI} onChange={(e) => { setUseAskAI(e.target.checked) }} />}
             <Button size="sm" variant={useAskUI ? "success" : "secondary"} onClick={() => {
               setUseAskAI(!useAskUI);
             }}>
@@ -61,7 +70,6 @@ const EditableJsonTextField: React.FC<EditableJsonTextFieldProps> = observer(({
           </>
         }
 
-        {headerExtra}
       </>}
       collapsed={collapsed}
     >
@@ -139,17 +147,19 @@ interface EditableJsonToggleFieldProps {
   localJson: LocalJson | null;
   field: string;
   label?: string;
+  default_val?: boolean;
 }
 
 export const EditableJsonToggleField: React.FC<EditableJsonToggleFieldProps> = observer(({
   localJson,
   field,
-  label
+  label,
+  default_val = true
 }) => {
   if (!localJson) return;
 
   return (
-    <Form.Switch label={label ?? field} checked={localJson.getField(field) ?? true} onChange={async (e) => {
+    <Form.Switch label={label ?? field} checked={localJson.getField(field) ?? default_val} onChange={async (e) => {
       await localJson.updateField(field, e.target.checked);
     }} />
 

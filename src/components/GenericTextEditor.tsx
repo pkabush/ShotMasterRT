@@ -15,6 +15,8 @@ export interface GenericTextEditorProps {
   collapsed?: boolean;
   children?: React.ReactNode;
   maxHeight?: string;
+  openColor?: string;
+  closedColor?: string;
 }
 
 const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
@@ -27,6 +29,8 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
   collapsed = false,
   children,
   maxHeight = '800px',
+  openColor,
+  closedColor,
 }) => {
   const [text, setText] = useState(initialText);
   const [originalText, setOriginalText] = useState(initialText);
@@ -37,8 +41,8 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
 
   useEffect(() => {
     setText(initialText);
-    setOriginalText(initialText);    
-    
+    setOriginalText(initialText);
+
     if (fitHeight && textareaRef.current) {
       textareaRef.current.style.height = 'auto';
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight + 1}px`;
@@ -126,9 +130,16 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
 
   return (
 
-    <CollapsibleContainerAccordion label={label} headerExtra={defaultHeaderExtra} defaultCollapsed={collapsed} onToggle={(_) => {
-      requestAnimationFrame(() => { updateSize(); });
-    }}>
+    <CollapsibleContainerAccordion
+      label={label}
+      headerExtra={defaultHeaderExtra}
+      defaultCollapsed={collapsed}
+      onToggle={(_) => {
+        requestAnimationFrame(() => { updateSize(); });
+      }}
+      openColor={openColor}
+      closedColor={closedColor}
+    >
       <textarea
         ref={textareaRef}
         className="form-control"
