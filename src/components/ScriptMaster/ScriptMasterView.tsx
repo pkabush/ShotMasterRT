@@ -1,6 +1,6 @@
 import { observer } from "mobx-react-lite";
 import { Project } from "../../classes/Project";
-import { Accordion, Badge, Button, ButtonGroup, Stack } from "react-bootstrap";
+import { Accordion, Badge, Button, ButtonGroup } from "react-bootstrap";
 import { ModularScript } from "../../classes/ScriptMaster";
 import { CollapsibleContainerAccordion } from "../Atomic/CollapsibleContainer";
 import EditableJsonTextField, { EditableJsonToggleField } from "../EditableJsonTextField";
@@ -73,7 +73,6 @@ export const ScriptMasterView = observer(() => {
 
         <EditableJsonTextField localJson={script} field="logline" label="Logline" />
         <GenerateLoglineView script={script} />
-        <GenerateEpisodesView script={script} />
         <GenerateEpisodesTextView script={script} />
     </div>
 
@@ -101,21 +100,8 @@ export const EpisodeListView: React.FC<EpisodeListViewProps> = observer(({
                 localJson={script}
                 field={`episode_lists/${episodeListName}/text`}
                 collapsed={true}
-                headerExtra={<>
-
-                    {false && <Button size="sm" onClick={() => {
-                        script.createEpisodesFromEpisodeList(episodeListName);
-                    }}>
-                        Sync
-                    </Button>}
-                </>}
                 onSave={() => { script.createEpisodesFromEpisodeList(episodeListName); }}
             />
-
-            {false && <Stack direction="horizontal" gap={3}>
-                <h3><Badge>Episodes:</Badge></h3>
-                <div className="ms-auto"><AddButton onClick={() => { script.addEpisode(episodeListName) }} /></div>
-            </Stack>}
 
             <Button size="sm" variant="success" onClick={() => {
                 script.generateAllSceneDescriptions(episodeListName);
@@ -130,14 +116,14 @@ export const EpisodeListView: React.FC<EpisodeListViewProps> = observer(({
                 <ButtonGroup >
 
 
-                    <EditableJsonToggleField localJson={script} field={show_scenes_field} label="Show Scenes" />
+                    <EditableJsonToggleField localJson={script} field={show_scenes_field} label="Show Scenes" default_val={false} />
 
                     <AddButton onClick={() => { script.addEpisode(episodeListName) }} />
                 </ButtonGroup>
 
             </>}>
                 {Object.entries(episodes ?? {}).map(([episodeName]) => (
-                    <>
+                    <div key={episodeName}>
                         {
                             script.getField(show_scenes_field) ?
                                 <EpisodeView
@@ -162,7 +148,7 @@ export const EpisodeListView: React.FC<EpisodeListViewProps> = observer(({
                                     }
                                     onSave={() => { script.createEpisodeListFromEpisodes(episodeListName) }}
                                 />}
-                    </>
+                    </div>
                 ))}
             </CollapsibleContainerAccordion>
 
@@ -206,21 +192,19 @@ export const EpisodeListView: React.FC<EpisodeListViewProps> = observer(({
 
             </>}>
                 {Object.entries(episodes ?? {}).map(([episodeName]) => {
-                    return <>
+                    return <div key={episodeName}>
                         <h4><Badge bg="secondary"> {episodeName}</Badge></h4>
                         {Object.entries(script.getScenes(episodeListName, episodeName) ?? {}).map(([sceneName]) => (
-                            <>
-                                <EditableJsonTextField
-                                    label={sceneName}
-                                    localJson={script}
-                                    field={`episode_lists/${episodeListName}/episodes/${episodeName}/scenes/${sceneName}/script`}
-                                    maxHeight="6000px"
-                                //fitHeight={false}
-                                />
-                            </>
+                            <EditableJsonTextField
+                                key={sceneName}
+                                label={sceneName}
+                                localJson={script}
+                                field={`episode_lists/${episodeListName}/episodes/${episodeName}/scenes/${sceneName}/script`}
+                                maxHeight="6000px"
+                            />
                         ))}
 
-                    </>
+                    </div>
                 })}
             </CollapsibleContainerAccordion>
 
@@ -251,6 +235,9 @@ export const EpisodeView: React.FC<EpisodeViewProps> = observer(({
 
     const scenes_field = `episode_lists/${episodeListName}/episodes/${episodeName}/gen_scenes_output`
 
+    // for spinner
+    const gen_res_field = `episode_lists/${episodeListName}/episodes/${episodeName}/gen_scenes_output`
+    const gen_id = `${script.path}#${gen_res_field}`
 
     const project = Project.getProject();
 
@@ -271,7 +258,10 @@ export const EpisodeView: React.FC<EpisodeViewProps> = observer(({
                 localJson={script}
                 field={`episode_lists/${episodeListName}/episodes/${episodeName}/description`}
                 headerExtra={
-                    <>{!show_gen_button && <EditableJsonToggleField default_val={false} localJson={script} field={show_gen_button_field} label="GEN" />}</>
+                    <>
+                        <LoadingSpinner isLoading={script.generating.isGenerating(gen_id)} asButton />
+                        {!show_gen_button && <EditableJsonToggleField default_val={false} localJson={script} field={show_gen_button_field} label="GEN" />}
+                    </>
                 }
                 onSave={() => { script.createEpisodeListFromEpisodes(episodeListName) }}
             />
@@ -290,7 +280,7 @@ export const EpisodeView: React.FC<EpisodeViewProps> = observer(({
                 headerExtra={
                     <>
                         <ButtonGroup>
-                            <EditableJsonToggleField localJson={project.projinfo} field="ui/scriptmaster/split_scenes" label="Split" />
+                            <EditableJsonToggleField localJson={project.projinfo} field="ui/scriptmaster/split_scenes" label="Split" default_val={false} />
 
                             <AddButton
                                 onClick={() => {
@@ -304,7 +294,7 @@ export const EpisodeView: React.FC<EpisodeViewProps> = observer(({
                 {project.projinfo?.getField("ui/scriptmaster/split_scenes") ?
                     <Accordion style={{ marginLeft: "15px" }} alwaysOpen>
                         {Object.entries((episode as any).scenes ?? {}).map(([sceneName]) => (
-                            <>
+                            <div key={sceneName}>
                                 <EditableJsonTextField
                                     label={`${episodeName} - ${sceneName}`}
                                     localJson={script}
@@ -318,7 +308,7 @@ export const EpisodeView: React.FC<EpisodeViewProps> = observer(({
                                         script.createScenesTextFromScenes(episodeListName, episodeName);
                                     }}
                                 />
-                            </>
+                            </div>
                         ))}
                     </Accordion> :
                     <div style={{ marginLeft: "15px" }} >
@@ -454,90 +444,6 @@ export const GenerateLoglineView: React.FC<GenerateLoglineViewProps> = observer(
     </div>;
 });
 
-export const GenerateEpisodesView: React.FC<GenerateLoglineViewProps> = observer(({ script }) => {
-    const project = Project.getProject()
-    const wf_name = project.scriptmaster.workflows.gen_episodes;
-    const scriptmaster = project.scriptmaster
-
-    const model = project.workflows[project.scriptmaster.workflows.gen_logline].model ?? AllTextModels[0]
-    const gen_id = `${script.path}#gen_episodes`
-
-    return <div>
-        <SettingsButton
-            className="mb-2"
-            buttons={
-                <>
-                    {/* Stylize Image Button */}
-                    <button className="btn btn-sm btn-outline-success" onClick={async () => {
-
-                        script.generating.add(gen_id)
-
-                        try {
-                            const workflow = project.workflows[wf_name] ?? ""
-                            const prompt = `
-            ${workflow.prompt}  
-
-
-            logline:
-            ${script.getField("logline")}   
-            synopsys:
-            ${script.getField("synopsys")}  
-
-
-            ${script.getField(scriptmaster.fields.gen_episodes)}          
-            `
-
-                            const res = await AI.GenerateText({
-                                prompt: prompt,
-                                model: model,
-                            })
-
-                            if (!res) return;
-                            script.updateField(scriptmaster.fields.gen_episodes_output, res)
-                            //const clean = res.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
-                            //script.updateField(scriptmaster.fields.gen_episodes_output_json, JSON.parse(clean))
-                        }
-                        catch (err) {
-                            console.error("Generation failed:", err);
-                        } finally {
-                            script.generating.remove(gen_id);
-                        }
-                    }} >
-                        Generate Episodes
-                    </button>
-
-                    {/* Model Selector */}
-                    <WorkflowOptionSelect
-                        workflowName={project.scriptmaster.workflows.gen_logline}
-                        optionName={"model"}
-                        values={AllTextModels}
-                    />
-
-                    {/* Loading Spinner */}
-                    <LoadingSpinner isLoading={script.generating.isGenerating(gen_id)} asButton />
-                </>
-            }
-            content={
-                <>
-                    <WorkflowTextField label={"base_prompt"} workflowName={wf_name} optionName={"prompt"} />
-                    <EditableJsonTextField label={"prompt"} localJson={script} field={project.scriptmaster.fields.gen_episodes} />
-                    <EditableJsonTextField label={"result"} localJson={script} field={project.scriptmaster.fields.gen_episodes_output} />
-
-                    <Button size="sm" onClick={() => {
-                        const src = script.getField(scriptmaster.fields.gen_episodes_output)
-                        const clean = src.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
-                        script.episodeLists = { ...JSON.parse(clean), ...script.episodeLists };
-                        //script.updateField(scriptmaster.fields.episode_list, JSON.parse(clean))
-                    }}>
-                        Create Episode Lists
-                    </Button>
-
-                </>
-            }
-        />
-    </div>;
-});
-
 
 export const GenerateEpisodesTextView: React.FC<GenerateLoglineViewProps> = observer(({ script }) => {
     const project = Project.getProject()
@@ -575,6 +481,11 @@ export const GenerateEpisodesTextView: React.FC<GenerateLoglineViewProps> = obse
 
                             if (!res) return;
                             script.updateField(scriptmaster.fields.gen_episodes_text_output, res)
+
+                            script.episodeLists = { ...script.episodeLists, ...{ "Variant_1": { text: res } } };
+                            script.createEpisodesFromEpisodeList("Variant_1");
+                            script.createEpisodeListFromEpisodes("Variant_1");
+
                         }
                         catch (err) {
                             console.error("Generation failed:", err);

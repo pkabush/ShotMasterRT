@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { observer } from 'mobx-react-lite';
 import GenericTextEditor from './GenericTextEditor';
 import { LocalJson } from '../classes/LocalJson';
-import { Button, Form } from 'react-bootstrap';
+import { Button, Form, Stack } from 'react-bootstrap';
 import { Project } from '../classes/Project';
 import { WorkflowOptionSelect } from './WorkflowOptionSelect';
 import { AI, AllTextModels } from '../classes/AI_provider';
@@ -35,8 +35,8 @@ const EditableJsonTextField: React.FC<EditableJsonTextFieldProps> = observer(({
   maxHeight = '800px',
   default_value = '',
   openColor,
-  closedColor, 
-  onSave, 
+  closedColor,
+  onSave,
 }) => {
   if (!localJson) return;
 
@@ -44,8 +44,8 @@ const EditableJsonTextField: React.FC<EditableJsonTextFieldProps> = observer(({
 
 
   const handleSave = async (newValue: string) => {
-    await localJson.updateField(field, newValue); 
-    if(onSave) await(onSave(newValue));    
+    await localJson.updateField(field, newValue);
+    if (onSave) await (onSave(newValue));
   };
 
   return (
@@ -103,25 +103,34 @@ export const AskAIView: React.FC<AskAIViewProps> = observer(({
   return <div style={{ backgroundColor: "#3a794c" }}>
     <div className='p-2' >
 
-      <Button size='sm' variant='success' onClick={async () => {
-        const workflow = project.workflows[workflowName] ?? ""
-        const prompt = `                        
+      <Stack direction="horizontal" gap={3}>
+        <Button size='sm' variant='success' onClick={async () => {
+          const workflow = project.workflows[workflowName] ?? ""
+          const prompt = `                        
                         ${localJson?.getField(field)}
-
             
                         ${localJson?.getField(prompt_filed)}            
                         `
-        const res = await AI.GenerateText({
-          prompt: prompt,
-          model: workflow.model ?? AllTextModels[0],
-        })
-        localJson?.updateField(res_field, res)
-      }} > Ask AI</Button>
-      <WorkflowOptionSelect
-        workflowName={workflowName}
-        optionName={"model"}
-        values={AllTextModels}
-      />
+          const res = await AI.GenerateText({
+            prompt: prompt,
+            model: workflow.model ?? AllTextModels[0],
+          })
+          localJson?.updateField(res_field, res)
+        }} > Ask AI</Button>
+        <WorkflowOptionSelect
+          workflowName={workflowName}
+          optionName={"model"}
+          values={AllTextModels}
+        />
+        <Button size='sm' variant='outline-warning' onClick={() => {
+          if (!localJson) return;
+          const old = localJson.getField(field);
+          localJson.updateField(field, localJson.getField(res_field));
+          localJson.updateField(res_field, old);
+        }}
+        className="ms-auto"
+        >copy output</Button>
+      </Stack>
 
       <EditableJsonTextField localJson={localJson} field={prompt_filed} can_ask_ia={false} />
       <EditableJsonTextField localJson={localJson} field={res_field} can_ask_ia={false} />

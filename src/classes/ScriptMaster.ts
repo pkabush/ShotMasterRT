@@ -5,9 +5,6 @@ import { Project } from "./Project";
 import { AI, AllTextModels } from "./AI_provider";
 
 
-
-
-
 export class ScriptMaster extends LocalFolder {
 
     workflows = {
