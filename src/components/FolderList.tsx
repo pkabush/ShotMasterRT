@@ -177,6 +177,7 @@ const FolderList: React.FC<FolderListProps> = observer(({ project }) => {
                                           project.setSelectedSubPath(`${episodeListName}/${episodeName}`)
                                         }}>
                                           {/** SCENES */}
+                                          {/**
                                           <Accordion style={{ marginLeft: '10px', }}>
                                             {Object.entries(script.getScenes(episodeListName, episodeName)).map(([sceneName, _]) => {
 
@@ -212,7 +213,7 @@ const FolderList: React.FC<FolderListProps> = observer(({ project }) => {
                                                   </li>
                                                 </ContextMenu.Trigger>
 
-                                                {/** SCENE PORTAL */}
+
                                                 <ContextMenu.Portal>
                                                   <ContextMenu.Content className="ContextMenuContent">
 
@@ -232,6 +233,8 @@ const FolderList: React.FC<FolderListProps> = observer(({ project }) => {
                                             })}
 
                                           </Accordion>
+
+                                             */}
 
                                         </CollapsibleAccordionCard>
                                       </ContextMenu.Trigger>

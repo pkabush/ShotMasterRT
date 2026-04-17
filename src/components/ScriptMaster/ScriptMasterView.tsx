@@ -153,9 +153,12 @@ export const EpisodeListView: React.FC<EpisodeListViewProps> = observer(({
             </CollapsibleContainerAccordion>
 
             <Button size="sm" variant="success" onClick={() => {
-                script.generateAllSceneScripts(episodeListName);
+                //script.generateAllSceneScripts(episodeListName);
+                script.generateAllEpisodeScripts(episodeListName);
+
             }}> Generate Script</Button>
 
+            {/** 
             <CollapsibleContainerAccordion label="Script" defaultCollapsed={true} headerExtra={<>
                 <Button
                     size="sm"
@@ -207,6 +210,65 @@ export const EpisodeListView: React.FC<EpisodeListViewProps> = observer(({
                     </div>
                 })}
             </CollapsibleContainerAccordion>
+*/}
+            <CollapsibleContainerAccordion label="Script" defaultCollapsed={true} headerExtra={<>
+                <Button
+                    size="sm"
+                    onClick={async () => {
+                        const fullScript = Object.entries(episodes ?? {})
+                            .map(([episodeName], episodeIndex) => {
+                                const epNumber = episodeIndex + 1;
+                                const episodeHeader = `EPISODE_${epNumber}`;
+
+                                /*
+                                const scenes = Object.entries(
+                                    script.getScenes(episodeListName, episodeName) ?? {}
+                                )
+                                    .map(([sceneName], sceneIndex) => {
+                                        const scNumber = sceneIndex + 1;
+
+                                        const sceneScript = script.getField(
+                                            `episode_lists/${episodeListName}/episodes/${episodeName}/scenes/${sceneName}/script`
+                                        );
+
+                                        return `SC_${epNumber}_${scNumber}\n${sceneScript}`;
+                                    })
+                                    .join("\n\n");
+
+                                
+
+                                return `${episodeHeader}\n\n${scenes}`;
+                                */
+                                const epScript = script.getField(
+                                    `episode_lists/${episodeListName}/episodes/${episodeName}/script`
+                                );
+                                return `${episodeHeader}\n\n${epScript}`;
+                            })
+                            .join("\n\n");
+
+                        await navigator.clipboard.writeText(fullScript);
+                        alert("Copied!");
+                    }}
+                >
+                    copy Full Script
+                </Button>
+
+            </>}>
+                {Object.entries(episodes ?? {}).map(([episodeName]) => {
+                    return <div key={episodeName}>
+
+                        <EditableJsonTextField
+                            key={episodeName}
+                            label={episodeName}
+                            localJson={script}
+                            field={`episode_lists/${episodeListName}/episodes/${episodeName}/script`}
+                            maxHeight="6000px"
+                        />
+
+                    </div>
+                })}
+            </CollapsibleContainerAccordion>
+
 
 
         </div >
@@ -240,6 +302,8 @@ export const EpisodeView: React.FC<EpisodeViewProps> = observer(({
     const gen_id = `${script.path}#${gen_res_field}`
 
     const project = Project.getProject();
+
+    const ep_script_field = `episode_lists/${episodeListName}/episodes/${episodeName}/script`
 
     return (
         <div className="m-3">
@@ -280,7 +344,7 @@ export const EpisodeView: React.FC<EpisodeViewProps> = observer(({
                 headerExtra={
                     <>
                         <ButtonGroup>
-                            <EditableJsonToggleField localJson={project.projinfo} field="ui/scriptmaster/split_scenes" label="Split" default_val={false} />
+                            {false && <EditableJsonToggleField localJson={project.projinfo} field="ui/scriptmaster/split_scenes" label="Split" default_val={false} />}
 
                             <AddButton
                                 onClick={() => {
@@ -291,7 +355,7 @@ export const EpisodeView: React.FC<EpisodeViewProps> = observer(({
                     </>
                 }
             >
-                {project.projinfo?.getField("ui/scriptmaster/split_scenes") ?
+                {project.projinfo?.getField("ui/scriptmaster/split_scenes") && false ?
                     <Accordion style={{ marginLeft: "15px" }} alwaysOpen>
                         {Object.entries((episode as any).scenes ?? {}).map(([sceneName]) => (
                             <div key={sceneName}>
@@ -321,8 +385,19 @@ export const EpisodeView: React.FC<EpisodeViewProps> = observer(({
                                 script.createScenesFromScenesText(episodeListName, episodeName);
                             }} />
 
+                        <GenerateEpisodeScript episodeList={episodeListName} episode={episodeName} script={script} />
+
+                        <EditableJsonTextField
+                            localJson={script}
+                            field={ep_script_field}
+                            label={`${episodeName} : SCRIPT`}
+                            maxHeight="10000px"
+                            openColor="#a98340"
+                            closedColor="#68522a" />
+
                     </div>
                 }
+
 
 
             </CollapsibleContainerAccordion>
@@ -647,16 +722,66 @@ export const GenerateSceneScriptView: React.FC<GenerateSceneScriptViewProps> = o
 
 
 
-export const test = {
-    "Episode Name": {
-        "description": "короткое описние",
-        "episodes": {
-            "Episode_1": "episode_description",
-            "Episode_2": "episode_description",
-            "Episode_3": "episode_description",
 
-        }
-    },
+
+interface GenerateEpisodeScriptViewProps {
+    script: ModularScript;
+    episode: string;
+    episodeList: string,
 }
+
+
+
+export const GenerateEpisodeScript: React.FC<GenerateEpisodeScriptViewProps> = observer(({ script, episode, episodeList }) => {
+    const project = Project.getProject()
+    const wf_name = project.scriptmaster.workflows.gen_scene_script;
+
+    const gen_res_field = `episode_lists/${episodeList}/episodes/${episode}/script`
+    const gen_prompt_field = `episode_lists/${episodeList}/episodes/${episode}/gen_script_prompt`
+    const use_logline_field = `episode_lists/${episodeList}/episodes/${episode}/gen_script_use_logline`
+    const use_episode_desc_field = `episode_lists/${episodeList}/episodes/${episode}/gen_script_use_desc`
+
+    const gen_id = `${script.path}#${gen_res_field}`
+
+    return <div>
+        <SettingsButton
+            className="mb-2"
+            buttons={
+                <>
+                    {/* Stylize Image Button */}
+                    <button className="btn btn-sm btn-outline-success" onClick={async () => {
+
+                        script.generateEpisodeScript(episodeList, episode);
+                        return;
+                    }} >
+                        Generate Script
+                    </button>
+
+                    {/* Model Selector */}
+                    <WorkflowOptionSelect
+                        workflowName={project.scriptmaster.workflows.gen_logline}
+                        optionName={"model"}
+                        values={AllTextModels}
+                    />
+
+                    {/* Loading Spinner */}
+                    <LoadingSpinner isLoading={script.generating.isGenerating(gen_id)} asButton />
+                </>
+            }
+            content={
+                <>
+                    <EditableJsonToggleField label="Use Logline" localJson={script} field={use_logline_field} />
+                    <EditableJsonToggleField label="Use Episode Description" localJson={script} field={use_episode_desc_field} />
+                    <WorkflowTextField workflowName={wf_name} optionName={"prompt"} />
+                    <EditableJsonTextField label={"Prompt"} localJson={script} field={gen_prompt_field} />
+
+                </>
+            }
+        />
+    </div>;
+});
+
+
+
 
 

@@ -264,6 +264,64 @@ export class ModularScript extends LocalJson {
         }
     }
 
+
+    // GENERATE
+    async generateEpisodeScript(episodeList: string, episode: string) {
+        const script = this;
+
+        const project = Project.getProject()
+        const wf_name = project.scriptmaster.workflows.gen_scene_script;
+
+        const gen_res_field = `episode_lists/${episodeList}/episodes/${episode}/script`
+        const gen_prompt_field = `episode_lists/${episodeList}/episodes/${episode}/gen_script_prompt`
+        const use_logline_field = `episode_lists/${episodeList}/episodes/${episode}/gen_script_use_logline`
+        const use_episode_desc_field = `episode_lists/${episodeList}/episodes/${episode}/gen_script_use_desc`
+        const model = project.workflows[project.scriptmaster.workflows.gen_logline].model ?? AllTextModels[0]
+        const gen_id = `${script.path}#${gen_res_field}`
+
+        const scenes_field = `episode_lists/${episodeList}/episodes/${episode}/gen_scenes_output`
+
+        script.generating.add(gen_id)
+
+        try {
+            const workflow = project.workflows[wf_name] ?? ""
+            const prompt = `
+            ${workflow.prompt}  
+
+
+            ${script.getField(use_logline_field) ?? true ?
+                    `logline:
+            ${script.getField("logline")}` : ""
+                }
+
+            ${script.getField(use_episode_desc_field) ?? true ?
+                    `Episode description:
+            ${script.getField(`episode_lists/${episodeList}/episodes/${episode}/description`)}` : ""
+                }
+
+            Scenes:
+            ${script.getField(scenes_field)}
+
+
+            ${script.getField(gen_prompt_field) ?? ""}          
+            `
+
+            const res = await AI.GenerateText({
+                prompt: prompt,
+                model: model,
+            })
+
+            if (!res) return;
+            script.updateField(gen_res_field, res)
+        }
+        catch (err) {
+            console.error("Generation failed:", err);
+        } finally {
+            script.generating.remove(gen_id);
+        }
+    }
+
+
     async generateAllSceneDescriptions(episodeList: string) {
         for (const episode of Object.keys(this.getEpisodes(episodeList))) {
             this.generateSceneDescriptions(episodeList, episode, true);
@@ -395,6 +453,17 @@ export class ModularScript extends LocalJson {
                     sceneName
                 );
             }
+        }
+    }
+
+    async generateAllEpisodeScripts(episodeList: string) {
+        const episodes = this.getEpisodes(episodeList);
+
+        for (const episodeName of Object.keys(episodes)) {
+            this.generateEpisodeScript(
+                episodeList,
+                episodeName
+            );
         }
     }
 
