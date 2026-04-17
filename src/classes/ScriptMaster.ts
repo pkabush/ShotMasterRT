@@ -232,12 +232,12 @@ export class ModularScript extends LocalJson {
             ${workflow.prompt}  
 
 
-            ${script.getField(use_logline_field) ?
+            ${script.getField(use_logline_field) ?? true ?
                     `logline:
             ${script.getField("logline")}` : ""
                 }
 
-            ${script.getField(use_episode_desc_field) ?
+            ${script.getField(use_episode_desc_field) ?? true ?
                     `Episode description:
             ${script.getField(`episode_lists/${episodeList}/episodes/${episode}/description`)}` : ""
                 }
@@ -246,7 +246,7 @@ export class ModularScript extends LocalJson {
             ${script.getField(`episode_lists/${episodeList}/episodes/${episode}/scenes/${sceneName}/description`)}
 
 
-            ${script.getField(gen_prompt_field)}          
+            ${script.getField(gen_prompt_field) ?? ""}          
             `
 
             const res = await AI.GenerateText({

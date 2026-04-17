@@ -88,17 +88,17 @@ ${l}
             ${(s.workflows[l]??"").prompt}  
 
 
-            ${o.getField(d)?`logline:
+            ${o.getField(d)??!0?`logline:
             ${o.getField("logline")}`:""}
 
-            ${o.getField(h)?`Episode description:
+            ${o.getField(h)??!0?`Episode description:
             ${o.getField(`episode_lists/${e}/episodes/${n}/description`)}`:""}
 
             Scene description:
             ${o.getField(`episode_lists/${e}/episodes/${n}/scenes/${i}/description`)}
 
 
-            ${o.getField(f)}          
+            ${o.getField(f)??""}          
             `,C=await xi.GenerateText({prompt:E,model:v});if(!C)return;o.updateField(c,C)}catch(S){console.error("Generation failed:",S)}finally{o.generating.remove(b)}}async generateAllSceneDescriptions(e){for(const n of Object.keys(this.getEpisodes(e)))this.generateSceneDescriptions(e,n,!0)}async generateSceneDescriptions(e,n,i=!1){const o=this,s=je.getProject(),l=s.scriptmaster.workflows.gen_scenes,c=`episode_lists/${e}/episodes/${n}/gen_scenes_output`,f=s.workflows[s.scriptmaster.workflows.gen_logline].model??rn[0],d=`${o.path}#${c}`;o.generating.add(d);try{const h=s.workflows[l]??"",v=`
             ${o.getField(`episode_lists/${e}/text`)}
             
