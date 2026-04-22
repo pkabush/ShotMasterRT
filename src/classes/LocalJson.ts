@@ -54,6 +54,18 @@ export class LocalJson extends LocalFile {
   }
 
 
+  private saveTimeout: any = null;
+
+  scheduleSave(delay = 200) {
+    if (this.saveTimeout) {      
+      clearTimeout(this.saveTimeout);
+    }
+
+    this.saveTimeout = setTimeout(() => {      
+      this.save();
+    }, delay);
+  }
+
   /**
    * Save JSON to disk. Creates the file if it doesn't exist yet.
    * Deletes the file if data is empty.
@@ -115,7 +127,7 @@ export class LocalJson extends LocalFile {
       }
     });
 
-    if (save) await this.save();
+    if (save) await this.scheduleSave();
   }
 
   getField(fieldPath: string): any {
