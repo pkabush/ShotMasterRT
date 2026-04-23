@@ -52,7 +52,7 @@ export class SeedanceAI {
                 "12": "12",
                 "13": "13",
                 "14": "14",
-                "15": "15",                
+                "15": "15",
             }
 
         }
@@ -80,6 +80,18 @@ export class SeedanceAI {
             image_url: { url },
             ...(role ? { role } : {}),
         };
+    }
+
+    public static videoMsg(
+        url: string,
+        role: "reference_video" = "reference_video"
+    ): SeedanceContent {
+        if (!url) throw new Error("videoMsg requires a url");
+        return {
+            type: "video_url",
+            video_url: { url },
+            role,
+        } as any;
     }
 
     private static async postToSeedance(payload: any) {

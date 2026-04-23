@@ -9,9 +9,17 @@ import TabsContainer from "./TabsContainer";
 import MediaGalleryPreview from "./MediaComponents/MediaGallerPreview";
 import BottomCenterLabel from "./Atomic/MediaElements/BottomCenterLabel";
 import type { MediaFolder } from "../classes/MediaFolder";
-import EditableJsonTextField from "./EditableJsonTextField";
+import EditableJsonTextField, { EditableJsonToggleField } from "./EditableJsonTextField";
 import type { LocalImage } from "../classes/fileSystem/LocalImage";
 import RefImagesPreview from "./MediaComponents/RefImagesPreview";
+import { Stack } from "react-bootstrap";
+import { SeedanceAI } from "../classes/AiProviders/Byteplus";
+import { TagsFolderContainer } from "./FolderTags/FolderTagsVide";
+import { Project } from "../classes/Project";
+import type { LocalFolder } from "../classes/fileSystem/LocalFolder";
+import { ai_providers } from "../classes/AI_provider";
+import { WorkflowOptionSelect } from "./WorkflowOptionSelect";
+import type { Shot } from "../classes/Shot";
 
 interface VideoEditWindowProps {
     localVideo: LocalVideo;
@@ -30,6 +38,9 @@ const VideoEditWindow: React.FC<VideoEditWindowProps> = ({
     onClose,
     reference_images = [],
 }) => {
+    const project = Project.getProject();
+    const seedance_edit_wf = "seedance_edit_video";
+
     const [generating, setGenerating] = useState(false);
     const [useReferences, setUseReferences] = useState(false);
     const [mode, setMode] = useState<OmniMode>(KlingAI.options.omni_video.mode.pro);
@@ -165,7 +176,7 @@ const VideoEditWindow: React.FC<VideoEditWindowProps> = ({
                                             options={Object.values(KlingAI.options.omni_video.mode)}
                                             onChange={(val: string) => setMode(val as OmniMode)}
                                         />
-                                        
+
                                         <SimpleSelect
                                             label="Keep Original Sound:"
                                             value={keepSound}
@@ -182,6 +193,106 @@ const VideoEditWindow: React.FC<VideoEditWindowProps> = ({
                                             label="Generate"
                                             is_loading={generating}
                                         />
+                                    </div>,
+                                Seedance_Edit:
+                                    <div className="flex-grow-1 d-flex flex-column">
+
+                                        <TagsFolderContainer tags={localVideo.references} folders={[
+                                            Project.getProject(),
+                                            Project.getProject().artbook as LocalFolder,
+                                            (localVideo.parentFolder!.parentFolder! as Shot).MediaFolder_results as LocalFolder,
+                                        ]} />
+                                        <>
+                                            <>Prompt : </>
+                                            <EditableJsonTextField localJson={localVideo.mediaJson} field={"video_edit_prompt"} fitHeight />
+
+                                        </>
+
+
+                                        <Stack direction="horizontal">
+                                            <EditableJsonToggleField localJson={localVideo.mediaJson} field={"seedance_edit/generate_audio"} default_val={false} label="Sound" />
+
+
+                                            <WorkflowOptionSelect
+                                                project={project}
+                                                workflowName={seedance_edit_wf}
+                                                optionName="resolution"
+                                                label="resolution"
+                                                values={Object.values(SeedanceAI.options.video.resolution)}
+                                            />
+                                            <WorkflowOptionSelect
+                                                project={project}
+                                                workflowName={seedance_edit_wf}
+                                                optionName="duration"
+                                                label="duration"
+                                                values={Object.values(SeedanceAI.options.video.duration)}
+                                                defaultValue={SeedanceAI.options.video.duration.default}
+                                            />
+                                            <WorkflowOptionSelect
+                                                project={project}
+                                                workflowName={seedance_edit_wf}
+                                                optionName="aspect_ratio"
+                                                label="Ratio:"
+                                                values={Object.values(SeedanceAI.options.video.ration)}
+                                                defaultValue={SeedanceAI.options.video.ration.adaptive}
+                                            />
+
+
+                                        </Stack>
+
+                                        <LoadingButton
+                                            onClick={async () => {
+                                                // EDIT VIDEO SEEDANCER!
+                                                const project = Project.getProject()
+                                                const content = []
+
+                                                const shot = localVideo.shot;
+                                                if (!shot) return;
+
+                                                // video
+                                                const webUrl = await localVideo.getWebUrl();
+                                                content.push(
+                                                    SeedanceAI.videoMsg(webUrl)
+                                                )
+
+                                                // prompt
+                                                const prompt = localVideo.mediaJson?.getField("video_edit_prompt")
+                                                if (prompt) content.push(SeedanceAI.textMsg(prompt))
+
+                                                // References
+                                                const references = await localVideo.references?.GetAI_Images() ?? []
+                                                for (const reference of references) {
+                                                    content.push(
+                                                        SeedanceAI.imgMsg(
+                                                            `data:${reference.mime};base64,${reference.rawBase64}`,
+                                                            "reference_image"
+                                                        )
+                                                    )
+                                                }
+
+                                                //console.log(content);
+
+                                                const result = await SeedanceAI.generateVideo({
+                                                    content,
+                                                    generate_audio: localVideo.mediaJson?.getField("seedance_edit/generate_audio") ?? false,
+                                                    resolution: project.workflows[seedance_edit_wf].resolution,
+                                                    duration: project.workflows[seedance_edit_wf].duration ? Number(project.workflows[seedance_edit_wf].duration) : undefined,
+                                                    ratio: project.workflows[seedance_edit_wf].aspect_ratio ?? SeedanceAI.options.video.ration.adaptive
+                                                });
+
+                                                if (!result) return;
+                                                const task = shot.addTask(result.id, {
+                                                    provider: ai_providers.BD,
+                                                })
+                                                await new Promise(res => setTimeout(res, 100));
+                                                task.check_status();
+
+                                            }}
+                                            label="Generate"
+                                            is_loading={generating}
+                                        />
+
+
                                     </div>,
                                 GenerateInfo: <>
                                     {/* Source preview */}
