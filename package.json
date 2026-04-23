@@ -23,6 +23,8 @@
     "mobx": "^6.15.0",
     "mobx-react-lite": "^4.1.1",
     "openai": "^6.10.0",
+    "patch-package": "^8.0.1",
+    "postinstall-postinstall": "^2.1.0",
     "react": "^19.2.0",
     "react-bootstrap": "^2.10.10",
     "react-dom": "^19.2.0",

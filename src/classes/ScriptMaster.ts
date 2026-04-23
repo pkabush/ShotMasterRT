@@ -3,6 +3,7 @@ import { LocalFolder } from "./fileSystem/LocalFolder";
 import { LocalJson } from "./LocalJson";
 import { Project } from "./Project";
 import { AI, AllTextModels } from "./AI_provider";
+import { Fountain } from "fountain-js";
 
 
 export class ScriptMaster extends LocalFolder {
@@ -465,6 +466,98 @@ export class ModularScript extends LocalJson {
                 episodeName
             );
         }
+    }
+
+    fountanise(text: string) {
+        let fountain = new Fountain();
+        let output = fountain.parse(text, true);
+        //let actual = output.html.script;
+
+        //console.log({ text, output });
+        const container = document.createElement('div');
+        container.innerHTML = output.html.script;
+
+        container.querySelectorAll('.dialogue').forEach(dialogue => {
+            dialogue.querySelectorAll('p').forEach(p => {
+                if (p.classList.contains('parenthetical')) {
+                    const h6 = document.createElement('h6');
+                    h6.innerHTML = p.innerHTML;
+                    p.replaceWith(h6);
+                    return;
+                }
+                const h5 = document.createElement('h5');
+                h5.innerHTML = p.innerHTML;
+                p.replaceWith(h5);
+            });
+        });
+
+        return container.innerHTML;
+    }
+
+    async fountaniseScene(episodeListName: string, episodeName: string) {
+        const ep_script_field = `episode_lists/${episodeListName}/episodes/${episodeName}/script`
+        const text = this.getField(ep_script_field);
+        //console.log(text);
+
+        const out = await this.fountanise(text);
+        //console.log(out);
+        await navigator.clipboard.writeText(out);
+    }
+
+    async getFullScript(episodeListName: string) {
+        const episodes = this.getEpisodes(episodeListName)
+
+        const fullScript = Object.entries(episodes ?? {})
+            .map(([episodeName], episodeIndex) => {
+                const epNumber = episodeIndex + 1;
+                const episodeHeader = `EPISODE_${epNumber}`;
+
+                const epScript = this.getField(
+                    `episode_lists/${episodeListName}/episodes/${episodeName}/script`
+                );
+                return `${episodeHeader}\n\n${epScript}`;
+            })
+            .join("\n\n");
+        return fullScript;
+    }
+
+    async fountanizeScript(episodeListName: string) {
+        const episodes = this.getEpisodes(episodeListName)
+
+        const fullScript = Object.entries(episodes ?? {})
+            .map(([episodeName], episodeIndex) => {
+                const epNumber = episodeIndex + 1;                
+                const episode = String(epNumber).padStart(3, '0');
+
+                const epScript = this.getField(
+                    `episode_lists/${episodeListName}/episodes/${episodeName}/script`
+                );
+                
+                const scene_script = this.fountanise(epScript);
+                
+                // Update Scene names
+                const container = document.createElement('div');
+                container.innerHTML = scene_script;
+
+                const h3Elements = container.querySelectorAll('h3');
+                console.log(episode,h3Elements);
+                h3Elements.forEach((h3, index) => {
+                    const sceneNumber = String(index + 1).padStart(3, '0');                    
+
+                    h3.innerHTML = 
+                    `SC_${sceneNumber} (EP_${episode}) ` + h3.innerHTML;
+                });
+
+
+                return `<h1>EPISODE_${episode}</h1>\n` + `${container.innerHTML}`;
+            })
+            .join("\n\n");
+
+
+
+        await navigator.clipboard.writeText(fullScript);
+        alert("Copied!");
+
     }
 
 }

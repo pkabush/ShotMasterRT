@@ -215,44 +215,24 @@ export const EpisodeListView: React.FC<EpisodeListViewProps> = observer(({
                 <Button
                     size="sm"
                     onClick={async () => {
-                        const fullScript = Object.entries(episodes ?? {})
-                            .map(([episodeName], episodeIndex) => {
-                                const epNumber = episodeIndex + 1;
-                                const episodeHeader = `EPISODE_${epNumber}`;
-
-                                /*
-                                const scenes = Object.entries(
-                                    script.getScenes(episodeListName, episodeName) ?? {}
-                                )
-                                    .map(([sceneName], sceneIndex) => {
-                                        const scNumber = sceneIndex + 1;
-
-                                        const sceneScript = script.getField(
-                                            `episode_lists/${episodeListName}/episodes/${episodeName}/scenes/${sceneName}/script`
-                                        );
-
-                                        return `SC_${epNumber}_${scNumber}\n${sceneScript}`;
-                                    })
-                                    .join("\n\n");
-
-                                
-
-                                return `${episodeHeader}\n\n${scenes}`;
-                                */
-                                const epScript = script.getField(
-                                    `episode_lists/${episodeListName}/episodes/${episodeName}/script`
-                                );
-                                return `${episodeHeader}\n\n${epScript}`;
-
-
-                            })
-                            .join("\n\n");
-
+                        const fullScript = await script.getFullScript(episodeListName);
                         await navigator.clipboard.writeText(fullScript);
                         alert("Copied!");
                     }}
                 >
                     copy Full Script
+                </Button>
+
+                <Button
+                    size="sm"
+                    onClick={async () => {
+                        //const fullScript = await script.getFullScript(episodeListName);                        
+                        //await navigator.clipboard.writeText(await script.fountanise(fullScript));
+                        //alert("Copied!");
+                        script.fountanizeScript( episodeListName );
+                    }}
+                >
+                    copy Full Script Fountain
                 </Button>
 
             </>}>
@@ -285,7 +265,6 @@ type EpisodeViewProps = {
     full_names?: boolean;
 };
 
-import { Fountain } from 'fountain-js';
 
 export const EpisodeView: React.FC<EpisodeViewProps> = observer(({
     script,
@@ -390,36 +369,6 @@ export const EpisodeView: React.FC<EpisodeViewProps> = observer(({
 
                         <GenerateEpisodeScript episodeList={episodeListName} episode={episodeName} script={script} />
 
-                        <Button onClick={() => {
-                            const text = script.getField(ep_script_field);
-                            //console.log(text);
-
-                            let fountain = new Fountain();
-                            let output = fountain.parse(text, true);
-                            let actual = output.html.script;
-
-                            console.log({ text, actual, output });
-                            const container = document.createElement('div');
-                            container.innerHTML = output.html.script;
-
-                            container.querySelectorAll('.dialogue').forEach(dialogue => {
-                                dialogue.querySelectorAll('p').forEach(p => {
-                                    if (p.classList.contains('parenthetical')) {
-                                        const h6 = document.createElement('h6');
-                                        h6.innerHTML = p.innerHTML;
-                                        p.replaceWith(h6);
-                                        return;
-                                    }
-                                    const h5 = document.createElement('h5');
-                                    h5.innerHTML = p.innerHTML;
-                                    p.replaceWith(h5);                                    
-                                });
-                            });
-
-                            console.log(container.innerHTML);
-
-
-                        }}> Convert Script</Button>
 
                         <EditableJsonTextField
                             localJson={script}
@@ -427,7 +376,16 @@ export const EpisodeView: React.FC<EpisodeViewProps> = observer(({
                             label={`${episodeName} : SCRIPT`}
                             maxHeight="10000px"
                             openColor="#a98340"
-                            closedColor="#68522a" />
+                            closedColor="#68522a"
+                            headerExtra={<>
+
+                                <Button size="sm" variant='outline-warning' onClick={() => {
+                                    script.fountaniseScene(episodeListName, episodeName);
+
+                                }}> Convert Script</Button>
+
+                            </>}
+                        />
 
                     </div>
                 }
