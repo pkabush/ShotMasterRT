@@ -10,6 +10,7 @@ import { LocalJson } from './LocalJson';
 import { KlingAI } from "./KlingAI";
 import { LocalFolder } from "./fileSystem/LocalFolder";
 import { ScriptMaster } from "./ScriptMaster";
+import { SeedanceAI } from "./AiProviders/Byteplus";
 
 export type ProjectView =
   | { type: "none" }
@@ -317,6 +318,8 @@ export class Project extends LocalFolder {
     GoogleAI.setApiKey = async (key: string) => { await this.userSettingsDB.update(data => { data.api_keys.Google_API_KEY = key; }); }
     ChatGPT.getApiKey = () => { return this.userSettingsDB.data.api_keys.GPT_API_KEY || null; };
     ChatGPT.setApiKey = async (key: string) => { await this.userSettingsDB.update(data => { data.api_keys.GPT_API_KEY = key; }); };
+    
+    SeedanceAI.getApiKey = () => { return this.userSettingsDB.data.api_keys.BP_API_KEY || null; };
 
     KlingAI.getKeysDict = () => {
       return {
@@ -402,4 +405,5 @@ export type Workflow = {
   character_orientation?: string;
   keep_original_sound?: string;
   system_message?: string;
+  resolution?: string;
 };

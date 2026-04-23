@@ -5,6 +5,7 @@ import { ai_providers } from "./AI_provider";
 import { KlingAI } from "./KlingAI";
 import { notificationManager } from "./NotificationManager";
 import type { LocalMedia } from "./fileSystem/LocalMedia";
+import { SeedanceAI } from "./AiProviders/Byteplus";
 
 export class Task {
     shot: Shot;
@@ -50,7 +51,7 @@ export class Task {
     }
 
     async check_status(retries: number = 30, delayMs: number = 15000) {
-        if (this.data.provider !== ai_providers.KLING) return;
+        if (![ai_providers.KLING, ai_providers.BD].includes(this.data.provider)) return;
 
         runInAction(() => { this.is_checking_status = true; this._status_log = "start checking"; });
 
@@ -60,22 +61,49 @@ export class Task {
             try {
                 console.log("new attempt");
 
+                // KLING
+                if (this.data.provider == ai_providers.KLING) {
+                    const status = await KlingAI.getStatus(this.id, this.data.workflow);
 
-                const status = await KlingAI.getStatus(this.id, this.data.workflow);
-                console.log("status", status)
-                this.update(status);
+                    console.log("status", status)
+                    this.update(status);
 
-                if (status?.status === "succeed" && status.url) {
-                    await this.downloadResults();
-                    this.finish_checking();
-                    return;
+                    if (status?.status === "succeed" && status.url) {
+                        await this.downloadResults();
+                        this.finish_checking();
+                        return;
+                    }
+
+                    if (status?.status === "failed") {
+                        console.warn(`Task ${this.id} failed.`);
+                        this.finish_checking();
+                        return;
+                    }
                 }
 
-                if (status?.status === "failed") {
-                    console.warn(`Task ${this.id} failed.`);
-                    this.finish_checking();
-                    return;
+                console.log(this.data.provider);
+                // Bytedance
+                if (this.data.provider == ai_providers.BD) {
+                    console.log("Check Bytedance Status");
+                    const status = await SeedanceAI.getStatus(this.id);
+
+                    console.log("status", status)
+                    this.update(status);
+
+                    if (status?.status === "succeeded" && status.url) {
+                        await this.downloadResults();
+                        this.finish_checking();
+                        return;
+                    }
+
+                    if (["failed", "expired", "cancelled"].includes(status?.status)) {
+                        console.warn(`Task ${this.id} failed.`);
+                        this.finish_checking();
+                        return;
+                    }
+
                 }
+
 
             } catch (err) {
                 console.error("Status check failed:", err);
@@ -99,15 +127,15 @@ export class Task {
         const url = this.data?.url;
         const res_media = await this.shot.MediaFolder_genVideo?.downloadFromUrl(url, this.data?.task_name) as LocalMedia;
 
-        if( !res_media ) return;
+        if (!res_media) return;
 
         // Save Res Media GenINFO
         if (this.data.geninfo) res_media?.mediaJson?.updateField("geninfo", this.data.geninfo)
 
-        this.update({ result: res_media?.name});
+        this.update({ result: res_media?.name });
 
-        notificationManager.add(`Downloaded ${this.shot.path}`, notificationManager.types.success, { 
-            onClick: () => { this.navigate(); } ,
+        notificationManager.add(`Downloaded ${this.shot.path}`, notificationManager.types.success, {
+            onClick: () => { this.navigate(); },
             media: res_media,
         })
     }
@@ -117,7 +145,7 @@ export class Task {
         this.shot.scene.project.setScene(this.shot.scene);
     }
 
-    get result() : LocalMedia | null{
+    get result(): LocalMedia | null {
         return this.shot.MediaFolder_genVideo!.getMediaByFilename(this.data.result);
     }
 

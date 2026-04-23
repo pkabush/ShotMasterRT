@@ -5,6 +5,7 @@ export const ai_providers = {
     KLING: "kling",
     GPT: "gpt",
     GOOGLE: "google",
+    BD:'bytedance',
 };
 
 export type AIImageInput = {

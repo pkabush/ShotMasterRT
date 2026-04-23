@@ -15,6 +15,7 @@ import { Kling_LipSync } from './Kling/Kling_LipSync';
 import MultiStateToggle from './Atomic/MultiStateToggle';
 import { Badge } from 'react-bootstrap';
 import { Google_GenerateKlingPrompt } from './GoogleNodes/Google_GenerateKlingPrompt';
+import { BytePlus_GenerateVideo } from './BytePlus/BP_generateVideo';
 
 interface Props {
   shot: Shot;
@@ -115,6 +116,7 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
             <Kling_GenerateVideo shot={shot} />
             <Kling_MotionControl shot={shot} />
             <Google_GenerateKlingPrompt shot={shot} />
+            <BytePlus_GenerateVideo shot={shot} />
 
             <TaskContainer shot={shot} />
             <MediaFolderGallery mediaFolder={shot.MediaFolder_genVideo} />

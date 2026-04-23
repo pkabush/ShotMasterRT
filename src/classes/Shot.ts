@@ -117,6 +117,9 @@ export class Shot extends LocalFolder {
   get srcImage(): LocalImage | null {
     return this.MediaFolder_results?.getFirstMediaWithTag("start_frame") as LocalImage;
   }
+  get start_frame(): LocalImage | null {
+    return this.MediaFolder_results?.getFirstMediaWithTag("start_frame") as LocalImage;
+  }
   get end_frame(): LocalImage | null {
     return this.MediaFolder_results?.getFirstMediaWithTag("end_frame") as LocalImage;
   }

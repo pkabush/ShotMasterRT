@@ -243,6 +243,8 @@ export const EpisodeListView: React.FC<EpisodeListViewProps> = observer(({
                                     `episode_lists/${episodeListName}/episodes/${episodeName}/script`
                                 );
                                 return `${episodeHeader}\n\n${epScript}`;
+
+
                             })
                             .join("\n\n");
 
@@ -283,6 +285,7 @@ type EpisodeViewProps = {
     full_names?: boolean;
 };
 
+import { Fountain } from 'fountain-js';
 
 export const EpisodeView: React.FC<EpisodeViewProps> = observer(({
     script,
@@ -386,6 +389,37 @@ export const EpisodeView: React.FC<EpisodeViewProps> = observer(({
                             }} />
 
                         <GenerateEpisodeScript episodeList={episodeListName} episode={episodeName} script={script} />
+
+                        <Button onClick={() => {
+                            const text = script.getField(ep_script_field);
+                            //console.log(text);
+
+                            let fountain = new Fountain();
+                            let output = fountain.parse(text, true);
+                            let actual = output.html.script;
+
+                            console.log({ text, actual, output });
+                            const container = document.createElement('div');
+                            container.innerHTML = output.html.script;
+
+                            container.querySelectorAll('.dialogue').forEach(dialogue => {
+                                dialogue.querySelectorAll('p').forEach(p => {
+                                    if (p.classList.contains('parenthetical')) {
+                                        const h6 = document.createElement('h6');
+                                        h6.innerHTML = p.innerHTML;
+                                        p.replaceWith(h6);
+                                        return;
+                                    }
+                                    const h5 = document.createElement('h5');
+                                    h5.innerHTML = p.innerHTML;
+                                    p.replaceWith(h5);                                    
+                                });
+                            });
+
+                            console.log(container.innerHTML);
+
+
+                        }}> Convert Script</Button>
 
                         <EditableJsonTextField
                             localJson={script}

@@ -16,23 +16,23 @@ export const SettingsView: React.FC<SettingsViewProps> = observer(({ project }) 
   const { userSettingsDB } = project;
 
   if (!userSettingsDB) return null;
-  
+
   const tabs = project.projinfo
     ? {
-        "Разбив на Шоты": (<EditableJsonTextField localJson={project.projinfo} field="split_shot_prompt" fitHeight/>),
-        "Генерация Тэгов": (<EditableJsonTextField localJson={project.projinfo} field="generate_tags_prompt" fitHeight/>),
-      }
+      "Разбив на Шоты": (<EditableJsonTextField localJson={project.projinfo} field="split_shot_prompt" fitHeight />),
+      "Генерация Тэгов": (<EditableJsonTextField localJson={project.projinfo} field="generate_tags_prompt" fitHeight />),
+    }
     : {};
 
-  
+
 
   return (
     <div style={{ padding: 20 }}>
       <h3>API Keys</h3>
-      <SimpleButton onClick={ ()=> {project.log()}} label="LOG Project" />  
-      <SimpleButton onClick={ ()=> {project.download_asset("assets/server.exe","server.exe")}} label="Download Server" />  
+      <SimpleButton onClick={() => { project.log() }} label="LOG Project" />
+      <SimpleButton onClick={() => { project.download_asset("assets/server.exe", "server.exe") }} label="Download Server" />
 
-      <EditableJsonTextField localJson={project.projinfo} field="project_path" fitHeight/>
+      <EditableJsonTextField localJson={project.projinfo} field="project_path" fitHeight />
 
       <StringEditField
         label="GPT API Key"
@@ -49,7 +49,7 @@ export const SettingsView: React.FC<SettingsViewProps> = observer(({ project }) 
           await userSettingsDB.update(data => { data.api_keys.Google_API_KEY = newValue; });
         }}
       />
-      
+
       <StringEditField
         label="Kling Acess Key"
         value={userSettingsDB.data.api_keys.Kling_Acess_Key || ""}
@@ -66,15 +66,22 @@ export const SettingsView: React.FC<SettingsViewProps> = observer(({ project }) 
         }}
       />
 
-
-
-    <div>
-      <SimpleDropdown
-        items={GPT.models}
-        currentItem={project.projinfo?.data.gpt_model}
-        onPicked={(val)=>{ project.projinfo?.updateField("gpt_model",val); }}
+      <StringEditField
+        label="Seedance API KEY"
+        value={userSettingsDB.data.api_keys.BP_API_KEY || ""}
+        onChange={async (newValue) => {
+          await userSettingsDB.update(data => { data.api_keys.BP_API_KEY = newValue; });
+        }}
       />
-    </div>
+
+
+      <div>
+        <SimpleDropdown
+          items={GPT.models}
+          currentItem={project.projinfo?.data.gpt_model}
+          onPicked={(val) => { project.projinfo?.updateField("gpt_model", val); }}
+        />
+      </div>
 
 
       {/* Tabs */}
