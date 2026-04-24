@@ -1,7 +1,7 @@
 import { makeObservable, observable, action, computed, toJS } from "mobx";
 import type { LocalJson } from "./LocalJson";
 import { Project } from "./Project";
-import type { LocalImage } from "./fileSystem/LocalImage";
+import { LocalImage } from "./fileSystem/LocalImage";
 import type { LocalItem } from "./fileSystem/LocalItem";
 
 export class Tags {
@@ -127,12 +127,13 @@ export class Tags {
 
         return this.get_active_tags
             .map((tag) => project.getByAbsPath(tag))
-            .filter((item): item is LocalImage => item !== null && item !== undefined);
+            .filter((item): item is LocalImage => item instanceof LocalImage);
     }
 
     async GetAI_Images() {
         const ref_images = this.active_images ?? [];
 
+        console.log(ref_images);
         const tagImages = await Promise.all(
             ref_images.map(async (image) => {
                 const base64Obj = await image.getBase64();
@@ -147,4 +148,13 @@ export class Tags {
 
         return tagImages;
     }
+
+    getActiveType<T extends LocalItem>(type: new (...args: any[]) => T): T[] {
+        const project = Project.getProject();
+
+        return this.get_active_tags
+            .map((path) => project.getByAbsPath(path))
+            .filter((item): item is T => item instanceof type);
+    }
+
 }

@@ -13,6 +13,8 @@ import { TagsFolderContainer } from "../FolderTags/FolderTagsContainer";
 import { Project } from "../../classes/Project";
 import type { LocalFolder } from "../../classes/fileSystem/LocalFolder";
 import { WorkflowOptionSelect } from "../WorkflowOptionSelect";
+import { LocalVideo } from "../../classes/fileSystem/LocalVideo";
+import { LocalAudio } from "../../classes/fileSystem/LocalAudio";
 
 // Video Gen Parameters
 // https://docs.byteplus.com/en/docs/ModelArk/1520757
@@ -72,6 +74,7 @@ export const BytePlus_GenerateVideo: React.FC<BytePlus_GenerateVideoProps> = obs
 
                             // References
                             const references = await shot.references?.GetAI_Images() ?? []
+                            console.log(references);
                             for (const reference of references) {
                                 content.push(
                                     SeedanceAI.imgMsg(
@@ -81,16 +84,34 @@ export const BytePlus_GenerateVideo: React.FC<BytePlus_GenerateVideoProps> = obs
                                 )
                             }
 
+                            // Audio Refs
+                            const audio_refs = await shot.references?.getActiveType(LocalAudio) ?? []
+                            for (const audio_ref of audio_refs) {
+                                const base64 = await audio_ref.getBase64();
+                                content.push(
+                                    SeedanceAI.audioMsg(
+                                        `data:${base64.mime};base64,${base64.rawBase64}`,
+                                    )
+                                )
+                            }
+
                             // TODO Video
-                            // TODO Audio
+                            const video_refs = await shot.references?.getActiveType(LocalVideo) ?? []
+                            for (const video_ref of video_refs) {
+                                const webUrl = await video_ref.getWebUrl();
+                                content.push(
+                                    SeedanceAI.videoMsg(webUrl)
+                                )
+                            }
+
 
 
                             const result = await SeedanceAI.generateVideo({
                                 content,
                                 generate_audio: project.projinfo!.getField(gen_audio_field) ?? false,
                                 resolution: project.workflows[wf_name].resolution,
-                                duration: project.workflows[wf_name].duration ? Number(project.workflows[wf_name].duration) : undefined,                                
-                                ratio:  project.workflows[wf_name].aspect_ratio ?? SeedanceAI.options.video.ration.adaptive
+                                duration: project.workflows[wf_name].duration ? Number(project.workflows[wf_name].duration) : undefined,
+                                ratio: project.workflows[wf_name].aspect_ratio ?? SeedanceAI.options.video.ration.adaptive
                             });
 
                             if (!result) return;
@@ -109,7 +130,7 @@ export const BytePlus_GenerateVideo: React.FC<BytePlus_GenerateVideoProps> = obs
                         workflowName={wf_name}
                         optionName="resolution"
                         label="resolution"
-                        values={Object.values(SeedanceAI.options.video.resolution)}                        
+                        values={Object.values(SeedanceAI.options.video.resolution)}
                     />
                     <WorkflowOptionSelect
                         project={project}
@@ -138,7 +159,11 @@ export const BytePlus_GenerateVideo: React.FC<BytePlus_GenerateVideoProps> = obs
                 <>
                     <EditableJsonToggleField localJson={project.projinfo} field={gen_audio_field} default_val={false} label="Sound" />
                     <EditableJsonTextField localJson={shot.shotJson} field="video_prompt" fitHeight />
-                    <TagsFolderContainer tags={shot.references} folders={[Project.getProject(), Project.getProject().artbook as LocalFolder]} />
+                    <TagsFolderContainer tags={shot.references} folders={[
+                        Project.getProject(),
+                        Project.getProject().artbook as LocalFolder,
+                        shot as LocalFolder
+                    ]} />
                     <MediaGalleryPreview mediaItem={shot.srcImage as LocalMedia} height={200} />
                     <MediaGalleryPreview mediaItem={shot.end_frame as LocalMedia} height={200} />
                     <MediaFolderGallery mediaFolder={shot.MediaFolder_results} label="Source Image" itemHeight={300} />

@@ -94,6 +94,18 @@ export class SeedanceAI {
         } as any;
     }
 
+    public static audioMsg(
+        url: string,
+        role: "reference_audio" = "reference_audio"
+    ): SeedanceContent {
+        if (!url) throw new Error("audioMsg requires a url");
+        return {
+            type: "audio_url",
+            audio_url: { url },
+            role,
+        } as any;
+    }
+
     private static async postToSeedance(payload: any) {
         const apiKey = this.getApiKey?.();
         if (!apiKey) throw new Error("No Seedance API key provided");

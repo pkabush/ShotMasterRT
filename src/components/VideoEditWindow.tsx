@@ -20,6 +20,7 @@ import type { LocalFolder } from "../classes/fileSystem/LocalFolder";
 import { ai_providers } from "../classes/AI_provider";
 import { WorkflowOptionSelect } from "./WorkflowOptionSelect";
 import type { Shot } from "../classes/Shot";
+import { LocalAudio } from "../classes/fileSystem/LocalAudio";
 
 interface VideoEditWindowProps {
     localVideo: LocalVideo;
@@ -200,7 +201,7 @@ const VideoEditWindow: React.FC<VideoEditWindowProps> = ({
                                         <TagsFolderContainer tags={localVideo.references} folders={[
                                             Project.getProject(),
                                             Project.getProject().artbook as LocalFolder,
-                                            (localVideo.parentFolder!.parentFolder! as Shot).MediaFolder_results as LocalFolder,
+                                            (localVideo.parentFolder!.parentFolder! as Shot) as LocalFolder,
                                         ]} />
                                         <>
                                             <>Prompt : </>
@@ -270,14 +271,36 @@ const VideoEditWindow: React.FC<VideoEditWindowProps> = ({
                                                     )
                                                 }
 
+                                                // Audio Refs
+                                                const audio_refs = await localVideo.references?.getActiveType(LocalAudio) ?? []
+                                                for (const audio_ref of audio_refs) {
+                                                    const base64 = await audio_ref.getBase64();
+                                                    content.push(
+                                                        SeedanceAI.audioMsg(
+                                                            `data:${base64.mime};base64,${base64.rawBase64}`,
+                                                        )
+                                                    )
+                                                }
+
+                                                // TODO Video
+                                                const video_refs = await localVideo.references?.getActiveType(LocalVideo) ?? []
+                                                for (const video_ref of video_refs) {
+                                                    const webUrl = await video_ref.getWebUrl();
+                                                    content.push(
+                                                        SeedanceAI.videoMsg(webUrl)
+                                                    )
+                                                }
+
+
+
                                                 //console.log(content);
 
                                                 const result = await SeedanceAI.generateVideo({
                                                     content,
                                                     generate_audio: localVideo.mediaJson?.getField("seedance_edit/generate_audio") ?? false,
-                                                    resolution: project.workflows[seedance_edit_wf].resolution,
-                                                    duration: project.workflows[seedance_edit_wf].duration ? Number(project.workflows[seedance_edit_wf].duration) : undefined,
-                                                    ratio: project.workflows[seedance_edit_wf].aspect_ratio ?? SeedanceAI.options.video.ration.adaptive
+                                                    resolution: project.workflows[seedance_edit_wf]?.resolution,
+                                                    duration: project.workflows[seedance_edit_wf]?.duration ? Number(project.workflows[seedance_edit_wf].duration) : undefined,
+                                                    ratio: project.workflows[seedance_edit_wf]?.aspect_ratio ?? SeedanceAI.options.video.ration.adaptive
                                                 });
 
                                                 if (!result) return;
