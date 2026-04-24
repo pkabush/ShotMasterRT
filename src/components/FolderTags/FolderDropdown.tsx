@@ -2,11 +2,11 @@ import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
 import React from "react";
 import { observer } from "mobx-react-lite";
 import { LocalFolder } from "../../classes/fileSystem/LocalFolder";
-import { LocalImage } from "../../classes/fileSystem/LocalImage";
 import { MediaPreviewSmall } from "../MediaComponents/MediaPreviewSmall";
 import "../../css/Dropdown.css";
 import { Stack } from "react-bootstrap";
 import type { LocalItem } from "../../classes/fileSystem/LocalItem";
+import { LocalMedia } from "../../classes/fileSystem/LocalMedia";
 
 interface FolderDropdownProps {
     folder: LocalFolder;
@@ -21,8 +21,8 @@ interface FolderDropdownProps {
 export const FolderDropdownNode: React.FC<FolderDropdownProps> = observer(
     ({ folder, onSelect, label, isRoot = true, selected_paths = [], show_empty = false }) => {
         const subfolders = folder.getType(LocalFolder);
-        const images = folder.getType(LocalImage);
-        const all_images = folder.getType(LocalImage, { deep: true });
+        const images = folder.getType(LocalMedia);
+        const all_images = folder.getType(LocalMedia, { deep: true });
         const isSelectedSubpath = isSubpath(folder.path, selected_paths);
 
         const hasChildren = subfolders.length > 0 || images.length > 0;

@@ -10,7 +10,7 @@ import type { LocalMedia } from "../../classes/fileSystem/LocalMedia";
 import type { Shot } from "../../classes/Shot";
 import EditableJsonTextField from "../EditableJsonTextField";
 import BottomCenterLabel from "../Atomic/MediaElements/BottomCenterLabel";
-import { TagsFolderContainer } from "../FolderTags/FolderTagsVide";
+import { TagsFolderContainer } from "../FolderTags/FolderTagsContainer";
 import { Project } from "../../classes/Project";
 import type { LocalFolder } from "../../classes/fileSystem/LocalFolder";
 

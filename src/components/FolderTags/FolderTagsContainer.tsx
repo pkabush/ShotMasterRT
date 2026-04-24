@@ -6,7 +6,6 @@ import { LocalFolder } from "../../classes/fileSystem/LocalFolder";
 import { observer } from "mobx-react-lite";
 import { Form, ListGroup, Stack } from "react-bootstrap";
 import { FolderDropdownNode } from "./FolderDropdown";
-import { LocalImage } from "../../classes/fileSystem/LocalImage";
 import { Project } from "../../classes/Project";
 import { MediaPreviewSmall } from "../MediaComponents/MediaPreviewSmall";
 import { LocalMedia } from "../../classes/fileSystem/LocalMedia";
@@ -59,7 +58,7 @@ export const TagsFolderContainer: React.FC<TagsContainerProps> = observer(({
                                         folder={local_folder}
                                         selected_paths={tags.tags}
                                         onSelect={(item) => {
-                                            if (item instanceof LocalImage) {
+                                            if (item instanceof LocalMedia) {
                                                 tags.addTag(item, true)
                                             }
                                         }} />)

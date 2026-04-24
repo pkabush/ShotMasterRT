@@ -128,7 +128,6 @@ export class Tags {
         return this.get_active_tags
             .map((tag) => project.getByAbsPath(tag))
             .filter((item): item is LocalImage => item !== null && item !== undefined);
-
     }
 
     async GetAI_Images() {

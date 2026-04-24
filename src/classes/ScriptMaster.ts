@@ -523,6 +523,7 @@ export class ModularScript extends LocalJson {
 
     async fountanizeScript(episodeListName: string) {
         const episodes = this.getEpisodes(episodeListName)
+        let globalSceneCounter = 0;
 
         const fullScript = Object.entries(episodes ?? {})
             .map(([episodeName], episodeIndex) => {
@@ -541,13 +542,13 @@ export class ModularScript extends LocalJson {
 
                 const h3Elements = container.querySelectorAll('h3');
                 console.log(episode,h3Elements);
-                h3Elements.forEach((h3, index) => {
-                    const sceneNumber = String(index + 1).padStart(3, '0');                    
+                h3Elements.forEach((h3, _) => {
+                    globalSceneCounter++;
+                    const sceneNumber = String(globalSceneCounter).padStart(3, '0');                    
 
                     h3.innerHTML = 
                     `SC_${sceneNumber} (EP_${episode}) ` + h3.innerHTML;
                 });
-
 
                 return `<h1>EPISODE_${episode}</h1>\n` + `${container.innerHTML}`;
             })

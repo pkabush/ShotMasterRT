@@ -14,7 +14,7 @@ import RefImagesPreview from "./MediaComponents/RefImagesPreview";
 import { ChatGPT } from "../classes/ChatGPT";
 import { WorkflowOptionSelect } from "./WorkflowOptionSelect";
 import { useProject } from "../contexts/ProjectContext";
-import { TagsFolderContainer } from "./FolderTags/FolderTagsVide";
+import { TagsFolderContainer } from "./FolderTags/FolderTagsContainer";
 import { Project } from "../classes/Project";
 
 interface ImageEditWindowProps {

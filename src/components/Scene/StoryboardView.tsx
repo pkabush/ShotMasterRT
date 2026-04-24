@@ -1,7 +1,7 @@
 import { observer } from "mobx-react-lite";
 import type { Storyboard } from "../../classes/Storyboard";
 import EditableJsonTextField from "../EditableJsonTextField";
-import { TagsFolderContainer } from "../FolderTags/FolderTagsVide";
+import { TagsFolderContainer } from "../FolderTags/FolderTagsContainer";
 import { Project } from "../../classes/Project";
 import type { LocalFolder } from "../../classes/fileSystem/LocalFolder";
 import { MediaFolderGallery } from "../MediaFolderGallery";

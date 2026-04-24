@@ -7,7 +7,7 @@ import LoadingSpinner from "../Atomic/LoadingSpinner";
 import type { Shot } from "../../classes/Shot";
 import EditableJsonTextField from "../EditableJsonTextField";
 import { Project } from "../../classes/Project";
-import { TagsFolderContainer } from "../FolderTags/FolderTagsVide";
+import { TagsFolderContainer } from "../FolderTags/FolderTagsContainer";
 import type { LocalFolder } from "../../classes/fileSystem/LocalFolder";
 
 interface Google_GenerateImageNodeProps {

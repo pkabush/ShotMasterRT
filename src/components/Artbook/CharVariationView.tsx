@@ -8,7 +8,7 @@ import { GoogleAI } from "../../classes/GoogleAI";
 import { useProject } from "../../contexts/ProjectContext";
 import type { Character } from "../../classes/Artbook/Character";
 import DropArea from "../Atomic/DropArea";
-import { TagsFolderContainer } from "../FolderTags/FolderTagsVide";
+import { TagsFolderContainer } from "../FolderTags/FolderTagsContainer";
 
 interface CharVariationViewProps {
     character: Character;

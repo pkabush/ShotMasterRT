@@ -9,7 +9,7 @@ import { ai_providers } from "../../classes/AI_provider";
 import { MediaFolderGallery } from "../MediaFolderGallery";
 import type { LocalMedia } from "../../classes/fileSystem/LocalMedia";
 import MediaGalleryPreview from "../MediaComponents/MediaGallerPreview";
-import { TagsFolderContainer } from "../FolderTags/FolderTagsVide";
+import { TagsFolderContainer } from "../FolderTags/FolderTagsContainer";
 import { Project } from "../../classes/Project";
 import type { LocalFolder } from "../../classes/fileSystem/LocalFolder";
 import { WorkflowOptionSelect } from "../WorkflowOptionSelect";

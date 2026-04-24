@@ -6,7 +6,7 @@ import SimpleSelect from "./Atomic/SimpleSelect";
 import LoadingSpinner from "./Atomic/LoadingSpinner";
 import { models } from "../classes/ChatGPT";
 import SettingsButton from "./Atomic/SettingsButton";
-import { TagsFolderContainer } from "./FolderTags/FolderTagsVide";
+import { TagsFolderContainer } from "./FolderTags/FolderTagsContainer";
 import type { LocalFolder } from "../classes/fileSystem/LocalFolder";
 import { WorkflowOptionSelect, WorkflowTextField } from "./WorkflowOptionSelect";
 import { AllTextModels } from "../classes/AI_provider";

@@ -14,7 +14,7 @@ import type { LocalImage } from "../classes/fileSystem/LocalImage";
 import RefImagesPreview from "./MediaComponents/RefImagesPreview";
 import { Stack } from "react-bootstrap";
 import { SeedanceAI } from "../classes/AiProviders/Byteplus";
-import { TagsFolderContainer } from "./FolderTags/FolderTagsVide";
+import { TagsFolderContainer } from "./FolderTags/FolderTagsContainer";
 import { Project } from "../classes/Project";
 import type { LocalFolder } from "../classes/fileSystem/LocalFolder";
 import { ai_providers } from "../classes/AI_provider";
