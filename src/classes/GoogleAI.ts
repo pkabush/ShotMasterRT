@@ -29,7 +29,13 @@ export class GoogleAI implements AIProvider {
       r21x9: "21:9",
       none: "none",
     },
-
+    resolution: {
+      "none": "none",
+      "0.5K": "0.5K",
+      "1K": "1K",
+      "2K": "2K",
+      "4K": "4K",
+    },
     text_models: {
       gemini_3_1_flash_lite: "gemini-3.1-flash-lite-preview",
       gemini_3_1_pro_preview: "gemini-3.1-pro-preview",
@@ -54,6 +60,7 @@ export class GoogleAI implements AIProvider {
     model: string = GoogleAI.options.img_models.flash_image,
     images?: AIImageInput[],
     aspect_ratio?: string,
+    resolution?: string,
   ) {
     try {
       const genAI = this.getGenAI();
@@ -73,9 +80,11 @@ export class GoogleAI implements AIProvider {
       const config: any = {};
       if (isImageModel) {
         config.response_modalities = ["Image"];
-        if (aspect_ratio && aspect_ratio != "none") {
-          config.imageConfig = { aspectRatio: aspect_ratio };
-        }
+
+        config.imageConfig = {
+          ...(aspect_ratio && aspect_ratio !== "none" ? { aspectRatio: aspect_ratio } : {}),
+          ...(resolution && resolution !== "none" ? { imageSize: resolution } : {}),
+        };
       }
       const payload = {
         model,
@@ -159,7 +168,8 @@ export class GoogleAI implements AIProvider {
       params.prompt,
       params.model,
       params.images,
-      params.aspect_ratio,      
+      params.aspect_ratio,
+      params.resolution,
     );
     if (!res) return null;
     return res as ImageResult;

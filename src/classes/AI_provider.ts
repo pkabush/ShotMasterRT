@@ -20,6 +20,7 @@ export type AIGenerateParms = {
     images?: AIImageInput[];
     model: string;
     aspect_ratio?: string;
+    resolution? : string;
 };
 
 export type ImageResult = {

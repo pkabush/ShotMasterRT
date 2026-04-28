@@ -69,10 +69,11 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
 
       const model = project?.workflows?.edit_image?.model ?? GoogleAI.options.img_models.flash_image
       const aspectRatio = project?.workflows?.edit_image?.aspect_ratio ?? GoogleAI.options.aspect_ratios.r9x16
+      const resolution = project?.workflows?.edit_image?.resolution ?? GoogleAI.options.resolution.none
 
       // Check IF Google      
       if (Object.values(GoogleAI.options.img_models).includes(model)) {
-        const result = await GoogleAI.img2img(prompt || "", model, images, aspectRatio);
+        const result = await GoogleAI.img2img(prompt || "", model, images, aspectRatio,resolution);
         console.log("Image generated:", result);
         genImage = await GoogleAI.saveResultImage(result, localImage.parentFolder as LocalFolder);
       }
@@ -106,8 +107,8 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
 
   return (<>
     <div className="border d-flex flex-column position-relative"
-      //style={{ height: "700px" }}
-      >
+    //style={{ height: "700px" }}
+    >
       {/** CLOSE BUTTON */}
       {onClose && (
         <button
@@ -204,6 +205,16 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
                         values={Object.values(GoogleAI.options.aspect_ratios)}
                         defaultValue={GoogleAI.options.aspect_ratios.r9x16}
                         label="Aspect Ratio:"
+                      />
+
+                      {/** Select Aspect Ratio */}
+                      <WorkflowOptionSelect
+                        project={project!}
+                        workflowName="edit_image"
+                        optionName="resolution"
+                        values={Object.values(GoogleAI.options.resolution)}
+                        defaultValue={GoogleAI.options.resolution.none}
+                        label="Resolution:"
                       />
 
                       {/** Select Model */}

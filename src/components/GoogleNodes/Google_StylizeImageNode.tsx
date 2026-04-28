@@ -51,6 +51,14 @@ export const Google_StylizeImageNode: React.FC<Google_StylizeImageNodeProps> = o
                         defaultValue={GoogleAI.options.aspect_ratios.r9x16}
                     />
 
+                    <WorkflowOptionSelect
+                        project={project}
+                        workflowName="stylize_image_google"
+                        optionName="resolution"
+                        values={Object.values(GoogleAI.options.resolution)}
+                        defaultValue={GoogleAI.options.resolution.none}
+                    />
+
 
                     {/* Loading Spinner */}
                     <LoadingSpinner isLoading={shot.is_generating} asButton />
@@ -72,7 +80,7 @@ export const Google_StylizeImageNode: React.FC<Google_StylizeImageNodeProps> = o
                     {/* Media folder gallery for results */}
                     <MediaFolderGallery mediaFolder={shot.MediaFolder_results} label="pick reference Frame" itemHeight={300} />
 
-                    <TagsFolderContainer tags={shot.references} folders={[Project.getProject(),Project.getProject().artbook as LocalFolder,shot]} />
+                    <TagsFolderContainer tags={shot.references} folders={[Project.getProject(), Project.getProject().artbook as LocalFolder, shot]} />
                 </>
             }
         />

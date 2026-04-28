@@ -238,6 +238,7 @@ export class Shot extends LocalFolder {
         this.scene.project.workflows.stylize_image_google.model,
         images,
         this.scene.project.workflows.stylize_image_google.aspect_ratio || GoogleAI.options.aspect_ratios.r9x16,
+        this.scene.project.workflows.stylize_image_google.resolution || GoogleAI.options.resolution.none,
       );
 
       const localImage: LocalImage | null =
