@@ -108,7 +108,26 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
           }
         }}><FontAwesomeIcon icon={faArrowsDownToLine} /></Button>}
 
-        <PromptDropdownButton />
+        <PromptDropdownButton
+          onClickPreset={(presetText) => {
+            setText((prev) => {
+              const newText = prev
+                ? `${prev}\n${presetText}`
+                : presetText;
+              onEdit?.(newText);
+              return newText;
+            });
+
+            requestAnimationFrame(() => {
+              updateSize();
+              if (textareaRef.current) {
+                const el = textareaRef.current;
+                el.selectionStart = el.selectionEnd = el.value.length;
+                el.focus();
+              }
+            });
+          }}
+        />
 
         <Button size="sm" variant="outline-warning" onClick={() => { navigator.clipboard.writeText(text); }}>
           <FontAwesomeIcon icon={faClipboard} />

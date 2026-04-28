@@ -105,7 +105,9 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
   };
 
   return (<>
-    <div className="border d-flex flex-column position-relative" style={{ height: "700px" }}>
+    <div className="border d-flex flex-column position-relative"
+      //style={{ height: "700px" }}
+      >
       {/** CLOSE BUTTON */}
       {onClose && (
         <button

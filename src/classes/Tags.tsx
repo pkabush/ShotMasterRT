@@ -21,8 +21,17 @@ export class Tags {
             tag_files: computed,            // computed derived property
             addTag: action,                 // actions to modify tags
             deleteTag: action,
-            toggle: action                  // new action to toggle disabled state
+            toggle: action,                // new action to toggle disabled state
+            moveTag: action,
         });
+    }
+
+    get use_parent_tags(): boolean {
+        return this.dataJson?.getField(`${this.dict_name}/use_parent_tags`) ?? true;
+    }
+
+    set use_parent_tags(value: boolean) {
+        this.dataJson?.updateField(`${this.dict_name}/use_parent_tags`, value);
     }
 
     tagpath(tag: string | LocalItem) {
@@ -53,6 +62,8 @@ export class Tags {
     }
 
     get parent_tags(): any[] {
+        // check if we use them first
+        if (!this.use_parent_tags) return [];
         const parentTags = this.parent_tags_obj?.get_active_tags ?? [];
         const ownTags = this.tags;
         return parentTags.filter(tag => !ownTags.includes(tag));
@@ -157,4 +168,20 @@ export class Tags {
             .filter((item): item is T => item instanceof type);
     }
 
+    moveTag(tag: string | LocalItem, offset: number) {
+        const path = this.tagpath(tag);
+        const currentTags = [...this.tags];
+        const index = currentTags.indexOf(path);
+
+        if (index === -1) return;
+
+        const newIndex = index + offset;
+
+        if (newIndex < 0 || newIndex >= currentTags.length) return;
+
+        currentTags.splice(index, 1);
+        currentTags.splice(newIndex, 0, path);
+
+        this.tags = currentTags;
+    }
 }

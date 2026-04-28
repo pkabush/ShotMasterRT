@@ -11,7 +11,7 @@ import { MediaPreviewSmall } from "../MediaComponents/MediaPreviewSmall";
 import { LocalMedia } from "../../classes/fileSystem/LocalMedia";
 import type { Tags } from "../../classes/Tags";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faImages } from "@fortawesome/free-solid-svg-icons";
+import { faArrowDown, faArrowUp, faImages, faTrashCan } from "@fortawesome/free-solid-svg-icons";
 
 interface TagsContainerProps {
     tags: Tags | null;
@@ -40,7 +40,6 @@ export const TagsFolderContainer: React.FC<TagsContainerProps> = observer(({
                     <AccordionCard.Controls>
                         <Stack direction="horizontal" gap={3}>
                             <Form.Switch label="Use Refs" checked={tags.use_tags} onChange={(e) => { tags.use_tags = e.target.checked }} />
-
                             <Button size="sm" variant="outline-secondary" onClick={() => tags.log()}>
                                 LOG
                             </Button>
@@ -52,17 +51,25 @@ export const TagsFolderContainer: React.FC<TagsContainerProps> = observer(({
                     {tags.use_tags ?
                         <ListGroup>
                             <ListGroup.Item key={tags.owner.path} className="py-0 px-0">
-                                {folders.map((local_folder) => (
-                                    <FolderDropdownNode
-                                        key={local_folder.path}
-                                        folder={local_folder}
-                                        selected_paths={tags.tags}
-                                        onSelect={(item) => {
-                                            if (item instanceof LocalMedia) {
-                                                tags.addTag(item, true)
-                                            }
-                                        }} />)
-                                )}
+                                <Stack direction="horizontal" gap={0}>
+                                    {folders.map((local_folder) => (
+                                        <FolderDropdownNode
+                                            key={local_folder.path}
+                                            folder={local_folder}
+                                            selected_paths={tags.tags}
+                                            onSelect={(item) => {
+                                                if (item instanceof LocalMedia) {
+                                                    tags.addTag(item, true)
+                                                }
+                                            }} />)
+                                    )}
+
+                                    <Form.Switch 
+                                    label="Use Parent Tags" 
+                                    checked={tags.use_parent_tags} 
+                                    className="ms-auto"
+                                    onChange={(e) => { tags.use_parent_tags = e.target.checked }} />
+                                </Stack>
                             </ListGroup.Item>
 
                             {tags.tags.map((tag: string) => {
@@ -79,13 +86,34 @@ export const TagsFolderContainer: React.FC<TagsContainerProps> = observer(({
                                             }}
                                         />
                                         {
-                                            (!media) ?
-                                                <>{tag}</> :
-                                                <MediaPreviewSmall media={media} />
+                                            (!media) ? <>{tag}</> : <MediaPreviewSmall media={media} />
                                         }
-                                        <Button size="sm" variant="outline-danger" onClick={() => tags.deleteTag(tag)} className="ms-auto">
-                                            Delete
+
+                                        <Button
+                                            size="sm"
+                                            variant="outline-secondary"
+                                            onClick={() => tags.moveTag(tag, -1)}
+                                            className="ms-auto">
+                                            <FontAwesomeIcon icon={faArrowUp} />
                                         </Button>
+
+                                        <Button
+                                            size="sm"
+                                            variant="outline-secondary"
+                                            onClick={() => tags.moveTag(tag, 1)}
+                                        >
+                                            <FontAwesomeIcon icon={faArrowDown} />
+                                        </Button>
+
+
+                                        <Button
+                                            size="sm"
+                                            variant="outline-danger"
+                                            className="ms-3"
+                                            onClick={() => tags.deleteTag(tag)}>
+                                            <FontAwesomeIcon icon={faTrashCan} />
+                                        </Button>
+
                                     </Stack>
                                 </ListGroup.Item>;
                             })}
@@ -111,6 +139,14 @@ export const TagsFolderContainer: React.FC<TagsContainerProps> = observer(({
                                                     <>{tag}</> :
                                                     <MediaPreviewSmall media={media} />
                                             }
+
+                                            <Button
+                                                size="sm"
+                                                variant="outline-warning"
+                                                className="ms-auto"
+                                                onClick={() => { tags.addTag(tag) }}>
+                                                Add
+                                            </Button>
                                         </Stack>
                                     </ListGroup.Item>;
                                 })}
