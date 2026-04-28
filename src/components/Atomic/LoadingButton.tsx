@@ -7,6 +7,7 @@ interface LoadingButtonProps {
   label?: string;
   className?: string;
   is_loading?: boolean;
+  lock_on_loading?: boolean;
 }
 
 const LoadingButton: React.FC<LoadingButtonProps> = ({
@@ -14,11 +15,12 @@ const LoadingButton: React.FC<LoadingButtonProps> = ({
   label = "Click",
   className = "",
   is_loading = false,
+  lock_on_loading = false,
 }) => {
   return (
     <SimpleButton
       onClick={onClick}
-      className={`${className} ${is_loading ? "disabled" : ""}`}
+      className={`${className} ${is_loading && lock_on_loading ? "disabled" : ""}`}
       label={
         <span className="d-flex align-items-center justify-content-center">
           {/* Spinner always visible */}
