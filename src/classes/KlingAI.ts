@@ -76,7 +76,8 @@ export class KlingAI {
       },
       mode: {
         std: "std",
-        pro: "pro"
+        pro: "pro",
+        "4k" : "4k",
       },
       model: {
         v1: "kling-v1",
