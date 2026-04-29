@@ -118,10 +118,11 @@ export class Character extends MediaFolder {
             const workflow = project.workflows[this.workflows.generate_variation_image];
 
             const script_text = project.script?.text;
-            const workflow_prompt = workflow.prompt;
+            //const workflow_prompt = workflow.prompt;
+            const workflow_prompt = project.workflows[`${this.workflows.generate_variation_image}_${ this.parentFolder?.name }`].prompt;            
             const var_prompt = this.variations[variationName].prompt;
 
-            const use_script = this.charJson?.getField(this.use_script_field) ?? true;
+            const use_script = false && (this.charJson?.getField(this.use_script_field) ?? true);            
 
             const prompt = `${use_script ?
                     `Сценарий: 
