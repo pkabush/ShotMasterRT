@@ -77,13 +77,12 @@ export const CharVariationView: React.FC<CharVariationViewProps> = observer(({
                         <EditableJsonToggleField localJson={character.charJson} field={character.use_script_field} label="use_script"/>
                         <EditableJsonTextField
                             localJson={project!.projinfo}
-                            field={`workflows/${character.workflows.generate_variation_image}/prompt`}
+                            field={`workflows/${character.workflows.generate_variation_image}_${ character.parentFolder?.name }/prompt`}
                             fitHeight
                         />
                     </>
                 }
             />
-
 
             <EditableJsonTextField
                 localJson={character.charJson}

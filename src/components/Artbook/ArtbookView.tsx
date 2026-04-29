@@ -22,9 +22,6 @@ interface ArtbookViewProps {
 
 export const ArtbookView: React.FC<ArtbookViewProps> = observer(({ artbook }) => {
 
-
-
-
   return (
     <div style={{ padding: "1rem" }}>
       <h2 className="mb-3">Artbook</h2>

@@ -21,7 +21,6 @@ export class Character extends MediaFolder {
         generate_variation_data: "generate_character_variation_data",
         generate_location_data: "generate_character_location_data",
         generate_variation_image: "generate_character_variation_image",
-
     }
 
     use_script_field = "use_script_for_gen_image"
@@ -141,7 +140,7 @@ ${var_prompt}
 
             const result = await GoogleAI.img2img(
                 prompt,
-                workflow.model,
+                workflow.model ?? GoogleAI.options.img_models.flash_3_1,
                 reference_images,
                 workflow.aspect_ratio
             );
