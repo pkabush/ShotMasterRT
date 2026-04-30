@@ -82,7 +82,7 @@ const DrawingCanvas: React.FC<Props> = ({ image, onClose = () => { } }) => {
     };
 
     const containerRef = useRef<HTMLDivElement | null>(null);
-    console.log(containerRef);
+    
 
     const getStagePoint = (stage: Konva.Stage) => {
         const pos = stage.getPointerPosition();
