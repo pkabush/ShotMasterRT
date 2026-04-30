@@ -184,4 +184,32 @@ export class Tags {
 
         this.tags = currentTags;
     }
+
+    async importFromClipboard() {
+        {
+            try {
+                const text = await navigator.clipboard.readText();
+                if (!text) { console.warn("Clipboard is empty"); return; }
+
+                let data;
+                try {
+                    data = JSON.parse(text);
+                } catch (jsonErr) {
+                    console.error("Clipboard does not contain valid JSON", jsonErr);
+                    return;
+                }
+
+                const local_path = data?.local_path;
+
+                if (!local_path) {
+                    console.warn("local_path missing in clipboard data");
+                    return;
+                }
+
+                this.addTag(local_path);
+            } catch (err) {
+                console.error("Failed to read from clipboard", err);
+            }
+        }
+    }
 }

@@ -51,7 +51,7 @@ export const TagsFolderContainer: React.FC<TagsContainerProps> = observer(({
                     {tags.use_tags ?
                         <ListGroup>
                             <ListGroup.Item key={tags.owner.path} className="py-0 px-0">
-                                <Stack direction="horizontal" gap={0}>
+                                <Stack direction="horizontal" gap={2}>
                                     {folders.map((local_folder) => (
                                         <FolderDropdownNode
                                             key={local_folder.path}
@@ -64,11 +64,18 @@ export const TagsFolderContainer: React.FC<TagsContainerProps> = observer(({
                                             }} />)
                                     )}
 
-                                    <Form.Switch 
-                                    label="Use Parent Tags" 
-                                    checked={tags.use_parent_tags} 
-                                    className="ms-auto"
-                                    onChange={(e) => { tags.use_parent_tags = e.target.checked }} />
+                                    <Form.Switch
+                                        label="Use Parent Tags"
+                                        checked={tags.use_parent_tags}
+                                        className="ms-auto"
+                                        onChange={(e) => { tags.use_parent_tags = e.target.checked }} />
+                                    <Button
+                                        size="sm"
+                                        variant="outline-warning"
+                                        onClick={async () => tags.importFromClipboard() }
+                                    >
+                                        Paste Tag
+                                    </Button>
                                 </Stack>
                             </ListGroup.Item>
 

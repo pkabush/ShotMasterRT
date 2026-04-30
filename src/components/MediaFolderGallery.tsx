@@ -11,7 +11,7 @@ import type { LocalMedia } from "../classes/fileSystem/LocalMedia";
 import ImageEditWindow from "./ImageEditWindow";
 import { LocalVideo } from "../classes/fileSystem/LocalVideo";
 import VideoEditWindow from "./VideoEditWindow";
-import type { Shot } from "../classes/Shot";
+import { Shot } from "../classes/Shot";
 import { ai_providers } from "../classes/AI_provider";
 import GrayscaleOverlay from "./Atomic/MediaElements/GrayscaleOverlay";
 import AddOutline from "./Atomic/MediaElements/AddOutline";
@@ -21,7 +21,7 @@ import { Form, Stack } from "react-bootstrap";
 import * as ContextMenu from "@radix-ui/react-context-menu";
 import "../css/ContextMenu.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronRight, faClipboard, faTags, faTrashCan } from "@fortawesome/free-solid-svg-icons";
+import { faChevronRight, faClipboard, faPhotoFilm, faTags, faTrashCan } from "@fortawesome/free-solid-svg-icons";
 
 interface MediaFolderGalleryProps {
     mediaFolder: MediaFolder | null;
@@ -32,12 +32,14 @@ interface MediaFolderGalleryProps {
 }
 
 export const MediaFolderGallery: React.FC<MediaFolderGalleryProps> = observer(
-    ({ mediaFolder, label = null, itemHeight = 300, showEditWindow = true ,defaultCollapsed=false}) => {
+    ({ mediaFolder, label = null, itemHeight = 300, showEditWindow = true, defaultCollapsed = false }) => {
         const [highlightGenParents, setHighlightGenParents] = useState<boolean>(true);
         const [currentItemHeight, setCurrentItemHeight] = useState<number>(itemHeight);
 
         if (!mediaFolder || !mediaFolder.handle) return null;
         label = label || mediaFolder.name;
+
+        const shot = mediaFolder.parentFolder instanceof Shot ? mediaFolder.parentFolder as Shot : undefined
 
         return (
             <>
@@ -205,6 +207,15 @@ export const MediaFolderGallery: React.FC<MediaFolderGalleryProps> = observer(
                                                 <MenuItemIcon><FontAwesomeIcon icon={faClipboard} /></MenuItemIcon>
                                                 Open in new Tab
                                             </ContextMenu.Item>
+
+
+                                            {shot && <ContextMenu.Item className="ContextMenuItem warning" onClick={() => {
+                                                shot.references?.addTag(mediaItem);
+                                            }}>
+                                                <MenuItemIcon><FontAwesomeIcon icon={faPhotoFilm} /></MenuItemIcon>
+                                                Add Shot Reference
+                                            </ContextMenu.Item>}
+
 
                                             <ContextMenu.Item className="ContextMenuItem danger" onClick={() => { mediaItem.delete() }}>
                                                 <MenuItemIcon><FontAwesomeIcon icon={faTrashCan} /></MenuItemIcon>
