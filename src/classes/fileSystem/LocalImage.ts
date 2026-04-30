@@ -23,6 +23,15 @@ export class LocalImage extends LocalMedia {
     }
   }
 
+  async getAIImage() {
+    const base64Obj = await this.getBase64();
+    return {
+      rawBase64: base64Obj.rawBase64,
+      mime: base64Obj.mime,
+      description: this.path,
+    };
+  }
+
   // **New static factory from Base64 string**
   static async fromBase64(
     base64Obj: { rawBase64: string; mime: string },

@@ -1,4 +1,4 @@
-import { action, computed, makeObservable, observable, } from "mobx";
+import { action, computed, makeObservable, observable, runInAction, } from "mobx";
 import type { LocalFolder } from "../fileSystem/LocalFolder";
 import { LocalImage } from "../fileSystem/LocalImage";
 import { LocalJson } from "../LocalJson";
@@ -6,6 +6,7 @@ import { MediaFolder } from "../MediaFolder";
 import { Project } from "../Project";
 import { GoogleAI } from "../GoogleAI";
 import { Tags } from "../Tags";
+import type { Artbook } from "../Artbook";
 
 
 
@@ -24,6 +25,7 @@ export class Character extends MediaFolder {
     }
 
     use_script_field = "use_script_for_gen_image"
+    use_defaultRefImage_field = "use_defaultRefImage_for_gen_image"
 
     constructor(parentFolder: LocalFolder | null, handle: FileSystemDirectoryHandle) {
         super(parentFolder, handle)
@@ -119,13 +121,13 @@ export class Character extends MediaFolder {
 
             const script_text = project.script?.text;
             //const workflow_prompt = workflow.prompt;
-            const workflow_prompt = project.workflows[`${this.workflows.generate_variation_image}_${ this.parentFolder?.name }`].prompt;            
+            const workflow_prompt = project.workflows[`${this.workflows.generate_variation_image}_${this.parentFolder?.name}`].prompt;
             const var_prompt = this.variations[variationName].prompt;
 
-            const use_script = false && (this.charJson?.getField(this.use_script_field) ?? true);            
+            const use_script = false && (this.charJson?.getField(this.use_script_field) ?? true);
 
             const prompt = `${use_script ?
-                    `Сценарий: 
+                `Сценарий: 
 ${script_text}` : ``}
 
 ${workflow_prompt}
@@ -136,8 +138,15 @@ ${var_prompt}
 `;
 
             console.log(workflow_prompt, var_prompt);
+            let reference_images = await this.references?.GetAI_Images();
 
-            const reference_images = await this.references?.GetAI_Images();
+            const artbook = this.parentFolder?.parentFolder as Artbook;
+            if (reference_images?.length == 0 && this.parentFolder == artbook.characters_folder) {
+                const char_ref_image = await artbook.getBaseCharRef() as LocalImage;
+                reference_images = [await char_ref_image.getAIImage()]
+                console.log("Added Default Char Ref Image");
+            }
+
 
             const result = await GoogleAI.img2img(
                 prompt,
@@ -162,15 +171,15 @@ ${var_prompt}
                 this.setVariationImage(variationName, localImage);
             }
 
+
         } finally {
-            // ✅ ALWAYS remove it
-            this.generating_variations =
-                this.generating_variations.filter(v => v !== variationName);
+            runInAction(() => {
+                this.generating_variations = this.generating_variations.filter(v => v !== variationName);
+            })
         }
     }
 
 }
-
 
 
 

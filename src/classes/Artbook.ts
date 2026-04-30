@@ -50,6 +50,7 @@ export class Artbook extends LocalFolder {
   async load() {
     // Load all subfolders and images    
     await this.load_subfolders();
+    await this.load_files()
     //console.log("AB", this)
 
     this.characters_folder = await LocalFolder.open(this, "ПЕРСОНАЖИ")
@@ -75,5 +76,14 @@ export class Artbook extends LocalFolder {
       }
     }
     return tags
+  }
+
+  async getBaseCharRef() {
+    let img_ref = this.getByPath("/REFS/CharRef.jpg")
+    if (!img_ref) {
+      img_ref = await this.downloadFromUrl("https://pkabush.github.io/ShotMasterRT/assets/CharRef.jpg");
+    }
+
+    return img_ref;
   }
 }

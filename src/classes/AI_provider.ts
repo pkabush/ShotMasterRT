@@ -11,7 +11,7 @@ export const ai_providers = {
 export type AIImageInput = {
     rawBase64: string;
     mime: string;
-    description: string;
+    description: string;    
 };
 
 export type AIGenerateParms = {
