@@ -16,6 +16,11 @@ import { WorkflowOptionSelect } from "./WorkflowOptionSelect";
 import { useProject } from "../contexts/ProjectContext";
 import { TagsFolderContainer } from "./FolderTags/FolderTagsContainer";
 import { Project } from "../classes/Project";
+import { Button,   Stack } from "react-bootstrap";
+import FullPageOverlay from "./Containers/FullPageOverlay";
+import DrawingCanvas from "./DrawingCanvas/DrawingCanvas";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faBrush } from "@fortawesome/free-solid-svg-icons";
 
 interface ImageEditWindowProps {
   localImage: LocalImage;
@@ -31,6 +36,8 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
   const [url, setUrl] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const { project } = useProject();
+
+  const [showCanvas, setShowCanvas] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -73,7 +80,7 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
 
       // Check IF Google      
       if (Object.values(GoogleAI.options.img_models).includes(model)) {
-        const result = await GoogleAI.img2img(prompt || "", model, images, aspectRatio,resolution);
+        const result = await GoogleAI.img2img(prompt || "", model, images, aspectRatio, resolution);
         console.log("Image generated:", result);
         genImage = await GoogleAI.saveResultImage(result, localImage.parentFolder as LocalFolder);
       }
@@ -171,6 +178,11 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
               tabs={{
                 ImageEdit:
                   < div className="flex-grow-1 d-flex flex-column">
+                    <Stack direction="horizontal" gap={3}>
+                      <Button onClick={() => { setShowCanvas(true) }} variant="warning" size="sm"> DRAW
+                        <FontAwesomeIcon icon={faBrush} />
+                      </Button>
+                    </Stack>
 
                     <RefImagesPreview images={reference_images} />
                     <TagsFolderContainer tags={localImage.references} folders={[
@@ -284,6 +296,12 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
         </Panel>
       </Group>
     </div >
+
+    <FullPageOverlay show={showCanvas}>
+      <DrawingCanvas image={localImage} onClose={() => { setShowCanvas(false) }} />
+    </FullPageOverlay>
+
+
   </>);
 
 
