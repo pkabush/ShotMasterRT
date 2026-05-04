@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { Accordion } from 'react-bootstrap';
 import { AccordionCard } from '../Containers/AccordionCard';
+import * as ContextMenu from "@radix-ui/react-context-menu";
 
 interface CollapsibleContainerProps {
   label?: string;
@@ -10,7 +11,7 @@ interface CollapsibleContainerProps {
   className?: string; // optional: extra classes for container
   headerExtra?: React.ReactNode; // optional: extra content in header (right side)
   openColor?: string;
-  closedColor?: string;  
+  closedColor?: string;
   header?: React.ReactNode;
   onToggle?: (isOpen: boolean) => void;
 }
@@ -52,7 +53,7 @@ export default CollapsibleContainer;
 
 
 export const CollapsibleContainerAccordion: React.FC<CollapsibleContainerProps> = ({
-  label = 'Section',  
+  label = 'Section',
   children,
   headerExtra,
   defaultCollapsed = false,
@@ -79,6 +80,7 @@ export const CollapsibleContainerAccordion: React.FC<CollapsibleContainerProps> 
   );
 };
 
+/*
 export const CollapsibleAccordionCard: React.FC<CollapsibleContainerProps> = ({
   label = 'Section',  
   children,
@@ -103,5 +105,62 @@ export const CollapsibleAccordionCard: React.FC<CollapsibleContainerProps> = ({
       </AccordionCard>
   );
 };
+*/
 
 
+
+
+interface CollapsibleContainerPropsContext extends CollapsibleContainerProps {
+  headerContextMenu?: React.ReactNode;
+}
+
+export const CollapsibleAccordionCard: React.FC<CollapsibleContainerPropsContext> = ({
+  label = 'Section',
+  children,
+  headerExtra,
+  openColor,
+  closedColor,
+  header,
+  onToggle,
+  headerContextMenu,
+}) => {
+
+  const headerNode = (
+    <AccordionCard.Header
+      closedColor={closedColor}
+      openColor={openColor}
+      onToggle={onToggle}
+    >
+      {header ?? label}
+      <AccordionCard.Controls>
+        {headerExtra}
+      </AccordionCard.Controls>
+    </AccordionCard.Header>
+  );
+
+  return (
+    <AccordionCard eventKey={label}>
+      {headerContextMenu ? (
+        <ContextMenu.Root>
+          <ContextMenu.Trigger asChild>
+            <div>
+              {headerNode}
+            </div>
+          </ContextMenu.Trigger>
+
+          <ContextMenu.Portal>
+            <ContextMenu.Content className="ContextMenuContent">
+              {headerContextMenu}
+            </ContextMenu.Content>
+          </ContextMenu.Portal>
+        </ContextMenu.Root>
+      ) : (
+        headerNode
+      )}
+
+      <AccordionCard.Body>
+        {children}
+      </AccordionCard.Body>
+    </AccordionCard>
+  );
+};

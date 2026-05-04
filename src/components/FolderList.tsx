@@ -19,8 +19,6 @@ const FolderList: React.FC<FolderListProps> = observer(({ project }) => {
 
   if (!project) return <div>No Project Opened</div>;
 
-
-
   const handleAddScene = async () => {
     const sceneName = prompt("Enter new scene name");
     if (!sceneName) return;
@@ -52,7 +50,22 @@ const FolderList: React.FC<FolderListProps> = observer(({ project }) => {
         overflowY: 'auto',
         minHeight: 0, // 👈 critical for flexbox scrolling
       }}>
-        <CollapsibleAccordionCard label='Artbook' closedColor='#573c2a' openColor='#b16616'>
+
+
+
+        <CollapsibleAccordionCard label='Artbook' closedColor='#573c2a' openColor='#b16616' headerContextMenu={
+          <>
+            <ContextMenu.Item className="ContextMenuItem" onClick={() => project.artbook?.log()}>
+              <MenuItemIcon><FontAwesomeIcon icon={faClipboard} /></MenuItemIcon>
+              Log
+            </ContextMenu.Item>
+
+            <ContextMenu.Item className="ContextMenuItem" onClick={() => project.artbook?.exportAllImages()}>
+              <MenuItemIcon><FontAwesomeIcon icon={faClipboard} /></MenuItemIcon>
+              Export All Images
+            </ContextMenu.Item>
+          </>
+        }>
           <Accordion>
             <div id="Artbook-Contents" style={{
               marginLeft: '10px',
@@ -107,13 +120,12 @@ const FolderList: React.FC<FolderListProps> = observer(({ project }) => {
                   </ListGroup>
                 </CollapsibleAccordionCard>
               })}
-
-
             </div>
           </Accordion>
-
-
         </CollapsibleAccordionCard>
+
+
+
 
 
         <CollapsibleAccordionCard label='Scenes' headerExtra={

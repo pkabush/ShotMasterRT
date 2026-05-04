@@ -86,4 +86,21 @@ export class Artbook extends LocalFolder {
 
     return img_ref;
   }
+
+  async exportAllImages() {
+    console.log(this);
+    const artboook_out = await LocalFolder.open(this.project!.timelinesDirHandle!, "Artbook");
+
+    for (const sub of this.getType(LocalFolder)) {
+      for (const char of sub.getType(LocalFolder)) {
+        for (const tag of char.getType(LocalImage)) {
+          console.log(tag.path.replaceAll("/","_"));
+          tag.copyToFolder(artboook_out,tag.path.replaceAll("/","_"));
+        }
+      }
+    }
+
+
+
+  }
 }
