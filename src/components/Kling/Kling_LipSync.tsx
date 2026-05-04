@@ -88,7 +88,7 @@ export const Kling_LipSync: React.FC<Kling_LipSyncProps> = observer(({ shot }) =
             )}
 
             {/* Audios */}
-            {["ID-0", "ID-1", "ID-2"].map((tag) => {
+            {["ID-0", "ID-1", "ID-2","ID--1"].map((tag) => {
                 const audio = shot.MediaFolder_Audio?.getFirstMediaWithTag(tag) as LocalAudio | null;
                 if (!audio) return null;
 

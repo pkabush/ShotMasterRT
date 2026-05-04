@@ -75,7 +75,7 @@ export class Shot extends LocalFolder {
       refVideo.tags = ["motion_ref"];
 
       const audio = await MediaFolder.create(this, "audio");
-      audio.tags = ["ID-0", "ID-1", "ID-2"];
+      audio.tags = ["ID-0", "ID-1", "ID-2", "ID--1"];
 
       runInAction(() => {
         this.shotJson = shotJson;
@@ -384,7 +384,7 @@ export class Shot extends LocalFolder {
       const face_choose: LipSyncFaceChoose[] = [];
 
       // Loop sequentially to await async calls
-      for (const tag of ["ID-0", "ID-1", "ID-2"]) {
+      for (const tag of ["ID-0", "ID-1", "ID-2","ID--1"]) {
         const audio = this.MediaFolder_Audio!.getFirstMediaWithTag(tag) as LocalAudio | null;
         if (!audio) continue;
 
