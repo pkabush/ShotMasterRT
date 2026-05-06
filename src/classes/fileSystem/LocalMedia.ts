@@ -15,6 +15,7 @@ export class LocalMedia extends LocalFile {
   mediaJson: LocalJson | null = null;
   file: File | null = null;
   references: Tags | null = null;
+  _duration: number | null = null;
 
   // internal promise
   private _urlPromise: Promise<string> | null = null;
@@ -45,6 +46,9 @@ export class LocalMedia extends LocalFile {
       removeTag: action,
       setTags: action,
       load: action,
+
+      _duration: observable,
+      duration: computed,
     });
 
     this._urlPromise = null; // initialize
@@ -209,6 +213,10 @@ export class LocalMedia extends LocalFile {
     } catch (err) {
       console.error("Copy To Clipboard Error", err);
     }
+  }
+
+  get duration() {
+    return this._duration ?? 3;
   }
 
 

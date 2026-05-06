@@ -6,9 +6,10 @@ import TabsContainer from "./TabsContainer";
 import SceneInfoCard from "./SceneInfoCard";
 import ShotsInfoStrip from "./ShotsInfoStrip";
 import { StoryboardView } from "./Scene/StoryboardView";
+import { SceneTimelineView } from "./SceneViews/TimelineView";
 
 
-interface SceneViewProps {
+export interface SceneViewProps {
     scene: Scene ;
 }
 
@@ -26,7 +27,10 @@ export const SceneView: React.FC<SceneViewProps> = observer(({ scene }) => {
                 Scene: <SceneInfoCard scene={scene} />,
                 Shots: <ShotsInfoStrip scene={scene} />,
                 Storyboard: <StoryboardView storyboard={scene.storyboard}/>,
+                Timeline: <SceneTimelineView scene={scene}/>,                
             }}
         />
     </div>;
 });
+
+
