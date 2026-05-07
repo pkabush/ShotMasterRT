@@ -218,6 +218,18 @@ export class LocalMedia extends LocalFile {
   get duration() {
     return this._duration ?? 3;
   }
+  get start_timecode() {
+    return this.mediaJson?.getField("start_timecode") ?? 0.0;
+  }
+  get end_timecode() {
+    return this.mediaJson?.getField("end_timecode") ?? this.duration;
+  }
+  set start_timecode(timecode) {
+    this.mediaJson?.updateField("start_timecode", timecode);
+  }
+  set end_timecode(timecode) {
+    this.mediaJson?.updateField("end_timecode", timecode);
+  }
 
 
 }

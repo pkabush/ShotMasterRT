@@ -3,9 +3,9 @@ import type { SceneViewProps } from "../SceneView";
 import { LocalVideo } from "../../classes/fileSystem/LocalVideo";
 import { useEffect, useMemo, useRef, useState } from "react";
 import MediaPreview from "../MediaComponents/MediaPreview";
-import { Badge, Button, Stack } from "react-bootstrap";
+import { Badge, Button,  Stack } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBackwardFast, faBackwardStep, faPause, faPlay, faRotate, faVolume, faVolumeXmark } from "@fortawesome/free-solid-svg-icons";
+import { faBackwardFast, faBackwardStep, faPause, faPlay, faRightFromBracket, faRightToBracket, faRotate,  faVolume, faVolumeXmark } from "@fortawesome/free-solid-svg-icons";
 
 export const SceneTimelineView: React.FC<SceneViewProps> = observer(({ scene }) => {
 
@@ -27,6 +27,8 @@ export const SceneTimelineView: React.FC<SceneViewProps> = observer(({ scene }) 
 
 const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
 
+    const SEEK_STEP = 0.1;
+
     const [currentIndex, setCurrentIndex] = useState(0);
     const [clipTime, setClipTime] = useState(0);
     const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
@@ -37,9 +39,6 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
     const [loop, setLoop] = useState(false)
 
     const [clipInfo, setClipInfo] = useState<any>(null)
-
-    const [trimStart, setTrimStart] = useState(1);
-    const [trimEnd, setTrimEnd] = useState(5);
 
     // Reset on scene Change
     useEffect(() => {
@@ -52,12 +51,16 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
 
     const clips = useMemo(() => {
         return scene.shots.map(shot => ({
-            video: shot.outVideo,
+            video: shot.previewMedia,
             shot,
         }));
     }, [scene.shots]);
 
-    const totalDuration = useMemo(() => scene.shots.reduce((sum, s) => sum + (s.previewMedia?.duration ?? 2), 0), [scene.shots]);
+    const totalDuration = scene.shots.reduce((sum, s) => {
+        const start = s.previewMedia?.start_timecode ?? 0;
+        const end = s.previewMedia?.end_timecode ?? 2;
+        return sum + (end - start);
+    }, 0);
 
     // handle switching clips
     useEffect(() => {
@@ -68,7 +71,8 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
         videoRefs.current.forEach((v, i) => {
             if (!v) return;
             if (i !== currentIndex) {
-                v.pause(); v.currentTime = 0;
+                const start_timecode = clips[i].video?.start_timecode ?? 0;
+                v.pause(); v.currentTime = start_timecode;
             }
         });
 
@@ -77,8 +81,7 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
 
         const play = async () => {
             if (!currentVideo.src) {
-                //currentVideo.src = clips[currentIndex].video?.urlObject ?? "";
-                currentVideo.src = "https://codeskulptor-demos.commondatastorage.googleapis.com/descent/background%20music.mp3"
+                currentVideo.src = "/assets/sounds/background_music.mp3";
                 currentVideo.volume = 0.01;
 
                 const preview = clips[currentIndex].shot.previewMedia
@@ -98,8 +101,10 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
                 currentVideo.onloadedmetadata = () => resolve();
             });
 
-            currentVideo.currentTime = seek ?? 0;
-            setClipTime(seek ?? 0);
+            const clip_start_timecode = clips[currentIndex].video?.start_timecode ?? 0;
+
+            currentVideo.currentTime = seek ?? clip_start_timecode;
+            setClipTime(seek ?? clip_start_timecode);
             if (!paused) currentVideo.play();
 
             //update Clip Indo
@@ -109,9 +114,6 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
         };
 
         play();
-
-
-
     }, [currentIndex]);
 
     const currentIndexRef = useRef(currentIndex);
@@ -130,18 +132,22 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
             if (!pausedRef.current) {
                 const video = videoRefs.current[currentIndexRef.current];
                 const clip = clips[currentIndexRef.current];
-                const shot = clip.shot
-                const duration = shot.previewMedia?.duration ?? 2
+                //const shot = clip.shot
+                //const duration = shot.previewMedia?.duration ?? 2
 
 
                 if (video && clip) {
                     const time = video.currentTime;
+                    const start_timecode = clip.video?.start_timecode ?? 0;
+                    const end_timecode = clip.video?.end_timecode ?? 2;
+
 
                     // Advance
-                    if (time >= (Math.min(duration, video.duration)) && !advancedClipRef.current) {
+                    if (time >= (Math.min(end_timecode, video.duration)) && !advancedClipRef.current) {
                         advancedClipRef.current = true;
-                        video.currentTime = 0.0;
-                        setClipTime(0.0);
+
+                        video.currentTime = start_timecode;
+                        setClipTime(start_timecode);
 
                         if (loopRef.current) {
                             video.play();
@@ -155,7 +161,7 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
                     }
 
                     // reset lock when inside clip again
-                    if (time < (Math.min(duration, video.duration))) {
+                    if (time < (Math.min(end_timecode, video.duration))) {
                         advancedClipRef.current = false;
                         setClipTime(time);
                     }
@@ -178,17 +184,160 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
 
     // on Sound switch
     useEffect(() => {
-        videoRefs.current.forEach((v, i) => {
+        videoRefs.current.forEach((v, _) => {
             if (!v) return;
             v.muted = muted;
         });
     }, [muted])
 
+    const currentClip = clips[currentIndex];
+    const currestClipDuration = currentClip ? currentClip.video?.duration ?? 2.0 : 2.0;
+    const currestClip_startTimecode = currentClip ? currentClip.video?.start_timecode ?? 0.0 : 0.0;
+    const currestClip_endTimecode = currentClip ? currentClip.video?.end_timecode ?? 0.0 : 2.0;
+
     const toClipStart = () => {
         const video = videoRefs.current[currentIndexRef.current];
-        if (video) { video.currentTime = 0 }
-        setClipTime(0);
+        if (video) { video.currentTime = currestClip_startTimecode }
+        setClipTime(currestClip_startTimecode);
     }
+
+    const toTimelineStart = () => {
+        setCurrentIndex(0);
+    }
+
+    const clipTimeRef = useRef(0);
+    useEffect(() => { clipTimeRef.current = clipTime; }, [clipTime]);
+    const clipsRef = useRef(clips);
+    useEffect(() => { clipsRef.current = clips; }, [clips]);
+
+
+    const seekBy = (delta: number) => {
+        const video = videoRefs.current[currentIndexRef.current];
+        const clip = clipsRef.current[currentIndexRef.current];
+
+        if (!video || !clip) return;
+
+        const nextTime = Math.max(0, Math.min(video.duration, video.currentTime + delta));
+
+        video.currentTime = nextTime;
+        setClipTime(nextTime);
+    };
+
+    // Keyboard Controls
+    useEffect(() => {
+        const onKeyDown = (e: KeyboardEvent) => {
+            // avoid triggering while typing in inputs
+            const target = e.target as HTMLElement;
+            if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) return;
+
+            if (e.code === "Space") {
+                e.preventDefault();
+                setPaused(prev => !prev);
+                return;
+            }
+
+            if (e.code === "KeyI") {
+                const clip = clipsRef.current[currentIndexRef.current];
+                const video = clip?.video;
+                if (video) { video.start_timecode = clipTimeRef.current; }
+                return;
+            }
+
+            if (e.code === "KeyO") {
+                const clip = clipsRef.current[currentIndexRef.current];
+                const video = clip?.video;
+                if (video) { video.end_timecode = clipTimeRef.current; }
+                return;
+            }
+
+            // CTRL + ARROWS → clip navigation 
+            /*
+            if (e.ctrlKey && e.code === "ArrowRight") {
+                e.preventDefault();
+                setCurrentIndex(i => Math.min(i + 1, clipsRef.current.length - 1));
+                return;
+            }
+
+            if (e.ctrlKey && e.code === "ArrowLeft") {
+                e.preventDefault();
+                setCurrentIndex(i => Math.max(i - 1, 0));
+                return;
+            }*/
+
+            if (e.ctrlKey && e.code === "ArrowLeft") {
+                e.preventDefault();
+
+                const index = currentIndexRef.current;
+                const clip = clipsRef.current[index];
+                const video = videoRefs.current[index];
+
+                if (!clip || !video) return;
+
+                const start = clip.video?.start_timecode ?? 0;
+                const EPS = 0.05; // tolerance for float drift
+                const atStart = Math.abs(video.currentTime - start) < EPS;
+
+                // If already at clip start → go to previous clip
+                if (atStart) {
+                    setCurrentIndex(prev => { return Math.max(prev - 1, 0); });
+                    return;
+                }
+
+                // Otherwise → jump to clip start
+                video.currentTime = start;
+                setClipTime(start);
+                return;
+            }
+
+            if (e.ctrlKey && e.code === "ArrowRight") {
+                e.preventDefault();
+                setCurrentIndex(i => Math.min(i + 1, clipsRef.current.length - 1));
+                return;
+            }
+
+
+
+            // ARROWS → small time offset
+            if (e.code === "ArrowRight") {
+                e.preventDefault();
+                seekBy(SEEK_STEP);
+                return;
+            }
+
+            if (e.code === "ArrowLeft") {
+                e.preventDefault();
+                seekBy(-SEEK_STEP);
+                return;
+            }
+
+
+            if (e.code === "Home") {
+                e.preventDefault();
+                toTimelineStart();
+                return;
+            }
+
+            if (e.code === "KeyL") {
+                e.preventDefault();
+                setLoop(prev => !prev);
+                return;
+            }
+
+            if (e.code === "KeyM") {
+                e.preventDefault();
+                setMuted(prev => !prev);
+                return;
+            }
+
+
+            console.log(e.code);
+
+        };
+
+        window.addEventListener("keydown", onKeyDown);
+        return () => window.removeEventListener("keydown", onKeyDown);
+    }, []);
+
 
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -200,10 +349,16 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
                         <video
                             key={clip.shot.path}
                             ref={(el) => { videoRefs.current[i] = el; }}
-                            src={clip?.video?.urlObject ?? ""}
+                            src={
+                                clip.video instanceof LocalVideo ?
+                                    (clip?.video?.urlObject ?? "assets/sounds/background music.mp3") :
+                                    "assets/sounds/background music.mp3"
+                            }
                             preload="auto"
-                            poster={clip.shot.srcImage?.urlObject ?? ""}
-                            controls={true}
+                            poster={
+                                clip.shot.previewMedia?.urlObject ?? ""
+                            }
+                            controls={false}
                             //onEnded={handleEnded}
                             style={{
                                 position: "absolute",
@@ -228,17 +383,35 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
                     </h3>
 
                     <Stack direction="horizontal" gap={1}>
-                        <Button onClick={toClipStart} variant="secondary">
+
+                        <Button onClick={toTimelineStart} variant="secondary" title="Go to Timeline Start [Home]">
+                            <FontAwesomeIcon icon={faBackwardFast} />
+                        </Button>
+
+                        <Button onClick={toClipStart} variant="secondary" title="Go to Clip Start [Arrow Down]">
                             <FontAwesomeIcon icon={faBackwardStep} />
                         </Button>
-                        <Button onClick={() => { setPaused((prev) => { return !prev; }) }} variant={paused ? "success" : "warning"}>
+                        <Button onClick={() => { setPaused((prev) => { return !prev; }) }} variant={paused ? "success" : "warning"} title="Play/Pause [SPACE]">
                             {paused ? <FontAwesomeIcon icon={faPlay} /> : <FontAwesomeIcon icon={faPause} />}
                         </Button>
-                        <Button onClick={() => { setLoop((prev) => { return !prev; }) }} variant={loop ? "info" : "outline-secondary"}>
+                        <Button onClick={() => { setLoop((prev) => { return !prev; }) }} variant={loop ? "info" : "outline-secondary"} title="Loop current Clip [L]">
                             <FontAwesomeIcon icon={faRotate} />
                         </Button>
-                        <Button onClick={() => { setMuted((prev) => { return !prev; }) }} variant={!muted ? "secondary" : "outline-secondary"}>
+                        <Button onClick={() => { setMuted((prev) => { return !prev; }) }} variant={!muted ? "secondary" : "outline-secondary"} title="Mute [M]">
                             {!muted ? <FontAwesomeIcon icon={faVolume} /> : <FontAwesomeIcon icon={faVolumeXmark} />}
+                        </Button>
+
+                        <Button onClick={() => {
+                            const video = clips[currentIndex].video;
+                            if (video) video.start_timecode = clipTime;
+                        }} variant="secondary" title="Set clip Start Timecode [I]">
+                            <FontAwesomeIcon icon={faRightFromBracket} />
+                        </Button>
+                        <Button onClick={() => {
+                            const video = clips[currentIndex].video;
+                            if (video) video.end_timecode = clipTime;
+                        }} variant="secondary" title="Set clip End Timecode [O]">
+                            <FontAwesomeIcon icon={faRightToBracket} />
                         </Button>
                     </Stack>
 
@@ -249,11 +422,14 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
                         total: {clipInfo?.duration}
                         <br />
                         time: {clipTime}
+                        <br />
+                        start_timecode: {currestClip_startTimecode}
+                        <br />
+                        end_timecode: {currestClip_endTimecode}
                     </div>
 
                 </span>
             </div>
-
 
             {/* 🎚 Video Seek Bar */}
             <div
@@ -289,7 +465,7 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
                         const seekFromEvent = (ev: PointerEvent) => {
                             const ratio = (ev.clientX - rect.left) / rect.width;
                             const clamped = Math.max(0, Math.min(1, ratio));
-                            const seek_time = clamped * video.duration;
+                            const seek_time = clamped * (clips[currentIndex].video?.duration ?? 5.0);
                             video.currentTime = seek_time;
                             setClipTime(seek_time);
                         };
@@ -312,7 +488,7 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
                     <div
                         style={{
                             position: "absolute",
-                            left: `${(trimStart / (clipInfo?.duration || 1)) * 100}%`,
+                            left: `${(currestClip_startTimecode / currestClipDuration) * 100}%`,
                             top: -6,
                             bottom: -6,
                             width: 2,
@@ -328,7 +504,7 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
                             left: 0,
                             top: 0,
                             bottom: 0,
-                            width: `${(trimStart / (clipInfo?.duration || 1)) * 100}%`,
+                            width: `${(currestClip_startTimecode / currestClipDuration) * 100}%`,
                             background: "rgba(207, 255, 103, 0.34)",
                             pointerEvents: "none",
                             zIndex: 3,
@@ -339,7 +515,7 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
                     <div
                         style={{
                             position: "absolute",
-                            left: `${(trimEnd / (clipInfo?.duration || 1)) * 100}%`,
+                            left: `${(currestClip_endTimecode / currestClipDuration) * 100}%`,
                             top: -6,
                             bottom: -6,
                             width: 2,
@@ -351,20 +527,21 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
                     <div
                         style={{
                             position: "absolute",
-                            left: `${(trimEnd / (clipInfo?.duration || 1)) * 100}%`,
+                            left: `${(currestClip_endTimecode / currestClipDuration) * 100}%`,
                             top: 0,
                             bottom: 0,
-                            width: `${((clipInfo?.duration - trimEnd) / (clipInfo?.duration || 1)) * 100}%`,
+                            width: `${((currestClipDuration - currestClip_endTimecode) / currestClipDuration) * 100}%`,
                             background: "rgba(254, 82, 82, 0.34)",
                             pointerEvents: "none",
                             zIndex: 3,
                         }}
                     />
 
+                    {/** CURRENT TIME POINTER */}
                     <div
                         style={{
                             position: "absolute",
-                            left: `${(clipTime / (clipInfo?.duration || 1)) * 100}%`,
+                            left: `${(clipTime / currestClipDuration) * 100}%`,
                             top: -6,
                             bottom: -6,
                             width: 4,
@@ -373,9 +550,6 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
                             zIndex: 5,
                         }}
                     />
-
-
-
                 </div>
 
                 <span
@@ -391,8 +565,6 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
                 </span>
             </div>
 
-
-
             {/* 🎞 Timeline */}
             <div
                 style={{
@@ -407,7 +579,9 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
                 {clips.map((clip, index) => {
                     const video = videoRefs.current[index];
                     const shot = clips[index].shot;
-                    const duration = shot.previewMedia?.duration ?? 2;
+                    //const duration = shot.previewMedia?.duration ?? 2;
+
+                    const duration = (shot.previewMedia?.end_timecode ?? 2) - (shot.previewMedia?.start_timecode ?? 0);
                     const widthPercent = (duration / totalDuration) * 100;
 
                     return (
@@ -423,14 +597,14 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
                                 overflow: "hidden",
                             }}
 
-                            
+
                             onClick={(e: React.MouseEvent<HTMLDivElement>) => {
                                 //console.log("Clicked",video, videoRefs.current,clips);
                                 if (!video) return;
                                 // SEEK CLICKED CLIP
                                 const rect = e.currentTarget.getBoundingClientRect();
                                 const ratio = (e.clientX - rect.left) / rect.width;
-                                const seek_time = ratio * duration;
+                                const seek_time = ratio * duration + (shot.previewMedia?.start_timecode ?? 0);
 
                                 // If same index
                                 if (index === currentIndex) {
@@ -463,7 +637,7 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
                                     bottom: 0,
                                     width: 4,
                                     background: "red",
-                                    left: `${index === currentIndex ? (clipTime / duration) * 100 : "0"}% `,
+                                    left: `${index === currentIndex ? ((clipTime - shot.previewMedia?.start_timecode) / duration) * 100 : "0"}% `,
                                     pointerEvents: "none",
                                     display: index === currentIndex ? "block" : "none",
                                     //display: "none",
