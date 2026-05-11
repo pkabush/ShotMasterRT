@@ -7,6 +7,7 @@ import { Project } from "../Project";
 import { GoogleAI } from "../GoogleAI";
 import { Tags } from "../Tags";
 import type { Artbook } from "../Artbook";
+import { AI } from "../AI_provider";
 
 
 
@@ -59,12 +60,18 @@ export class Character extends MediaFolder {
                 const name = img.name_no_extension;
                 if (!(name in this.variations)) { this.addVariation(name) }
             }
+
+            // add char ref if character
+            const artbook = this.parentFolder?.parentFolder as Artbook;
+            if (this.parentFolder == artbook.characters_folder) {
+                const char_ref_image = await artbook.getBaseCharRef() as LocalImage;
+                this.references.addTag(char_ref_image);                
+            }
         } catch (err) {
             console.error('Error loading shot:', this.name, err);
             this.charJson = null;
         }
     }
-
 
     addVariation(name?: string, descrition = "") {
         // Use prompt if name is not provided
@@ -140,13 +147,14 @@ ${var_prompt}
             console.log(workflow_prompt, var_prompt);
             let reference_images = await this.references?.GetAI_Images();
 
+            /*
             const artbook = this.parentFolder?.parentFolder as Artbook;
+            
             if (reference_images?.length == 0 && this.parentFolder == artbook.characters_folder) {
                 const char_ref_image = await artbook.getBaseCharRef() as LocalImage;
                 reference_images = [await char_ref_image.getAIImage()]
                 console.log("Added Default Char Ref Image");
-            }
-
+            }*/
 
             const result = await GoogleAI.img2img(
                 prompt,
@@ -178,6 +186,67 @@ ${var_prompt}
             })
         }
     }
+
+    async generateVariationDescriptions(add_variations = false,generate_variations = false) {
+        const project = Project.getProject()
+        const charlist_field = "looklist"
+        const is_env = this.parentFolder?.name == "ЛОКАЦИИ"
+        const wf_name = is_env ? this.workflows.generate_location_data : this.workflows.generate_variation_data
+
+        const workflow = project!.workflows[wf_name] ?? ""
+        const prompt = `
+            SCRIPT:
+            ${project!.script?.text}
+
+
+            ${workflow.prompt} 
+            ${this.name}
+            `
+
+        const res = await AI.GenerateText({
+            prompt: prompt,
+            model: workflow.model!,
+        })
+
+        if (res) {
+            const clean = res.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
+            await this.charJson!.updateField(charlist_field, clean)
+
+            if (add_variations || (project.projinfo?.getField(`workflows/${wf_name}/auto_add`) ?? true)) this.addLooksFromLooklist(generate_variations);
+        }
+    }
+
+    addLooksFromLooklist(generate = false) {
+        const project = Project.getProject()
+        const charlist_field = "looklist"
+        const looks_json = this.charJson!.getField(charlist_field)
+        const is_env = this.parentFolder?.name == "ЛОКАЦИИ"
+        const wf_name = is_env ? this.workflows.generate_location_data : this.workflows.generate_variation_data
+
+        let looks_data: Record<string, any>;
+        try {
+            looks_data = JSON.parse(looks_json);
+        } catch (err) {
+            console.error("Invalid shots JSON:", err);
+            alert("Error: The shots JSON is invalid. Please check the format.");
+            return;
+        }
+
+        for (const look_name of Object.keys(looks_data)) {
+            const look_descrition = looks_data[look_name].replace(" ", "_");
+            this.addVariation(look_name, look_descrition)
+            if (generate || (project.projinfo?.getField(`workflows/${wf_name}/auto_gen`) ?? false)) { this.generateLook(look_name) }
+        }
+    }
+
+    generateVariationsIfMissing() {
+        console.log(this.name);
+        if (Object.keys(this.variations).length == 0){
+            console.log("No variations, generating ", this.name);
+            this.generateVariationDescriptions(true,true);
+        }
+    }
+
 
 }
 

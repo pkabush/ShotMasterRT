@@ -89,7 +89,7 @@ export const CharVariationView: React.FC<CharVariationViewProps> = observer(({
                 field={`variations/${variationName}/prompt`}
             />
 
-            <TagsFolderContainer tags={character.references} folders={[character]} />
+            <TagsFolderContainer tags={character.references} folders={[character,project!]} />
 
             <Button
                 onClick={() => character.setVariationImage(variationName)}
@@ -98,6 +98,7 @@ export const CharVariationView: React.FC<CharVariationViewProps> = observer(({
             >
                 USE Picked Image
             </Button>
+
         </div>
     );
 });

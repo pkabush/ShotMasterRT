@@ -6,12 +6,11 @@ import { MediaFolder } from "./MediaFolder";
 import { Character } from "./Artbook/Character";
 import { LocalImage } from "./fileSystem/LocalImage";
 
-
 export class Artbook extends LocalFolder {
   project: Project | null = null;
 
-  characters_folder: LocalFolder | null = null;
-  environment_folder: LocalFolder | null = null;
+  characters_folder: MediaFolder | null = null;
+  environment_folder: MediaFolder | null = null;
 
   workflows = {
     gen_char_names: "artbook_generate_character_names",
@@ -53,8 +52,9 @@ export class Artbook extends LocalFolder {
     await this.load_files()
     //console.log("AB", this)
 
-    this.characters_folder = await LocalFolder.open(this, "ПЕРСОНАЖИ")
-    this.environment_folder = await LocalFolder.open(this, "ЛОКАЦИИ")
+    this.characters_folder = await LocalFolder.open(this, "ПЕРСОНАЖИ", MediaFolder);
+    this.environment_folder = await LocalFolder.open(this, "ЛОКАЦИИ", MediaFolder);
+
 
     for (const artSubfolder of this.subfolders) {
       await artSubfolder.load_subfolders(Character);
@@ -94,13 +94,20 @@ export class Artbook extends LocalFolder {
     for (const sub of this.getType(LocalFolder)) {
       for (const char of sub.getType(LocalFolder)) {
         for (const tag of char.getType(LocalImage)) {
-          console.log(tag.path.replaceAll("/","_"));
-          tag.copyToFolder(artboook_out,tag.path.replaceAll("/","_"));
+          console.log(tag.path.replaceAll("/", "_"));
+          tag.copyToFolder(artboook_out, tag.path.replaceAll("/", "_"));
         }
       }
     }
-
-
-
   }
+
+  async generateMissingVariationDescriptions(folder: LocalFolder) {
+    for( const char of folder.getType(Character)){
+      char.generateVariationsIfMissing();     
+    }
+  }
+
+
+
+
 }

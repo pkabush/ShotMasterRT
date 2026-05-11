@@ -186,7 +186,7 @@ export class Project extends LocalFolder {
       currentView: observable,
       selectedScene: observable,
       selectedPath: observable,
-      selectedSubPath:observable,
+      selectedSubPath: observable,
       loadFromFolder: action,
       loadScenes: action,
       setView: action,
@@ -318,7 +318,7 @@ export class Project extends LocalFolder {
     GoogleAI.setApiKey = async (key: string) => { await this.userSettingsDB.update(data => { data.api_keys.Google_API_KEY = key; }); }
     ChatGPT.getApiKey = () => { return this.userSettingsDB.data.api_keys.GPT_API_KEY || null; };
     ChatGPT.setApiKey = async (key: string) => { await this.userSettingsDB.update(data => { data.api_keys.GPT_API_KEY = key; }); };
-    
+
     SeedanceAI.getApiKey = () => { return this.userSettingsDB.data.api_keys.BP_API_KEY || null; };
 
     KlingAI.getKeysDict = () => {
