@@ -33,13 +33,28 @@ export const Google_GenerateImageNode: React.FC<Google_GenerateImageNodeProps> =
                         Generate Image
                     </button>
 
-                    {/* Model Selector */}
 
                     <WorkflowOptionSelect
                         project={project}
                         workflowName="generate_shot_image"
                         optionName="model"
                         values={Object.values(GoogleAI.options.img_models)}
+                    />
+
+                    <WorkflowOptionSelect
+                        project={project}
+                        workflowName="generate_shot_image"
+                        optionName="aspect_ratio"
+                        values={Object.values(GoogleAI.options.aspect_ratios)}
+                        defaultValue={GoogleAI.options.aspect_ratios.r9x16}
+                    />
+
+                    <WorkflowOptionSelect
+                        project={project}
+                        workflowName="generate_shot_image"
+                        optionName="resolution"
+                        values={Object.values(GoogleAI.options.resolution)}
+                        defaultValue={GoogleAI.options.resolution.none}
                     />
 
                     {/* Loading Spinner */}
@@ -57,8 +72,8 @@ export const Google_GenerateImageNode: React.FC<Google_GenerateImageNodeProps> =
 
 
                     {/* Media folder gallery for results */}
-                    
-                    <TagsFolderContainer tags={shot.references} folders={[Project.getProject(),Project.getProject().artbook as LocalFolder]} />
+
+                    <TagsFolderContainer tags={shot.references} folders={[Project.getProject(), Project.getProject().artbook as LocalFolder]} />
 
                 </>
             }

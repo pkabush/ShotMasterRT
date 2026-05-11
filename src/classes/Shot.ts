@@ -185,7 +185,9 @@ export class Shot extends LocalFolder {
       const result = await GoogleAI.img2img(
         prompt,
         this.scene.project.workflows.generate_shot_image.model,
-        images
+        images,
+        this.scene.project.workflows.generate_shot_image.aspect_ratio || GoogleAI.options.aspect_ratios.r9x16,
+        this.scene.project.workflows.generate_shot_image.resolution || GoogleAI.options.resolution.none,
       );
 
       const localImage: LocalImage | null =
@@ -384,7 +386,7 @@ export class Shot extends LocalFolder {
       const face_choose: LipSyncFaceChoose[] = [];
 
       // Loop sequentially to await async calls
-      for (const tag of ["ID-0", "ID-1", "ID-2","ID--1"]) {
+      for (const tag of ["ID-0", "ID-1", "ID-2", "ID--1"]) {
         const audio = this.MediaFolder_Audio!.getFirstMediaWithTag(tag) as LocalAudio | null;
         if (!audio) continue;
 
