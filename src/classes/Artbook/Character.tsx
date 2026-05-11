@@ -212,7 +212,7 @@ ${var_prompt}
             const clean = res.replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "").trim();
             await this.charJson!.updateField(charlist_field, clean)
 
-            if (add_variations || (project.projinfo?.getField(`workflows/${wf_name}/auto_add`) ?? true)) this.addLooksFromLooklist(generate_variations);
+            if (add_variations || (project.projinfo?.getField(`workflows/${wf_name}/auto_add`) ?? false)) this.addLooksFromLooklist(generate_variations);
         }
     }
 

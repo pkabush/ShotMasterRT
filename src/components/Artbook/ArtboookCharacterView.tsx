@@ -242,7 +242,7 @@ export const GenVariations: React.FC<GenVariationsProps> = observer(({ character
             }
             content={
                 <>                    
-                    <EditableJsonToggleField localJson={project.projinfo} field={`workflows/${wf_name}/auto_add`} label="Auto Create Variations"/>
+                    <EditableJsonToggleField localJson={project.projinfo} field={`workflows/${wf_name}/auto_add`} label="Auto Create Variations" default_val={false}/>
                     <EditableJsonToggleField localJson={project.projinfo} field={`workflows/${wf_name}/auto_gen`} label="Auto Generate Variation Images" default_val={false}/>
 
                     <WorkflowTextField workflowName={wf_name} optionName={"prompt"} />
