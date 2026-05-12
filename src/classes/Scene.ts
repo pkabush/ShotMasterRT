@@ -39,13 +39,13 @@ export class Scene extends LocalFolder {
     generated_tags_list: "generated_tags_list"
   }
 
-  get project(){
-    return Project.getProject(); 
+  get project() {
+    return Project.getProject();
   }
 
-  constructor(parentFolder: LocalFolder|null,handle: FileSystemDirectoryHandle) {
+  constructor(parentFolder: LocalFolder | null, handle: FileSystemDirectoryHandle) {
     super(parentFolder, handle);
-    
+
     // makeObservable instead of makeAutoObservable
     makeObservable(this, {
       sceneJson: observable,
@@ -58,11 +58,39 @@ export class Scene extends LocalFolder {
       finishedShotsNum: computed,
       selectShot: action,
       shots: computed,
-      project:computed,
+      shots_ordered: computed,
+      project: computed,
     });
   }
 
   get shots() { return this.getType(Shot); }
+
+  get shots_ordered() {
+    const shots = this.getType(Shot);
+    const shots_order_list: string[] = this.sceneJson?.getField("shots_order_list") ?? [];
+
+    // Add missing shots to order list
+    for (const shot of shots) {
+      if (!shots_order_list.includes(shot.name)) {
+        shots_order_list.push(shot.name);
+      }
+    }
+
+    // Remove deleted shots from order list
+    const shotNames = new Set(shots.map(shot => shot.name));
+    for (let i = shots_order_list.length - 1; i >= 0; i--) {
+      if (!shotNames.has(shots_order_list[i])) {
+        shots_order_list.splice(i, 1);
+      }
+    }
+
+    // Return ordered shots
+    const shotsMap = new Map(shots.map(shot => [shot.name, shot]));
+
+    return shots_order_list
+      .map(name => shotsMap.get(name))
+      .filter((shot): shot is Shot => shot !== undefined);
+  }
 
   selectShot(shot: Shot) {
     if (this.shots.includes(shot)) {
@@ -76,7 +104,7 @@ export class Scene extends LocalFolder {
       this.references = new Tags(this, this.sceneJson);
       await this.load_subfolders(Shot);
       // Load StoryBoard Later to overwrite
-      this.storyboard = await LocalFolder.open(this,"Storyboard",Storyboard);
+      //this.storyboard = await LocalFolder.open(this, "Storyboard", Storyboard);
     } catch (err) {
       console.error('Error loading scene:', err);
       this.sceneJson = null;
@@ -329,11 +357,44 @@ ${this.project.artbook?.tags_list.join("\n")}
       })
   }
 
-  async delete(show_dialogue= false) {
+  async delete(show_dialogue = false) {
     await super.delete(show_dialogue);
 
     if (this.project.selectedScene == this)
-      this.project.setView( {type:"none"} );
+      this.project.setView({ type: "none" });
+  }
+
+  set_shot_list_index(shot: Shot, targetIndex: number) {
+    const orderedShots = [...this.shots_ordered];
+
+    const fromIndex = orderedShots.indexOf(shot);
+    if (fromIndex === -1) return;
+
+    // IMPORTANT: allow inserting at END
+    targetIndex = Math.max(0, Math.min(targetIndex, orderedShots.length));
+
+    if (fromIndex === targetIndex) return;
+
+    orderedShots.splice(fromIndex, 1);
+
+    // adjust only if we removed something before target
+    let adjustedIndex = targetIndex;
+    if (fromIndex < targetIndex) {
+      adjustedIndex -= 1;
+    }
+
+    orderedShots.splice(adjustedIndex, 0, shot);
+
+    this.sceneJson?.updateField(
+      "shots_order_list",
+      orderedShots.map(s => s.name)
+    );
+  }
+
+  get_shot_list_index(shot: Shot): number {
+    return this.shots_ordered.indexOf(shot);
   }
 
 }
+
+

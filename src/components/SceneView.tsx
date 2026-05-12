@@ -5,7 +5,6 @@ import SimpleButton from "./Atomic/SimpleButton";
 import TabsContainer from "./TabsContainer";
 import SceneInfoCard from "./SceneInfoCard";
 import ShotsInfoStrip from "./ShotsInfoStrip";
-import { StoryboardView } from "./Scene/StoryboardView";
 import { SceneTimelineView } from "./SceneViews/TimelineView";
 
 
@@ -26,7 +25,6 @@ export const SceneView: React.FC<SceneViewProps> = observer(({ scene }) => {
             tabs={{
                 Scene: <SceneInfoCard scene={scene} />,
                 Shots: <ShotsInfoStrip scene={scene} />,
-                Storyboard: <StoryboardView storyboard={scene.storyboard}/>,
                 Timeline: <SceneTimelineView scene={scene}/>,                
             }}
         />

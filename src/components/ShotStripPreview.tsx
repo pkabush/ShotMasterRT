@@ -19,6 +19,8 @@ interface Props {
 
 const ShotStripPreview: React.FC<Props> = observer(({ shot, isSelected, onClick }) => {
 
+  const [dragSide, setDragSide] = React.useState<"left" | "right" | null>(null);
+
   return (
     <div
       className="flex-shrink-0 position-relative d-flex align-items-center justify-content-center"
@@ -30,6 +32,42 @@ const ShotStripPreview: React.FC<Props> = observer(({ shot, isSelected, onClick 
         borderStyle: 'solid',
       }}
       onClick={() => onClick(shot)}
+      // DRAGGABLES
+      draggable={true}
+      onDragStart={(e) => {
+        e.dataTransfer.setData("LocalFilePath", shot.path);
+      }}
+      onDragOver={(e) => {
+        e.preventDefault();
+        const rect = e.currentTarget.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const isRight = mouseX > rect.width / 2;
+        setDragSide(isRight ? "right" : "left");
+      }}
+      onDragLeave={() => setDragSide(null)}
+      onDragEnd={() => setDragSide(null)}
+      onDrop={(e) => {
+        e.preventDefault();
+        setDragSide(null);
+        const local_file_path = e.dataTransfer.getData("LocalFilePath");
+        if (!local_file_path) return;
+
+        console.log(local_file_path);
+        const dragged_file = shot.getByAbsPath(local_file_path);
+        if (dragged_file instanceof Shot) {
+          console.log("Dragged Shot Over", dragged_file);
+          if (dragged_file.scene == shot.scene) {
+            // Same sceve - move
+            let index = shot.scene.get_shot_list_index(shot);
+            // Mouse position inside target
+            const rect = e.currentTarget.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const droppedOnRight = mouseX > rect.width / 2;
+            if (droppedOnRight) { index += 1; }
+            shot.scene.set_shot_list_index(dragged_file, index);
+          }
+        }
+      }}
     >
       {shot.previewMedia ? (
         <MediaPreview
@@ -146,8 +184,24 @@ const ShotStripPreview: React.FC<Props> = observer(({ shot, isSelected, onClick 
           onChange={(newState) => { if (shot.shotJson) { shot.shotJson.updateField("shot_state", newState); } }}
           useIndicator={true}
         />
-
       </div>
+
+
+      {dragSide && (
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            bottom: 0,
+            width: "16px",
+            left: dragSide === "left" ? 0 : "100%",
+            transform: dragSide === "right" ? "translateX(-4px)" : "translateX(-12px)",
+            backgroundColor: "#00ff66",
+            pointerEvents: "none",
+            zIndex: 9999,
+          }}
+        />
+      )}
 
     </div>
   );

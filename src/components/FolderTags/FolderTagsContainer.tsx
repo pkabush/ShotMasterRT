@@ -24,150 +24,204 @@ export const TagsFolderContainer: React.FC<TagsContainerProps> = observer(({
     folders = [],
 }) => {
     if (!tags) return null;
-
     const project = Project.getProject();
+    const [isDraggingOver, setIsDraggingOver] = React.useState(false);
 
     return (
-        <Accordion defaultActiveKey="TAGS" className="mb-2">
-            <AccordionCard eventKey="TAGS">
-                <AccordionCard.Header closedColor="#544228" openColor="#a97428">
-                    <>
-                        References
-                        <FontAwesomeIcon icon={faImages} className="mx-2" style={{
-                            color: '#e2eb3a',
-                        }} />
-                    </>
-                    <AccordionCard.Controls>
-                        <Stack direction="horizontal" gap={3}>
-                            <Form.Switch label="Use Refs" checked={tags.use_tags} onChange={(e) => { tags.use_tags = e.target.checked }} />
-                            <Button size="sm" variant="outline-secondary" onClick={() => tags.log()}>
-                                LOG
-                            </Button>
-                        </Stack>
-                    </AccordionCard.Controls>
+        <div
+            onDragOver={(e) => {
+                e.preventDefault();
+                setIsDraggingOver(true);
+            }}
+            onDragLeave={() => setIsDraggingOver(false)}
+            onDrop={(e) => {
+                e.preventDefault();
+                setIsDraggingOver(false);
 
-                </AccordionCard.Header>
-                <AccordionCard.Body>
-                    {tags.use_tags ?
-                        <ListGroup>
-                            <ListGroup.Item key={tags.owner.path} className="py-0 px-0">
-                                <Stack direction="horizontal" gap={2}>
-                                    {folders.map((local_folder) => (
-                                        <FolderDropdownNode
-                                            key={local_folder.path}
-                                            folder={local_folder}
-                                            selected_paths={tags.tags}
-                                            onSelect={(item) => {
-                                                if (item instanceof LocalMedia) {
-                                                    tags.addTag(item, true)
-                                                }
-                                            }} />)
-                                    )}
+                const local_file_path = e.dataTransfer.getData("LocalFilePath");
+                if (!local_file_path) return;
 
-                                    <Form.Switch
-                                        label="Use Parent Tags"
-                                        checked={tags.use_parent_tags}
-                                        className="ms-auto"
-                                        onChange={(e) => { tags.use_parent_tags = e.target.checked }} />
-                                    <Button
-                                        size="sm"
-                                        variant="outline-warning"
-                                        onClick={async () => tags.importFromClipboard() }
-                                    >
-                                        Paste Tag
-                                    </Button>
-                                </Stack>
-                            </ListGroup.Item>
+                console.log(local_file_path);
 
-                            {tags.tags.map((tag: string) => {
-                                const media = project.getByAbsPath(tag, LocalMedia);
-                                const active = tags.isActive(tag);
+                const dragged_file = project.getByAbsPath(local_file_path);
+                if (dragged_file instanceof LocalMedia) { tags.addTag(dragged_file); }
+            }}
+            style={{ position: "relative" }}
+        >
+            <Accordion defaultActiveKey="TAGS" className="mb-2">
+                <AccordionCard eventKey="TAGS">
+                    <AccordionCard.Header closedColor="#544228" openColor="#a97428">
+                        <>
+                            References
+                            <FontAwesomeIcon icon={faImages} className="mx-2" style={{
+                                color: '#e2eb3a',
+                            }} />
+                        </>
+                        <AccordionCard.Controls>
+                            <Stack direction="horizontal" gap={3}>
+                                <Form.Switch label="Use Refs" checked={tags.use_tags} onChange={(e) => { tags.use_tags = e.target.checked }} />
+                                <Button size="sm" variant="outline-secondary" onClick={() => tags.log()}>
+                                    LOG
+                                </Button>
+                            </Stack>
+                        </AccordionCard.Controls>
 
-                                return <ListGroup.Item key={tag} className="py-0 px-0">
-                                    <Stack direction="horizontal" gap={0}>
-                                        <div
-                                            className={`rounded-circle mx-2 ${active ? 'bg-success' : 'border border-secondary'}`}
-                                            style={{ width: '15px', height: '15px', }}
-                                            onClick={() => {
-                                                tags.toggle(tag);
-                                            }}
-                                        />
-                                        {
-                                            (!media) ? <>{tag}</> : <MediaPreviewSmall media={media} />
-                                        }
+                    </AccordionCard.Header>
+                    <AccordionCard.Body>
+                        {tags.use_tags ?
+                            <ListGroup>
+                                <ListGroup.Item key={tags.owner.path} className="py-0 px-0">
+                                    <Stack direction="horizontal" gap={2}>
+                                        {folders.map((local_folder) => (
+                                            <FolderDropdownNode
+                                                key={local_folder.path}
+                                                folder={local_folder}
+                                                selected_paths={tags.tags}
+                                                onSelect={(item) => {
+                                                    if (item instanceof LocalMedia) {
+                                                        tags.addTag(item, true)
+                                                    }
+                                                }} />)
+                                        )}
 
+                                        <Form.Switch
+                                            label="Use Parent Tags"
+                                            checked={tags.use_parent_tags}
+                                            className="ms-auto"
+                                            onChange={(e) => { tags.use_parent_tags = e.target.checked }} />
                                         <Button
                                             size="sm"
-                                            variant="outline-secondary"
-                                            onClick={() => tags.moveTag(tag, -1)}
-                                            className="ms-auto">
-                                            <FontAwesomeIcon icon={faArrowUp} />
-                                        </Button>
-
-                                        <Button
-                                            size="sm"
-                                            variant="outline-secondary"
-                                            onClick={() => tags.moveTag(tag, 1)}
+                                            variant="outline-warning"
+                                            onClick={async () => tags.importFromClipboard()}
                                         >
-                                            <FontAwesomeIcon icon={faArrowDown} />
+                                            Paste Tag
                                         </Button>
-
-
-                                        <Button
-                                            size="sm"
-                                            variant="outline-danger"
-                                            className="ms-3"
-                                            onClick={() => tags.deleteTag(tag)}>
-                                            <FontAwesomeIcon icon={faTrashCan} />
-                                        </Button>
-
                                     </Stack>
-                                </ListGroup.Item>;
-                            })}
+                                </ListGroup.Item>
 
-
-
-                            {
-                                tags.parent_tags.map((tag: string) => {
+                                {tags.tags.map((tag: string) => {
                                     const media = project.getByAbsPath(tag, LocalMedia);
                                     const active = tags.isActive(tag);
 
                                     return <ListGroup.Item key={tag} className="py-0 px-0">
                                         <Stack direction="horizontal" gap={0}>
                                             <div
-                                                className={`rounded-circle mx-2 ${active ? 'bg-warning' : 'border border-warning'}`}
+                                                className={`rounded-circle mx-2 ${active ? 'bg-success' : 'border border-secondary'}`}
                                                 style={{ width: '15px', height: '15px', }}
                                                 onClick={() => {
                                                     tags.toggle(tag);
                                                 }}
                                             />
                                             {
-                                                (!media) ?
-                                                    <>{tag}</> :
-                                                    <MediaPreviewSmall media={media} />
+                                                (!media) ? <>{tag}</> : <MediaPreviewSmall media={media} />
                                             }
 
                                             <Button
                                                 size="sm"
-                                                variant="outline-warning"
-                                                className="ms-auto"
-                                                onClick={() => { tags.addTag(tag) }}>
-                                                Add
+                                                variant="outline-secondary"
+                                                onClick={() => tags.moveTag(tag, -1)}
+                                                className="ms-auto">
+                                                <FontAwesomeIcon icon={faArrowUp} />
                                             </Button>
+
+                                            <Button
+                                                size="sm"
+                                                variant="outline-secondary"
+                                                onClick={() => tags.moveTag(tag, 1)}
+                                            >
+                                                <FontAwesomeIcon icon={faArrowDown} />
+                                            </Button>
+
+
+                                            <Button
+                                                size="sm"
+                                                variant="outline-danger"
+                                                className="ms-3"
+                                                onClick={() => tags.deleteTag(tag)}>
+                                                <FontAwesomeIcon icon={faTrashCan} />
+                                            </Button>
+
                                         </Stack>
                                     </ListGroup.Item>;
                                 })}
 
 
-                        </ListGroup>
-                        :
-                        <>Tags Are Toggled Off</>
-                    }
-                </AccordionCard.Body>
+
+                                {
+                                    tags.parent_tags.map((tag: string) => {
+                                        const media = project.getByAbsPath(tag, LocalMedia);
+                                        const active = tags.isActive(tag);
+
+                                        return <ListGroup.Item key={tag} className="py-0 px-0">
+                                            <Stack direction="horizontal" gap={0}>
+                                                <div
+                                                    className={`rounded-circle mx-2 ${active ? 'bg-warning' : 'border border-warning'}`}
+                                                    style={{ width: '15px', height: '15px', }}
+                                                    onClick={() => {
+                                                        tags.toggle(tag);
+                                                    }}
+                                                />
+                                                {
+                                                    (!media) ?
+                                                        <>{tag}</> :
+                                                        <MediaPreviewSmall media={media} />
+                                                }
+
+                                                <Button
+                                                    size="sm"
+                                                    variant="outline-warning"
+                                                    className="ms-auto"
+                                                    onClick={() => { tags.addTag(tag) }}>
+                                                    Add
+                                                </Button>
+                                            </Stack>
+                                        </ListGroup.Item>;
+                                    })}
 
 
-            </AccordionCard>
-        </Accordion>
+                            </ListGroup>
+                            :
+                            <>Tags Are Toggled Off</>
+                        }
+                    </AccordionCard.Body>
+
+
+                </AccordionCard>
+            </Accordion>
+
+            {isDraggingOver && (
+                <div
+                    style={{
+                        position: "absolute",
+                        inset: 0,
+                        backgroundColor: "rgba(77, 171, 247, 0.08)",
+                        backdropFilter: "blur(1px)",
+                        zIndex: 999,
+                        pointerEvents: "none",
+
+                        border: "4px dashed rgba(235, 133, 25, 0.9)",
+                        borderRadius: "6px",
+                        boxSizing: "border-box",
+                    }}
+                />
+            )}
+            {isDraggingOver && (
+                <div style={{
+                    position: "absolute",
+                    inset: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    zIndex: 1000,
+                    color: "#ffb15e",
+                    fontSize: "1.5rem",
+                    fontWeight: 600,
+                    pointerEvents: "none",
+                }}>
+                    Drop Reference Here
+                </div>
+            )}
+        </div>
     );
 });
 

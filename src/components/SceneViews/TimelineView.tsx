@@ -3,9 +3,10 @@ import type { SceneViewProps } from "../SceneView";
 import { LocalVideo } from "../../classes/fileSystem/LocalVideo";
 import { useEffect, useMemo, useRef, useState } from "react";
 import MediaPreview from "../MediaComponents/MediaPreview";
-import { Badge, Button,  Stack } from "react-bootstrap";
+import { Badge, Button, Stack } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBackwardFast, faBackwardStep, faPause, faPlay, faRightFromBracket, faRightToBracket, faRotate,  faVolume, faVolumeXmark } from "@fortawesome/free-solid-svg-icons";
+import { faBackwardFast, faBackwardStep, faPause, faPlay, faRightFromBracket, faRightToBracket, faRotate, faVolume, faVolumeXmark } from "@fortawesome/free-solid-svg-icons";
+import { Shot } from "../../classes/Shot";
 
 export const SceneTimelineView: React.FC<SceneViewProps> = observer(({ scene }) => {
 
@@ -50,11 +51,11 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
     }, [scene]);
 
     const clips = useMemo(() => {
-        return scene.shots.map(shot => ({
+        return scene.shots_ordered.map(shot => ({
             video: shot.previewMedia,
             shot,
         }));
-    }, [scene.shots]);
+    }, [scene.shots_ordered]);
 
     const totalDuration = scene.shots.reduce((sum, s) => {
         const start = s.previewMedia?.start_timecode ?? 0;
@@ -338,6 +339,8 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
         return () => window.removeEventListener("keydown", onKeyDown);
     }, []);
 
+    const [dragOver, setDragOver] = useState<{ index: number; side: "left" | "right"; } | null>(null);
+
 
     return (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -597,7 +600,6 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
                                 overflow: "hidden",
                             }}
 
-
                             onClick={(e: React.MouseEvent<HTMLDivElement>) => {
                                 //console.log("Clicked",video, videoRefs.current,clips);
                                 if (!video) return;
@@ -617,7 +619,41 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
                                 setCurrentIndex(index);
                             }}
 
+                            // DRAGGABLES
+                            draggable={true}
+                            onDragStart={(e) => {
+                                e.dataTransfer.setData("LocalFilePath", shot.path);
+                            }}
+                            onDragOver={(e) => {
+                                e.preventDefault();
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                const mouseX = e.clientX - rect.left;
+                                const side = mouseX > rect.width / 2 ? "right" : "left";
+                                setDragOver({ index, side, });
+                            }}
+                            onDragLeave={() => {
+                                setDragOver(null);
+                            }}
+                            onDrop={(e) => {
+                                e.preventDefault();
+                                setDragOver(null);
+                                const local_file_path = e.dataTransfer.getData("LocalFilePath");
+                                const dragged_file = shot.getByAbsPath(local_file_path);
+                                if (dragged_file instanceof Shot) {
+                                    if (dragged_file.scene == shot.scene) {
+                                        // Same sceve - move
+                                        let index = shot.scene.get_shot_list_index(shot);
+                                        // Mouse position inside target
+                                        const rect = e.currentTarget.getBoundingClientRect();
+                                        const mouseX = e.clientX - rect.left;
+                                        const droppedOnRight = mouseX > rect.width / 2;
+                                        if (droppedOnRight) { index += 1; }
+                                        //console.log(index);
+                                        shot.scene.set_shot_list_index(dragged_file, index);
+                                    }
+                                }
 
+                            }}
                         >
                             <span style={{
                                 position: "absolute",
@@ -643,6 +679,22 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
                                     //display: "none",
                                 }}
                             />
+
+                            {/** DRAG AND DROP HIGHLIGHT */}
+                            {dragOver?.index === index && (
+                                <div
+                                    style={{
+                                        position: "absolute",
+                                        top: 0,
+                                        bottom: 0,
+                                        width: 12,
+                                        left: dragOver.side === "left" ? 0 : "100%",
+                                        transform: dragOver.side === "right" ? "translateX(-12px)" : undefined,
+                                        background: "#ffbf10",
+                                        pointerEvents: "none",
+                                    }}
+                                />
+                            )}
                         </div>
                     );
                 })}

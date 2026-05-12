@@ -7,6 +7,9 @@ import ResizableContainer from './ResizableContainer';
 import ShotInfoCard from './ShotInfoCard'; // Import the new ShotInfoCard
 import SimpleButton from './Atomic/SimpleButton';
 import LoadingButton from './Atomic/LoadingButton';
+import { Button } from 'react-bootstrap';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
 
 interface Props {
   scene: Scene;
@@ -31,7 +34,7 @@ const ShotsInfoStrip: React.FC<Props> = observer(({ scene }) => {
       {/* Resizable strip for shot previews */}
       <ResizableContainer initialHeight={200}>
         <div className="d-flex overflow-auto gap-2 h-100">
-          {scene.shots.map((shot) => (
+          {scene.shots_ordered.map((shot) => (
             <ShotStripPreview
               key={shot.name}
               shot={shot}
@@ -54,6 +57,29 @@ const ShotsInfoStrip: React.FC<Props> = observer(({ scene }) => {
         <SimpleButton label="+ Add Shot" onClick={handleAddShot}
           tooltip='Creates New SHOT.
 Hold CTRL to auto Name Shot.'/>
+
+        {scene.selectedShot &&
+          <>
+            <Button size='sm' variant='outline-warning' title="move Shot Left"
+              onClick={() => {
+                if (!scene.selectedShot) return;
+                const index = scene.get_shot_list_index(scene.selectedShot);
+                scene.set_shot_list_index(scene.selectedShot, index - 1);
+              }}>
+              <FontAwesomeIcon icon={faChevronLeft} />
+            </Button>
+            <Button size='sm' variant='outline-warning' title="move Shot Right"
+              onClick={() => {
+                if (!scene.selectedShot) return;
+                const index = scene.get_shot_list_index(scene.selectedShot);
+                scene.set_shot_list_index(scene.selectedShot, index + 1);
+              }}>
+              <FontAwesomeIcon icon={faChevronRight} />
+            </Button>
+
+          </>
+        }
+
       </div>
 
       {/* Show info card for the selected shot */}
