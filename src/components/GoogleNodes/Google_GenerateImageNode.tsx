@@ -9,6 +9,7 @@ import EditableJsonTextField from "../EditableJsonTextField";
 import { Project } from "../../classes/Project";
 import { TagsFolderContainer } from "../FolderTags/FolderTagsContainer";
 import type { LocalFolder } from "../../classes/fileSystem/LocalFolder";
+import { ChatGPT } from "../../classes/ChatGPT";
 
 interface Google_GenerateImageNodeProps {
     shot: Shot;
@@ -38,7 +39,10 @@ export const Google_GenerateImageNode: React.FC<Google_GenerateImageNodeProps> =
                         project={project}
                         workflowName="generate_shot_image"
                         optionName="model"
-                        values={Object.values(GoogleAI.options.img_models)}
+                        values={[
+                            ...Object.values(ChatGPT.options.models),
+                            ...Object.values(GoogleAI.options.img_models)
+                        ]}
                     />
 
                     <WorkflowOptionSelect

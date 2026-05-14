@@ -19,10 +19,13 @@ export class ChatGPT implements AIProvider {
     models: {
       //gpt_4o_mini: "gpt-4o-mini",
       //gpt_5_1: "gpt-5.1",
-      gpt_5_mini: "gpt-5-mini",
+      //gpt_5_mini: "gpt-5-mini",
       //gpt_5_nano: "gpt-5-nano",
       gpt_5: "gpt-5",
       gpt_5_4: "gpt-5.4",
+      gpt_5_4_mini: "gpt-5.4-mini",
+      gpt_5_5: "gpt-5.5",
+      //gpt_image_2: "gpt-image-2",      
     }
   }
 
@@ -121,13 +124,14 @@ export class ChatGPT implements AIProvider {
   public static async img2img(
     prompt?: string,
     model: string = ChatGPT.options.models.gpt_5,
-    images?: { rawBase64: string; mime: string; description: string }[]
+    images?: { rawBase64: string; mime: string; description: string }[],
+    resolution?: string,
   ) {
     try {
       const openai = this.getClient();
 
       const content: any[] = [];
-      if (prompt) content.push( { type: "input_text", text: prompt });
+      if (prompt) content.push({ type: "input_text", text: prompt });
 
 
       // Add images
@@ -149,7 +153,7 @@ export class ChatGPT implements AIProvider {
         }
       }
 
-      const payload = {
+      const payload:any = {
         model,
         input: [
           {
@@ -157,8 +161,14 @@ export class ChatGPT implements AIProvider {
             content,
           },
         ],
-        tools: [{ type: "image_generation" as const }],
+        tools: [{
+          type: "image_generation" as const,
+        }],
       };
+
+      if (resolution) {
+        payload.tools[0].size = resolution;
+      }
 
       console.log("OpenAI Payload", payload);
 
@@ -214,11 +224,18 @@ export class ChatGPT implements AIProvider {
   }
 
   async generateImage(params: AIGenerateParms): Promise<ImageResult | null> {
+
+    //const resolution = aspectToPixels(params.aspect_ratio, params.resolution);
+
+    // Only gpt-image supports resolution, other models only give 1024x1024/ 2x3 of same res
     const res = await ChatGPT.img2img(
       params.prompt,
       params.model,
-      params.images
+      params.images,
+      //resolution
     );
+
+
 
     if (!res) return null;
 
@@ -226,3 +243,58 @@ export class ChatGPT implements AIProvider {
   }
 
 }
+
+// Resolutions Mapping
+const RESOLUTION_MAP: Record<string, number> = {
+  "none": 1024,
+  "0.5K": 512,
+  "1K": 1024,
+  "2K": 2048,
+  "4K": 4096,
+};
+
+function roundTo16(value: number): number {
+  return Math.round(value / 16) * 16;
+}
+
+export function aspectToPixels(
+  aspect: string = "9:16",
+  resolution: string = "1K"
+): string | undefined {
+  if ((!aspect || aspect === "none") && (!resolution || resolution === "none"))
+    return undefined;
+
+  // defaults
+  if (!aspect || aspect === "none") {
+    aspect = "9:16";
+  }
+
+  if (!resolution || resolution === "none") {
+    resolution = "1K";
+  }
+
+  const maxSide = RESOLUTION_MAP[resolution];
+
+  const [wRatio, hRatio] = aspect.split(":").map(Number);
+
+  let width: number;
+  let height: number;
+
+  // Bigger aspect side gets the max resolution
+  if (wRatio >= hRatio) {
+    width = maxSide;
+    height = (maxSide * hRatio) / wRatio;
+  } else {
+    height = maxSide;
+    width = (maxSide * wRatio) / hRatio;
+  }
+
+  // Ensure divisible by 16
+  width = roundTo16(width);
+  height = roundTo16(height);
+
+  return `${width}x${height}`;
+}
+
+
+

@@ -7,7 +7,7 @@ import { GoogleAI } from './GoogleAI';
 import { KlingAI, type LipSyncFaceChoose } from './KlingAI';
 import { Task } from './Task';
 //import { Art } from "./Art";
-import { ai_providers, type AIImageInput } from './AI_provider';
+import { AI, ai_providers, type AIImageInput } from './AI_provider';
 import { LocalVideo } from './fileSystem/LocalVideo';
 import { MediaFolder } from './MediaFolder';
 import type { LocalAudio } from './fileSystem/LocalAudio';
@@ -182,13 +182,23 @@ export class Shot extends LocalFolder {
       const images = await this.references?.GetAI_Images() ?? [];
       const prompt = this.shotJson?.data.prompt || "";
 
+      // Add Images and resolution
+      const result = await AI.GenerateImage({
+        prompt,
+        model: this.scene.project.workflows.generate_shot_image.model ?? "",
+        aspect_ratio: this.scene.project.workflows.generate_shot_image.aspect_ratio || GoogleAI.options.aspect_ratios.r9x16,
+        resolution: this.scene.project.workflows.generate_shot_image.resolution || GoogleAI.options.resolution.none,
+        images
+      })
+
+      /*
       const result = await GoogleAI.img2img(
         prompt,
         this.scene.project.workflows.generate_shot_image.model,
         images,
         this.scene.project.workflows.generate_shot_image.aspect_ratio || GoogleAI.options.aspect_ratios.r9x16,
         this.scene.project.workflows.generate_shot_image.resolution || GoogleAI.options.resolution.none,
-      );
+      );*/
 
       const localImage: LocalImage | null =
         await GoogleAI.saveResultImage(
