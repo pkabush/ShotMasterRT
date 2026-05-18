@@ -285,7 +285,7 @@ export class Shot extends LocalFolder {
       this.is_submitting_video = true;
     });
 
-    const prompt = this.shotJson?.data.video_prompt || "";
+    const prompt = (this.shotJson?.data.generated_video_prompt || this.shotJson?.data.video_prompt) || "";
 
     try {
       const workflow = this.scene.project.workflows.generate_video_kling;

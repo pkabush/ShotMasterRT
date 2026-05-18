@@ -115,7 +115,7 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
           Generate_VIDEO: <>
             <Kling_GenerateVideo shot={shot} />
             <Kling_MotionControl shot={shot} />
-            <Google_GenerateKlingPrompt shot={shot} />
+            {false && <Google_GenerateKlingPrompt shot={shot} />}
             <BytePlus_GenerateVideo shot={shot} />
 
             <TaskContainer shot={shot} />

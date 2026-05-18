@@ -1,16 +1,11 @@
-import React, { useCallback } from "react";
+import React from "react";
 import { observer } from "mobx-react-lite";
 import SettingsButton from "../Atomic/SettingsButton";
 import { WorkflowOptionSelect, WorkflowTextField } from "../WorkflowOptionSelect";
-import LoadingSpinner from "../Atomic/LoadingSpinner";
-import MediaGalleryPreview from "../MediaComponents/MediaGallerPreview";
-import { MediaFolderGallery } from "../MediaFolderGallery";
-import type { LocalMedia } from "../../classes/fileSystem/LocalMedia";
 import type { Shot } from "../../classes/Shot";
 import EditableJsonTextField from "../EditableJsonTextField";
 import { AI, AllTextModels } from "../../classes/AI_provider";
 import { Project } from "../../classes/Project";
-import { Button } from "react-bootstrap";
 
 interface Google_GenerateKlingPromptProps {
     shot: Shot;
@@ -20,14 +15,6 @@ export const Google_GenerateKlingPrompt: React.FC<Google_GenerateKlingPromptProp
     const wf_name = "Generate_KlingVideoPrompt"
     const project = Project.getProject()
     const kling_docs = "docs/kling/video_api"
-
-    const swap_prompts = useCallback(() => {
-        const src = shot.shotJson?.getField("video_prompt")
-        const res = shot.shotJson?.getField("generated_video_prompt")
-        
-        shot.shotJson!.updateField("generated_video_prompt", src);
-        shot.shotJson!.updateField("video_prompt", res);
-    },[])
 
     return (
         <SettingsButton
@@ -42,14 +29,21 @@ export const Google_GenerateKlingPrompt: React.FC<Google_GenerateKlingPromptProp
 
                             const workflow = project.workflows[wf_name] ?? ""
 
+
+                            //let source_prompt = shot.shotJson?.getField("kling_source_prompt")
+                            //if (!source_prompt) {
+                            //    const source_prompt = shot.shotJson?.getField("video_prompt")
+                            //    shot.shotJson!.updateField("kling_source_prompt", source_prompt);
+                            //}
+                            let source_prompt = shot.shotJson?.getField("video_prompt")
+
                             const prompt = `
                                 Kling Prompting Guide:
                                 ${project.projinfo?.getField(kling_docs)}
 
-
                                 ${workflow.prompt} 
                                 
-                                ${shot.shotJson?.getField("video_prompt")}
+                                ${source_prompt}
                             `
 
                             const images = []
@@ -80,8 +74,9 @@ export const Google_GenerateKlingPrompt: React.FC<Google_GenerateKlingPromptProp
                             })
 
                             if (res) {
+                                //shot.shotJson!.updateField("video_prompt", res);
                                 shot.shotJson!.updateField("generated_video_prompt", res);
-                                swap_prompts();
+                                //swap_prompts();
                             }
 
                         }}
@@ -97,26 +92,12 @@ export const Google_GenerateKlingPrompt: React.FC<Google_GenerateKlingPromptProp
                         values={AllTextModels}
                     />
 
-                    {/* Loading Spinner */}
-                    <LoadingSpinner isLoading={false} asButton />
                 </>
             }
             content={
                 <>
-                    {/** Previews */}
-                    <MediaGalleryPreview mediaItem={shot.srcImage as LocalMedia} height={200} />
-                    <MediaGalleryPreview mediaItem={shot.end_frame as LocalMedia} height={200} />
-                    <MediaFolderGallery mediaFolder={shot.MediaFolder_results} label="Source Image" itemHeight={300} defaultCollapsed={true} />
-
                     <EditableJsonTextField localJson={shot.scene.project.projinfo} field={kling_docs} fitHeight collapsed={true} />
                     <WorkflowTextField workflowName={wf_name} optionName={"prompt"} />
-                    <EditableJsonTextField localJson={shot.shotJson} field="video_prompt" fitHeight />
-
-                    <EditableJsonTextField collapsed={true} localJson={shot.shotJson} field="generated_video_prompt" fitHeight headerExtra={
-                        <>
-                        <Button size="sm" variant="warning" onClick={swap_prompts}> Swap/Restore Old Prompt </Button>
-                        </>}
-                    />
                 </>
             }
         />
