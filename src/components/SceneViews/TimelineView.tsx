@@ -7,6 +7,9 @@ import { Badge, Button, Stack } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBackwardFast, faBackwardStep, faPause, faPlay, faRightFromBracket, faRightToBracket, faRotate, faVolume, faVolumeXmark } from "@fortawesome/free-solid-svg-icons";
 import { Shot } from "../../classes/Shot";
+import {  combineVideosFromUint8 } from "../../classes/Ffmpeg/FFmpegService";
+import { mb_trimLocalVideo } from "../../classes/Ffmpeg/mediabunnyService";
+
 
 export const SceneTimelineView: React.FC<SceneViewProps> = observer(({ scene }) => {
 
@@ -383,6 +386,26 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
                 }}>
                     <h3>
                         <Badge bg="secondary">{clips[currentIndex] ? clips[currentIndex].shot.name : "No"}</Badge>
+                        <Button size="sm" onClick={async () => {
+                            const out_videos = scene.shots_ordered.map((shot) => { return shot.previewMedia instanceof LocalVideo ? shot.previewMedia : null });
+
+                            const buffers: Uint8Array[] = [];
+                            for (const video of out_videos) {        
+                                if(!video) continue;                        
+                                const blob = await mb_trimLocalVideo(video);
+                                if (!blob) continue;
+                                const arrayBuffer = await blob.arrayBuffer();
+                                buffers.push(new Uint8Array(arrayBuffer));
+                            }
+
+                            // safety check
+                            if (buffers.length === 0) return;
+
+                            const finalBlob = await combineVideosFromUint8(buffers);;
+                            const url = URL.createObjectURL(finalBlob);
+                            window.open(url);
+
+                        }}>Export</Button>
                     </h3>
 
                     <Stack direction="horizontal" gap={1}>

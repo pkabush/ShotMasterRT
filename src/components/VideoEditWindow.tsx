@@ -12,7 +12,7 @@ import type { MediaFolder } from "../classes/MediaFolder";
 import EditableJsonTextField, { EditableJsonToggleField } from "./EditableJsonTextField";
 import type { LocalImage } from "../classes/fileSystem/LocalImage";
 import RefImagesPreview from "./MediaComponents/RefImagesPreview";
-import { Stack } from "react-bootstrap";
+import { Button, Stack } from "react-bootstrap";
 import { SeedanceAI } from "../classes/AiProviders/Byteplus";
 import { TagsFolderContainer } from "./FolderTags/FolderTagsContainer";
 import { Project } from "../classes/Project";
@@ -21,6 +21,9 @@ import { ai_providers } from "../classes/AI_provider";
 import { WorkflowOptionSelect } from "./WorkflowOptionSelect";
 import type { Shot } from "../classes/Shot";
 import { LocalAudio } from "../classes/fileSystem/LocalAudio";
+import { trimVideo } from "../classes/Ffmpeg/FFmpegService";
+
+
 
 interface VideoEditWindowProps {
     localVideo: LocalVideo;
@@ -144,6 +147,18 @@ const VideoEditWindow: React.FC<VideoEditWindowProps> = ({
                             tabs={{
                                 VideoEdit:
                                     <div className="flex-grow-1 d-flex flex-column">
+
+                                        {false && <Button onClick={async () => {
+                                            console.log(localVideo, localVideo.duration, localVideo.start_timecode);
+                                            localVideo.log();
+
+                                            const blob = await trimVideo(localVideo);
+                                            const url = URL.createObjectURL(blob);
+                                            window.open(url);
+                                        }}> TRIM </Button>}
+
+
+
 
                                         {/** REFS Toggle */}
                                         <label className="d-flex align-items-center gap-2 mb-2">
