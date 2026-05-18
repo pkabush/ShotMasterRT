@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import { observer } from "mobx-react-lite";
 import SettingsButton from "../Atomic/SettingsButton";
 import { WorkflowOptionSelect, WorkflowTextField } from "../WorkflowOptionSelect";
@@ -10,6 +10,7 @@ import type { Shot } from "../../classes/Shot";
 import EditableJsonTextField from "../EditableJsonTextField";
 import { AI, AllTextModels } from "../../classes/AI_provider";
 import { Project } from "../../classes/Project";
+import { Button } from "react-bootstrap";
 
 interface Google_GenerateKlingPromptProps {
     shot: Shot;
@@ -19,6 +20,14 @@ export const Google_GenerateKlingPrompt: React.FC<Google_GenerateKlingPromptProp
     const wf_name = "Generate_KlingVideoPrompt"
     const project = Project.getProject()
     const kling_docs = "docs/kling/video_api"
+
+    const swap_prompts = useCallback(() => {
+        const src = shot.shotJson?.getField("video_prompt")
+        const res = shot.shotJson?.getField("generated_video_prompt")
+        
+        shot.shotJson!.updateField("generated_video_prompt", src);
+        shot.shotJson!.updateField("video_prompt", res);
+    },[])
 
     return (
         <SettingsButton
@@ -51,7 +60,7 @@ export const Google_GenerateKlingPrompt: React.FC<Google_GenerateKlingPromptProp
                                     rawBase64: base64Obj.rawBase64,
                                     mime: base64Obj.mime,
                                     description: "first_frame",
-                                });                                
+                                });
                             }
 
                             if (shot.end_frame) {
@@ -72,6 +81,7 @@ export const Google_GenerateKlingPrompt: React.FC<Google_GenerateKlingPromptProp
 
                             if (res) {
                                 shot.shotJson!.updateField("generated_video_prompt", res);
+                                swap_prompts();
                             }
 
                         }}
@@ -102,7 +112,11 @@ export const Google_GenerateKlingPrompt: React.FC<Google_GenerateKlingPromptProp
                     <WorkflowTextField workflowName={wf_name} optionName={"prompt"} />
                     <EditableJsonTextField localJson={shot.shotJson} field="video_prompt" fitHeight />
 
-                    <EditableJsonTextField localJson={shot.shotJson} field="generated_video_prompt" fitHeight />
+                    <EditableJsonTextField collapsed={true} localJson={shot.shotJson} field="generated_video_prompt" fitHeight headerExtra={
+                        <>
+                        <Button size="sm" variant="warning" onClick={swap_prompts}> Swap/Restore Old Prompt </Button>
+                        </>}
+                    />
                 </>
             }
         />
