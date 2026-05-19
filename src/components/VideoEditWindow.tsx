@@ -22,6 +22,7 @@ import { WorkflowOptionSelect } from "./WorkflowOptionSelect";
 import type { Shot } from "../classes/Shot";
 import { LocalAudio } from "../classes/fileSystem/LocalAudio";
 import { trimVideo } from "../classes/Ffmpeg/FFmpegService";
+import { MiniVideoEditor } from "./MediaComponents/MiniVideoEditor";
 
 
 
@@ -128,7 +129,8 @@ const VideoEditWindow: React.FC<VideoEditWindowProps> = ({
                 {/* Left panel — video preview */}
                 <Panel defaultSize={500} minSize={10}>
                     <div className="d-flex align-items-center justify-content-center h-100">
-                        <MediaGalleryVideo localVideo={localVideo} fillParent />
+                        {false && <MediaGalleryVideo localVideo={localVideo} fillParent />}
+                        <MiniVideoEditor localVideo={localVideo} />
                     </div>
                 </Panel>
 
