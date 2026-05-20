@@ -6,7 +6,7 @@ import {
     useNodesState,
     useEdgesState,
     addEdge,
-    Panel,    
+    Panel,
     type Edge,
 } from "@xyflow/react";
 
@@ -17,12 +17,14 @@ import type { LocalJson } from "../../classes/LocalJson";
 
 import { useCallback, useEffect, useState } from "react";
 import { nb_GoogleAI } from "./Nodes/GoogleTextModel";
+import { LocalImageNode } from "./Nodes/nb_LocalImage";
 
 
 
 const nodeTypes = {
     textNode: TextNode,
     googleAiNode: nb_GoogleAI,
+    localImageNode: LocalImageNode,
 };
 
 const MultiInputNodes = [
@@ -50,6 +52,19 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
                 type: "textNode",
                 position: { x: 100, y: 100 },
                 data: { text: "New node" },
+            },
+        ]);
+    }, [setNodes]);
+
+    const addLocalImageNode = useCallback(() => {
+        const id = crypto.randomUUID();
+        setNodes((nds) => [
+            ...nds,
+            {
+                id,
+                type: "localImageNode",
+                position: { x: 100, y: 100 },
+                data: { path: "" },
             },
         ]);
     }, [setNodes]);
@@ -121,8 +136,8 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
             snapToGrid
             snapGrid={[20, 20]} // grid size (x, y)
 
-            multiSelectionKeyCode="Ctrl"
-            selectionKeyCode="Ctrl"
+            multiSelectionKeyCode="Shift"
+            selectionKeyCode="Shift"
             selectionOnDrag
 
             deleteKeyCode={["Delete"]}
@@ -167,8 +182,9 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
                 <Stack gap={1}>
                     <Button onClick={exportFlow}>Save</Button>
                     <Button onClick={loadFlow}>Load</Button>
-                    <Button onClick={addTextNode}>+ Text Node</Button>
+                    <Button onClick={addTextNode}>+ Text Node</Button>                    
                     <Button onClick={addGoogleAiNode}>+ GoogleNode</Button>
+                    <Button onClick={addLocalImageNode}>+ LocalImage</Button>
                     <Button
                         variant={showMiniMap ? "secondary" : "outline-secondary"}
                         onClick={toggleMiniMap}

@@ -2,8 +2,12 @@ import { memo, useEffect, useState } from "react";
 import { Handle, Position, useReactFlow, useStore, useUpdateNodeInternals, type Node, type NodeProps } from "@xyflow/react";
 import { Button, Stack } from "react-bootstrap";
 import SimpleSelect from "../../Atomic/SimpleSelect";
-import { GoogleAI } from "../../../classes/GoogleAI";
+import { GoogleAI, type AIMessage } from "../../../classes/GoogleAI";
 import LoadingSpinner from "../../Atomic/LoadingSpinner";
+import type { AIImageInput } from "../../../classes/AI_provider";
+import { Project } from "../../../classes/Project";
+import { LocalImage } from "../../../classes/fileSystem/LocalImage";
+import { NamedHandle, NamedInputHandle, NamedOutputHandle } from "../Atomic/NamedInput";
 
 export type nb_GoogleTextModelData = {
     model?: string;
@@ -16,6 +20,8 @@ export const nb_GoogleAI = memo(
 
         const { getEdges, getNodes, setNodes } = useReactFlow();
         const [loading, setLoading] = useState(false);
+
+        const project = Project.getProject();
 
         const incomingCount = useStore(
             (state) =>
@@ -42,19 +48,28 @@ export const nb_GoogleAI = memo(
                 });;
                 const inputNodes = incoming.map((e) => nodes.find((n) => n.id === e.source));
 
-                let prompt = "";
-                inputNodes.forEach((node) => {
-                    if (!node) return;
-                    if (node.type == "textNode") {
-                        prompt += node.data.text + "\n";
-                    }
-                });
+                let messages: AIMessage[] = [];
 
-                console.log(prompt);
+                for (const node of inputNodes) {
+                    if (!node) return;
+                    if (node.type == "textNode" && node.data.text) {
+                        messages.push(node.data.text as string);
+                    }
+                    if (node.type == "localImageNode" && node.data.path) {
+                        const image = project.getByAbsPath(node.data.path as string);
+                        //console.log(image);
+                        if (image instanceof LocalImage) {
+                            //console.log(await image.getAIImage());
+                            messages.push(await image.getAIImage());
+                        }
+                    }
+                };
+
+                //console.log("Messages", messages);
 
                 const model = data.model;
-                //const res = await GoogleAI.img2img(prompt, model);
-                //console.log(res);
+                const res = await GoogleAI.sendMessages(messages, model);
+                console.log(res);
 
             } finally {
                 setLoading(false);
@@ -70,7 +85,6 @@ export const nb_GoogleAI = memo(
                     borderRadius: 12,
                     padding: 12,
                     minWidth: 240,
-                    minHeight: 240,
                     position: "relative",
                     boxShadow: loading
                         ? "0 0 12px 2px rgba(0, 255, 100, 0.7)"
@@ -95,38 +109,8 @@ export const nb_GoogleAI = memo(
 
                 {/* Multi INPUT HANDLE */}
                 {Array.from({ length: incomingCount + 1 }).map((_, index) => (
-                    <>
-                        <Handle
-                            key={index}
-                            type="target"
-                            position={Position.Left}
-                            id={`input_${index}`}
-                            style={{
-                                background: "#fff",
-                                width: 10,
-                                height: 10,
-                                left: -5,
-                                top: 15 + index * 20,
-                            }}
-                        />
-
-                        <div
-                            style={{
-                                position: "absolute",
-                                left: -50,
-                                top: 8 + index * 20,
-                                fontSize: 11,
-                                opacity: 0.7,
-                                color: "#fff",
-                                pointerEvents: "none",
-                            }}
-                        >
-                            {`input_${index}`}
-                        </div>
-                    </>
+                    <NamedInputHandle id={`input_${index}`} index={index} />
                 ))}
-
-
 
                 <Stack>
                     <SimpleSelect
@@ -153,20 +137,13 @@ export const nb_GoogleAI = memo(
 
                 </Stack>
 
-
-
                 {/* OUTPUT HANDLE */}
-                <Handle
-                    type="source"
-                    position={Position.Right}
-                    style={{
-                        background: "#fff",
-                        width: 10,
-                        height: 10,
-                        right: -5,
-                        top: 15,
-                    }}
-                />
+                <NamedOutputHandle id="out_text" />
+                <NamedOutputHandle id="out_image" index={1} />
+
+
+
+
             </div >
         );
     }

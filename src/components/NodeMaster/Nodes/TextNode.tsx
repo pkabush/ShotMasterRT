@@ -50,7 +50,7 @@ export const TextNode = memo(
           style={{
             width: "100%",
             resize: "both",
-            background: "#1e1e1e",
+            background: "#0c0c0c",
             color: "white",
             border: "1px solid #444",
             borderRadius: 6,

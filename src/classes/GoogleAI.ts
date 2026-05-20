@@ -180,6 +180,115 @@ export class GoogleAI implements AIProvider {
 
 
 
+// ---------- img2img function ----------
+public static async sendMessages(
+  messages: AIMessage[],
+  model: string = GoogleAI.options.img_models.flash_image,
+  aspect_ratio?: string,
+  resolution?: string,
+) {
+  try {
+    const genAI = this.getGenAI();
+
+    const contents: any[] = [];
+
+    for (const message of messages) {
+
+      // Plain string
+      if (typeof message === "string") {
+        if (message.trim()) {
+          contents.push({
+            text: message,
+          });
+        }
+        continue;
+      }
+
+      // Raw image object
+      if ("rawBase64" in message && "mime" in message) {
+        contents.push({
+          inlineData: {
+            data: message.rawBase64,
+            mimeType: message.mime,
+          },
+        });
+        continue;
+      }      
+    }
+
+    // Generate Payload
+    const isImageModel = Object.values(
+      GoogleAI.options.img_models
+    ).includes(model);
+
+    const config: any = {};
+
+    if (isImageModel) {
+      config.response_modalities = ["Image"];
+
+      config.imageConfig = {
+        ...(aspect_ratio && aspect_ratio !== "none"
+          ? { aspectRatio: aspect_ratio }
+          : {}),
+        ...(resolution && resolution !== "none"
+          ? { imageSize: resolution }
+          : {}),
+      };
+    }
+
+    const payload = {
+      model,
+      contents,
+      config,
+    };
+
+    console.log("Gemini Payload", payload);
+
+    const response = await genAI.models.generateContent(payload);
+
+    console.log("GEMINI RES", response);
+
+    // IMAGE RESPONSE
+    if (isImageModel) {
+      const candidates = response?.candidates ?? [];
+      const parts = candidates[0]?.content?.parts ?? [];
+
+      for (const part of parts) {
+        if (part.inlineData) {
+          return {
+            base64Obj: {
+              rawBase64: part.inlineData.data,
+              mime: part.inlineData.mimeType || "image/png",
+            },
+            id: response.responseId,
+          };
+        }
+      }
+    }
+
+    // TEXT RESPONSE
+    return response.text;
+
+  } catch (err: any) {
+    const message = err?.message || "";
+
+    if (
+      message.includes("API key not valid") ||
+      message.includes("API_KEY_INVALID") ||
+      err instanceof MissingApiKeyError
+    ) {
+      this.showKeyPromptWindow();
+      return null;
+    }
+
+    console.error("img2img error", err);
+    throw err;
+  }
+}
+
 
 }
 
+export type AIMessage =
+  | string
+  | AIImageInput;
