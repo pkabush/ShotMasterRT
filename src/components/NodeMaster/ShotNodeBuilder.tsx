@@ -6,7 +6,8 @@ import {
     useNodesState,
     useEdgesState,
     addEdge,
-    Panel,
+    Panel,    
+    type Edge,
 } from "@xyflow/react";
 
 import "@xyflow/react/dist/style.css";
@@ -15,40 +16,29 @@ import { Button, Stack } from "react-bootstrap";
 import type { LocalJson } from "../../classes/LocalJson";
 
 import { useCallback, useEffect, useState } from "react";
+import { nb_GoogleAI } from "./Nodes/GoogleTextModel";
 
-
-const initialNodes = [
-    { id: 'n1', position: { x: 0, y: 0 }, data: { label: 'Node 1' } },
-    { id: 'n2', position: { x: 0, y: 100 }, data: { label: 'Node 2' } },
-    {
-        id: "n3",
-        type: "textNode",
-        position: { x: 100, y: 100 },
-        data: {
-            text: "Hello",
-        },
-    },
-];
-const initialEdges = [{ id: 'n1-n2', source: 'n1', target: 'n2' }];
 
 
 const nodeTypes = {
     textNode: TextNode,
+    googleAiNode: nb_GoogleAI,
 };
+
+const MultiInputNodes = [
+    "googleAiNode",
+];
 
 interface SceneNodeBuilderProps {
     nodegraphJson: LocalJson;
 }
 
 export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJson }) => {
-
-    //console.log(nodegraphJson.getField("nodegraphs/nodegraph_001"));
-
-    const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-    const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+    const [nodes, setNodes, onNodesChange] = useNodesState<any>([]);
+    const [edges, setEdges, onEdgesChange] = useEdgesState<any>([]);
 
     // Minimap Toggle
-    const [showMiniMap, setShowMiniMap] = useState(true);
+    const [showMiniMap, setShowMiniMap] = useState(false);
     const toggleMiniMap = useCallback(() => { setShowMiniMap((v) => !v); }, []);
 
     const addTextNode = useCallback(() => {
@@ -60,6 +50,23 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
                 type: "textNode",
                 position: { x: 100, y: 100 },
                 data: { text: "New node" },
+            },
+        ]);
+    }, [setNodes]);
+
+    const addGoogleAiNode = useCallback(() => {
+        const id = crypto.randomUUID();
+
+        setNodes((nds) => [
+            ...nds,
+            {
+                id,
+                type: "googleAiNode",
+                position: { x: 100, y: 100, },
+                data: {
+                    prompt: "Ask something...",
+                    response: "",
+                },
             },
         ]);
     }, [setNodes]);
@@ -95,7 +102,20 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={(c) =>
-                setEdges((eds) => addEdge(c, eds))
+                //setEdges((eds) => addEdge(c, eds))                
+                setEdges((eds) => {
+                    const filtered = eds.filter(
+                        (e) =>
+                            !(
+                                e.target === c.target &&
+                                e.targetHandle === c.targetHandle
+                            )
+                    );
+
+
+
+                    return addEdge(c, filtered);
+                })
             }
             colorMode={'dark'}
             snapToGrid
@@ -111,6 +131,33 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
                 setNodes((nds) => nds.filter((n) => !deleted.find((d) => d.id === n.id)));
             }}
 
+            onEdgesDelete={(deletedEdges) => {
+                // remove deleted ones
+                const remaining = edges.filter((e) => !deletedEdges.some((d) => d.id === e.id));
+
+                // Update MultiInputNodes
+                const remapped: Edge[] = [...remaining];
+                nodes.forEach((n) => {
+                    if (MultiInputNodes.includes(n.type)) {
+                        const incoming = remaining.filter((e) => e.target === n.id)
+                            .sort((a, b) => {
+                                const aIndex = parseInt(a.targetHandle?.replace("input_", "") ?? "0");
+                                const bIndex = parseInt(b.targetHandle?.replace("input_", "") ?? "0");
+                                return aIndex - bIndex;
+                            });
+
+                        // reassign sequentially
+                        incoming.forEach((edge, index) => {
+                            const idx = remapped.findIndex((e) => e.id === edge.id);
+                            if (idx === -1) return;
+                            remapped[idx] = { ...edge, targetHandle: `input_${index}`, };
+                        });
+                    }
+                })
+
+                setEdges(remapped);
+            }}
+
         >
             <Background />
             <Controls />
@@ -121,6 +168,7 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
                     <Button onClick={exportFlow}>Save</Button>
                     <Button onClick={loadFlow}>Load</Button>
                     <Button onClick={addTextNode}>+ Text Node</Button>
+                    <Button onClick={addGoogleAiNode}>+ GoogleNode</Button>
                     <Button
                         variant={showMiniMap ? "secondary" : "outline-secondary"}
                         onClick={toggleMiniMap}
@@ -133,7 +181,7 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
 
         </ReactFlow>
 
-    </div>
+    </div >
 
 
 }

@@ -2,6 +2,7 @@ import { memo } from "react";
 import {
   Handle,
   Position,
+  useReactFlow,
   type Node,
   type NodeProps,
 } from "@xyflow/react";
@@ -13,7 +14,9 @@ export type TextNodeData = {
 export type TextNodeType = Node<TextNodeData, "textNode">;
 
 export const TextNode = memo(
-  ({ data, selected }: NodeProps<TextNodeType>) => {
+  ({ id, data, selected }: NodeProps<TextNodeType>) => {
+    const { setNodes } = useReactFlow();
+
     return (
       <div
         style={{
@@ -57,6 +60,22 @@ export const TextNode = memo(
             fontSize: 14,
             boxSizing: "border-box",
           }}
+
+          onChange={(e) => {
+            const value = e.target.value;
+
+            setNodes((nds) =>
+              nds.map((n) =>
+                n.id === id ? {
+                  ...n, data: {
+                    ...n.data,
+                    text: value,
+                  },
+                }
+                  : n
+              )
+            );
+          }}
         />
 
         <Handle
@@ -73,6 +92,22 @@ export const TextNode = memo(
             transform: "none",
           }}
         />
+
+        <div
+          style={{
+            position: "absolute",
+            right: -30,
+            top: 8,
+            fontSize: 11,
+            opacity: 0.7,
+            color: "#fff",
+            pointerEvents: "none",
+          }}
+        >
+          text
+        </div>
+
+
       </div>
     );
   }
