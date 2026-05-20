@@ -134,7 +134,6 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
             <MediaFolderGallery mediaFolder={shot.MediaFolder_results} />
             <MediaFolderGallery mediaFolder={shot.MediaFolder_refVideo} />
           </>
-          ,
 
         }}
       />

@@ -23,6 +23,7 @@ const default_sceneInfoJson = {
 
 export class Scene extends LocalFolder {
   sceneJson: LocalJson | null = null;
+  nodeGraphJson: LocalJson | null = null;
   is_generating_shotsjson = false;
   is_generating_tags = false;
   is_generating_all_shot_images = false;
@@ -49,6 +50,7 @@ export class Scene extends LocalFolder {
     // makeObservable instead of makeAutoObservable
     makeObservable(this, {
       sceneJson: observable,
+      nodeGraphJson: observable,
       is_generating_shotsjson: observable,
       is_generating_tags: observable,
       is_generating_all_shot_images: observable,
@@ -101,6 +103,7 @@ export class Scene extends LocalFolder {
   async load(): Promise<void> {
     try {
       this.sceneJson = await LocalJson.create(this, 'sceneinfo.json', default_sceneInfoJson);
+      this.nodeGraphJson = await LocalJson.create(this, 'nodegraph.json');
       this.references = new Tags(this, this.sceneJson);
       await this.load_subfolders(Shot);
       // Load StoryBoard Later to overwrite
@@ -357,10 +360,9 @@ ${this.project.artbook?.tags_list.join("\n")}
       })
   }
 
-  async delete(show_dialogue = false) {
+  async delete(show_dialogue = true) {
     await super.delete(show_dialogue);
-
-    if (this.project.selectedScene == this)
+    if (this.project.selectedScene == this && (!this.project.scenes?.includes(this)))
       this.project.setView({ type: "none" });
   }
 
