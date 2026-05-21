@@ -3,10 +3,11 @@ import type { LocalVideo } from "../../classes/fileSystem/LocalVideo";
 import MediaGalleryVideo from "./MediaGalleryVideo";
 import { Button, Stack } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBackwardStep, faPause, faPlay, faRightFromBracket, faRightToBracket, faScissors, faVolume, faVolumeXmark } from "@fortawesome/free-solid-svg-icons";
+import { faBackwardStep, faCamera, faPause, faPlay, faRightFromBracket, faRightToBracket, faScissors, faVolume, faVolumeXmark } from "@fortawesome/free-solid-svg-icons";
 import { useEffect, useRef, useState } from "react";
 import { mb_trimLocalVideo } from "../../classes/Ffmpeg/mediabunnyService";
 import type { MediaFolder } from "../../classes/MediaFolder";
+import { LocalImage } from "../../classes/fileSystem/LocalImage";
 
 
 interface MiniVideoEditorProps {
@@ -141,6 +142,46 @@ export const MiniVideoEditor: React.FC<MiniVideoEditorProps> = observer(({ local
         return () => window.removeEventListener("keydown", onKeyDown);
     }, [localVideo]);
 
+    const captureCurrentFrame = async () => {
+        const video = videoPlayer.current;
+        if (!video) return;
+
+        const canvas = document.createElement("canvas");
+
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return;
+
+        // draw current frame
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        const blob = await new Promise<Blob | null>((resolve) => {
+            canvas.toBlob(resolve, "image/png");
+        });
+
+        if (!blob) return;
+
+        // blob -> base64
+        const rawBase64 = await blobToBase64(blob);
+
+        const outFolder = localVideo.shot ? localVideo.shot.MediaFolder_results! : localVideo.parentFolder!;
+
+        // create LocalImage
+        const image = await LocalImage.fromBase64(
+            {
+                rawBase64,
+                mime: blob.type || "image/png",
+            },
+            outFolder,
+            `${localVideo.name}_frame_${clipTime.toFixed(2)}.png`
+        );
+
+        console.log("Saved frame:", image);
+    };
+
+
 
     return <div style={{
         position: "relative",
@@ -188,6 +229,14 @@ export const MiniVideoEditor: React.FC<MiniVideoEditorProps> = observer(({ local
                     localVideo.end_timecode = clipTime;
                 }}>
                     <FontAwesomeIcon icon={faRightToBracket} />
+                </Button>
+
+                <Button
+                    variant="info"
+                    title="Capture Current Frame"
+                    onClick={captureCurrentFrame}
+                >
+                    <FontAwesomeIcon icon={faCamera} />
                 </Button>
 
 
@@ -382,3 +431,21 @@ export const MiniVideoEditor: React.FC<MiniVideoEditorProps> = observer(({ local
 
 
 
+export async function blobToBase64(blob: Blob): Promise<string> {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+
+        reader.onloadend = () => {
+            const result = reader.result as string;
+
+            // remove data:mime;base64,
+            const base64 = result.split(",")[1];
+
+            resolve(base64);
+        };
+
+        reader.onerror = reject;
+
+        reader.readAsDataURL(blob);
+    });
+}
