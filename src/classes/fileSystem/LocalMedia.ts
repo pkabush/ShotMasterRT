@@ -7,6 +7,7 @@ import * as webFileStorage from '../webFileStorage';
 import { runInAction, makeObservable, observable, action, computed, override } from "mobx";
 import type { LocalFolder } from "./LocalFolder";
 import { Tags } from "../Tags";
+import { Project } from "../Project";
 
 // LocalMediaInterface.ts
 export class LocalMedia extends LocalFile {
@@ -203,9 +204,15 @@ export class LocalMedia extends LocalFile {
   async copyToClipboard(): Promise<void> {
     try {
       console.log("Copy to clipboard", this.path);
+      const fullPath =
+        Project.getProject().projinfo?.getField("project_path")
+          .replace(/\\/g, "/") + this.path;
 
       await navigator.clipboard.writeText(
-        JSON.stringify({ local_path: this.path })
+        JSON.stringify({
+          local_path: this.path,
+          full_path:fullPath,
+        })
       );
 
       const items = await navigator.clipboard.read();

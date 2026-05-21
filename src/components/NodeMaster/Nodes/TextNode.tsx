@@ -1,11 +1,10 @@
 import { memo } from "react";
 import {
-  Handle,
-  Position,
   useReactFlow,
   type Node,
   type NodeProps,
 } from "@xyflow/react";
+import { NamedInputHandle, NamedOutputHandle } from "../Atomic/NamedInput";
 
 export type TextNodeData = {
   text: string;
@@ -44,7 +43,7 @@ export const TextNode = memo(
 
         <textarea
           className="nodrag nowheel"
-          defaultValue={data.text}
+          value={data.text ?? ""}
           placeholder="Enter text..."
           rows={5}
           style={{
@@ -78,35 +77,8 @@ export const TextNode = memo(
           }}
         />
 
-        <Handle
-          type="source"
-          position={Position.Right}
-          style={{
-            background: "#fff",
-            width: 10,
-            height: 10,
-
-            top: 12,
-            right: -5,
-
-            transform: "none",
-          }}
-        />
-
-        <div
-          style={{
-            position: "absolute",
-            right: -30,
-            top: 8,
-            fontSize: 11,
-            opacity: 0.7,
-            color: "#fff",
-            pointerEvents: "none",
-          }}
-        >
-          text
-        </div>
-
+        <NamedOutputHandle id="out_text" />
+        <NamedInputHandle id={`input_0`} />
 
       </div>
     );

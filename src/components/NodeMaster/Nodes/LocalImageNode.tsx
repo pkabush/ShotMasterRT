@@ -1,8 +1,6 @@
-import { memo, useEffect, useMemo } from "react";
+import { memo, useMemo } from "react";
 import {
-    Handle,
     NodeResizeControl,    
-    Position,
     useReactFlow,
     type Node,
     type NodeProps,
@@ -13,6 +11,7 @@ import MediaPreview from "../../MediaComponents/MediaPreview";
 import type { LocalMedia } from "../../../classes/fileSystem/LocalMedia";
 import { LocalVideo } from "../../../classes/fileSystem/LocalVideo";
 import { MiniVideoEditor } from "../../MediaComponents/MiniVideoEditor";
+import { NamedInputHandle, NamedOutputHandle } from "../Atomic/NamedInput";
 
 
 export type LocalImageNodeDate = {
@@ -123,34 +122,8 @@ export const LocalImageNode = memo(
                 </div>
 
 
-                <Handle
-                    type="source"
-                    position={Position.Right}
-                    style={{
-                        background: "#fff",
-                        width: 10,
-                        height: 10,
-
-                        top: 12,
-                        right: -5,
-
-                        transform: "none",
-                    }}
-                />
-
-                <div
-                    style={{
-                        position: "absolute",
-                        right: -30,
-                        top: 8,
-                        fontSize: 11,
-                        opacity: 0.7,
-                        color: "#fff",
-                        pointerEvents: "none",
-                    }}
-                >
-                    text
-                </div>
+            <NamedOutputHandle id="path" />
+            <NamedInputHandle id="path" />
 
 
             </div>
