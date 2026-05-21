@@ -46,8 +46,8 @@ export const BytePlus_GenerateVideo: React.FC<BytePlus_GenerateVideoProps> = obs
                         onClick={async () => {
                             const content = []
 
-                            // Add Prompt
-                            const prompt = shot.shotJson?.getField("video_prompt")
+                            // Add Prompt                            
+                            const prompt = (shot.shotJson?.data.generated_video_prompt || shot.shotJson?.data.video_prompt) || "";
                             if (prompt) content.push(SeedanceAI.textMsg(prompt))
 
                             // Add First Frame
@@ -159,6 +159,7 @@ export const BytePlus_GenerateVideo: React.FC<BytePlus_GenerateVideoProps> = obs
                 <>
                     <EditableJsonToggleField localJson={project.projinfo} field={gen_audio_field} default_val={false} label="Sound" />
                     <EditableJsonTextField localJson={shot.shotJson} field="video_prompt" fitHeight />
+                    <EditableJsonTextField localJson={shot.shotJson} field="generated_video_prompt" fitHeight />
                     <TagsFolderContainer tags={shot.references} folders={[
                         Project.getProject(),
                         Project.getProject().artbook as LocalFolder,
