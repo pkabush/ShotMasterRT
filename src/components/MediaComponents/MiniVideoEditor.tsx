@@ -182,7 +182,6 @@ export const MiniVideoEditor: React.FC<MiniVideoEditorProps> = observer(({ local
     };
 
 
-
     return <div style={{
         position: "relative",
         width: "100%",

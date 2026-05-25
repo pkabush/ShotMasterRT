@@ -59,7 +59,7 @@ export const LocalImageNode = memo(
                     transition: "all 0.15s ease",
                 }}
             >
-                <NodeResizeControl style={controlStyle} minWidth={100} minHeight={50}>
+                <NodeResizeControl style={controlStyle} minWidth={400} minHeight={400} >
                     <ResizeIcon />
                 </NodeResizeControl>
 
