@@ -20,7 +20,7 @@ const defaultNodeData: Record<NodeType, any> = {
 };
 
 export function useNodeGraphApi() {
-    const { getNodes, setNodes, getEdges, setEdges, } = useReactFlow();
+    const { getNodes, setNodes, getEdges, setEdges, screenToFlowPosition } = useReactFlow();
 
     const id2Node = useCallback(
         (id: string): Node | undefined => {
@@ -28,19 +28,23 @@ export function useNodeGraphApi() {
         },
         [getNodes]
     );
-
     const addNode = useCallback(
         (
             type: NodeType,
-            position: XYPosition = { x: 100, y: 100 },
+            position?: XYPosition,
             data: Record<string, any> = {}
         ) => {
             const id = crypto.randomUUID();
 
+            // fallback → center of viewport
+            const finalPosition =
+                position ??
+                screenToFlowPosition({ x: window.innerWidth / 2, y: window.innerHeight / 2, });
+
             const newNode: Node = {
                 id,
                 type,
-                position,
+                position: finalPosition,
                 data: {
                     ...defaultNodeData[type],
                     ...data,
@@ -51,7 +55,7 @@ export function useNodeGraphApi() {
 
             return id;
         },
-        [setNodes]
+        [setNodes, screenToFlowPosition]
     );
 
     const removeNode = useCallback(
@@ -141,7 +145,6 @@ export function useNodeGraphApi() {
         },
         [getNodes, getEdges]
     );
-
     /**
      * Get nodes that feed into this node (upstream)
      */
