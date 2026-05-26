@@ -24,6 +24,7 @@ import { useNodeGraphApi } from "./nodeGraphApi";
 import { FlowClipboard } from "./Tools/FLowClipboard";
 import { toJS } from "mobx";
 import { KlingNode } from "./Nodes/KlingNode";
+import { ShotTasksNode } from "./Nodes/ShotTasksNode";
 
 
 
@@ -31,7 +32,8 @@ export const nodeTypes = {
     textNode: TextNode,
     googleAiNode: nb_GoogleAI,
     localImageNode: LocalImageNode,
-    klingNode: KlingNode,
+    klingNode: KlingNode,    
+    tasksNode: ShotTasksNode,
 };
 
 export type NodeType = keyof typeof nodeTypes;
@@ -192,6 +194,7 @@ const AddNodeUIPanel = () => {
         <Button onClick={() => addNode("googleAiNode")}>+ GoogleNode</Button>
         <Button onClick={() => addNode("localImageNode")}>+ LocalImage</Button>
         <Button onClick={() => addNode("klingNode")}>+ Kling</Button>
+        <Button onClick={() => addNode("tasksNode")}>+ Tasks</Button>
     </>
 
 

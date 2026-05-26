@@ -1,15 +1,15 @@
-import { memo, useEffect, useState } from "react";
-import { useReactFlow, useStore, useUpdateNodeInternals, type Node, type NodeProps } from "@xyflow/react";
+import { memo, useState } from "react";
+import { type Node, type NodeProps } from "@xyflow/react";
 import { Button, Stack } from "react-bootstrap";
 import SimpleSelect from "../../Atomic/SimpleSelect";
-import { GoogleAI, type AIMessage } from "../../../classes/GoogleAI";
 import LoadingSpinner from "../../Atomic/LoadingSpinner";
 import { Project } from "../../../classes/Project";
 import { LocalImage } from "../../../classes/fileSystem/LocalImage";
-import { NamedInputHandle, NamedOutputHandle } from "../Atomic/NamedInput";
-import { useLocalFile } from "../Context/LocalFileContext";
+import { NamedInputHandle } from "../Atomic/NamedInput";
 import { useNodeGraphApi } from "../nodeGraphApi";
 import { KlingAI } from "../../../classes/KlingAI";
+import { Shot } from "../../../classes/Shot";
+import { ai_providers } from "../../../classes/AI_provider";
 
 export type KlingNodeModelData = {
     model?: string;
@@ -22,8 +22,6 @@ export type KlingNodeType = Node<KlingNodeModelData, "KlingModel">;
 
 export const KlingNode = memo(
     ({ id, data, selected }: NodeProps<KlingNodeType>) => {
-        const project = Project.getProject();
-        const { local_file } = useLocalFile();
 
         const [loading, setLoading] = useState(false);
 
@@ -34,6 +32,12 @@ export const KlingNode = memo(
             try {
                 let task_info: { id: string; workflow: string } | null = null;
                 console.log(data);
+
+                // Get Shot
+                const in0 = nodegraph_api.getInputNodes(id, "shot")[0];
+                const project = Project.getProject();
+                const shot = project.getByAbsPath(in0?.data?.path as string);
+                if (!(shot instanceof Shot)) { throw new Error("Missing required input: SHOT"); }
 
                 // Get Prompt
                 const prompt_node = nodegraph_api.getInputNodes(id, "prompt")[0]
@@ -54,18 +58,58 @@ export const KlingNode = memo(
 
                 console.log({ first_frame_raw, last_frame_raw });
 
-                const payload = {
-                    image: first_frame_raw,
-                    image_tail: last_frame_raw,
-                    prompt,
-                    model:data.model,
-                    mode: data.mode,
-                    duration: data.duration,
-                    sound: data.sound
+                if (data.model === KlingAI.options.omni_video.model.o1) {
+                    const image_list = [];
+                    if (first_frame) {
+                        image_list.push({
+                            image_url: first_frame_raw as string,
+                            type: KlingAI.options.omni_video.image.type.first_frame,
+                        });
+                    }
+                    if (last_frame) {
+                        image_list.push({
+                            image_url: last_frame_raw as string,
+                            type: KlingAI.options.omni_video.image.type.end_frame,
+                        });
+                    }
+
+                    const payload = {
+                        prompt,
+                        model: data.model,
+                        mode: data.mode,
+                        duration: data.duration,
+                        aspect_ratio: "16:9", // required unless editing video                        
+                        image_list: image_list.length ? image_list : undefined,
+                    }
+
+                    task_info = await KlingAI.omniVideo(payload);
+                }
+                else {
+                    const payload = {
+                        image: first_frame_raw,
+                        image_tail: last_frame_raw,
+                        prompt,
+                        model: data.model,
+                        mode: data.mode,
+                        duration: data.duration,
+                        sound: data.sound
+                    }
+
+                    //console.log(payload);
+                    task_info = await KlingAI.img2video(payload);
                 }
 
-                //console.log(payload);
-                task_info = await KlingAI.img2video(payload);
+
+                // Create Task
+                if (task_info) {
+                    const task = shot.addTask(task_info.id, {
+                        provider: ai_providers.KLING,
+                        workflow: task_info.workflow,
+                    });
+                    // Check Status
+                    await new Promise(res => setTimeout(res, 100));
+                    task.check_status();
+                }
 
 
             } finally {
@@ -162,10 +206,11 @@ export const KlingNode = memo(
                         Generate
                     </Button>
 
-                    <NamedInputHandle id={"prompt"} index={0} />
-                    <NamedInputHandle id={"first_frame"} index={1} />
-                    <NamedInputHandle id={"last_frame"} index={2} />
-                    <NamedInputHandle id={"refs"} index={3} />
+                    <NamedInputHandle id={"shot"} index={0} />
+                    <NamedInputHandle id={"prompt"} index={1} />
+                    <NamedInputHandle id={"first_frame"} index={2} />
+                    <NamedInputHandle id={"last_frame"} index={3} />
+                    <NamedInputHandle id={"refs"} index={4} />
 
                 </div >
             </div >

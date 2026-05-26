@@ -120,7 +120,7 @@ export const LocalImageNode = memo(
                         transition: "all 0.15s ease",
                     }}
                 >
-                    <NodeResizeControl style={controlStyle} minWidth={400} minHeight={400} >
+                    <NodeResizeControl style={controlStyle} minWidth={200} minHeight={100} >
                         <ResizeIcon />
                     </NodeResizeControl>
 
@@ -163,13 +163,11 @@ export const LocalImageNode = memo(
                         }}
                     >
                         
-                        {local_image instanceof LocalVideo ?
+                        {(local_image instanceof LocalVideo) && selected ?
                             <div className="d-flex align-items-center justify-content-center h-100 w-100">
                                 <MiniVideoEditor localVideo={local_image} />
                             </div>
                             :
-
-
                             <MediaPreview
                                 media={local_image}
                                 style={{
@@ -179,6 +177,8 @@ export const LocalImageNode = memo(
                                     display: "block",
                                 }}
                                 autoPlay={true}
+                                loop={true}
+                                muted={true}
                             />}
 
 

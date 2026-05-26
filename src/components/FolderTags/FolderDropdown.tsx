@@ -113,6 +113,10 @@ export const FolderDropdownNode: React.FC<FolderDropdownProps> = observer(
             <DropdownMenu.Sub>
                 <DropdownMenu.SubTrigger
                     className={`submenu-trigger ${isSelectedSubpath ? "submenu-selected" : ""}`}
+                    onClick={(event) => {
+                        event.preventDefault();
+                        onSelect?.(folder);
+                    }}
                 >
                     {folder.name} <span style={{ color: "#999" }}>({all_images.length})</span>
                 </DropdownMenu.SubTrigger>
@@ -137,6 +141,6 @@ const isSubpath = (path: string, selectedPaths: string[]) => {
     const normalizedFolder = path.replace(/\\/g, "/");
     return selectedPaths.some((selected) => {
         const normSelected = selected.replace(/\\/g, "/");
-        return normSelected.startsWith(normalizedFolder + "/");
+        return normSelected.startsWith(normalizedFolder);
     });
 };

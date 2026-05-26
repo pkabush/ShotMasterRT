@@ -23,6 +23,8 @@ const defaultNodeData: Record<NodeType, any> = {
         mode: KlingAI.options.img2video.mode.std,
         duration: KlingAI.options.img2video.duration.five,
         sound: KlingAI.options.img2video.sound.off,
+    },
+    tasksNode: {       
     }
 };
 
