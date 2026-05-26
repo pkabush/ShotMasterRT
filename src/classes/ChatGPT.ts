@@ -14,6 +14,21 @@ export const models = [
   "gpt-5",
 ]
 
+function base64ToFile(base64: any, filename: any, mimeType: any) {
+  const byteChars = atob(base64);
+  const byteNumbers = new Array(byteChars.length);
+
+  for (let i = 0; i < byteChars.length; i++) {
+    byteNumbers[i] = byteChars.charCodeAt(i);
+  }
+
+  const byteArray = new Uint8Array(byteNumbers);
+  const blob = new Blob([byteArray], { type: mimeType });
+
+  return new File([blob], filename, { type: mimeType });
+}
+
+
 export class ChatGPT implements AIProvider {
   public static options = {
     models: {
@@ -25,7 +40,11 @@ export class ChatGPT implements AIProvider {
       gpt_5_4: "gpt-5.4",
       gpt_5_4_mini: "gpt-5.4-mini",
       gpt_5_5: "gpt-5.5",
-      //gpt_image_2: "gpt-image-2",      
+      gpt_image_2: "gpt-image-2",
+    },
+    image_models: {
+      gpt_image_2: "gpt-image-2",
+
     }
   }
 
@@ -128,67 +147,122 @@ export class ChatGPT implements AIProvider {
     resolution?: string,
   ) {
     try {
+
       const openai = this.getClient();
 
-      const content: any[] = [];
-      if (prompt) content.push({ type: "input_text", text: prompt });
+      if (Object.values(ChatGPT.options.image_models).includes(model)) {
 
-
-      // Add images
-      if (images?.length) {
-        for (const img of images) {
-          if (!img?.rawBase64 || !img?.mime) continue;
-
-          if (img.description) {
-            content.push({
-              type: "input_text",
-              text: img.description,
-            });
+        const file_images: File[] = [];
+        // Add images        
+        let img_id = 0;
+        if (images?.length) {
+          for (const img of images) {
+            if (!img?.rawBase64 || !img?.mime) continue;
+            const img_file = base64ToFile(img.rawBase64, `image${img_id}.png`, img.mime);
+            file_images.push(img_file);
+            img_id++;
           }
+        }
 
-          content.push({
-            type: "input_image",
-            image_url: `data:${img.mime};base64,${img.rawBase64}`,
-          });
+        console.log("img_files", file_images);
+        let result = null;
+        if (!images?.length) {
+          const payload: any = {
+            model,
+            prompt: prompt ?? "",
+          };
+          if (resolution) payload.size = resolution;
+          console.log("GPT_Payload", payload);
+          result = await openai.images.generate(payload);
+        }
+        else {
+          const payload: any = {
+            model,
+            prompt: prompt ?? "",
+            image: file_images,
+          };
+          if (resolution) payload.size = resolution;
+          console.log("GPT_Payload", payload);
+          result = await openai.images.edit(payload);
+        }
+
+        console.log("OPENAI RES", result);
+
+        if (result && result.data) {
+          const image_base64 = result.data[0].b64_json;
+          if (!image_base64) return null;
+
+          return {
+            base64Obj: {
+              rawBase64: image_base64,
+              mime: "image/png",
+            },
+            id: result._request_id!,
+          };
+
         }
       }
+      else {
+        // RESPONSES API
 
-      const payload:any = {
-        model,
-        input: [
-          {
-            role: "user" as const,
-            content,
-          },
-        ],
-        tools: [{
-          type: "image_generation" as const,
-        }],
-      };
+        const content: any[] = [];
+        if (prompt) content.push({ type: "input_text", text: prompt });
 
-      if (resolution) {
-        payload.tools[0].size = resolution;
-      }
+        // Add images
+        if (images?.length) {
+          for (const img of images) {
+            if (!img?.rawBase64 || !img?.mime) continue;
 
-      console.log("OpenAI Payload", payload);
+            if (img.description) {
+              content.push({
+                type: "input_text",
+                text: img.description,
+              });
+            }
 
-      const response = await openai.responses.create(payload);
-      console.log("OPENAI RES", response);
+            content.push({
+              type: "input_image",
+              image_url: `data:${img.mime};base64,${img.rawBase64}`,
+            });
+          }
+        }
 
-      const imageData = response.output
-        ?.filter((o: any) => o.type === "image_generation_call")
-        ?.map((o: any) => o.result);
 
-      if (imageData?.length) {
-        const base64 = imageData[0];
-
-        return {
-          base64Obj: {
-            rawBase64: base64,
-            mime: "image/png",
-          },
-          id: response.id,
+        const payload: any = {
+          model,
+          input: [
+            {
+              role: "user" as const,
+              content,
+            },
+          ],
+          tools: [{
+            type: "image_generation" as const,
+          }],
         };
+
+        //if (resolution) {          payload.tools[0].size = resolution;        }
+
+
+        const response = await openai.responses.create(payload);
+
+        console.log("OPENAI RES", response);
+
+        const imageData = response.output
+          ?.filter((o: any) => o.type === "image_generation_call")
+          ?.map((o: any) => o.result);
+
+        if (imageData?.length) {
+          const base64 = imageData[0];
+
+          return {
+            base64Obj: {
+              rawBase64: base64,
+              mime: "image/png",
+            },
+            id: response.id,
+          };
+        }
       }
 
       return null;
@@ -225,14 +299,14 @@ export class ChatGPT implements AIProvider {
 
   async generateImage(params: AIGenerateParms): Promise<ImageResult | null> {
 
-    //const resolution = aspectToPixels(params.aspect_ratio, params.resolution);
+    const resolution = aspectToPixels(params.aspect_ratio, params.resolution);
 
     // Only gpt-image supports resolution, other models only give 1024x1024/ 2x3 of same res
     const res = await ChatGPT.img2img(
       params.prompt,
       params.model,
       params.images,
-      //resolution
+      resolution
     );
 
 
