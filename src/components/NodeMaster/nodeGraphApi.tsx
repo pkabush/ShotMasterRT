@@ -3,6 +3,7 @@
 import { useCallback } from "react";
 import { useReactFlow, type XYPosition, type Node, type Edge } from "@xyflow/react";
 import type { NodeType } from "./ShotNodeBuilder";
+import { KlingAI } from "../../classes/KlingAI";
 
 
 
@@ -17,6 +18,12 @@ const defaultNodeData: Record<NodeType, any> = {
     localImageNode: {
         path: "",
     },
+    klingNode: {
+        model: KlingAI.options.img2video.model.v3,
+        mode: KlingAI.options.img2video.mode.std,
+        duration: KlingAI.options.img2video.duration.five,
+        sound: KlingAI.options.img2video.sound.off,
+    }
 };
 
 export function useNodeGraphApi() {
@@ -156,7 +163,7 @@ export function useNodeGraphApi() {
             const filteredEdges = edges.filter((e) => {
                 if (e.target !== nodeId) return false;
 
-                if (input_key && e.data?.input_key !== input_key) {
+                if (input_key && e.targetHandle !== input_key) {
                     return false;
                 }
 

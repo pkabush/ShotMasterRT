@@ -23,6 +23,7 @@ import { LocalFileProvider } from "./Context/LocalFileContext";
 import { useNodeGraphApi } from "./nodeGraphApi";
 import { FlowClipboard } from "./Tools/FLowClipboard";
 import { toJS } from "mobx";
+import { KlingNode } from "./Nodes/KlingNode";
 
 
 
@@ -30,6 +31,7 @@ export const nodeTypes = {
     textNode: TextNode,
     googleAiNode: nb_GoogleAI,
     localImageNode: LocalImageNode,
+    klingNode: KlingNode,
 };
 
 export type NodeType = keyof typeof nodeTypes;
@@ -37,7 +39,6 @@ export type NodeType = keyof typeof nodeTypes;
 export const MultiInputNodes = [
     "googleAiNode",
 ];
-
 
 
 interface SceneNodeBuilderProps {
@@ -190,6 +191,7 @@ const AddNodeUIPanel = () => {
         <Button onClick={() => addNode("textNode")}>+ Text Node</Button>
         <Button onClick={() => addNode("googleAiNode")}>+ GoogleNode</Button>
         <Button onClick={() => addNode("localImageNode")}>+ LocalImage</Button>
+        <Button onClick={() => addNode("klingNode")}>+ Kling</Button>
     </>
 
 
