@@ -10,6 +10,7 @@ import { useNodeGraphApi } from "../nodeGraphApi";
 import { KlingAI } from "../../../classes/KlingAI";
 import { Shot } from "../../../classes/Shot";
 import { ai_providers } from "../../../classes/AI_provider";
+import { LocalVideo } from "../../../classes/fileSystem/LocalVideo";
 
 export type KlingNodeModelData = {
     model?: string;
@@ -51,15 +52,16 @@ export const KlingNode = memo(
                 const first_frame = project.getByAbsPath((first_frame_node?.data?.path as string) ?? "", LocalImage)
                 const last_frame = project.getByAbsPath((last_frame_node?.data?.path as string) ?? "", LocalImage)
 
-                if (!first_frame) { throw new Error("Missing required input: first_frame"); }
-
-                const first_frame_raw = (await first_frame?.getBase64()).rawBase64;
+                const first_frame_raw = (await first_frame?.getBase64())?.rawBase64;
                 const last_frame_raw = (await last_frame?.getBase64())?.rawBase64;
 
                 console.log({ first_frame_raw, last_frame_raw });
 
                 if (data.model === KlingAI.options.omni_video.model.o1) {
+                    // Omni Model Workflow
                     const image_list = [];
+                    const video_list = [];
+
                     if (first_frame) {
                         image_list.push({
                             image_url: first_frame_raw as string,
@@ -73,6 +75,42 @@ export const KlingNode = memo(
                         });
                     }
 
+                    // Base Video For Omni
+                    const base_video_node = nodegraph_api.getInputNodes(id, "base_video")[0]
+                    const base_video = project.getByAbsPath((base_video_node?.data?.path as string) ?? "", LocalVideo)
+                    if (base_video) {
+                        video_list.push({
+                            video_url:  await base_video.getWebUrl(),
+                            refer_type: KlingAI.options.omni_video.video.refer_type.base,
+                            keep_original_sound:  data.sound == "on" ? "yes" as const: "no" as const,
+                        });
+                    }
+
+
+                    // GET MERGE INPUTS
+                    const id_refs = nodegraph_api.getInputNodes(id, "refs")[0];
+                    if (id_refs) {
+                        const merged_nodes = nodegraph_api.getInputNodes(id_refs.id);
+                        for (const ref_node of merged_nodes) {
+                            const reference_file = project.getByAbsPath((ref_node?.data?.path as string) ?? "")
+                            // If Image Push To Images
+                            if (reference_file instanceof LocalImage) {
+                                image_list.push({
+                                    image_url: (await reference_file.getBase64()).rawBase64,
+                                });
+                            }
+                            // If Video Push to videos
+                            if (reference_file instanceof LocalVideo) {
+                                const webUrl = await reference_file.getWebUrl();
+                                video_list.push({
+                                    video_url: webUrl,
+                                    refer_type: KlingAI.options.omni_video.video.refer_type.feature,
+                                    keep_original_sound: "no" as const,
+                                });
+                            }
+                        }
+                    }
+
                     const payload = {
                         prompt,
                         model: data.model,
@@ -80,11 +118,15 @@ export const KlingNode = memo(
                         duration: data.duration,
                         aspect_ratio: "16:9", // required unless editing video                        
                         image_list: image_list.length ? image_list : undefined,
+                        video_list: video_list.length ? video_list : undefined,
+                        sound: data.sound,
                     }
 
                     task_info = await KlingAI.omniVideo(payload);
                 }
                 else {
+                    if (!first_frame_raw) { throw new Error("Missing required input: first_frame"); }
+
                     const payload = {
                         image: first_frame_raw,
                         image_tail: last_frame_raw,
@@ -210,7 +252,8 @@ export const KlingNode = memo(
                     <NamedInputHandle id={"prompt"} index={1} />
                     <NamedInputHandle id={"first_frame"} index={2} />
                     <NamedInputHandle id={"last_frame"} index={3} />
-                    <NamedInputHandle id={"refs"} index={4} />
+                    <NamedInputHandle id={"refs"} index={4} active={data.model == KlingAI.options.img2video.model.vo1}/>
+                    <NamedInputHandle id={"base_video"} index={5} active={data.model == KlingAI.options.img2video.model.vo1}/>
 
                 </div >
             </div >

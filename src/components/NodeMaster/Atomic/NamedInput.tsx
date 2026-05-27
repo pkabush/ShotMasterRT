@@ -5,12 +5,14 @@ type NamedHandleProps = {
     id: string;
     index?: number;
     type: "source" | "target";
+    active?: boolean;
 };
 
 export const NamedHandle = ({
     id,
     index = 0,
     type,
+    active = true,
 }: NamedHandleProps) => {
     const spacing = 20;
 
@@ -24,7 +26,8 @@ export const NamedHandle = ({
                 position={position}
                 id={id}
                 style={{
-                    background: "#fff",
+                    background: active ? "#fff" : "#666",
+                    border: active ? "1px solid #fff" : "1px solid #444",
                     width: 10,
                     height: 10,
                     top: 15 + index * spacing,
@@ -37,7 +40,7 @@ export const NamedHandle = ({
                     position: "absolute",
                     top: 8 + index * spacing,
                     fontSize: 11,
-                    opacity: 0.7,
+                    opacity: active ? 0.7 : 0.35,
                     color: "#fff",
                     pointerEvents: "none",
                     userSelect: "none",

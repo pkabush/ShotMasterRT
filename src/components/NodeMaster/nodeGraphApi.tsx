@@ -4,6 +4,7 @@ import { useCallback } from "react";
 import { useReactFlow, type XYPosition, type Node, type Edge } from "@xyflow/react";
 import type { NodeType } from "./ShotNodeBuilder";
 import { KlingAI } from "../../classes/KlingAI";
+import { SeedanceAI } from "../../classes/AiProviders/Byteplus";
 
 
 
@@ -25,6 +26,15 @@ const defaultNodeData: Record<NodeType, any> = {
         sound: KlingAI.options.img2video.sound.off,
     },
     tasksNode: {       
+    },
+    mergeNode: {
+
+    },
+    seedanceNode: {
+        resolution: SeedanceAI.options.video.resolution.default,
+        duration: SeedanceAI.options.video.duration.default,
+        ratio: SeedanceAI.options.video.ration.adaptive,
+        sound: true,
     }
 };
 
@@ -170,7 +180,7 @@ export function useNodeGraphApi() {
                 }
 
                 return true;
-            });
+            }).sort();
 
             const result = filteredEdges
                 .map((e) => nodes.find((n) => n.id === e.source))
@@ -211,6 +221,7 @@ export function useNodeGraphApi() {
         },
         [setNodes]
     );
+
 
 
     return {

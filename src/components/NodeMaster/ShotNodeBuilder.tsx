@@ -25,6 +25,8 @@ import { FlowClipboard } from "./Tools/FLowClipboard";
 import { toJS } from "mobx";
 import { KlingNode } from "./Nodes/KlingNode";
 import { ShotTasksNode } from "./Nodes/ShotTasksNode";
+import { MergeNode } from "./Nodes/MergeNode";
+import { SeedanceNode } from "./Nodes/SeedanceNode";
 
 
 
@@ -34,12 +36,15 @@ export const nodeTypes = {
     localImageNode: LocalImageNode,
     klingNode: KlingNode,    
     tasksNode: ShotTasksNode,
+    mergeNode: MergeNode,
+    seedanceNode: SeedanceNode,
 };
 
 export type NodeType = keyof typeof nodeTypes;
 
 export const MultiInputNodes = [
     "googleAiNode",
+    "mergeNode",
 ];
 
 
@@ -194,7 +199,9 @@ const AddNodeUIPanel = () => {
         <Button onClick={() => addNode("googleAiNode")}>+ GoogleNode</Button>
         <Button onClick={() => addNode("localImageNode")}>+ LocalImage</Button>
         <Button onClick={() => addNode("klingNode")}>+ Kling</Button>
+        <Button onClick={() => addNode("seedanceNode")}>+ SeedanceNode</Button>
         <Button onClick={() => addNode("tasksNode")}>+ Tasks</Button>
+        <Button onClick={() => addNode("mergeNode")}>+ Merge</Button>
     </>
 
 

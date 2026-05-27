@@ -69,7 +69,7 @@ export const nb_GoogleAI = memo(
                     const aIndex = parseInt(a.targetHandle?.replace("input_", "") ?? "0");
                     const bIndex = parseInt(b.targetHandle?.replace("input_", "") ?? "0");
                     return aIndex - bIndex;
-                });;
+                });
                 const inputNodes = incoming.map((e) => nodes.find((n) => n.id === e.source));
 
                 let messages: AIMessage[] = [];
