@@ -32,7 +32,6 @@ export const KlingNode = memo(
             setLoading(true);
             try {
                 let task_info: { id: string; workflow: string } | null = null;
-                console.log(data);
 
                 // Get Shot
                 const in0 = nodegraph_api.getInputNodes(id, "shot")[0];
@@ -51,11 +50,9 @@ export const KlingNode = memo(
                 const last_frame_node = nodegraph_api.getInputNodes(id, "last_frame")[0]
                 const first_frame = project.getByAbsPath((first_frame_node?.data?.path as string) ?? "", LocalImage)
                 const last_frame = project.getByAbsPath((last_frame_node?.data?.path as string) ?? "", LocalImage)
-
                 const first_frame_raw = (await first_frame?.getBase64())?.rawBase64;
                 const last_frame_raw = (await last_frame?.getBase64())?.rawBase64;
 
-                console.log({ first_frame_raw, last_frame_raw });
 
                 if (data.model === KlingAI.options.omni_video.model.o1) {
                     // Omni Model Workflow

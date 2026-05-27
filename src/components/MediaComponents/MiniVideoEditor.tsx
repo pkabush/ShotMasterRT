@@ -1,6 +1,5 @@
 import { observer } from "mobx-react-lite";
 import type { LocalVideo } from "../../classes/fileSystem/LocalVideo";
-import MediaGalleryVideo from "./MediaGalleryVideo";
 import { Button, Stack } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBackwardStep, faCamera, faPause, faPlay, faRightFromBracket, faRightToBracket, faScissors, faVolume, faVolumeXmark } from "@fortawesome/free-solid-svg-icons";
@@ -68,9 +67,14 @@ export const MiniVideoEditor: React.FC<MiniVideoEditorProps> = observer(({ local
     // ON Paused
     useEffect(() => {
         const video = videoPlayer.current;
-        if (paused) video?.pause();
-        else video?.play();
-    }, [paused])
+        if (!video) return;
+
+        if (paused) {
+            video.pause();
+        } else {
+            video.play().catch(() => { });
+        }
+    }, [paused]);
 
     // on Sound switch
     useEffect(() => {
@@ -181,7 +185,6 @@ export const MiniVideoEditor: React.FC<MiniVideoEditorProps> = observer(({ local
         console.log("Saved frame:", image);
     };
 
-
     return <div style={{
         position: "relative",
         width: "100%",
@@ -201,6 +204,7 @@ export const MiniVideoEditor: React.FC<MiniVideoEditorProps> = observer(({ local
                     //window.open(url);
                     const cut = await localVideo.parentFolder!.downloadFromUrl(url) as LocalVideo;
                     if (cut) (localVideo.parentFolder! as MediaFolder).setSelectedMedia(cut);
+                    URL.revokeObjectURL(url);
                 }}>
                     <FontAwesomeIcon icon={faScissors} />
                 </Button>
@@ -260,7 +264,7 @@ export const MiniVideoEditor: React.FC<MiniVideoEditorProps> = observer(({ local
 
 
 
-        {/* Video Здфнук*/}
+        {/* Video Player*/}
         <video
             src={localVideo.urlObject || ""}
             preload="auto"
@@ -419,12 +423,6 @@ export const MiniVideoEditor: React.FC<MiniVideoEditorProps> = observer(({ local
         </div>
 
     </div>
-
-
-
-
-    return <MediaGalleryVideo localVideo={localVideo} fillParent />;
-
 
 })
 

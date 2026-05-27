@@ -23,6 +23,8 @@ import type { Shot } from "../classes/Shot";
 import { LocalAudio } from "../classes/fileSystem/LocalAudio";
 import { trimVideo } from "../classes/Ffmpeg/FFmpegService";
 import { MiniVideoEditor } from "./MediaComponents/MiniVideoEditor";
+import { faScissors } from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 
 
@@ -102,6 +104,8 @@ const VideoEditWindow: React.FC<VideoEditWindowProps> = ({
         }
     };
 
+    const [useVideoEditor,setUseVideoEditor] = useState(false);
+
     return (
         <div className="border d-flex flex-column position-relative" style={{ height: "700px" }}>
             {/** CLOSE BUTTON */}
@@ -128,9 +132,27 @@ const VideoEditWindow: React.FC<VideoEditWindowProps> = ({
             <Group orientation="horizontal" style={{ height: "100%" }}>
                 {/* Left panel — video preview */}
                 <Panel defaultSize={500} minSize={10}>
-                    <div className="d-flex align-items-center justify-content-center h-100">
-                        {false && <MediaGalleryVideo localVideo={localVideo} fillParent />}
-                        <MiniVideoEditor localVideo={localVideo} />
+                    <div className="position-relative h-100 w-100">
+
+                        <div className="d-flex align-items-center justify-content-center h-100">
+                            {/* Top-right button */}
+                            <Button
+                                variant="outline-warning"
+                                className="position-absolute"
+                                style={{
+                                    top: "2px",
+                                    right: "2px",
+                                    zIndex: 10,
+                                }}
+                                onClick={() => {setUseVideoEditor((prev) => (!prev))}}
+                            >
+                                <FontAwesomeIcon icon={faScissors} />
+                            </Button>
+
+
+                            {!useVideoEditor && <MediaGalleryVideo localVideo={localVideo} fillParent />}
+                            {useVideoEditor && <MiniVideoEditor localVideo={localVideo} />}
+                        </div>
                     </div>
                 </Panel>
 
@@ -158,7 +180,6 @@ const VideoEditWindow: React.FC<VideoEditWindowProps> = ({
                                             const url = URL.createObjectURL(blob);
                                             window.open(url);
                                         }}> TRIM </Button>}
-
 
 
 
