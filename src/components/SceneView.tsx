@@ -6,7 +6,7 @@ import TabsContainer from "./TabsContainer";
 import SceneInfoCard from "./SceneInfoCard";
 import ShotsInfoStrip from "./ShotsInfoStrip";
 import { SceneTimelineView } from "./SceneViews/TimelineView";
-import { SceneNodeBuilder } from "./NodeMaster/ShotNodeBuilder";
+import { SceneNodeBuilderWithProvider } from "./NodeMaster/ShotNodeBuilder";
 
 
 export interface SceneViewProps {
@@ -30,7 +30,7 @@ export const SceneView: React.FC<SceneViewProps> = observer(({ scene }) => {
                 Scene: <SceneInfoCard scene={scene} />,
                 Shots: <ShotsInfoStrip scene={scene} />,
                 Timeline: <SceneTimelineView scene={scene} />,
-                NodeMaster: <SceneNodeBuilder nodegraphJson={scene.nodeGraphJson!} />
+                NodeMaster: <SceneNodeBuilderWithProvider nodegraphJson={scene.nodeGraphJson!} />
             }}
         />
     </div>;

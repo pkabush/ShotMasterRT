@@ -25,7 +25,7 @@ const defaultNodeData: Record<NodeType, any> = {
         duration: KlingAI.options.img2video.duration.five,
         sound: KlingAI.options.img2video.sound.off,
     },
-    tasksNode: {       
+    tasksNode: {
     },
     mergeNode: {
 
@@ -51,7 +51,8 @@ export function useNodeGraphApi() {
         (
             type: NodeType,
             position?: XYPosition,
-            data: Record<string, any> = {}
+            data: Record<string, any> = {},
+            size?: [number, number] // [width, height]
         ) => {
             const id = crypto.randomUUID();
 
@@ -68,6 +69,7 @@ export function useNodeGraphApi() {
                     ...defaultNodeData[type],
                     ...data,
                 },
+                ...(size ? { width: size[0], height: size[1], } : {}),
             };
 
             setNodes((nds) => [...nds, newNode]);
@@ -234,5 +236,6 @@ export function useNodeGraphApi() {
         getInputNodes,
         getNodeData,
         setNodeData,
+        screenToFlowPosition,
     };
 }

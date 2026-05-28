@@ -183,6 +183,9 @@ export const MiniVideoEditor: React.FC<MiniVideoEditorProps> = observer(({ local
         );
 
         console.log("Saved frame:", image);
+        alert(`Frame saved: ${image.name}
+also Copied To Clipboard!`);
+        image.copyToClipboard();
     };
 
     return <div style={{
@@ -205,6 +208,11 @@ export const MiniVideoEditor: React.FC<MiniVideoEditorProps> = observer(({ local
                     const cut = await localVideo.parentFolder!.downloadFromUrl(url) as LocalVideo;
                     if (cut) (localVideo.parentFolder! as MediaFolder).setSelectedMedia(cut);
                     URL.revokeObjectURL(url);
+
+                    alert(`Clip saved: ${cut.name}
+also Copied To Clipboard!`);
+                    cut.copyToClipboard();
+
                 }}>
                     <FontAwesomeIcon icon={faScissors} />
                 </Button>

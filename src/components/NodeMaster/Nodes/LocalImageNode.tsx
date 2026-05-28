@@ -17,6 +17,8 @@ import { NamedInputHandle, NamedOutputHandle } from "../Atomic/NamedInput";
 import { useNodeGraphApi } from "../nodeGraphApi";
 import { LocalFolder } from "../../../classes/fileSystem/LocalFolder";
 import { LocalFile } from "../../../classes/fileSystem/LocalFile";
+import { MediaFolder } from "../../../classes/MediaFolder";
+import { MediaFolderGallery } from "../../MediaFolderGallery";
 
 
 export type LocalImageNodeDate = {
@@ -160,26 +162,38 @@ export const LocalImageNode = memo(
                             justifyContent: "center",
 
                             overflow: "hidden",
-                        }}
+                            
+                        }}                        
                     >
-                        
-                        {(local_image instanceof LocalVideo) && selected ?
-                            <div className="d-flex align-items-center justify-content-center h-100 w-100">
-                                <MiniVideoEditor localVideo={local_image} />
+
+                        {/** Local Image / Local Video */}
+                        {(local_image instanceof LocalMedia) && <>
+                            {(local_image instanceof LocalVideo) && selected ?                            
+                                <div className="d-flex align-items-center justify-content-center h-100 w-100 nodrag">
+                                    <MiniVideoEditor localVideo={local_image} />
+                                </div>
+                                :
+                                <MediaPreview
+                                    media={local_image}
+                                    style={{
+                                        width: "100%",
+                                        height: "100%",
+                                        objectFit: "contain",
+                                        display: "block",
+                                    }}
+                                    autoPlay={true}
+                                    loop={true}
+                                    muted={true}
+                                />}
+                        </>}
+
+
+
+                        {(local_image instanceof MediaFolder) && <>
+                            <div className="h-100 w-100 nodrag">
+                                <MediaFolderGallery mediaFolder={local_image} showEditWindow={false}/>
                             </div>
-                            :
-                            <MediaPreview
-                                media={local_image}
-                                style={{
-                                    width: "100%",
-                                    height: "100%",
-                                    objectFit: "contain",
-                                    display: "block",
-                                }}
-                                autoPlay={true}
-                                loop={true}
-                                muted={true}
-                            />}
+                        </>}
 
 
 

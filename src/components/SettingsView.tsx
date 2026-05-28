@@ -21,6 +21,7 @@ export const SettingsView: React.FC<SettingsViewProps> = observer(({ project }) 
       <SimpleButton onClick={() => { project.log() }} label="LOG Project" />
       <SimpleButton onClick={() => { project.download_asset("assets/server.exe", "server.exe") }} label="Download Server (Windows)" />
       <SimpleButton onClick={() => { project.download_asset("assets/server.zip", "server.zip") }} label="Download Server (MacOS)" />
+      <SimpleButton onClick={() => { project.download_asset("assets/Shotmaster_import.Lua", "Shotmaster_import.Lua") }} label="Download Resolve LuaScript" />
 
       <EditableJsonTextField localJson={project.projinfo} field="project_path" fitHeight />
 
@@ -75,7 +76,13 @@ export const SettingsView: React.FC<SettingsViewProps> = observer(({ project }) 
         />
       </div>
 
-
+      <>
+        To use Lua Script paste it to:
+        <br />
+        C:\Users\USERNAME\AppData\Roaming\Blackmagic Design\DaVinci Resolve\Support\Fusion\Scripts\Utility
+        <br />
+        Also you can add shortcut to it - for example "H" is free
+      </>
 
 
     </div>

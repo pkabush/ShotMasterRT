@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef } from "react";
 import { useReactFlow, type Node, type Edge } from "@xyflow/react";
 import { toJS } from "mobx";
+import { useNodeGraphApi } from "../nodeGraphApi";
 
 export const FlowClipboard = () => {
     const {
@@ -11,6 +12,7 @@ export const FlowClipboard = () => {
         screenToFlowPosition,
     } = useReactFlow();
 
+    const nodegraph_api = useNodeGraphApi();
     // cursor in FLOW coordinates
     const mouseRef = useRef({ x: 0, y: 0 });
 
@@ -90,56 +92,67 @@ export const FlowClipboard = () => {
         }
 
         const data = parsed?.nodes_data;
-        if (!data?.nodes?.length) return;
+        if (data?.nodes?.length) {
 
-        const idMap = new Map<string, string>();
+            const idMap = new Map<string, string>();
 
-        // --- bounding box of copied nodes
-        let minX = Infinity;
-        let minY = Infinity;
+            // --- bounding box of copied nodes
+            let minX = Infinity;
+            let minY = Infinity;
 
-        for (const n of data.nodes) {
-            minX = Math.min(minX, n.position.x);
-            minY = Math.min(minY, n.position.y);
+            for (const n of data.nodes) {
+                minX = Math.min(minX, n.position.x);
+                minY = Math.min(minY, n.position.y);
+            }
+
+            // --- cursor in FLOW space
+            const cursor = mouseRef.current;
+
+            const offsetX = cursor.x - minX;
+            const offsetY = cursor.y - minY;
+
+            // --- new nodes
+            const newNodes: Node[] = data.nodes.map((n: any) => {
+                const newId = crypto.randomUUID();
+                idMap.set(n.id, newId);
+
+                return {
+                    ...n,
+                    id: newId,
+                    selected: true,
+                    position: {
+                        x: n.position.x + offsetX,
+                        y: n.position.y + offsetY,
+                    },
+                };
+            });
+
+            // --- new edges remapped
+            const newEdges: Edge[] = data.edges.map((e: any) => ({
+                ...e,
+                id: crypto.randomUUID(),
+                source: idMap.get(e.source)!,
+                target: idMap.get(e.target)!,
+            }));
+
+            // --- update graph safely
+            setNodes((nds) => [
+                ...nds.map((n) => ({ ...n, selected: false })),
+                ...newNodes,
+            ]);
+
+            setEdges((eds) => [...eds, ...newEdges]);
         }
 
-        // --- cursor in FLOW space
-        const cursor = mouseRef.current;
+        // Local Path Present
+        if (parsed.local_path) {
+            console.log("Buffer",parsed);
+            const cursor = mouseRef.current;
+            nodegraph_api.addNode("localImageNode",cursor, {path:parsed.local_path}, [300,400]);           
 
-        const offsetX = cursor.x - minX;
-        const offsetY = cursor.y - minY;
+        }
 
-        // --- new nodes
-        const newNodes: Node[] = data.nodes.map((n: any) => {
-            const newId = crypto.randomUUID();
-            idMap.set(n.id, newId);
 
-            return {
-                ...n,
-                id: newId,
-                selected: true,
-                position: {
-                    x: n.position.x + offsetX,
-                    y: n.position.y + offsetY,
-                },
-            };
-        });
-
-        // --- new edges remapped
-        const newEdges: Edge[] = data.edges.map((e: any) => ({
-            ...e,
-            id: crypto.randomUUID(),
-            source: idMap.get(e.source)!,
-            target: idMap.get(e.target)!,
-        }));
-
-        // --- update graph safely
-        setNodes((nds) => [
-            ...nds.map((n) => ({ ...n, selected: false })),
-            ...newNodes,
-        ]);
-
-        setEdges((eds) => [...eds, ...newEdges]);
     }, [setNodes, setEdges]);
 
     /**

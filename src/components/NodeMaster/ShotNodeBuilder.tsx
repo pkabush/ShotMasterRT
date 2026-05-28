@@ -9,6 +9,8 @@ import {
     Panel,
     type Edge,
     SelectionMode,
+    useReactFlow,
+    ReactFlowProvider,
 } from "@xyflow/react";
 
 import "@xyflow/react/dist/style.css";
@@ -34,7 +36,7 @@ export const nodeTypes = {
     textNode: TextNode,
     googleAiNode: nb_GoogleAI,
     localImageNode: LocalImageNode,
-    klingNode: KlingNode,    
+    klingNode: KlingNode,
     tasksNode: ShotTasksNode,
     mergeNode: MergeNode,
     seedanceNode: SeedanceNode,
@@ -52,6 +54,12 @@ interface SceneNodeBuilderProps {
     nodegraphJson: LocalJson;
 }
 
+export const SceneNodeBuilderWithProvider: React.FC<SceneNodeBuilderProps> = ({ nodegraphJson }) => {
+    return <ReactFlowProvider>
+        <SceneNodeBuilder nodegraphJson={nodegraphJson} />
+    </ReactFlowProvider>
+}
+
 export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJson }) => {
     const [nodes, setNodes, onNodesChange] = useNodesState<any>([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState<any>([]);
@@ -60,7 +68,8 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
     const [showMiniMap, setShowMiniMap] = useState(false);
     const toggleMiniMap = useCallback(() => { setShowMiniMap((v) => !v); }, []);
 
-    //const { addNode } = useNodeGraphApi();
+    const nodegraph_api = useNodeGraphApi();
+
 
     const exportFlow = useCallback(() => {
         nodegraphJson.updateField("nodegraphs/nodegraph_001", { nodes, edges, });
@@ -80,6 +89,15 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
 
 
     useEffect(() => { loadFlow(); }, [nodegraphJson, loadFlow])
+
+    const onDragOver = useCallback((event: any) => {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'move';
+    }, []);
+
+
+
+
 
     return <div style={{
         width: "100%",
@@ -161,6 +179,21 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
                     },
                 }}
 
+                onDrop={(e) => {
+                    e.preventDefault();
+                    //console.log("DROP IT", e);
+
+                    const local_file_path = e.dataTransfer.getData("LocalFilePath");
+                    if (!local_file_path) return;
+
+                    //console.log(local_file_path, e);
+                    nodegraph_api.addNode("localImageNode",
+                        nodegraph_api.screenToFlowPosition({ x: e.clientX, y: e.clientY })
+                        , { path: local_file_path }, [300, 400]);
+                }}
+                onDragOver={onDragOver}
+
+
             >
                 <Background bgColor="#313131" />
                 <Controls />
@@ -193,8 +226,10 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
 const AddNodeUIPanel = () => {
 
     const { addNode } = useNodeGraphApi();
+    const { getNodes, getEdges } = useReactFlow();
 
     return <>
+        <Button onClick={() => { console.log({ nodes: getNodes(), edges: getEdges() }) }}>Log</Button>
         <Button onClick={() => addNode("textNode")}>+ Text Node</Button>
         <Button onClick={() => addNode("googleAiNode")}>+ GoogleNode</Button>
         <Button onClick={() => addNode("localImageNode")}>+ LocalImage</Button>

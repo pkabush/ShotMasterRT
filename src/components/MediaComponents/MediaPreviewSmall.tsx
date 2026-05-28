@@ -31,19 +31,24 @@ export const MediaPreviewSmall: React.FC<MediaPreviewSmallProps> = ({
       : { top: "100%", bottom: "auto" };
 
   return (
-    <div className="d-inline-block position-relative">
+    <div className="d-inline-block position-relative"
+      draggable={true}
+      onDragStart={(e) => {
+        console.log("DragStart");
+        e.dataTransfer.setData("LocalFilePath", media.path);
+      }}>
       <div className="d-flex align-items-center">
         {/* Small inline preview */}
         <MediaGalleryPreview
           mediaItem={media}
           height={inlinePreviewHeight}
-          autoPlay = {false}
+          autoPlay={false}
         />
 
         {/* Clickable text */}
         <span
           className="text-muted"
-          style={{ cursor: openOnClick ? "pointer" : "default" }}          
+          style={{ cursor: openOnClick ? "pointer" : "default" }}
           onClick={openOnClick ? () => media.openInNewTab() : undefined}
           title={media.name} // full filename on hover
         >
@@ -72,7 +77,7 @@ export const MediaPreviewSmall: React.FC<MediaPreviewSmallProps> = ({
           }
         `}
       </style>
-    </div>
+    </div >
   );
 };
 
