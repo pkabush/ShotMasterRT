@@ -1,5 +1,6 @@
 import { LocalMedia } from './LocalMedia';
 import type { LocalFolder } from './LocalFolder';
+import { runInAction } from 'mobx';
 
 // LocalImage.ts
 export class LocalImage extends LocalMedia {
@@ -70,6 +71,49 @@ export class LocalImage extends LocalMedia {
       throw err;
     }
   }
+
+  private _imageMetaPromise: Promise<void> | null = null;
+
+  async ensureImageMetaLoaded() {
+    if (this._width && this._height ) return;
+    if (this._imageMetaPromise) return this._imageMetaPromise;
+
+    this._imageMetaPromise = (async () => {
+      try {
+        const url = await this.getUrlObject();
+
+        await new Promise<void>((resolve, reject) => {
+          const img = new Image();
+          img.src = url;
+
+          img.onload = () => {
+            runInAction(() => {
+              this._width = img.naturalWidth || 100;
+              this._height = img.naturalHeight || 100;
+            });
+            resolve();
+          };
+
+          img.onerror = reject;
+        });
+
+      } catch (err) {
+        console.error("Failed to load image metadata:", err);
+      } finally {
+        this._imageMetaPromise = null;
+      }
+    })();
+
+    return this._imageMetaPromise;
+  }
+
+
+  async getUrlObject(): Promise<string> {
+    const url = await super.getUrlObject();
+    this.ensureImageMetaLoaded(); // fire and forget (like video)
+    return url;
+  }
+
 }
 
 // Utility

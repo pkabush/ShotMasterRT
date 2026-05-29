@@ -1,4 +1,4 @@
-import { memo, useMemo } from "react";
+import { memo, useEffect, useMemo, useRef, useState } from "react";
 import {
     NodeResizeControl,
     NodeToolbar,
@@ -18,7 +18,10 @@ import { useNodeGraphApi } from "../nodeGraphApi";
 import { LocalFolder } from "../../../classes/fileSystem/LocalFolder";
 import { LocalFile } from "../../../classes/fileSystem/LocalFile";
 import { MediaFolder } from "../../../classes/MediaFolder";
-import { MediaFolderGallery } from "../../MediaFolderGallery";
+import MediaItemCard, { MediaFolderGallery, MenuItemIcon } from "../../MediaFolderGallery";
+import { observer } from "mobx-react-lite";
+import MediaGalleryPreview from "../../MediaComponents/MediaGallerPreview";
+import DropArea from "../../Atomic/DropArea";
 
 
 export type LocalImageNodeDate = {
@@ -162,13 +165,13 @@ export const LocalImageNode = memo(
                             justifyContent: "center",
 
                             overflow: "hidden",
-                            
-                        }}                        
+
+                        }}
                     >
 
                         {/** Local Image / Local Video */}
                         {(local_image instanceof LocalMedia) && <>
-                            {(local_image instanceof LocalVideo) && selected ?                            
+                            {(local_image instanceof LocalVideo) && selected ?
                                 <div className="d-flex align-items-center justify-content-center h-100 w-100 nodrag">
                                     <MiniVideoEditor localVideo={local_image} />
                                 </div>
@@ -191,7 +194,10 @@ export const LocalImageNode = memo(
 
                         {(local_image instanceof MediaFolder) && <>
                             <div className="h-100 w-100 nodrag">
-                                <MediaFolderGallery mediaFolder={local_image} showEditWindow={false}/>
+                                {/**
+                                <MediaFolderGallery mediaFolder={local_image} showEditWindow={false} />
+                                 */}
+                                <NodeMediaFolderGallery mediaFolder={local_image} />
                             </div>
                         </>}
 
@@ -212,7 +218,6 @@ export const LocalImageNode = memo(
 );
 
 LocalImageNode.displayName = "LocalImageNode";
-
 
 function ResizeIcon() {
     return (
@@ -235,3 +240,94 @@ function ResizeIcon() {
         </svg>
     );
 }
+
+
+interface NodeMediaFolderGalleryProps {
+    mediaFolder: MediaFolder;
+}
+
+import * as ContextMenu from "@radix-ui/react-context-menu";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faClipboard } from "@fortawesome/free-solid-svg-icons";
+import "../../../css/ContextMenu.css";
+
+export const NodeMediaFolderGallery: React.FC<NodeMediaFolderGalleryProps> = observer(
+    ({ mediaFolder }) => {
+
+
+        return <div className="d-flex flex-wrap gap-2" style={{
+
+
+        }}>
+            <ContextMenu.Root>
+                <ContextMenu.Trigger style={{ backgroundColor: "#2c2c31", }} className="d-flex flex-wrap gap-2 w-100 h-100" >
+                    {mediaFolder.mediaOrdered.map((mediaItem) => (
+                        <MediaItemCard
+                            key={mediaItem.path}
+                            mediaItem={mediaItem}
+                            height={100}
+                            isSelected={false}
+                            onSelect={(media) => { }}
+                        />
+                    ))}
+
+                    <DropArea width={100} height={100} onDropFiles={async (files) => { await mediaFolder.saveFiles(files); }}>
+                    </DropArea>
+                </ContextMenu.Trigger>
+
+                <ContextMenu.Portal>
+                    <ContextMenu.Content className="ContextMenuContent">
+                        <ContextMenu.Item className="ContextMenuItem" onClick={() => mediaFolder.copyFromClipboard()}>
+                            <MenuItemIcon><FontAwesomeIcon icon={faClipboard} /></MenuItemIcon>
+                            Paste
+                        </ContextMenu.Item>
+                        <ContextMenu.Item className="ContextMenuItem" onClick={() => mediaFolder.log()}>
+                            <MenuItemIcon><FontAwesomeIcon icon={faClipboard} /></MenuItemIcon>
+                            Log
+                        </ContextMenu.Item>
+                        <ContextMenu.Item className="ContextMenuItem" onClick={async () => {
+                            try {
+                                const text = await navigator.clipboard.readText();
+                                if (text && (text.startsWith("http://") || text.startsWith("https://"))) {
+                                    console.log("Importing URL from clipboard:", text);
+                                    mediaFolder.downloadFromUrl(text);
+                                } else {
+                                    alert("Clipboard does not contain a valid URL.");
+                                }
+                            } catch (err) {
+                                console.error("Failed to read clipboard:", err);
+                                alert("Failed to access clipboard.");
+                            }
+                        }}>
+                            <MenuItemIcon><FontAwesomeIcon icon={faClipboard} /></MenuItemIcon>
+                            Import URL
+                        </ContextMenu.Item>
+
+                    </ContextMenu.Content>
+                </ContextMenu.Portal>
+
+
+
+
+            </ContextMenu.Root>
+        </div>
+
+        return <MediaFolderGallery mediaFolder={mediaFolder} itemHeight={100} showEditWindow={false} />
+
+        return <div        >
+
+            {
+                mediaFolder.mediaOrdered.map((mediaItem) => (
+
+                    <>
+                        <MediaGalleryPreview mediaItem={mediaItem} height={100} />
+
+
+                    </>
+                ))}
+            <DropArea width={100} height={100} onDropFiles={async (files) => { await mediaFolder.saveFiles(files); }}>
+            </DropArea>
+
+        </div>;
+    });
+

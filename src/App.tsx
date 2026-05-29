@@ -60,6 +60,7 @@ const App: React.FC = observer(() => {
 
   }, []);
 
+
   return (
     <ProjectContext.Provider value={{ project }}>
       <div style={{ minHeight: '100vh' }}>
@@ -101,6 +102,8 @@ const App: React.FC = observer(() => {
         <NotificationContainer />
       </div>
     </ProjectContext.Provider>
+
+
   );
 });
 

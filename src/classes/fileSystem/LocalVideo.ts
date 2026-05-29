@@ -49,7 +49,11 @@ export class LocalVideo extends LocalMedia {
           video.src = url;
 
           video.onloadedmetadata = () => {
-            runInAction(() => { this._duration = video.duration; });
+            runInAction(() => {
+              this._duration = video.duration;
+              this._width = video.videoWidth || 100;
+              this._height = video.videoHeight || 100;
+            });
             video.remove();
             resolve();
           };

@@ -39,8 +39,6 @@ export const MediaFolderGallery: React.FC<MediaFolderGalleryProps> = observer(
         if (!mediaFolder || !mediaFolder.handle) return null;
         label = label || mediaFolder.name;
 
-        const shot = mediaFolder.parentFolder instanceof Shot ? mediaFolder.parentFolder as Shot : undefined
-
         return (
             <>
                 <MediaGallery label={label}
@@ -132,107 +130,14 @@ export const MediaFolderGallery: React.FC<MediaFolderGalleryProps> = observer(
                     <ContextMenu.Root>
                         <ContextMenu.Trigger style={{ backgroundColor: "#2c2c31", }} className="d-flex flex-wrap gap-2 w-100 h-100" >
                             {mediaFolder.mediaOrdered.map((mediaItem) => (
-
-                                <ContextMenu.Root key={mediaItem.path}>
-                                    <ContextMenu.Trigger>
-                                        <MediaGalleryPreview
-                                            mediaItem={mediaItem}
-                                            height={currentItemHeight}
-                                            onSelectMedia={(media: LocalMedia) => { mediaFolder.setSelectedMedia(media) }}
-                                        >
-                                            {mediaFolder.selectedMedia != null && (
-                                                mediaFolder.selectedMedia !== mediaItem &&
-                                                mediaFolder.selectedMedia?.sourceImage !== mediaItem &&
-                                                !mediaFolder.selectedMedia?.generatedMedia.includes(mediaItem)
-                                            ) && highlightGenParents && (<GrayscaleOverlay />)}
-
-                                            <AddOutline showOutline={mediaFolder.selectedMedia == mediaItem} color="#0a74ff" width={5} />
-                                            <AddOutline showOutline={mediaFolder.selectedMedia?.sourceImage == mediaItem} color="#ff0ab565" width={5} />
-                                            <AddOutline showOutline={mediaFolder.selectedMedia?.generatedMedia.includes(mediaItem)} color="#fffb0a65" width={5} />
-
-                                            <MediaItemTags mediaItem={mediaItem} />
-                                        </MediaGalleryPreview>
-                                    </ContextMenu.Trigger>
-
-                                    <ContextMenu.Portal>
-                                        <ContextMenu.Content className="ContextMenuContent">
-                                            <ContextMenu.Sub>
-                                                <ContextMenu.SubTrigger className="ContextMenuSubTrigger">
-                                                    <MenuItemIcon><FontAwesomeIcon icon={faTags} /></MenuItemIcon>
-                                                    Tags
-                                                    <div className="RightSlot">
-                                                        <FontAwesomeIcon icon={faChevronRight} />
-                                                    </div>
-                                                </ContextMenu.SubTrigger>
-                                                <ContextMenu.Portal>
-                                                    <ContextMenu.SubContent
-                                                        className="ContextMenuSubContent"
-                                                        sideOffset={2}
-                                                        alignOffset={-5}
-                                                    >
-                                                        {mediaFolder.tags.map((tag) => {
-                                                            return <ContextMenu.Item className="ContextMenuItem" key={tag} onClick={(event) => {
-                                                                event.preventDefault();
-                                                                mediaItem.toggleTag(tag);
-                                                            }}>
-                                                                <MenuItemIcon>
-                                                                    <div
-                                                                        className={`rounded-circle mx-1 ${mediaItem.hasTag(tag) ? 'bg-success' : 'border border-secondary'}`}
-                                                                        style={{ width: '15px', height: '15px' }}
-                                                                    />
-                                                                </MenuItemIcon>
-
-                                                                {tag}
-                                                            </ContextMenu.Item>
-
-                                                        })}
-
-                                                    </ContextMenu.SubContent>
-                                                </ContextMenu.Portal>
-                                            </ContextMenu.Sub>
-
-                                            <ContextMenu.Separator className="ContextMenuSeparator" />
-
-                                            <ContextMenu.Item className="ContextMenuItem" onClick={() => mediaItem.log()}>
-                                                <MenuItemIcon><FontAwesomeIcon icon={faClipboard} /></MenuItemIcon>
-                                                Log
-                                            </ContextMenu.Item>
-
-                                            <ContextMenu.Item className="ContextMenuItem" onClick={async () => { await mediaItem.copyToClipboard() }}>
-                                                <MenuItemIcon><FontAwesomeIcon icon={faClipboard} /></MenuItemIcon>
-                                                Copy
-                                            </ContextMenu.Item>
-
-                                            <ContextMenu.Item className="ContextMenuItem" onClick={() => mediaItem.openInNewTab()}>
-                                                <MenuItemIcon><FontAwesomeIcon icon={faClipboard} /></MenuItemIcon>
-                                                Open in new Tab
-                                            </ContextMenu.Item>
-
-
-                                            {shot && <ContextMenu.Item className="ContextMenuItem warning" onClick={() => {
-                                                shot.references?.addTag(mediaItem);
-                                            }}>
-                                                <MenuItemIcon><FontAwesomeIcon icon={faPhotoFilm} /></MenuItemIcon>
-                                                Add Shot Reference
-                                            </ContextMenu.Item>}
-
-
-                                            <ContextMenu.Item className="ContextMenuItem danger" onClick={() => { mediaItem.delete() }}>
-                                                <MenuItemIcon><FontAwesomeIcon icon={faTrashCan} /></MenuItemIcon>
-                                                Delete
-                                            </ContextMenu.Item>
-
-
-                                        </ContextMenu.Content>
-                                    </ContextMenu.Portal>
-
-
-
-                                </ContextMenu.Root>
-
-
-
-
+                                <MediaItemCard
+                                    key={mediaItem.path}
+                                    mediaItem={mediaItem}
+                                    height={currentItemHeight}
+                                    highlightGenParents={highlightGenParents}
+                                    isSelected={mediaFolder.selectedMedia === mediaItem}
+                                    onSelect={(media) => mediaFolder.setSelectedMedia(media)}
+                                />
                             ))}
 
                             <DropArea width={100} height={currentItemHeight} onDropFiles={async (files) => { await mediaFolder.saveFiles(files); }}>
@@ -287,3 +192,146 @@ export const MenuItemIcon: React.FC<MenuItemIconProps> = ({ children }) => {
         </span>
     );
 };
+
+
+interface Props {
+    mediaItem: LocalMedia;
+    height: number;
+
+    highlightGenParents?: boolean;
+    isSelected: boolean;
+
+    onSelect: (m: LocalMedia) => void;
+}
+
+const MediaItemCard: React.FC<Props> = ({
+    mediaItem,
+    height,
+    highlightGenParents = false,
+    isSelected,
+    onSelect
+}) => {
+    const mediaFolder = mediaItem.parentFolder as MediaFolder;
+    const shot = mediaFolder.parentFolder instanceof Shot ? mediaFolder.parentFolder as Shot : undefined
+
+    return (
+        <ContextMenu.Root key={mediaItem.path}>
+            <ContextMenu.Trigger>
+                <MediaGalleryPreview
+                    mediaItem={mediaItem}
+                    height={height}
+                    onSelectMedia={onSelect}
+                >
+                    {mediaFolder.selectedMedia != null &&
+                        mediaFolder.selectedMedia !== mediaItem &&
+                        mediaFolder.selectedMedia?.sourceImage !== mediaItem &&
+                        !mediaFolder.selectedMedia?.generatedMedia.includes(mediaItem) &&
+                        highlightGenParents && <GrayscaleOverlay />
+                    }
+
+                    <AddOutline
+                        showOutline={isSelected}
+                        color="#0a74ff"
+                        width={5}
+                    />
+
+                    <AddOutline
+                        showOutline={mediaFolder.selectedMedia?.sourceImage === mediaItem}
+                        color="#ff0ab565"
+                        width={5}
+                    />
+
+                    <AddOutline
+                        showOutline={mediaFolder.selectedMedia?.generatedMedia.includes(mediaItem)}
+                        color="#fffb0a65"
+                        width={5}
+                    />
+
+                    <MediaItemTags mediaItem={mediaItem} />
+                </MediaGalleryPreview>
+            </ContextMenu.Trigger>
+
+            <ContextMenu.Portal>
+                <ContextMenu.Content className="ContextMenuContent">
+
+                    {/* TAGS */}
+                    <ContextMenu.Sub>
+                        <ContextMenu.SubTrigger className="ContextMenuSubTrigger">
+                            <MenuItemIcon>
+                                <FontAwesomeIcon icon={faTags} />
+                            </MenuItemIcon>
+                            Tags
+                            <div className="RightSlot">
+                                <FontAwesomeIcon icon={faChevronRight} />
+                            </div>
+                        </ContextMenu.SubTrigger>
+
+                        <ContextMenu.Portal>
+                            <ContextMenu.SubContent className="ContextMenuSubContent">
+                                {mediaFolder.tags.map(tag => (
+                                    <ContextMenu.Item
+                                        key={tag}
+                                        className="ContextMenuItem"
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            mediaItem.toggleTag(tag);
+                                        }}
+                                    >
+                                        <MenuItemIcon>
+                                            <div
+                                                className={`rounded-circle mx-1 ${mediaItem.hasTag(tag)
+                                                        ? "bg-success"
+                                                        : "border border-secondary"
+                                                    }`}
+                                                style={{ width: 15, height: 15 }}
+                                            />
+                                        </MenuItemIcon>
+                                        {tag}
+                                    </ContextMenu.Item>
+                                ))}
+                            </ContextMenu.SubContent>
+                        </ContextMenu.Portal>
+                    </ContextMenu.Sub>
+
+                    <ContextMenu.Separator className="ContextMenuSeparator" />
+
+                    <ContextMenu.Item onClick={() => mediaItem.log()} className="ContextMenuItem">
+                        <MenuItemIcon><FontAwesomeIcon icon={faClipboard} /></MenuItemIcon>
+                        Log
+                    </ContextMenu.Item>
+
+                    <ContextMenu.Item onClick={() => mediaItem.copyToClipboard()} className="ContextMenuItem">
+                        <MenuItemIcon><FontAwesomeIcon icon={faClipboard} /></MenuItemIcon>
+                        Copy
+                    </ContextMenu.Item>
+
+                    <ContextMenu.Item onClick={() => mediaItem.openInNewTab()} className="ContextMenuItem">
+                        <MenuItemIcon><FontAwesomeIcon icon={faClipboard} /></MenuItemIcon>
+                        Open in new Tab
+                    </ContextMenu.Item>
+
+                    {shot && (
+                        <ContextMenu.Item
+                            className="ContextMenuItem warning"
+                            onClick={() => shot.references?.addTag(mediaItem)}
+                        >
+                            <MenuItemIcon><FontAwesomeIcon icon={faPhotoFilm} /></MenuItemIcon>
+                            Add Shot Reference
+                        </ContextMenu.Item>
+                    )}
+
+                    <ContextMenu.Item
+                        className="ContextMenuItem danger"
+                        onClick={() => mediaItem.delete()}
+                    >
+                        <MenuItemIcon><FontAwesomeIcon icon={faTrashCan} /></MenuItemIcon>
+                        Delete
+                    </ContextMenu.Item>
+
+                </ContextMenu.Content>
+            </ContextMenu.Portal>
+        </ContextMenu.Root>
+    );
+};
+
+export default MediaItemCard;

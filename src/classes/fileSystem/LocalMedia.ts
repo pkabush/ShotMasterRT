@@ -16,7 +16,10 @@ export class LocalMedia extends LocalFile {
   mediaJson: LocalJson | null = null;
   file: File | null = null;
   references: Tags | null = null;
+
   _duration: number | null = null;
+  _width: number | null = null;
+  _height: number | null = null;
 
   // internal promise
   private _urlPromise: Promise<string> | null = null;
@@ -38,6 +41,9 @@ export class LocalMedia extends LocalFile {
       web_url: observable,
       mediaJson: observable,
 
+      _width: observable,
+      _height: observable,
+
       revokeUrl: action,
       delete: override,
       getUrlObject: action,
@@ -50,6 +56,7 @@ export class LocalMedia extends LocalFile {
 
       _duration: observable,
       duration: computed,
+      aspect: computed,
     });
 
     this._urlPromise = null; // initialize
@@ -211,7 +218,7 @@ export class LocalMedia extends LocalFile {
       await navigator.clipboard.writeText(
         JSON.stringify({
           local_path: this.path,
-          full_path:fullPath,
+          full_path: fullPath,
         })
       );
 
@@ -238,5 +245,8 @@ export class LocalMedia extends LocalFile {
     this.mediaJson?.updateField("end_timecode", timecode);
   }
 
+  get aspect() {
+    return (this._width ?? 100) / (this._height ?? 100);
+  }
 
 }

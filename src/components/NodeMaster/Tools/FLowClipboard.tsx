@@ -146,9 +146,9 @@ export const FlowClipboard = () => {
 
         // Local Path Present
         if (parsed.local_path) {
-            console.log("Buffer",parsed);
+            console.log("Buffer", parsed);
             const cursor = mouseRef.current;
-            nodegraph_api.addNode("localImageNode",cursor, {path:parsed.local_path}, [300,400]);           
+            nodegraph_api.addNode("localImageNode", cursor, { path: parsed.local_path }, [300, 400]);
 
         }
 
@@ -159,7 +159,23 @@ export const FlowClipboard = () => {
      * Keyboard shortcuts
      */
     useEffect(() => {
+        const isEditableElement = (el: EventTarget | null) => {
+            if (!(el instanceof HTMLElement)) return false;
+
+            return (
+                el.tagName === "INPUT" ||
+                el.tagName === "TEXTAREA" ||
+                el.isContentEditable
+            );
+        };
+
+
         const onKeyDown = (e: KeyboardEvent) => {
+            // allow normal text copy/paste inside editors
+            if (isEditableElement(e.target)) {
+                return;
+            }
+
             const isCopy = (e.ctrlKey || e.metaKey) && e.code === "KeyC";
             const isPaste = (e.ctrlKey || e.metaKey) && e.code === "KeyV";
 

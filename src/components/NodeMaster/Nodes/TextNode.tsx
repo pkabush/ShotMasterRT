@@ -42,7 +42,7 @@ export const TextNode = memo(
         </div>
 
         <textarea
-          className="nodrag nowheel"
+          className="nodrag nopan nowheel"
           value={data.text ?? ""}
           placeholder="Enter text..."
           rows={5}
@@ -59,6 +59,8 @@ export const TextNode = memo(
             fontSize: 14,
             boxSizing: "border-box",
           }}
+
+
 
           onChange={(e) => {
             const value = e.target.value;
