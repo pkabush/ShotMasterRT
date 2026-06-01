@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useMemo } from "react";
 import {
     NodeResizeControl,
     NodeToolbar,
@@ -18,9 +18,8 @@ import { useNodeGraphApi } from "../nodeGraphApi";
 import { LocalFolder } from "../../../classes/fileSystem/LocalFolder";
 import { LocalFile } from "../../../classes/fileSystem/LocalFile";
 import { MediaFolder } from "../../../classes/MediaFolder";
-import MediaItemCard, { MediaFolderGallery, MenuItemIcon } from "../../MediaFolderGallery";
+import MediaItemCard, { MenuItemIcon } from "../../MediaFolderGallery";
 import { observer } from "mobx-react-lite";
-import MediaGalleryPreview from "../../MediaComponents/MediaGallerPreview";
 import DropArea from "../../Atomic/DropArea";
 
 
@@ -254,20 +253,16 @@ import "../../../css/ContextMenu.css";
 export const NodeMediaFolderGallery: React.FC<NodeMediaFolderGalleryProps> = observer(
     ({ mediaFolder }) => {
 
-
-        return <div className="d-flex flex-wrap gap-2" style={{
-
-
-        }}>
+        return <div className="d-flex flex-wrap w-100 h-100" style={{}}>
             <ContextMenu.Root>
-                <ContextMenu.Trigger style={{ backgroundColor: "#2c2c31", }} className="d-flex flex-wrap gap-2 w-100 h-100" >
+                <ContextMenu.Trigger style={{ backgroundColor: "#2c2c31", }} className="d-flex flex-wrap gap-2 w-100 h-100 align-content-start" >
                     {mediaFolder.mediaOrdered.map((mediaItem) => (
                         <MediaItemCard
                             key={mediaItem.path}
                             mediaItem={mediaItem}
                             height={100}
                             isSelected={false}
-                            onSelect={(media) => { }}
+                            onSelect={() => { }}
                         />
                     ))}
 
@@ -305,29 +300,8 @@ export const NodeMediaFolderGallery: React.FC<NodeMediaFolderGalleryProps> = obs
 
                     </ContextMenu.Content>
                 </ContextMenu.Portal>
-
-
-
-
             </ContextMenu.Root>
         </div>
 
-        return <MediaFolderGallery mediaFolder={mediaFolder} itemHeight={100} showEditWindow={false} />
-
-        return <div        >
-
-            {
-                mediaFolder.mediaOrdered.map((mediaItem) => (
-
-                    <>
-                        <MediaGalleryPreview mediaItem={mediaItem} height={100} />
-
-
-                    </>
-                ))}
-            <DropArea width={100} height={100} onDropFiles={async (files) => { await mediaFolder.saveFiles(files); }}>
-            </DropArea>
-
-        </div>;
     });
 

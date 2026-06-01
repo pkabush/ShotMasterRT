@@ -83,10 +83,7 @@ export const MediaFolderGallery: React.FC<MediaFolderGalleryProps> = observer(
                                     <SimpleButton label="Paste" className="btn-outline-secondary btn-sm"
                                         onClick={() => { mediaFolder!.copyFromClipboard(); }} />}
                             </Stack>
-
                         </>
-
-
                     }
                     editWindow={
                         showEditWindow ? (
@@ -280,8 +277,8 @@ const MediaItemCard: React.FC<Props> = ({
                                         <MenuItemIcon>
                                             <div
                                                 className={`rounded-circle mx-1 ${mediaItem.hasTag(tag)
-                                                        ? "bg-success"
-                                                        : "border border-secondary"
+                                                    ? "bg-success"
+                                                    : "border border-secondary"
                                                     }`}
                                                 style={{ width: 15, height: 15 }}
                                             />

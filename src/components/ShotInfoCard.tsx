@@ -16,6 +16,7 @@ import MultiStateToggle from './Atomic/MultiStateToggle';
 import { Badge } from 'react-bootstrap';
 import { Google_GenerateKlingPrompt } from './GoogleNodes/Google_GenerateKlingPrompt';
 import { BytePlus_GenerateVideo } from './BytePlus/BP_generateVideo';
+import { toJS } from 'mobx';
 
 interface Props {
   shot: Shot;
@@ -82,6 +83,13 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
           />
 
           <SimpleButton onClick={() => { shot.log() }} label="Log Shot" />
+
+          <SimpleButton onClick={() => {
+            console.log("tasks",
+              toJS(shot.tasksJson?.tasks)
+            );
+
+          }} label="New Tasks" />
           <SimpleButton onClick={handleDelete} label="Delete Shot" className="btn-outline-danger" />
         </div>
       </div>
@@ -118,13 +126,13 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
             {false && <Google_GenerateKlingPrompt shot={shot} />}
             <BytePlus_GenerateVideo shot={shot} />
 
-            <TaskContainer shot={shot} />
+            <TaskContainer tasksJson={shot.tasksJson!} />
             <MediaFolderGallery mediaFolder={shot.MediaFolder_genVideo} />
           </>
           ,
           LipSync: <>
             <Kling_LipSync shot={shot} />
-            <TaskContainer shot={shot} />
+            <TaskContainer tasksJson={shot.tasksJson!} />
           </>
           ,
 

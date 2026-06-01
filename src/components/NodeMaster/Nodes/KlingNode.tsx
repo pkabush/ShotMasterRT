@@ -1,4 +1,4 @@
-import { memo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { type Node, type NodeProps } from "@xyflow/react";
 import { Button, Stack } from "react-bootstrap";
 import SimpleSelect from "../../Atomic/SimpleSelect";
@@ -11,6 +11,9 @@ import { KlingAI } from "../../../classes/KlingAI";
 import { Shot } from "../../../classes/Shot";
 import { ai_providers } from "../../../classes/AI_provider";
 import { LocalVideo } from "../../../classes/fileSystem/LocalVideo";
+import { TasksJson } from "../../../classes/Task";
+import { useLocalFile } from "../Context/LocalFileContext";
+import type { LocalJson } from "../../../classes/LocalJson";
 
 export type KlingNodeModelData = {
     model?: string;
@@ -28,6 +31,9 @@ export const KlingNode = memo(
 
         const nodegraph_api = useNodeGraphApi();
 
+        const { local_file } = useLocalFile();
+        const localTasksJson = useMemo(() => { return new TasksJson(local_file as LocalJson); }, [local_file]);
+
         const handleClick = async () => {
             setLoading(true);
             try {
@@ -37,7 +43,8 @@ export const KlingNode = memo(
                 const in0 = nodegraph_api.getInputNodes(id, "shot")[0];
                 const project = Project.getProject();
                 const shot = project.getByAbsPath(in0?.data?.path as string);
-                if (!(shot instanceof Shot)) { throw new Error("Missing required input: SHOT"); }
+                const tasksJson = (shot instanceof Shot) ? shot.tasksJson : localTasksJson
+                //if (!(shot instanceof Shot)) { throw new Error("Missing required input: SHOT"); }
 
                 // Get Prompt
                 const prompt_node = nodegraph_api.getInputNodes(id, "prompt")[0]
@@ -77,9 +84,9 @@ export const KlingNode = memo(
                     const base_video = project.getByAbsPath((base_video_node?.data?.path as string) ?? "", LocalVideo)
                     if (base_video) {
                         video_list.push({
-                            video_url:  await base_video.getWebUrl(),
+                            video_url: await base_video.getWebUrl(),
                             refer_type: KlingAI.options.omni_video.video.refer_type.base,
-                            keep_original_sound:  data.sound == "on" ? "yes" as const: "no" as const,
+                            keep_original_sound: data.sound == "on" ? "yes" as const : "no" as const,
                         });
                     }
 
@@ -141,7 +148,7 @@ export const KlingNode = memo(
 
                 // Create Task
                 if (task_info) {
-                    const task = shot.addTask(task_info.id, {
+                    const task = tasksJson!.addTask(task_info.id, {
                         provider: ai_providers.KLING,
                         workflow: task_info.workflow,
                     });
@@ -249,8 +256,8 @@ export const KlingNode = memo(
                     <NamedInputHandle id={"prompt"} index={1} />
                     <NamedInputHandle id={"first_frame"} index={2} />
                     <NamedInputHandle id={"last_frame"} index={3} />
-                    <NamedInputHandle id={"refs"} index={4} active={data.model == KlingAI.options.img2video.model.vo1}/>
-                    <NamedInputHandle id={"base_video"} index={5} active={data.model == KlingAI.options.img2video.model.vo1}/>
+                    <NamedInputHandle id={"refs"} index={4} active={data.model == KlingAI.options.img2video.model.vo1} />
+                    <NamedInputHandle id={"base_video"} index={5} active={data.model == KlingAI.options.img2video.model.vo1} />
 
                 </div >
             </div >

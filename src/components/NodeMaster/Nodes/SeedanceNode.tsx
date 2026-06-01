@@ -1,4 +1,4 @@
-import { memo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { type Node, type NodeProps } from "@xyflow/react";
 import { Button, Stack } from "react-bootstrap";
 import SimpleSelect from "../../Atomic/SimpleSelect";
@@ -12,6 +12,9 @@ import { ai_providers } from "../../../classes/AI_provider";
 import { LocalVideo } from "../../../classes/fileSystem/LocalVideo";
 import { SeedanceAI } from "../../../classes/AiProviders/Byteplus";
 import { LocalAudio } from "../../../classes/fileSystem/LocalAudio";
+import { useLocalFile } from "../Context/LocalFileContext";
+import { TasksJson } from "../../../classes/Task";
+import type { LocalJson } from "../../../classes/LocalJson";
 
 export type SeedanceNodeModelData = {
     resolution?: string;
@@ -29,6 +32,9 @@ export const SeedanceNode = memo(
 
         const nodegraph_api = useNodeGraphApi();
 
+        const { local_file } = useLocalFile();
+        const localTasksJson = useMemo(() => { return new TasksJson(local_file as LocalJson); }, [local_file]);
+
         const handleClick = async () => {
             setLoading(true);
             try {
@@ -36,7 +42,8 @@ export const SeedanceNode = memo(
                 const in0 = nodegraph_api.getInputNodes(id, "shot")[0];
                 const project = Project.getProject();
                 const shot = project.getByAbsPath(in0?.data?.path as string);
-                if (!(shot instanceof Shot)) { throw new Error("Missing required input: SHOT"); }
+                //if (!(shot instanceof Shot)) { throw new Error("Missing required input: SHOT"); }
+                const tasksJson = (shot instanceof Shot) ? shot.tasksJson : localTasksJson;
 
                 // Get Prompt
                 const prompt_node = nodegraph_api.getInputNodes(id, "prompt")[0]
@@ -117,7 +124,7 @@ export const SeedanceNode = memo(
 
 
                 if (!result) return;
-                const task = shot.addTask(result.id, { provider: ai_providers.BD, })
+                const task = tasksJson!.addTask(result.id, { provider: ai_providers.BD, })
                 await new Promise(res => setTimeout(res, 100));
                 task.check_status();
 

@@ -106,6 +106,7 @@ export class Scene extends LocalFolder {
       this.nodeGraphJson = await LocalJson.create(this, 'nodegraph.json');
       this.references = new Tags(this, this.sceneJson);
       await this.load_subfolders(Shot);
+      await this.load_files();
       // Load StoryBoard Later to overwrite
       //this.storyboard = await LocalFolder.open(this, "Storyboard", Storyboard);
     } catch (err) {

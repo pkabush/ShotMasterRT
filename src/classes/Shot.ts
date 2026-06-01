@@ -5,8 +5,7 @@ import { LocalImage } from './fileSystem/LocalImage';
 import { action, makeObservable, observable, runInAction } from "mobx";
 import { GoogleAI } from './GoogleAI';
 import { KlingAI, type LipSyncFaceChoose } from './KlingAI';
-import { Task } from './Task';
-//import { Art } from "./Art";
+import {  TasksJson } from './Task';
 import { AI, ai_providers, type AIImageInput } from './AI_provider';
 import { LocalVideo } from './fileSystem/LocalVideo';
 import { MediaFolder } from './MediaFolder';
@@ -19,8 +18,8 @@ import { Tags } from './Tags';
 
 export class Shot extends LocalFolder {
   shotJson: LocalJson | null = null;
-  tasks: Task[] = [];
   references: Tags | null = null;
+  tasksJson:TasksJson | null = null;
 
   // Processes
   is_submitting_video = false;
@@ -48,7 +47,6 @@ export class Shot extends LocalFolder {
     // Use makeObservable because we extend LocalFolder
     makeObservable(this, {
       shotJson: observable,
-      tasks: observable,
       is_submitting_video: observable,
       is_generating: observable,
       MediaFolder_results: observable,
@@ -56,6 +54,7 @@ export class Shot extends LocalFolder {
       MediaFolder_refVideo: observable,
       MediaFolder_Audio: observable,
       references: observable,
+      tasksJson:observable,
       load: action,
     });
   }
@@ -64,6 +63,7 @@ export class Shot extends LocalFolder {
     try {
       const shotJson = await LocalJson.create(this, 'shotinfo.json');
       const references = new Tags(this, shotJson);
+      const tasksJson = new TasksJson(shotJson);
 
       const results = await MediaFolder.create(this, "results");
       results.tags = ["start_frame", "end_frame", "ref_frame", "unreal_frame"];
@@ -80,14 +80,13 @@ export class Shot extends LocalFolder {
       runInAction(() => {
         this.shotJson = shotJson;
         this.references = references;
+        this.tasksJson = tasksJson;
         this.MediaFolder_results = results;
         this.MediaFolder_genVideo = genVideo;
         this.MediaFolder_refVideo = refVideo;
         this.MediaFolder_Audio = audio;
       });
-
-      this.loadTasks();
-
+      
     } catch (err) {
       console.error('Error loading shot:', this.name, err);
 
@@ -141,36 +140,6 @@ export class Shot extends LocalFolder {
   get kling_face_id_data(): any | null {
     if (!this.outVideo) return null;
     return this.shotJson?.getField("KlingFaceID/" + this.outVideo.name);
-  }
-
-  // --- TASKS -----------
-  loadTasks(): void {
-    const tasksData = this.shotJson?.getField("tasks");
-    runInAction(() => {
-      this.tasks = [];
-      if (!tasksData || typeof tasksData !== "object") return;
-      for (const taskId of Object.keys(tasksData)) {
-        this.tasks.push(new Task(this, taskId));
-      }
-    });
-  }
-
-  addTask(id: string, data?: any | null): Task {
-    const task = new Task(this, id);
-    data.task_name = `${this.scene.name}_${this.name}_${getCurrentTimestampUTC()}${data.geninfo?.workflow ? `_${data.geninfo.workflow}` : ''}`;
-    runInAction(() => { this.tasks.push(task); });
-    task.update(data);
-    return task;
-  }
-
-  removeTask(task: Task) {
-    runInAction(() => {
-      this.tasks = this.tasks.filter(t => t !== task);
-    });
-
-    const tasks = this.shotJson?.getField("tasks") ?? {};
-    delete tasks[task.id as string];
-    this.shotJson?.updateField("tasks", tasks);
   }
 
   // --- GENERATIONS -----------
@@ -339,7 +308,7 @@ export class Shot extends LocalFolder {
 
       if (!task_info) return;
 
-      const task = this.addTask(task_info.id, {
+      const task = this.tasksJson!.addTask(task_info.id, {
         provider: ai_providers.KLING,
         workflow: task_info.workflow,
         // Add Gen Info
@@ -427,7 +396,7 @@ export class Shot extends LocalFolder {
         face_choose
       });
 
-      const task = this.addTask(task_info.id, {
+      const task = this.tasksJson!.addTask(task_info.id, {
         provider: ai_providers.KLING,
         workflow: task_info.workflow,
         geninfo: {
@@ -468,7 +437,7 @@ export class Shot extends LocalFolder {
           keep_original_sound: workflow.keep_original_sound,
         });
 
-        const task = this.addTask(task_info.id, {
+        const task = this.tasksJson!.addTask(task_info.id, {
           provider: ai_providers.KLING,
           workflow: task_info.workflow,
           // GENINFO

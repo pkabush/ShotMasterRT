@@ -14,7 +14,7 @@ const TaskView: React.FC<Props> = observer(({ project }) => {
     // Flatten all tasks from all shots in all scenes
     const allTasks = project.scenes ? project.scenes.flatMap(scene =>
         scene.shots.flatMap(shot =>
-            shot.tasks.map(task => (task))
+            shot.tasksJson!.tasks.map(task => (task))
         )
     ) : [];
 

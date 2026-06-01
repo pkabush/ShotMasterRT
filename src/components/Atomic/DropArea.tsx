@@ -33,6 +33,7 @@ const DropArea: FC<DropAreaProps> = ({
 
     const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
         e.preventDefault();
+        e.stopPropagation();
         setIsDragging(false);
         const files = Array.from(e.dataTransfer.files);
         if (files.length > 0 && onDropFiles) {

@@ -1,4 +1,4 @@
-import { memo, useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { useNodes, type Node, type NodeProps } from "@xyflow/react";
 
 import LoadingSpinner from "../../Atomic/LoadingSpinner";
@@ -8,6 +8,9 @@ import { NamedInputHandle } from "../Atomic/NamedInput";
 import { useNodeGraphApi } from "../nodeGraphApi";
 import { Shot } from "../../../classes/Shot";
 import TaskContainer from "../../TaskContainer";
+import { useLocalFile } from "../Context/LocalFileContext";
+import { TasksJson } from "../../../classes/Task";
+import type { LocalJson } from "../../../classes/LocalJson";
 
 
 export type ShotTasksModelData = {
@@ -32,6 +35,13 @@ export const ShotTasksNode = memo(
 
         const shot = project.getByAbsPath(in0?.data?.path as string);
         const is_shot = shot instanceof Shot;
+
+        const {local_file} = useLocalFile();
+        const tasksJson = useMemo(() => {
+            console.log("Load tasks");
+            const tasksJson = new TasksJson(local_file as LocalJson);            
+            return tasksJson;
+        },[local_file]);        
         
 
         return (
@@ -65,7 +75,8 @@ export const ShotTasksNode = memo(
                         </div>
                         
                         {in0?.data?.path as string}
-                        {is_shot && <TaskContainer shot={shot} />}
+                        {is_shot && <TaskContainer tasksJson={shot.tasksJson!} />}
+                        {!is_shot && <TaskContainer tasksJson={tasksJson} />}
 
 
                     </div>

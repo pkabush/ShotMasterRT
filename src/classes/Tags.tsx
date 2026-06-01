@@ -13,7 +13,6 @@ export class Tags {
         this.owner = owner;
         this.dataJson = dataJson;
 
-
         makeObservable(this, {
             dataJson: observable,           // observable reference to the LocalJson
             tags: computed,                 // computed getter/setter
