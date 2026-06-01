@@ -1,8 +1,10 @@
+import { computed, makeObservable } from "mobx";
 import { LocalJson } from "../LocalJson";
 import { LocalAudio } from "./LocalAudio";
 import { LocalFile } from "./LocalFile";
 import { LocalImage } from "./LocalImage";
 import { LocalItem } from "./LocalItem";
+import { LocalMedia } from "./LocalMedia";
 import { LocalVideo } from "./LocalVideo";
 
 export class LocalFolder extends LocalItem {
@@ -39,6 +41,11 @@ export class LocalFolder extends LocalItem {
     ) {
         super(parentFolder, handle);
         this.handle = handle;
+
+        makeObservable(this, {
+            media: computed,
+            mediaOrdered: computed,
+        });
     }
 
     async load_subfolders<T extends LocalFolder = LocalFolder>(SubfolderType?: new (parent: LocalFolder, handle: FileSystemDirectoryHandle) => T) {
@@ -194,6 +201,7 @@ export class LocalFolder extends LocalItem {
             throw err;
         }
     }
+
     async copyFromClipboard() {
         if (!this.handle) { throw new Error("MediaFolder not loaded"); }
         if (!navigator.clipboard) {
@@ -271,6 +279,18 @@ export class LocalFolder extends LocalItem {
             console.error("Failed to read from clipboard:", err);
         }
     }
+
+    // Media Getters Folder 
+    get media(): LocalMedia[] {
+        return this.getType(LocalMedia)
+    }
+    get mediaOrdered(): LocalMedia[] {
+        return [...this.media].sort(
+            (a, b) => a.lastModified - b.lastModified
+        );
+    }
+
+
 }
 
 

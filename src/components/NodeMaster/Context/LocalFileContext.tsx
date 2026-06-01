@@ -1,14 +1,17 @@
 import {
     createContext,
     useContext,
+    useMemo,
     type ReactNode,
 } from "react";
 import type { LocalJson } from "../../../classes/LocalJson";
 import type { LocalFile } from "../../../classes/fileSystem/LocalFile";
+import { TasksJson } from "../../../classes/Task";
 
 
 interface LocalFileContextType {
     local_file: LocalFile;
+    tasks_json: TasksJson;
 }
 
 const LocalFileContext =
@@ -24,10 +27,18 @@ export const LocalFileProvider: React.FC<ProviderProps> = ({
     children,
 }) => {
 
-    
+    const value = useMemo(() => {
+        const tasks_json =  new TasksJson(local_file as LocalJson);
+        return {
+            local_file,
+            tasks_json
+        }
+    },[local_file])
+
+
     return (
         <LocalFileContext.Provider
-            value={{ local_file }}
+            value={value}
         >
             {children}
         </LocalFileContext.Provider>

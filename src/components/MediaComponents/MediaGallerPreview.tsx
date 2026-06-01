@@ -33,7 +33,7 @@ const MediaGalleryPreview: React.FC<MediaGalleryPreviewProps> = observer(({
           key={mediaItem.path}
           localImage={mediaItem}
           height={height}
-          onClick={() => onSelectMedia?.(mediaItem)}
+          onClick={() => onSelectMedia?.(mediaItem)}          
         />
         {children}
       </div>

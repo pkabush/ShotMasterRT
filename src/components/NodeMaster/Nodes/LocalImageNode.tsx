@@ -1,4 +1,4 @@
-import { memo, useMemo } from "react";
+import React, { memo, useCallback, useMemo } from "react";
 import {
     NodeResizeControl,
     NodeToolbar,
@@ -17,7 +17,6 @@ import { NamedInputHandle, NamedOutputHandle } from "../Atomic/NamedInput";
 import { useNodeGraphApi } from "../nodeGraphApi";
 import { LocalFolder } from "../../../classes/fileSystem/LocalFolder";
 import { LocalFile } from "../../../classes/fileSystem/LocalFile";
-import { MediaFolder } from "../../../classes/MediaFolder";
 import MediaItemCard, { MenuItemIcon } from "../../MediaFolderGallery";
 import { observer } from "mobx-react-lite";
 import DropArea from "../../Atomic/DropArea";
@@ -65,6 +64,10 @@ export const LocalImageNode = memo(
             return null;
         }, [ng_api, id, project])
 
+        const setPath = useCallback((path: string) => {
+            setNodes((nds) => nds.map((n) => n.id === id ? { ...n, data: { ...n.data, path: path, }, } : n));
+        }, [setNodes, id])
+
         return (
             <>
                 <NodeToolbar
@@ -77,7 +80,7 @@ export const LocalImageNode = memo(
                         selected_paths={[data.path]}
                         onSelect={(item) => {
                             console.log(item);
-                            setNodes((nds) => nds.map((n) => n.id === id ? { ...n, data: { ...n.data, path: item.path, }, } : n));
+                            setPath(item.path);
                         }} />
 
                     {inputFolders.map((folder) => (
@@ -86,7 +89,7 @@ export const LocalImageNode = memo(
                             folder={folder}
                             onSelect={(item) => {
                                 console.log(item);
-                                setNodes((nds) => nds.map((n) => n.id === id ? { ...n, data: { ...n.data, path: item.path, }, } : n));
+                                setPath(item.path);
                             }}
                         />
                     ))}
@@ -96,10 +99,23 @@ export const LocalImageNode = memo(
                         selected_paths={[data.path]}
                         onSelect={(item) => {
                             console.log(item);
-                            setNodes((nds) => nds.map((n) => n.id === id ? { ...n, data: { ...n.data, path: item.path, }, } : n));
+                            setPath(item.path);
                         }} />}
 
                 </NodeToolbar>
+
+                <NodeToolbar
+                    isVisible={selected}
+                    position={Position.Top}
+                    align={"end"}
+                >
+                    <Button size="sm" onClick={() => {
+                        const file = project.getByAbsPath(data.path);
+                        if (file?.parentFolder)
+                            setPath(file?.parentFolder!.path);
+                    }}>Up</Button>
+                </NodeToolbar>
+
 
 
                 <div
@@ -135,23 +151,28 @@ export const LocalImageNode = memo(
                             opacity: 0.7,
                         }}
                     >
-                        LocalImageNode {data.path}
+
+                        {data.path.split("/").map((part, index, parts) => {
+                            const fullPath = parts.slice(0, index + 1).join("/");
+
+                            return (
+                                <React.Fragment key={fullPath}>
+                                    <span
+                                        style={{
+                                            cursor: "pointer",
+                                        }}
+                                        onClick={() => {
+                                            setPath(fullPath);
+                                        }}
+                                    >
+                                        {part == "" ? "ROOT" : part}
+                                    </span>
+
+                                    {index < parts.length - 1 && " / "}
+                                </React.Fragment>
+                            );
+                        })}
                     </div>
-
-
-                    {false && <>
-                        <FolderDropdownNode
-                            folder={project}
-                            onSelect={(item) => {
-                                console.log(item);
-                                // up date path
-                                setNodes((nds) => nds.map((n) => n.id === id ? { ...n, data: { ...n.data, path: item.path, }, } : n));
-                            }} />
-
-                        <>
-                            {data.path}
-                        </>
-                    </>}
 
 
                     <div
@@ -189,26 +210,18 @@ export const LocalImageNode = memo(
                                 />}
                         </>}
 
-
-
-                        {(local_image instanceof MediaFolder) && <>
+                        {(local_image instanceof LocalFolder) && <>
                             <div className="h-100 w-100 nodrag">
-                                {/**
-                                <MediaFolderGallery mediaFolder={local_image} showEditWindow={false} />
-                                 */}
-                                <NodeMediaFolderGallery mediaFolder={local_image} />
+                                <NodeMediaFolderGallery mediaFolder={local_image} onPathClick={(path) => {
+                                    setNodes((nds) => nds.map((n) => n.id === id ? { ...n, data: { ...n.data, path: path, }, } : n));
+                                }} />
                             </div>
                         </>}
 
-
-
-
                     </div>
-
 
                     <NamedOutputHandle id="path" />
                     <NamedInputHandle id="path" />
-
 
                 </div>
             </>
@@ -242,66 +255,125 @@ function ResizeIcon() {
 
 
 interface NodeMediaFolderGalleryProps {
-    mediaFolder: MediaFolder;
+    mediaFolder: LocalFolder;
+    onPathClick: (path: string) => void;
 }
 
 import * as ContextMenu from "@radix-ui/react-context-menu";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClipboard } from "@fortawesome/free-solid-svg-icons";
 import "../../../css/ContextMenu.css";
+import { Button } from "react-bootstrap";
 
 export const NodeMediaFolderGallery: React.FC<NodeMediaFolderGalleryProps> = observer(
-    ({ mediaFolder }) => {
+    ({ mediaFolder, onPathClick }) => {
 
-        return <div className="d-flex flex-wrap w-100 h-100" style={{}}>
-            <ContextMenu.Root>
-                <ContextMenu.Trigger style={{ backgroundColor: "#2c2c31", }} className="d-flex flex-wrap gap-2 w-100 h-100 align-content-start" >
-                    {mediaFolder.mediaOrdered.map((mediaItem) => (
-                        <MediaItemCard
-                            key={mediaItem.path}
-                            mediaItem={mediaItem}
-                            height={100}
-                            isSelected={false}
-                            onSelect={() => { }}
-                        />
-                    ))}
+        return <DropArea width={"100%"} height={"100%"}
+            onDropFiles={async (files) => { await mediaFolder.saveFiles(files); }}
+            base_border="2px #606060"
+        >
 
-                    <DropArea width={100} height={100} onDropFiles={async (files) => { await mediaFolder.saveFiles(files); }}>
-                    </DropArea>
-                </ContextMenu.Trigger>
+            <div className="d-flex flex-wrap w-100 h-100" style={{}}>
+                <ContextMenu.Root>
+                    <ContextMenu.Trigger style={{ backgroundColor: "#2c2c31", }} className="d-flex flex-wrap gap-2 w-100 h-100 align-content-start" >
+                        {mediaFolder.parentFolder &&
+                            <FolderPreview
+                                localFolder={mediaFolder.parentFolder}
+                                onClick={() => { onPathClick(mediaFolder.parentFolder!.path); }}
+                                label="..."
+                            />
+                        }
 
-                <ContextMenu.Portal>
-                    <ContextMenu.Content className="ContextMenuContent">
-                        <ContextMenu.Item className="ContextMenuItem" onClick={() => mediaFolder.copyFromClipboard()}>
-                            <MenuItemIcon><FontAwesomeIcon icon={faClipboard} /></MenuItemIcon>
-                            Paste
-                        </ContextMenu.Item>
-                        <ContextMenu.Item className="ContextMenuItem" onClick={() => mediaFolder.log()}>
-                            <MenuItemIcon><FontAwesomeIcon icon={faClipboard} /></MenuItemIcon>
-                            Log
-                        </ContextMenu.Item>
-                        <ContextMenu.Item className="ContextMenuItem" onClick={async () => {
-                            try {
-                                const text = await navigator.clipboard.readText();
-                                if (text && (text.startsWith("http://") || text.startsWith("https://"))) {
-                                    console.log("Importing URL from clipboard:", text);
-                                    mediaFolder.downloadFromUrl(text);
-                                } else {
-                                    alert("Clipboard does not contain a valid URL.");
+                        {mediaFolder.subfolders.map((subfolder) => (
+                            <FolderPreview
+                                localFolder={subfolder}
+                                onClick={() => { onPathClick(subfolder.path); }}
+                            />
+                        ))}
+
+                        {mediaFolder.mediaOrdered.map((mediaItem) => (
+                            <MediaItemCard
+                                key={mediaItem.path}
+                                mediaItem={mediaItem}
+                                height={100}
+                                isSelected={false}
+                                onSelect={() => { onPathClick(mediaItem.path); }}
+                            />
+                        ))}
+
+                        {false && <DropArea width={100} height={100} onDropFiles={async (files) => { await mediaFolder.saveFiles(files); }} />}
+                    </ContextMenu.Trigger>
+
+                    <ContextMenu.Portal>
+                        <ContextMenu.Content className="ContextMenuContent">
+                            <ContextMenu.Item className="ContextMenuItem" onClick={() => mediaFolder.copyFromClipboard()}>
+                                <MenuItemIcon><FontAwesomeIcon icon={faClipboard} /></MenuItemIcon>
+                                Paste
+                            </ContextMenu.Item>
+                            <ContextMenu.Item className="ContextMenuItem" onClick={() => mediaFolder.log()}>
+                                <MenuItemIcon><FontAwesomeIcon icon={faClipboard} /></MenuItemIcon>
+                                Log
+                            </ContextMenu.Item>
+                            <ContextMenu.Item className="ContextMenuItem" onClick={async () => {
+                                try {
+                                    const text = await navigator.clipboard.readText();
+                                    if (text && (text.startsWith("http://") || text.startsWith("https://"))) {
+                                        console.log("Importing URL from clipboard:", text);
+                                        mediaFolder.downloadFromUrl(text);
+                                    } else {
+                                        alert("Clipboard does not contain a valid URL.");
+                                    }
+                                } catch (err) {
+                                    console.error("Failed to read clipboard:", err);
+                                    alert("Failed to access clipboard.");
                                 }
-                            } catch (err) {
-                                console.error("Failed to read clipboard:", err);
-                                alert("Failed to access clipboard.");
-                            }
-                        }}>
-                            <MenuItemIcon><FontAwesomeIcon icon={faClipboard} /></MenuItemIcon>
-                            Import URL
-                        </ContextMenu.Item>
+                            }}>
+                                <MenuItemIcon><FontAwesomeIcon icon={faClipboard} /></MenuItemIcon>
+                                Import URL
+                            </ContextMenu.Item>
 
-                    </ContextMenu.Content>
-                </ContextMenu.Portal>
-            </ContextMenu.Root>
-        </div>
+                        </ContextMenu.Content>
+                    </ContextMenu.Portal>
+                </ContextMenu.Root>
+            </div>
 
+        </DropArea>
     });
 
+
+
+interface FolderPreviewProps {
+    localFolder: LocalFolder;
+    onClick?: () => void;
+    label?:string;
+}
+
+const FolderPreview = ({ localFolder, onClick ,label}: FolderPreviewProps) => {
+    return (
+        <div
+            style={{
+                width: 75,
+                height: 100,
+                border: "2px solid #4c4c4c",
+                borderRadius: "8px",
+                display: "flex",
+                justifyContent: "center",
+                //alignItems: "center",
+                cursor: "pointer",
+                backgroundColor: "#2a2a31",
+            }}
+            onClick={onClick}
+        >
+            <span
+                style={{
+                    display: "block",
+                    textAlign: "center",
+                    width: "100%",
+                    color: "#5e727e",
+                }}
+            >
+                {label ? label : localFolder.name}
+            </span>
+        </div>
+    );
+};

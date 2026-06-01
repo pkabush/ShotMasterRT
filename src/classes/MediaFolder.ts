@@ -23,15 +23,7 @@ export class MediaFolder extends LocalFolder {
     get shot(): Shot {
         return this.parentFolder as Shot;
     }
-    get media(): LocalMedia[] {
-        return this.getType(LocalMedia)
-    }
-    get mediaOrdered(): LocalMedia[] {
-        return [...this.media].sort(
-            (a, b) => a.lastModified - b.lastModified
-        );
-    }
-
+    
     constructor(parentFolder: LocalFolder | null, handle: FileSystemDirectoryHandle) {
         super(parentFolder, handle)
 
@@ -43,9 +35,7 @@ export class MediaFolder extends LocalFolder {
             // actions
             setSelectedMedia: action,
             // computed
-            mediaOrdered: computed,
-            shot: computed,
-            media: computed,
+            shot: computed,     
         });
     }
 

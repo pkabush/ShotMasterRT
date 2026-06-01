@@ -9,6 +9,7 @@ interface DropAreaProps {
     onDropLocalFiles?: (path:string) => void;
     children?: ReactNode; // optional content inside the box
     label?: string;
+    base_border?: string;
 }
 
 const DropArea: FC<DropAreaProps> = ({
@@ -18,7 +19,7 @@ const DropArea: FC<DropAreaProps> = ({
     children,
     label = "Drag and Drop Here",
     onDropLocalFiles,
-
+    base_border = "2px dashed #606060"
 }) => {
     const [isDragging, setIsDragging] = useState(false);
 
@@ -49,7 +50,7 @@ const DropArea: FC<DropAreaProps> = ({
             style={{
                 width,
                 height,
-                border: isDragging ? "2px solid #42a5f5" : "2px dashed #606060",
+                border: isDragging ? "2px solid #42a5f5" : base_border,
                 borderRadius: "8px",
                 display: "flex",
                 justifyContent: "center",

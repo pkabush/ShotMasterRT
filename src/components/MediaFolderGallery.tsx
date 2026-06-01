@@ -1,7 +1,7 @@
 // MediaFolderGallery.tsx
 import React, { useState } from "react";
 import { observer } from "mobx-react-lite";
-import type { MediaFolder } from "../classes/MediaFolder";
+import { MediaFolder } from "../classes/MediaFolder";
 import { LocalImage } from "../classes/fileSystem/LocalImage";
 import MediaGallery from "./MediaGallery";
 import SimpleButton from "./Atomic/SimpleButton";
@@ -22,6 +22,7 @@ import * as ContextMenu from "@radix-ui/react-context-menu";
 import "../css/ContextMenu.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faChevronRight, faClipboard, faPhotoFilm, faTags, faTrashCan } from "@fortawesome/free-solid-svg-icons";
+import type { LocalFolder } from "../classes/fileSystem/LocalFolder";
 
 interface MediaFolderGalleryProps {
     mediaFolder: MediaFolder | null;
@@ -108,7 +109,7 @@ export const MediaFolderGallery: React.FC<MediaFolderGalleryProps> = observer(
                                                     console.log("Video task created:", task_info);
 
                                                     const shot = mediaFolder.shot as Shot;
-                                                    const task = shot.addTask(task_info.id, { provider: ai_providers.KLING, workflow: task_info.workflow, geninfo: task_info.geninfo })
+                                                    const task = shot.tasksJson!.addTask(task_info.id, { provider: ai_providers.KLING, workflow: task_info.workflow, geninfo: task_info.geninfo })
                                                     await new Promise(res => setTimeout(res, 100));
                                                     console.log("created_task");
 
@@ -208,7 +209,7 @@ const MediaItemCard: React.FC<Props> = ({
     isSelected,
     onSelect
 }) => {
-    const mediaFolder = mediaItem.parentFolder as MediaFolder;
+    const mediaFolder = mediaItem.parentFolder as LocalFolder;
     const shot = mediaFolder.parentFolder instanceof Shot ? mediaFolder.parentFolder as Shot : undefined
 
     return (
@@ -219,30 +220,34 @@ const MediaItemCard: React.FC<Props> = ({
                     height={height}
                     onSelectMedia={onSelect}
                 >
-                    {mediaFolder.selectedMedia != null &&
-                        mediaFolder.selectedMedia !== mediaItem &&
-                        mediaFolder.selectedMedia?.sourceImage !== mediaItem &&
-                        !mediaFolder.selectedMedia?.generatedMedia.includes(mediaItem) &&
-                        highlightGenParents && <GrayscaleOverlay />
-                    }
-
                     <AddOutline
                         showOutline={isSelected}
                         color="#0a74ff"
                         width={5}
                     />
 
-                    <AddOutline
-                        showOutline={mediaFolder.selectedMedia?.sourceImage === mediaItem}
-                        color="#ff0ab565"
-                        width={5}
-                    />
+                    {(mediaFolder instanceof MediaFolder) && <>
+                        {mediaFolder.selectedMedia != null &&
+                            mediaFolder.selectedMedia !== mediaItem &&
+                            mediaFolder.selectedMedia?.sourceImage !== mediaItem &&
+                            !mediaFolder.selectedMedia?.generatedMedia.includes(mediaItem) &&
+                            highlightGenParents && <GrayscaleOverlay />
+                        }
 
-                    <AddOutline
-                        showOutline={mediaFolder.selectedMedia?.generatedMedia.includes(mediaItem)}
-                        color="#fffb0a65"
-                        width={5}
-                    />
+
+                        <AddOutline
+                            showOutline={mediaFolder.selectedMedia?.sourceImage === mediaItem}
+                            color="#ff0ab565"
+                            width={5}
+                        />
+
+                        <AddOutline
+                            showOutline={mediaFolder.selectedMedia?.generatedMedia.includes(mediaItem)}
+                            color="#fffb0a65"
+                            width={5}
+                        />
+                    </>
+                    }
 
                     <MediaItemTags mediaItem={mediaItem} />
                 </MediaGalleryPreview>
@@ -252,45 +257,48 @@ const MediaItemCard: React.FC<Props> = ({
                 <ContextMenu.Content className="ContextMenuContent">
 
                     {/* TAGS */}
-                    <ContextMenu.Sub>
-                        <ContextMenu.SubTrigger className="ContextMenuSubTrigger">
-                            <MenuItemIcon>
-                                <FontAwesomeIcon icon={faTags} />
-                            </MenuItemIcon>
-                            Tags
-                            <div className="RightSlot">
-                                <FontAwesomeIcon icon={faChevronRight} />
-                            </div>
-                        </ContextMenu.SubTrigger>
+                    {(mediaFolder instanceof MediaFolder) && <>
+                        <ContextMenu.Sub>
+                            <ContextMenu.SubTrigger className="ContextMenuSubTrigger">
+                                <MenuItemIcon>
+                                    <FontAwesomeIcon icon={faTags} />
+                                </MenuItemIcon>
+                                Tags
+                                <div className="RightSlot">
+                                    <FontAwesomeIcon icon={faChevronRight} />
+                                </div>
+                            </ContextMenu.SubTrigger>
 
-                        <ContextMenu.Portal>
-                            <ContextMenu.SubContent className="ContextMenuSubContent">
-                                {mediaFolder.tags.map(tag => (
-                                    <ContextMenu.Item
-                                        key={tag}
-                                        className="ContextMenuItem"
-                                        onClick={(e) => {
-                                            e.preventDefault();
-                                            mediaItem.toggleTag(tag);
-                                        }}
-                                    >
-                                        <MenuItemIcon>
-                                            <div
-                                                className={`rounded-circle mx-1 ${mediaItem.hasTag(tag)
-                                                    ? "bg-success"
-                                                    : "border border-secondary"
-                                                    }`}
-                                                style={{ width: 15, height: 15 }}
-                                            />
-                                        </MenuItemIcon>
-                                        {tag}
-                                    </ContextMenu.Item>
-                                ))}
-                            </ContextMenu.SubContent>
-                        </ContextMenu.Portal>
-                    </ContextMenu.Sub>
+                            <ContextMenu.Portal>
+                                <ContextMenu.SubContent className="ContextMenuSubContent">
+                                    {mediaFolder.tags.map(tag => (
+                                        <ContextMenu.Item
+                                            key={tag}
+                                            className="ContextMenuItem"
+                                            onClick={(e) => {
+                                                e.preventDefault();
+                                                mediaItem.toggleTag(tag);
+                                            }}
+                                        >
+                                            <MenuItemIcon>
+                                                <div
+                                                    className={`rounded-circle mx-1 ${mediaItem.hasTag(tag)
+                                                        ? "bg-success"
+                                                        : "border border-secondary"
+                                                        }`}
+                                                    style={{ width: 15, height: 15 }}
+                                                />
+                                            </MenuItemIcon>
+                                            {tag}
+                                        </ContextMenu.Item>
+                                    ))}
+                                </ContextMenu.SubContent>
+                            </ContextMenu.Portal>
+                        </ContextMenu.Sub>
 
-                    <ContextMenu.Separator className="ContextMenuSeparator" />
+                        <ContextMenu.Separator className="ContextMenuSeparator" />
+                    </>}
+
 
                     <ContextMenu.Item onClick={() => mediaItem.log()} className="ContextMenuItem">
                         <MenuItemIcon><FontAwesomeIcon icon={faClipboard} /></MenuItemIcon>

@@ -342,7 +342,7 @@ const VideoEditWindow: React.FC<VideoEditWindowProps> = ({
                                                 });
 
                                                 if (!result) return;
-                                                const task = shot.addTask(result.id, {
+                                                const task = shot.tasksJson!.addTask(result.id, {
                                                     provider: ai_providers.BD,
                                                 })
                                                 await new Promise(res => setTimeout(res, 100));

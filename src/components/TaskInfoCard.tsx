@@ -31,9 +31,6 @@ const TaskInfoCard: React.FC<Props> = observer(({ task, show_path = false }) => 
         }
     }, [task])
 
-    console.log(task.result);
-
-
     return (
         <ContextMenu.Root>
             <ContextMenu.Trigger>

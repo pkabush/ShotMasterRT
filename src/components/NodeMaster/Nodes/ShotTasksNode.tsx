@@ -1,4 +1,4 @@
-import { memo, useMemo, useState } from "react";
+import { memo, useState } from "react";
 import { useNodes, type Node, type NodeProps } from "@xyflow/react";
 
 import LoadingSpinner from "../../Atomic/LoadingSpinner";
@@ -9,8 +9,7 @@ import { useNodeGraphApi } from "../nodeGraphApi";
 import { Shot } from "../../../classes/Shot";
 import TaskContainer from "../../TaskContainer";
 import { useLocalFile } from "../Context/LocalFileContext";
-import { TasksJson } from "../../../classes/Task";
-import type { LocalJson } from "../../../classes/LocalJson";
+
 
 
 export type ShotTasksModelData = {
@@ -25,10 +24,10 @@ export const ShotTasksNode = memo(
         //@ts-ignore
         const [loading, setLoading] = useState(false);
         //@ts-ignore
-        const nodes = useNodes(); 
+        const nodes = useNodes();
         const nodegraph_api = useNodeGraphApi();
 
-        const in0 = nodegraph_api.getInputNodes(id,"path")[0];
+        const in0 = nodegraph_api.getInputNodes(id, "path")[0];
         //console.log(in0.data.path);
 
         const project = Project.getProject();
@@ -36,13 +35,8 @@ export const ShotTasksNode = memo(
         const shot = project.getByAbsPath(in0?.data?.path as string);
         const is_shot = shot instanceof Shot;
 
-        const {local_file} = useLocalFile();
-        const tasksJson = useMemo(() => {
-            console.log("Load tasks");
-            const tasksJson = new TasksJson(local_file as LocalJson);            
-            return tasksJson;
-        },[local_file]);        
-        
+        const { tasks_json } = useLocalFile();
+
 
         return (
             <>
@@ -62,7 +56,7 @@ export const ShotTasksNode = memo(
                 >
 
                     <div style={{ fontSize: 12, marginBottom: 8, opacity: 0.7 }}>
-                        Shot Tasks 
+                        Shot Tasks
                     </div>
 
                     <div className="nodrag">
@@ -73,10 +67,10 @@ export const ShotTasksNode = memo(
                         }}>
                             <LoadingSpinner isLoading={loading} />
                         </div>
-                        
+
                         {in0?.data?.path as string}
                         {is_shot && <TaskContainer tasksJson={shot.tasksJson!} />}
-                        {!is_shot && <TaskContainer tasksJson={tasksJson} />}
+                        {!is_shot && <TaskContainer tasksJson={tasks_json} />}
 
 
                     </div>

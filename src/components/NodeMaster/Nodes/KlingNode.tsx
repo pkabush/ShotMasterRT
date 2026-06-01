@@ -1,4 +1,4 @@
-import { memo, useMemo, useState } from "react";
+import { memo, useState } from "react";
 import { type Node, type NodeProps } from "@xyflow/react";
 import { Button, Stack } from "react-bootstrap";
 import SimpleSelect from "../../Atomic/SimpleSelect";
@@ -11,9 +11,8 @@ import { KlingAI } from "../../../classes/KlingAI";
 import { Shot } from "../../../classes/Shot";
 import { ai_providers } from "../../../classes/AI_provider";
 import { LocalVideo } from "../../../classes/fileSystem/LocalVideo";
-import { TasksJson } from "../../../classes/Task";
 import { useLocalFile } from "../Context/LocalFileContext";
-import type { LocalJson } from "../../../classes/LocalJson";
+
 
 export type KlingNodeModelData = {
     model?: string;
@@ -31,8 +30,7 @@ export const KlingNode = memo(
 
         const nodegraph_api = useNodeGraphApi();
 
-        const { local_file } = useLocalFile();
-        const localTasksJson = useMemo(() => { return new TasksJson(local_file as LocalJson); }, [local_file]);
+        const { tasks_json} = useLocalFile();        
 
         const handleClick = async () => {
             setLoading(true);
@@ -43,7 +41,7 @@ export const KlingNode = memo(
                 const in0 = nodegraph_api.getInputNodes(id, "shot")[0];
                 const project = Project.getProject();
                 const shot = project.getByAbsPath(in0?.data?.path as string);
-                const tasksJson = (shot instanceof Shot) ? shot.tasksJson : localTasksJson
+                const tasksJson = (shot instanceof Shot) ? shot.tasksJson : tasks_json
                 //if (!(shot instanceof Shot)) { throw new Error("Missing required input: SHOT"); }
 
                 // Get Prompt
