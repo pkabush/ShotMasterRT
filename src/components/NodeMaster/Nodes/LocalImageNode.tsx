@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useMemo } from "react";
+import React, { memo, useCallback, useMemo, useState } from "react";
 import {
     NodeResizeControl,
     NodeToolbar,
@@ -40,6 +40,8 @@ export const LocalImageNode = memo(
         const { setNodes } = useReactFlow();
         const ng_api = useNodeGraphApi();
         const project = Project.getProject();
+
+        const [showCanvas, setShowCanvas] = useState(false);
 
         const local_image = useMemo(() => {
             return project.getByAbsPath(data.path) as LocalMedia;
@@ -109,11 +111,19 @@ export const LocalImageNode = memo(
                     position={Position.Top}
                     align={"end"}
                 >
+
+                    {local_image instanceof LocalImage &&
+                        <Button onClick={() => { setShowCanvas(true) }} variant="warning" size="sm"> DRAW
+                            <FontAwesomeIcon icon={faBrush} />
+                        </Button>}
+
                     <Button size="sm" onClick={() => {
                         const file = project.getByAbsPath(data.path);
                         if (file?.parentFolder)
                             setPath(file?.parentFolder!.path);
                     }}>Up</Button>
+
+
                 </NodeToolbar>
 
 
@@ -196,18 +206,29 @@ export const LocalImageNode = memo(
                                     <MiniVideoEditor localVideo={local_image} />
                                 </div>
                                 :
-                                <MediaPreview
-                                    media={local_image}
-                                    style={{
-                                        width: "100%",
-                                        height: "100%",
-                                        objectFit: "contain",
-                                        display: "block",
-                                    }}
-                                    autoPlay={true}
-                                    loop={true}
-                                    muted={true}
-                                />}
+                                <>
+                                    <MediaPreview
+                                        media={local_image}
+                                        style={{
+                                            width: "100%",
+                                            height: "100%",
+                                            objectFit: "contain",
+                                            display: "block",
+                                        }}
+                                        autoPlay={true}
+                                        loop={true}
+                                        muted={true}
+                                    />
+                                    {local_image instanceof LocalImage &&
+                                        <div className="nodrag" style={{ cursor: "default" }}>
+                                            <FullPageOverlay show={showCanvas}>
+                                                <DrawingCanvas image={local_image} onClose={() => { setShowCanvas(false) }} />
+                                            </FullPageOverlay>
+                                        </div>
+                                    }
+                                </>
+
+                            }
                         </>}
 
                         {(local_image instanceof LocalFolder) && <>
@@ -261,9 +282,12 @@ interface NodeMediaFolderGalleryProps {
 
 import * as ContextMenu from "@radix-ui/react-context-menu";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faClipboard } from "@fortawesome/free-solid-svg-icons";
+import { faBrush, faClipboard } from "@fortawesome/free-solid-svg-icons";
 import "../../../css/ContextMenu.css";
 import { Button } from "react-bootstrap";
+import FullPageOverlay from "../../Containers/FullPageOverlay";
+import DrawingCanvas from "../../DrawingCanvas/DrawingCanvas";
+import { LocalImage } from "../../../classes/fileSystem/LocalImage";
 
 export const NodeMediaFolderGallery: React.FC<NodeMediaFolderGalleryProps> = observer(
     ({ mediaFolder, onPathClick }) => {
@@ -336,8 +360,9 @@ export const NodeMediaFolderGallery: React.FC<NodeMediaFolderGalleryProps> = obs
                     </ContextMenu.Portal>
                 </ContextMenu.Root>
             </div>
-
         </DropArea>
+
+
     });
 
 
@@ -345,10 +370,10 @@ export const NodeMediaFolderGallery: React.FC<NodeMediaFolderGalleryProps> = obs
 interface FolderPreviewProps {
     localFolder: LocalFolder;
     onClick?: () => void;
-    label?:string;
+    label?: string;
 }
 
-const FolderPreview = ({ localFolder, onClick ,label}: FolderPreviewProps) => {
+const FolderPreview = ({ localFolder, onClick, label }: FolderPreviewProps) => {
     return (
         <div
             style={{
@@ -369,11 +394,20 @@ const FolderPreview = ({ localFolder, onClick ,label}: FolderPreviewProps) => {
                     display: "block",
                     textAlign: "center",
                     width: "100%",
-                    color: "#5e727e",
+                    color: "#728a99",
                 }}
             >
                 {label ? label : localFolder.name}
+                {/**
+                <br/>
+                sub { localFolder.subfolders.length}
+                <br/>
+                img { localFolder.getType(LocalImage,{deep:true}).length}
+                <br/>
+                vod { localFolder.getType(LocalVideo,{deep:true}).length}
+                 */}
             </span>
+
         </div>
     );
 };

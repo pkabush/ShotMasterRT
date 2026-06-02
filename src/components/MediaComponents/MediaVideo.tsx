@@ -30,7 +30,12 @@ const MediaVideo: React.FC<Props> = observer(({ localVideo, ...props }) => {
     return <div>Loading...</div>;
   }
 
-  return (<video src={localVideo.urlObject!} {...props} />);
+  return (<video src={localVideo.urlObject!} {...props}
+    draggable
+    onDragStart={(e) => {
+      e.dataTransfer.setData("LocalFilePath", localVideo.path);
+    }}
+  />);
 });
 
 export default MediaVideo;

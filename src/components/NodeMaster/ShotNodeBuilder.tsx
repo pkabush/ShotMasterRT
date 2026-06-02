@@ -9,7 +9,6 @@ import {
     Panel,
     type Edge,
     SelectionMode,
-    useReactFlow,
     ReactFlowProvider,
 } from "@xyflow/react";
 
@@ -29,6 +28,9 @@ import { KlingNode } from "./Nodes/KlingNode";
 import { ShotTasksNode } from "./Nodes/ShotTasksNode";
 import { MergeNode } from "./Nodes/MergeNode";
 import { SeedanceNode } from "./Nodes/SeedanceNode";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faClapperboard, faFilm } from "@fortawesome/free-solid-svg-icons";
+import { Scene } from "../../classes/Scene";
 
 
 
@@ -94,8 +96,6 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
         event.preventDefault();
         event.dataTransfer.dropEffect = 'move';
     }, []);
-
-
 
 
 
@@ -179,17 +179,33 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
                     },
                 }}
 
-                onDrop={(e) => {
+                onDrop={async (e) => {
                     e.preventDefault();
                     //console.log("DROP IT", e);
 
                     const local_file_path = e.dataTransfer.getData("LocalFilePath");
-                    if (!local_file_path) return;
+                    if (local_file_path) {
+                        //console.log(local_file_path, e);
+                        nodegraph_api.addNode("localImageNode",
+                            nodegraph_api.screenToFlowPosition({ x: e.clientX, y: e.clientY })
+                            , { path: local_file_path }, [300, 400]);
+                    }
 
-                    //console.log(local_file_path, e);
-                    nodegraph_api.addNode("localImageNode",
-                        nodegraph_api.screenToFlowPosition({ x: e.clientX, y: e.clientY })
-                        , { path: local_file_path }, [300, 400]);
+                    const files = Array.from(e.dataTransfer.files);
+                    if (files.length > 0) {
+                        console.log(files);
+                        const parentFolder = nodegraphJson.parentFolder;
+                        const save_files = await parentFolder!.saveFiles(files);
+                        let offset = 0;
+                        for (const file of save_files) {
+                            nodegraph_api.addNode("localImageNode",
+                                nodegraph_api.screenToFlowPosition({ x: e.clientX, y: e.clientY + offset })
+                                , { path: file.path }, [300, 400]);
+                            offset += 300;
+                        }
+                    }
+
+
                 }}
                 onDragOver={onDragOver}
 
@@ -203,10 +219,15 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
 
                 <Panel position="top-left">
                     <Stack gap={1}>
-                        <Button onClick={exportFlow}>Save</Button>
-                        <Button onClick={loadFlow}>Load</Button>
+                        <Button variant="secondary" onClick={() => { console.log({ nodes, edges,nodegraphJson }) }}>
+                            <FontAwesomeIcon icon={(nodegraphJson.parentFolder! instanceof Scene) ? faFilm : faClapperboard} />
+                            {nodegraphJson.parentFolder!.name}
+                            </Button>
+                        <Button onClick={exportFlow} size="sm">Save</Button>
+                        <Button onClick={loadFlow} size="sm">Load</Button>
                         <AddNodeUIPanel></AddNodeUIPanel>
                         <Button
+                            size="sm"
                             variant={showMiniMap ? "secondary" : "outline-secondary"}
                             onClick={toggleMiniMap}
                         >
@@ -224,19 +245,16 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
 
 
 const AddNodeUIPanel = () => {
-
     const { addNode } = useNodeGraphApi();
-    const { getNodes, getEdges } = useReactFlow();
 
     return <>
-        <Button onClick={() => { console.log({ nodes: getNodes(), edges: getEdges() }) }}>Log</Button>
-        <Button onClick={() => addNode("textNode")}>+ Text Node</Button>
-        <Button onClick={() => addNode("googleAiNode")}>+ GoogleNode</Button>
-        <Button onClick={() => addNode("localImageNode")}>+ LocalImage</Button>
-        <Button onClick={() => addNode("klingNode")}>+ Kling</Button>
-        <Button onClick={() => addNode("seedanceNode")}>+ SeedanceNode</Button>
-        <Button onClick={() => addNode("tasksNode")}>+ Tasks</Button>
-        <Button onClick={() => addNode("mergeNode")}>+ Merge</Button>
+        <Button size="sm" onClick={() => addNode("textNode")}>+ Text Node</Button>
+        <Button size="sm" onClick={() => addNode("googleAiNode")}>+ GoogleNode</Button>
+        <Button size="sm" onClick={() => addNode("localImageNode")}>+ LocalImage</Button>
+        <Button size="sm" onClick={() => addNode("klingNode")}>+ Kling</Button>
+        <Button size="sm" onClick={() => addNode("seedanceNode")}>+ SeedanceNode</Button>
+        <Button size="sm" onClick={() => addNode("tasksNode")}>+ Tasks</Button>
+        <Button size="sm" onClick={() => addNode("mergeNode")}>+ Merge</Button>
     </>
 
 

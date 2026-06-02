@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { useReactFlow, type Node, type Edge } from "@xyflow/react";
 import { toJS } from "mobx";
 import { useNodeGraphApi } from "../nodeGraphApi";
+import { useLocalFile } from "../Context/LocalFileContext";
 
 export const FlowClipboard = () => {
     const {
@@ -15,6 +16,7 @@ export const FlowClipboard = () => {
     const nodegraph_api = useNodeGraphApi();
     // cursor in FLOW coordinates
     const mouseRef = useRef({ x: 0, y: 0 });
+    const local_file = useLocalFile();
 
     /**
      * Track mouse position in flow space
@@ -81,77 +83,105 @@ export const FlowClipboard = () => {
      */
     const pasteSelected = useCallback(async () => {
         const text = await navigator.clipboard.readText();
-        if (!text) return;
-
-        let parsed;
-        try {
-            parsed = JSON.parse(text);
-        } catch {
-            console.warn("Invalid clipboard JSON");
-            return;
-        }
-
-        const data = parsed?.nodes_data;
-        if (data?.nodes?.length) {
-
-            const idMap = new Map<string, string>();
-
-            // --- bounding box of copied nodes
-            let minX = Infinity;
-            let minY = Infinity;
-
-            for (const n of data.nodes) {
-                minX = Math.min(minX, n.position.x);
-                minY = Math.min(minY, n.position.y);
+        if (text) {
+            let parsed;
+            try {
+                parsed = JSON.parse(text);
+            } catch {
+                console.warn("Invalid clipboard JSON");
+                return;
             }
 
-            // --- cursor in FLOW space
-            const cursor = mouseRef.current;
+            const data = parsed?.nodes_data;
+            if (data?.nodes?.length) {
+                const idMap = new Map<string, string>();
 
-            const offsetX = cursor.x - minX;
-            const offsetY = cursor.y - minY;
+                // --- bounding box of copied nodes
+                let minX = Infinity;
+                let minY = Infinity;
 
-            // --- new nodes
-            const newNodes: Node[] = data.nodes.map((n: any) => {
-                const newId = crypto.randomUUID();
-                idMap.set(n.id, newId);
+                for (const n of data.nodes) {
+                    minX = Math.min(minX, n.position.x);
+                    minY = Math.min(minY, n.position.y);
+                }
 
-                return {
-                    ...n,
-                    id: newId,
-                    selected: true,
-                    position: {
-                        x: n.position.x + offsetX,
-                        y: n.position.y + offsetY,
-                    },
-                };
-            });
+                // --- cursor in FLOW space
+                const cursor = mouseRef.current;
 
-            // --- new edges remapped
-            const newEdges: Edge[] = data.edges.map((e: any) => ({
-                ...e,
-                id: crypto.randomUUID(),
-                source: idMap.get(e.source)!,
-                target: idMap.get(e.target)!,
-            }));
+                const offsetX = cursor.x - minX;
+                const offsetY = cursor.y - minY;
 
-            // --- update graph safely
-            setNodes((nds) => [
-                ...nds.map((n) => ({ ...n, selected: false })),
-                ...newNodes,
-            ]);
+                // --- new nodes
+                const newNodes: Node[] = data.nodes.map((n: any) => {
+                    const newId = crypto.randomUUID();
+                    idMap.set(n.id, newId);
 
-            setEdges((eds) => [...eds, ...newEdges]);
+                    return {
+                        ...n,
+                        id: newId,
+                        selected: true,
+                        position: {
+                            x: n.position.x + offsetX,
+                            y: n.position.y + offsetY,
+                        },
+                    };
+                });
+
+                // --- new edges remapped
+                const newEdges: Edge[] = data.edges.map((e: any) => ({
+                    ...e,
+                    id: crypto.randomUUID(),
+                    source: idMap.get(e.source)!,
+                    target: idMap.get(e.target)!,
+                }));
+
+                // --- update graph safely
+                setNodes((nds) => [
+                    ...nds.map((n) => ({ ...n, selected: false })),
+                    ...newNodes,
+                ]);
+
+                setEdges((eds) => [...eds, ...newEdges]);
+            }
+
+            // Local Path Present
+            if (parsed.local_path) {
+                console.log("Buffer", parsed);
+                const cursor = mouseRef.current;
+                nodegraph_api.addNode("localImageNode", cursor, { path: parsed.local_path }, [300, 400]);
+            }
         }
 
-        // Local Path Present
-        if (parsed.local_path) {
-            console.log("Buffer", parsed);
-            const cursor = mouseRef.current;
-            nodegraph_api.addNode("localImageNode", cursor, { path: parsed.local_path }, [300, 400]);
+        if (navigator.clipboard.read) {
+            const items = await navigator.clipboard.read();
+            //console.log("Clipboard items:", items);
 
+            const pngFiles: File[] = [];
+            for (const item of items) {
+                console.log(item);
+                if (item.types.includes("image/png")) {
+                    try {
+                        const blob = await item.getType("image/png");
+                        const file = new File([blob], `clipboard-${Date.now()}.png`, { type: "image/png" });
+                        pngFiles.push(file);
+                    } catch (err) {
+                        console.warn("Failed to read image/png from clipboard:", err);
+                    }
+                }
+            }
+
+            if (pngFiles.length > 0) {
+                const save_files = await local_file.local_file.parentFolder!.saveFiles(pngFiles);
+                const cursor = mouseRef.current;
+                let offset = 0;
+                for (const file of save_files) {
+                    nodegraph_api.addNode("localImageNode",
+                        cursor
+                        , { path: file.path }, [300, 400]);
+                    offset += 300;
+                }
+            }
         }
-
 
     }, [setNodes, setEdges]);
 

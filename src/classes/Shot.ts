@@ -18,6 +18,7 @@ import { Tags } from './Tags';
 
 export class Shot extends LocalFolder {
   shotJson: LocalJson | null = null;
+  nodeGraphJson: LocalJson | null = null;
   references: Tags | null = null;
   tasksJson:TasksJson | null = null;
 
@@ -47,6 +48,7 @@ export class Shot extends LocalFolder {
     // Use makeObservable because we extend LocalFolder
     makeObservable(this, {
       shotJson: observable,
+      nodeGraphJson: observable,
       is_submitting_video: observable,
       is_generating: observable,
       MediaFolder_results: observable,
@@ -62,6 +64,7 @@ export class Shot extends LocalFolder {
   async load(): Promise<void> {
     try {
       const shotJson = await LocalJson.create(this, 'shotinfo.json');
+      const nodeGraphJson = await LocalJson.create(this, 'nodegraph.json');
       const references = new Tags(this, shotJson);
       const tasksJson = new TasksJson(shotJson);
 
@@ -85,6 +88,7 @@ export class Shot extends LocalFolder {
         this.MediaFolder_genVideo = genVideo;
         this.MediaFolder_refVideo = refVideo;
         this.MediaFolder_Audio = audio;
+        this.nodeGraphJson = nodeGraphJson;
       });
       
     } catch (err) {

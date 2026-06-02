@@ -94,7 +94,12 @@ export class Scene extends LocalFolder {
       .filter((shot): shot is Shot => shot !== undefined);
   }
 
-  selectShot(shot: Shot) {
+  selectShot(shot: Shot | null) {
+    if (shot == null) {
+      this.selectedShot = null;
+      return;
+    }
+
     if (this.shots.includes(shot)) {
       this.selectedShot = shot;
     }

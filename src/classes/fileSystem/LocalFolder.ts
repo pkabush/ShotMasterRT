@@ -109,10 +109,19 @@ export class LocalFolder extends LocalItem {
         }
     }
 
-    async saveFiles(files: File[]) {
+    async saveFiles(files: File[]): Promise<LocalFile[]> {
+        const savedFiles: LocalFile[] = [];
+
         for (const file of files) {
-            try { await this.save_file(file); } catch { }
+            try {
+                const savedFile = await this.save_file(file);
+                savedFiles.push(savedFile);
+            } catch {
+                // Ignore failed files
+            }
         }
+
+        return savedFiles;
     }
 
     get files(): LocalFile[] {

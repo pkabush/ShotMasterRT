@@ -78,11 +78,12 @@ const DrawingCanvas: React.FC<Props> = ({ image, onClose = () => { } }) => {
         const filename = `drawing-${Date.now()}.png`;
         onClose();
         const new_image = await LocalImage.fromBase64({ rawBase64, mime }, folder, filename);
+        new_image.copyToClipboard();        
         folder.setSelectedMedia(new_image);
     };
 
     const containerRef = useRef<HTMLDivElement | null>(null);
-    
+
 
     const getStagePoint = (stage: Konva.Stage) => {
         const pos = stage.getPointerPosition();
