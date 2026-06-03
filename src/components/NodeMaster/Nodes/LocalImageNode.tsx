@@ -43,6 +43,8 @@ export const LocalImageNode = memo(
 
         const [showCanvas, setShowCanvas] = useState(false);
 
+        const local_file = useLocalFile();
+
         const local_image = useMemo(() => {
             return project.getByAbsPath(data.path) as LocalMedia;
         }, [data.path])
@@ -103,6 +105,10 @@ export const LocalImageNode = memo(
                             console.log(item);
                             setPath(item.path);
                         }} />}
+
+                    <Button size="sm" variant="warning" onClick={() => {
+                        setPath(local_file.local_file.parentFolder!.path);
+                    }}>Root</Button>
 
                 </NodeToolbar>
 
@@ -282,12 +288,13 @@ interface NodeMediaFolderGalleryProps {
 
 import * as ContextMenu from "@radix-ui/react-context-menu";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faBrush, faClipboard } from "@fortawesome/free-solid-svg-icons";
+import { faBrush, faClipboard, faFilm, faImage } from "@fortawesome/free-solid-svg-icons";
 import "../../../css/ContextMenu.css";
 import { Button } from "react-bootstrap";
 import FullPageOverlay from "../../Containers/FullPageOverlay";
 import DrawingCanvas from "../../DrawingCanvas/DrawingCanvas";
 import { LocalImage } from "../../../classes/fileSystem/LocalImage";
+import { useLocalFile } from "../Context/LocalFileContext";
 
 export const NodeMediaFolderGallery: React.FC<NodeMediaFolderGalleryProps> = observer(
     ({ mediaFolder, onPathClick }) => {
@@ -374,6 +381,9 @@ interface FolderPreviewProps {
 }
 
 const FolderPreview = ({ localFolder, onClick, label }: FolderPreviewProps) => {
+    const image_count = localFolder.getType(LocalImage, { deep: true }).length
+    const video_count = localFolder.getType(LocalVideo, { deep: true }).length
+
     return (
         <div
             style={{
@@ -394,7 +404,8 @@ const FolderPreview = ({ localFolder, onClick, label }: FolderPreviewProps) => {
                     display: "block",
                     textAlign: "center",
                     width: "100%",
-                    color: "#728a99",
+                    color: "#afc4d1",
+
                 }}
             >
                 {label ? label : localFolder.name}
@@ -406,6 +417,22 @@ const FolderPreview = ({ localFolder, onClick, label }: FolderPreviewProps) => {
                 <br/>
                 vod { localFolder.getType(LocalVideo,{deep:true}).length}
                  */}
+                <br />
+                <div style={{
+                    //fontSize:15
+                    color:"#7f8290"
+                }}>
+                    {!label && <>
+                        {image_count != 0 && <>
+                            <FontAwesomeIcon icon={faImage} /> {image_count}
+                        </>}
+                        <br />
+                        {video_count != 0 && <>
+                            <FontAwesomeIcon icon={faFilm} /> {video_count}
+                        </>}
+
+                    </>}
+                </div>
             </span>
 
         </div>

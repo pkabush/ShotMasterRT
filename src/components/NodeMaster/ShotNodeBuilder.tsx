@@ -29,7 +29,7 @@ import { ShotTasksNode } from "./Nodes/ShotTasksNode";
 import { MergeNode } from "./Nodes/MergeNode";
 import { SeedanceNode } from "./Nodes/SeedanceNode";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faClapperboard, faFilm } from "@fortawesome/free-solid-svg-icons";
+import { faA, faBook, faClapperboard, faCodeBranch, faFileArrowDown, faFilm, faFish, faFloppyDisk, faImage, faListOl } from "@fortawesome/free-solid-svg-icons";
 import { Scene } from "../../classes/Scene";
 
 
@@ -223,8 +223,8 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
                             <FontAwesomeIcon icon={(nodegraphJson.parentFolder! instanceof Scene) ? faFilm : faClapperboard} />
                             {nodegraphJson.parentFolder!.name}
                             </Button>
-                        <Button onClick={exportFlow} size="sm">Save</Button>
-                        <Button onClick={loadFlow} size="sm">Load</Button>
+                        <Button onClick={exportFlow} size="sm" variant="success"> <FontAwesomeIcon icon={faFloppyDisk} /> Save</Button>
+                        <Button onClick={loadFlow} size="sm"  variant="secondary"> <FontAwesomeIcon icon={faFileArrowDown} /> Load</Button>
                         <AddNodeUIPanel></AddNodeUIPanel>
                         <Button
                             size="sm"
@@ -248,13 +248,13 @@ const AddNodeUIPanel = () => {
     const { addNode } = useNodeGraphApi();
 
     return <>
-        <Button size="sm" onClick={() => addNode("textNode")}>+ Text Node</Button>
-        <Button size="sm" onClick={() => addNode("googleAiNode")}>+ GoogleNode</Button>
-        <Button size="sm" onClick={() => addNode("localImageNode")}>+ LocalImage</Button>
-        <Button size="sm" onClick={() => addNode("klingNode")}>+ Kling</Button>
-        <Button size="sm" onClick={() => addNode("seedanceNode")}>+ SeedanceNode</Button>
-        <Button size="sm" onClick={() => addNode("tasksNode")}>+ Tasks</Button>
-        <Button size="sm" onClick={() => addNode("mergeNode")}>+ Merge</Button>
+        <Button size="sm" variant="warning" onClick={() => addNode("textNode")}><FontAwesomeIcon icon={faA} /> Text Node</Button>
+        <Button size="sm" variant="warning" onClick={() => addNode("localImageNode")}><FontAwesomeIcon icon={faImage} /> LocalImage</Button>
+        <Button size="sm" variant="warning" onClick={() => addNode("googleAiNode")}><FontAwesomeIcon icon={faBook} /> Google</Button>        
+        <Button size="sm" variant="warning" onClick={() => addNode("klingNode")}><FontAwesomeIcon icon={faFilm} /> Kling</Button>
+        <Button size="sm" variant="warning" onClick={() => addNode("seedanceNode")}><FontAwesomeIcon icon={faFish} /> Seedance</Button>
+        <Button size="sm" variant="warning" onClick={() => addNode("tasksNode")}><FontAwesomeIcon icon={faListOl} /> Tasks</Button>
+        <Button size="sm" variant="warning" onClick={() => addNode("mergeNode")}><FontAwesomeIcon icon={faCodeBranch} /> Merge</Button>
     </>
 
 
