@@ -29,8 +29,9 @@ import { ShotTasksNode } from "./Nodes/ShotTasksNode";
 import { MergeNode } from "./Nodes/MergeNode";
 import { SeedanceNode } from "./Nodes/SeedanceNode";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faA, faBook, faClapperboard, faCodeBranch, faFileArrowDown, faFilm, faFish, faFloppyDisk, faImage, faListOl } from "@fortawesome/free-solid-svg-icons";
+import { faA, faBook, faClapperboard, faCodeBranch, faFileArrowDown, faFilm, faFish, faFloppyDisk, faG, faImage, faListOl } from "@fortawesome/free-solid-svg-icons";
 import { Scene } from "../../classes/Scene";
+import { GptNode } from "./Nodes/GptNode";
 
 
 
@@ -42,6 +43,7 @@ export const nodeTypes = {
     tasksNode: ShotTasksNode,
     mergeNode: MergeNode,
     seedanceNode: SeedanceNode,
+    gptNode: GptNode,
 };
 
 export type NodeType = keyof typeof nodeTypes;
@@ -251,6 +253,7 @@ const AddNodeUIPanel = () => {
         <Button size="sm" variant="warning" onClick={() => addNode("textNode")}><FontAwesomeIcon icon={faA} /> Text Node</Button>
         <Button size="sm" variant="warning" onClick={() => addNode("localImageNode")}><FontAwesomeIcon icon={faImage} /> LocalImage</Button>
         <Button size="sm" variant="warning" onClick={() => addNode("googleAiNode")}><FontAwesomeIcon icon={faBook} /> Google</Button>        
+        <Button size="sm" variant="warning" onClick={() => addNode("gptNode")}><FontAwesomeIcon icon={faG} /> Gpt</Button>        
         <Button size="sm" variant="warning" onClick={() => addNode("klingNode")}><FontAwesomeIcon icon={faFilm} /> Kling</Button>
         <Button size="sm" variant="warning" onClick={() => addNode("seedanceNode")}><FontAwesomeIcon icon={faFish} /> Seedance</Button>
         <Button size="sm" variant="warning" onClick={() => addNode("tasksNode")}><FontAwesomeIcon icon={faListOl} /> Tasks</Button>

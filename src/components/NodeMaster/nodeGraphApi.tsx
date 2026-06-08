@@ -35,7 +35,10 @@ const defaultNodeData: Record<NodeType, any> = {
         duration: SeedanceAI.options.video.duration.default,
         ratio: SeedanceAI.options.video.ration.adaptive,
         sound: true,
-    }
+    },
+    gptNode: {
+        gen_image: true,        
+    },
 };
 
 export function useNodeGraphApi() {

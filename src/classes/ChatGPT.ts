@@ -1,5 +1,6 @@
 import OpenAI from "openai";
 import type { AIGenerateParms, AIProvider, ImageResult } from "./AI_provider";
+import type { AIMessage } from "./GoogleAI";
 
 
 // Custom error types for clarity
@@ -309,12 +310,135 @@ export class ChatGPT implements AIProvider {
       resolution
     );
 
-
-
     if (!res) return null;
 
     return res;
   }
+
+  // New Message Type Function
+  public static async sendMessages(
+    messages: AIMessage[],
+    model: string = ChatGPT.options.models.gpt_5_5,
+    aspect_ratio?: string,
+    resolution?: string,
+    gen_image: boolean = true,
+  ) {
+    try {
+      const openai = this.getClient();
+
+      // SWITHC ON MODEL
+      if (Object.values(ChatGPT.options.image_models).includes(model)) {
+        // Image Model Use Image Generation API
+        // - allows only one prompt and multiple images
+        const images: { rawBase64: string; mime: string; description: string }[] = [];
+        const prompts: string[] = [];
+
+        // Convert Mesasges into [prompt + images]
+        for (const message of messages) {
+          // Plain string
+          if (typeof message === "string") {
+            if (message.trim()) { prompts.push(message); }
+            continue;
+          }
+          // Raw image object
+          if ("rawBase64" in message && "mime" in message) {
+            images.push(message);
+            continue;
+          }
+        }
+
+        const res = aspectToPixels(aspect_ratio, resolution);
+
+        return await this.img2img(
+          prompts.join(),
+          model,
+          images,
+          res,
+        )
+      }
+      else {
+        const content: any[] = [];
+
+        // Gather all the messages
+        for (const message of messages) {
+          // Plain string
+          if (typeof message === "string") {
+            if (message.trim()) {
+              content.push({ type: "input_text", text: message });
+            }
+            continue;
+          }
+
+          // Raw image object
+          if ("rawBase64" in message && "mime" in message) {
+            content.push({
+              type: "input_image",
+              image_url: `data:${message.mime};base64,${message.rawBase64}`,
+            });
+            continue;
+          }
+        }
+
+        // Create Payload
+        const payload: any = {
+          model,
+          input: [
+            {
+              role: "user" as const,
+              content,
+            },
+          ],
+        };
+
+        if (gen_image) payload.tools = [{
+          type: "image_generation" as const,
+        }];
+
+        console.log("GPT_MSG_Payload", payload);
+
+        // Get response
+        const response = await openai.responses.create(payload);
+        console.log("OPENAI RES", response);
+
+        // Return Image or Text
+        const imageData = response.output
+          ?.filter((o: any) => o.type === "image_generation_call")
+          ?.map((o: any) => o.result);
+
+        if (imageData?.length) {
+          const base64 = imageData[0];
+          return {
+            base64Obj: {
+              rawBase64: base64,
+              mime: "image/png",
+            },
+            id: response.id,
+          };
+        }
+
+        const text = response.output_text;
+        return text;
+      }
+
+      return null;
+
+    } catch (err: any) {
+      const message = err?.message || "";
+
+      if (
+        message.includes("API key") ||
+        message.includes("invalid_api_key") ||
+        err instanceof MissingApiKeyError
+      ) {
+        console.log("INPUT GPT KEY!");
+        return null;
+      }
+
+      console.error("img2img error", err);
+      throw err;
+    }
+  }
+
 
 }
 

@@ -1,6 +1,6 @@
 import { memo, useEffect, useState } from "react";
 import { useReactFlow, useStore, useUpdateNodeInternals, type Node, type NodeProps } from "@xyflow/react";
-import {  Button, Stack } from "react-bootstrap";
+import { Button, Stack } from "react-bootstrap";
 import SimpleSelect from "../../Atomic/SimpleSelect";
 import { GoogleAI, type AIMessage } from "../../../classes/GoogleAI";
 import LoadingSpinner from "../../Atomic/LoadingSpinner";
@@ -9,25 +9,25 @@ import { LocalImage } from "../../../classes/fileSystem/LocalImage";
 import { NamedInputHandle, NamedOutputHandle } from "../Atomic/NamedInput";
 import { useLocalFile } from "../Context/LocalFileContext";
 import { useNodeGraphApi } from "../nodeGraphApi";
+import { ChatGPT } from "../../../classes/ChatGPT";
 
-export type nb_GoogleTextModelData = {
+export type GptNodeModelData = {
     model?: string;
-    img_model?: string;
     gen_image?: boolean;
     resolution?: string;
     aspect_ratio?: string;
 };
 
-export type nb_GoogleTextModelType = Node<nb_GoogleTextModelData, "googleTextModel">;
+export type GptNodeModelType = Node<GptNodeModelData, "gptNodeModel">;
 
-export const nb_GoogleAI = memo(
-    ({ id, data, selected }: NodeProps<nb_GoogleTextModelType>) => {
+export const GptNode = memo(
+    ({ id, data, selected }: NodeProps<GptNodeModelType>) => {
         const project = Project.getProject();
         const { local_file } = useLocalFile();
 
         const { getEdges, getNodes, setNodes } = useReactFlow();
         const setNodeData = (
-            updater: (data: nb_GoogleTextModelData) => Partial<nb_GoogleTextModelData>
+            updater: (data: GptNodeModelData) => Partial<GptNodeModelData>
         ) => {
             setNodes((nds) =>
                 nds.map((n) =>
@@ -36,7 +36,7 @@ export const nb_GoogleAI = memo(
                             ...n,
                             data: {
                                 ...n.data,
-                                ...updater(n.data as nb_GoogleTextModelData),
+                                ...updater(n.data as GptNodeModelData),
                             },
                         }
                         : n
@@ -59,6 +59,7 @@ export const nb_GoogleAI = memo(
         const nodegraph_api = useNodeGraphApi();
 
         const handleClick = async () => {
+
             setLoading(true);
             try {
                 const edges = getEdges();
@@ -89,26 +90,26 @@ export const nb_GoogleAI = memo(
                 };
 
 
-
                 const node = nodegraph_api.id2Node(id);
                 if (!node) return;
 
 
-                const model = data.gen_image ? data.img_model : data.model;
+                const model = data.model;
                 const resolution = data.resolution;
                 const aspect_ratio = data.aspect_ratio;
 
-                const res = await GoogleAI.sendMessages(messages, model, aspect_ratio, resolution);
 
-                if (data.gen_image) {
-                    const out_image_nodes = nodegraph_api.getOutputNodes(id, "out_image", "localImageNode");                    
+                const res = await ChatGPT.sendMessages(messages, model, aspect_ratio, resolution,data.gen_image);
+
+                if (!(typeof res === "string")) {
+                    const out_image_nodes = nodegraph_api.getOutputNodes(id, "out_image", "localImageNode");
 
                     if (out_image_nodes.length == 0) {
                         const saved_image = await GoogleAI.saveResultImage(res, local_file.parentFolder!);
                         console.log(saved_image)
                         console.log(local_file)
                         console.log(local_file.parentFolder!)
-                        if(!saved_image) return;
+                        if (!saved_image) return;
 
                         // Create New Node
                         const my_pos = node?.position ?? { x: 0, y: 0 };
@@ -119,15 +120,15 @@ export const nb_GoogleAI = memo(
                     else {
                         const res_node = out_image_nodes[0]
                         const res_image = local_file.getByAbsPath(res_node.data.path as string) ?? local_file;
-                        
+
                         const saved_image = await GoogleAI.saveResultImage(res, res_image.parentFolder!);
-                        
+
                         nodegraph_api.setNodeData(res_node.id, { path: saved_image?.path });
                         updateNodeInternals(res_node.id);
                     }
 
 
-                    
+
                 }
                 else {
                     console.log(res);
@@ -151,9 +152,11 @@ export const nb_GoogleAI = memo(
 
                 console.log(getNodes());
 
+
             } finally {
                 setLoading(false);
             }
+
         };
 
 
@@ -174,7 +177,7 @@ export const nb_GoogleAI = memo(
             >
 
                 <div style={{ fontSize: 12, marginBottom: 8, opacity: 0.7 }}>
-                    Google AI
+                    GPT Node
                 </div>
 
                 <div className="nodrag">
@@ -189,47 +192,35 @@ export const nb_GoogleAI = memo(
                     <Stack>
 
                         <Stack direction="horizontal" gap={1}>
-                            <Button size="sm" variant="warning"
-                                onClick={() => {
-                                    setNodeData((d) => ({
-                                        gen_image: !d.gen_image,
-                                    }));
-                                }}>
-                                {(data.gen_image ?? false) ? "Img" : "Text"}
-                            </Button>
+                            <>
+                                <SimpleSelect
+                                    value={data.model ?? Object.values(ChatGPT.options.models)[0]}
+                                    options={[
+                                        ...Object.values(ChatGPT.options.models)
+                                    ]}
+                                    onChange={(val: string) => {
+                                        setNodeData(() => ({ model: val, }));
+                                    }}
+                                />
+                            </>
 
-                            {(data.gen_image ?? false) ?
-                                <>
-                                    <SimpleSelect
-                                        value={data.img_model ?? Object.values(GoogleAI.options.img_models)[0]}
-                                        options={[
-                                            ...Object.values(GoogleAI.options.img_models)
-                                        ]}
-                                        onChange={(val: string) => {
-                                            setNodeData(() => ({ img_model: val, }));
-                                        }}
-                                    />
-                                </>
-                                :
-                                <>
-                                    <SimpleSelect
-                                        value={data.model ?? Object.values(GoogleAI.options.text_models)[0]}
-                                        options={[
-                                            ...Object.values(GoogleAI.options.text_models)
-                                        ]}
-                                        onChange={(val: string) => {
-                                            setNodeData(() => ({
-                                                model: val,
-                                            }));
-                                        }}
-                                    />
-                                </>
-                            }
+
+                            {!(Object.values(ChatGPT.options.image_models).includes(data.model ?? "")) &&
+                                <Button size="sm" variant="warning"
+                                    onClick={() => {
+                                        setNodeData((d) => ({
+                                            gen_image: !d.gen_image,
+                                        }));
+                                    }}>
+                                    {(data.gen_image ?? false) ? "Img" : "Text"}
+                                </Button>}
+
+
 
 
                         </Stack>
 
-                        {(data.gen_image ?? false) ?
+                        {(Object.values(ChatGPT.options.image_models).includes(data.model ?? "")) ?
                             <>
                                 <SimpleSelect
                                     label="Aspect"
@@ -279,7 +270,7 @@ export const nb_GoogleAI = memo(
     }
 );
 
-nb_GoogleAI.displayName = "ButtonNode";
+GptNode.displayName = "ButtonNode";
 
 
 
