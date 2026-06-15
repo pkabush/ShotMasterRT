@@ -12,6 +12,7 @@ export type TextNodeData = {
 
 export type TextNodeType = Node<TextNodeData, "textNode">;
 
+
 export const TextNode = memo(
   ({ id, data, selected }: NodeProps<TextNodeType>) => {
     const { setNodes } = useReactFlow();
