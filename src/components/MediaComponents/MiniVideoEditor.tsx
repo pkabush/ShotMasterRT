@@ -5,7 +5,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBackwardStep, faCamera, faPause, faPlay, faRightFromBracket, faRightToBracket, faScissors, faVolume, faVolumeXmark } from "@fortawesome/free-solid-svg-icons";
 import { useEffect, useRef, useState } from "react";
 import { mb_trimLocalVideo } from "../../classes/Ffmpeg/mediabunnyService";
-import type { MediaFolder } from "../../classes/MediaFolder";
+import { MediaFolder } from "../../classes/MediaFolder";
 import { LocalImage } from "../../classes/fileSystem/LocalImage";
 
 
@@ -170,7 +170,10 @@ export const MiniVideoEditor: React.FC<MiniVideoEditorProps> = observer(({ local
         // blob -> base64
         const rawBase64 = await blobToBase64(blob);
 
+        console.log("local_videp",localVideo,localVideo.shot);
+        
         const outFolder = localVideo.shot ? localVideo.shot.MediaFolder_results! : localVideo.parentFolder!;
+        console.log("OUT_FOLDER",outFolder);
 
         // create LocalImage
         const image = await LocalImage.fromBase64(
@@ -206,7 +209,7 @@ also Copied To Clipboard!`);
                     const url = URL.createObjectURL(blob);
                     //window.open(url);
                     const cut = await localVideo.parentFolder!.downloadFromUrl(url) as LocalVideo;
-                    if (cut) (localVideo.parentFolder! as MediaFolder).setSelectedMedia(cut);
+                    if (cut && (localVideo.parentFolder instanceof MediaFolder)) (localVideo.parentFolder! as MediaFolder).setSelectedMedia(cut);
                     URL.revokeObjectURL(url);
 
                     alert(`Clip saved: ${cut.name}

@@ -17,7 +17,7 @@ import { TextNode } from "./Nodes/TextNode";
 import { Button, Stack } from "react-bootstrap";
 import type { LocalJson } from "../../classes/LocalJson";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { nb_GoogleAI } from "./Nodes/GoogleTextModelNode";
 import { LocalImageNode } from "./Nodes/LocalImageNode";
 import { LocalFileProvider } from "./Context/LocalFileContext";
@@ -29,7 +29,7 @@ import { ShotTasksNode } from "./Nodes/ShotTasksNode";
 import { MergeNode } from "./Nodes/MergeNode";
 import { SeedanceNode } from "./Nodes/SeedanceNode";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faA, faBook, faClapperboard, faCodeBranch, faFileArrowDown, faFilm, faFish, faFloppyDisk, faG, faImage, faListOl } from "@fortawesome/free-solid-svg-icons";
+import { faA, faBook, faClapperboard, faCodeBranch, faFileArrowDown, faFilm, faFish, faFloppyDisk, faG, faImage, faListOl, type IconDefinition } from "@fortawesome/free-solid-svg-icons";
 import { Scene } from "../../classes/Scene";
 import { GptNode } from "./Nodes/GptNode";
 
@@ -74,10 +74,10 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
 
     const nodegraph_api = useNodeGraphApi();
 
-
     const exportFlow = useCallback(() => {
         nodegraphJson.updateField("nodegraphs/nodegraph_001", { nodes, edges, });
     }, [nodegraphJson, nodes, edges]);
+
 
     const loadFlow = useCallback(() => {
         const loaded_ng = toJS(nodegraphJson.getField("nodegraphs/nodegraph_001"))
@@ -91,15 +91,33 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
         }
     }, [nodegraphJson]);
 
-
     useEffect(() => { loadFlow(); }, [nodegraphJson, loadFlow])
+
+    // Saving
+    const latestGraph = useRef<{
+        nodes: any[];
+        edges: any[];
+    }>({ nodes: [], edges: [] });
+
+    useEffect(() => {
+        latestGraph.current = { nodes, edges };
+    }, [nodes, edges]);
+
+    useEffect(() => {
+        return () => {
+            if (latestGraph.current.nodes.length == 0) return;
+            console.log("Graph Closed, saving...", latestGraph.current);
+            nodegraphJson.updateField(
+                "nodegraphs/nodegraph_001",
+                latestGraph.current
+            );
+        };
+    }, [nodegraphJson]);
 
     const onDragOver = useCallback((event: any) => {
         event.preventDefault();
         event.dataTransfer.dropEffect = 'move';
     }, []);
-
-
 
     return <div style={{
         width: "100%",
@@ -188,14 +206,24 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
                     const local_file_path = e.dataTransfer.getData("LocalFilePath");
                     if (local_file_path) {
                         //console.log(local_file_path, e);
+                        console.log("Drop From Local File");
                         nodegraph_api.addNode("localImageNode",
                             nodegraph_api.screenToFlowPosition({ x: e.clientX, y: e.clientY })
                             , { path: local_file_path }, [300, 400]);
+                        return;
+                    }
+
+                    const addNode = e.dataTransfer.getData("addNode");
+                    if (addNode) {
+                        console.log("Drop Node");
+                        nodegraph_api.addNode(addNode as NodeType,
+                            nodegraph_api.screenToFlowPosition({ x: e.clientX, y: e.clientY }));
+                        return;
                     }
 
                     const files = Array.from(e.dataTransfer.files);
                     if (files.length > 0) {
-                        console.log(files);
+                        console.log("DROP FILE", files);
                         const parentFolder = nodegraphJson.parentFolder;
                         const save_files = await parentFolder!.saveFiles(files);
                         let offset = 0;
@@ -221,12 +249,12 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
 
                 <Panel position="top-left">
                     <Stack gap={1}>
-                        <Button variant="secondary" onClick={() => { console.log({ nodes, edges,nodegraphJson }) }}>
+                        <Button variant="secondary" onClick={() => { console.log({ nodes, edges, nodegraphJson }) }}>
                             <FontAwesomeIcon icon={(nodegraphJson.parentFolder! instanceof Scene) ? faFilm : faClapperboard} />
                             {nodegraphJson.parentFolder!.name}
-                            </Button>
+                        </Button>
                         <Button onClick={exportFlow} size="sm" variant="success"> <FontAwesomeIcon icon={faFloppyDisk} /> Save</Button>
-                        <Button onClick={loadFlow} size="sm"  variant="secondary"> <FontAwesomeIcon icon={faFileArrowDown} /> Load</Button>
+                        <Button onClick={loadFlow} size="sm" variant="secondary"> <FontAwesomeIcon icon={faFileArrowDown} /> Load</Button>
                         <AddNodeUIPanel></AddNodeUIPanel>
                         <Button
                             size="sm"
@@ -246,19 +274,52 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
 }
 
 
-const AddNodeUIPanel = () => {
+const nodes = [
+    ["textNode", "Text Node", faA],
+    ["localImageNode", "LocalImage", faImage],
+    ["googleAiNode", "Google", faBook],
+    ["gptNode", "Gpt", faG],
+    ["klingNode", "Kling", faFilm],
+    ["seedanceNode", "Seedance", faFish],
+    ["tasksNode", "Tasks", faListOl],
+    ["mergeNode", "Merge", faCodeBranch],
+] as const;
+
+const AddNodeUIPanel = () => (
+    <>
+        {nodes.map(([nodeType, label, icon]) => (
+            <AddNodeButton
+                key={nodeType}
+                nodeType={nodeType}
+                label={label}
+                icon={icon}
+            />
+        ))}
+    </>
+);
+
+
+interface AddNodeButtonProps {
+    nodeType: NodeType;
+    label: string;
+    icon: IconDefinition;
+}
+export const AddNodeButton = ({
+    nodeType,
+    label,
+    icon,
+}: AddNodeButtonProps) => {
     const { addNode } = useNodeGraphApi();
 
-    return <>
-        <Button size="sm" variant="warning" onClick={() => addNode("textNode")}><FontAwesomeIcon icon={faA} /> Text Node</Button>
-        <Button size="sm" variant="warning" onClick={() => addNode("localImageNode")}><FontAwesomeIcon icon={faImage} /> LocalImage</Button>
-        <Button size="sm" variant="warning" onClick={() => addNode("googleAiNode")}><FontAwesomeIcon icon={faBook} /> Google</Button>        
-        <Button size="sm" variant="warning" onClick={() => addNode("gptNode")}><FontAwesomeIcon icon={faG} /> Gpt</Button>        
-        <Button size="sm" variant="warning" onClick={() => addNode("klingNode")}><FontAwesomeIcon icon={faFilm} /> Kling</Button>
-        <Button size="sm" variant="warning" onClick={() => addNode("seedanceNode")}><FontAwesomeIcon icon={faFish} /> Seedance</Button>
-        <Button size="sm" variant="warning" onClick={() => addNode("tasksNode")}><FontAwesomeIcon icon={faListOl} /> Tasks</Button>
-        <Button size="sm" variant="warning" onClick={() => addNode("mergeNode")}><FontAwesomeIcon icon={faCodeBranch} /> Merge</Button>
-    </>
-
-
-}
+    return (
+        <Button
+            size="sm"
+            variant="warning"
+            onClick={() => addNode(nodeType)}
+            onDragStart={(e) => { e.dataTransfer.setData("addNode", nodeType); }}
+            draggable={true}
+        >
+            <FontAwesomeIcon icon={icon} /> {label}
+        </Button>
+    );
+};

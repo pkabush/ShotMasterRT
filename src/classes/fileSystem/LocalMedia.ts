@@ -2,7 +2,7 @@ import { LocalFile } from "./LocalFile";
 import type { LocalImage } from "./LocalImage";
 import { LocalJson } from "../LocalJson";
 import type { MediaFolder } from "../MediaFolder";
-import type { Shot } from "../Shot";
+import { Shot } from "../Shot";
 import * as webFileStorage from '../webFileStorage';
 import { runInAction, makeObservable, observable, action, computed, override } from "mobx";
 import type { LocalFolder } from "./LocalFolder";
@@ -29,7 +29,8 @@ export class LocalMedia extends LocalFile {
   }
 
   get shot(): Shot | null {
-    return this.parentFolder?.parentFolder as Shot;
+    const shot = this.parentFolder?.parentFolder;
+    return shot instanceof Shot ? shot : null;
   }
 
   constructor(parentFolder: LocalFolder, handle: FileSystemFileHandle) {
