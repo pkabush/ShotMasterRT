@@ -212,7 +212,7 @@ export class LocalMedia extends LocalFile {
     try {
       console.log("Copy to clipboard", this.path);
       const fullPath =
-        Project.getProject().projinfo?.getField("project_path")
+        Project.getProject().projinfo?.getField("project_path") ?? ""
           .replace(/\\/g, "/") + this.path;
 
       await navigator.clipboard.writeText(
