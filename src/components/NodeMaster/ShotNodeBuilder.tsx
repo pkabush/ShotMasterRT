@@ -153,8 +153,18 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
 
                 multiSelectionKeyCode="Shift"
                 selectionKeyCode="Shift"
+                
+                
                 selectionOnDrag
                 selectionMode={SelectionMode.Partial}
+                panOnDrag={[1]} // only middle mouse button pans the canvas
+                //selectionOnDrag={false} // left drag won't create a selection box
+                elementsSelectable={true} // nodes selectable with left click
+                nodesDraggable={true} // nodes still draggable (see note below)
+
+
+
+
 
                 minZoom={0.025}
                 maxZoom={20}
