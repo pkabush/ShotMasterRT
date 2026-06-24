@@ -152,7 +152,7 @@ export class Task {
                     console.log("status", status)
                     this.update(status);
 
-                    if (status?.status === "succeed" && status.url) {
+                    if ((status?.status === "succeed" || status?.status === "succeeded") && status.url) {
                         await this.downloadResults();
                         this.finish_checking();
                         return;

@@ -54,7 +54,7 @@ function base64url(input: ArrayBuffer | string): string {
 
 export class KlingAI {
   // Function to dynamically provide keys, similar to ChatGPT.getApiKey
-  public static getKeysDict: (() => { accessKey: string; secretKey: string } | null) | null = null;
+  public static getKeysDict: (() => { accessKey: string; secretKey: string, apiKey: string } | null) | null = null;
 
   public static videoModels = [
     "kling-v1",
@@ -77,7 +77,7 @@ export class KlingAI {
       mode: {
         std: "std",
         pro: "pro",
-        "4k" : "4k",
+        "4k": "4k",
       },
       model: {
         v1: "kling-v1",
@@ -88,8 +88,9 @@ export class KlingAI {
         v2_1m: "kling-v2-1-master",
         v2_5: "kling-v2-5-turbo",
         v2_6: "kling-v2-6",
-        v3:  "kling-v3",
+        v3: "kling-v3",
         vo1: "kling-video-o1",
+        turbo : "kling-3.0-turbo",
       },
       sound: {
         on: "on",
@@ -155,10 +156,11 @@ export class KlingAI {
 
 
   public static async getToken(): Promise<string> {
-    const keys_dict = this.getKeysDict?.();
+    const keys_dict = this.getKeysDict?.();    
     if (!keys_dict) throw new Error("No Kling API keys provided or getKeysDict not set");
 
-    return await generateKlingToken(keys_dict.accessKey, keys_dict.secretKey);
+    return keys_dict.apiKey;
+    //return await generateKlingToken(keys_dict.accessKey, keys_dict.secretKey);
   }
 
   private static async postToKling(targetUrl: string, payload: any) {
@@ -293,7 +295,12 @@ export class KlingAI {
 
   // ================= GET STATUS =================
   public static async getStatus(task_id: string, workflow: string = "text2video") {
-    const targetUrl = `https://api-singapore.klingai.com/v1/videos/${workflow}/${task_id}`;
+
+    const targetUrl = workflow === "klingTurbo" ?
+    `https://api-singapore.klingai.com/tasks?task_ids=${task_id}` : 
+    `https://api-singapore.klingai.com/v1/videos/${workflow}/${task_id}`;
+
+    console.log("KLING Check Status", {task_id,workflow,targetUrl});
     const encodedTarget = encodeURIComponent(targetUrl);
     const locUrl = `http://localhost:4000/proxy/${encodedTarget}`;
     const token = await this.getToken();
@@ -314,6 +321,17 @@ export class KlingAI {
     if (contentType.includes("application/json")) {
       const data = await response.json();
       console.log("KLING check status:", data);
+
+      // Turbo has different result
+      if ( workflow === "klingTurbo" ){
+        console.log("TURBO RES", data.data[0].status, data?.data[0]?.outputs[0]?.url)
+
+      return {
+        status: data?.data[0]?.status,
+        status_msg: "",
+        url: data?.data[0]?.outputs[0]?.url    || null
+      }}
+
       return {
         status: data?.data?.task_status || "unknown",
         status_msg: data?.data?.task_status_msg || "",
@@ -431,6 +449,43 @@ export class KlingAI {
     };
   }
 
+  public static async turbo(options: {
+    prompt: string;
+    image?: string;
+    duration?: string;
+    mode?: string;
+  }) {
+
+    const {
+      image,
+      prompt,
+      duration = KlingAI.options.img2video.duration.five,
+      mode = KlingAI.options.img2video.mode.std,
+    } = options;
+
+
+    const payload: any = {settings:{}};
+
+    if (image) {
+      payload.contents = [
+        { "type": "prompt", "text": prompt },
+        { "type": "first_frame", "url": image }];
+    }
+    else {
+      payload.prompt = prompt;
+    }
+
+    if (duration) payload.settings.duration = duration;
+    if (mode != "std" ) payload.settings.resolution = "1080p";
+
+    const targetUrl = image ? "https://api-singapore.klingai.com/image-to-video/kling-3.0-turbo" : "https://api-singapore.klingai.com//text-to-video/kling-3.0-turbo";
+    console.log("KLING TURBO PAYLOAD",payload,targetUrl);
+    const data = await this.postToKling(targetUrl, payload);
+
+    return { id: data.data.id, workflow: "klingTurbo" };
+  }
+
+
 }
 
 export interface LipSyncFaceChoose {
@@ -443,5 +498,5 @@ export interface LipSyncFaceChoose {
   sound_insert_time: number; // Required: insert time in ms
   sound_volume?: number;    // Optional, default 1, range [0,2]
   original_audio_volume?: number; // Optional, default 1, range [0,2]
-  
+
 }

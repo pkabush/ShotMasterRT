@@ -324,7 +324,8 @@ export class Project extends LocalFolder {
     KlingAI.getKeysDict = () => {
       return {
         accessKey: this.userSettingsDB.data.api_keys.Kling_Acess_Key,
-        secretKey: this.userSettingsDB.data.api_keys.Kling_Secret_Key
+        secretKey: this.userSettingsDB.data.api_keys.Kling_Secret_Key,
+        apiKey: this.userSettingsDB.data.api_keys.Kling_Api_Key
       }
     }
   }

@@ -5,7 +5,7 @@ import { LocalImage } from './fileSystem/LocalImage';
 import { action, makeObservable, observable, runInAction } from "mobx";
 import { GoogleAI } from './GoogleAI';
 import { KlingAI, type LipSyncFaceChoose } from './KlingAI';
-import {  TasksJson } from './Task';
+import { TasksJson } from './Task';
 import { AI, ai_providers, type AIImageInput } from './AI_provider';
 import { LocalVideo } from './fileSystem/LocalVideo';
 import { MediaFolder } from './MediaFolder';
@@ -20,7 +20,7 @@ export class Shot extends LocalFolder {
   shotJson: LocalJson | null = null;
   nodeGraphJson: LocalJson | null = null;
   references: Tags | null = null;
-  tasksJson:TasksJson | null = null;
+  tasksJson: TasksJson | null = null;
 
   // Processes
   is_submitting_video = false;
@@ -56,7 +56,7 @@ export class Shot extends LocalFolder {
       MediaFolder_refVideo: observable,
       MediaFolder_Audio: observable,
       references: observable,
-      tasksJson:observable,
+      tasksJson: observable,
       load: action,
     });
   }
@@ -90,7 +90,7 @@ export class Shot extends LocalFolder {
         this.MediaFolder_Audio = audio;
         this.nodeGraphJson = nodeGraphJson;
       });
-      
+
     } catch (err) {
       console.error('Error loading shot:', this.name, err);
 
@@ -292,6 +292,22 @@ export class Shot extends LocalFolder {
           aspect_ratio: "16:9", // required unless editing video
           image_list: image_list.length ? image_list : undefined,
         });
+      }
+
+      // ================= OMNI VIDEO (kling-video-o1) =================
+      else if (model === KlingAI.options.img2video.model.turbo) {
+        console.log("Used Turbo Model");
+        const start_frame = this.srcImage ? (await this.srcImage.getBase64()).rawBase64 : undefined;
+
+        task_info = await KlingAI.turbo({
+          image: start_frame,
+          prompt,
+          duration: workflow.duration,
+          mode:workflow.mode ?? "std",
+        });
+
+        console.log("TURBO TASK INFO",task_info);
+     
       }
 
       // ================= IMG2VIDEO (default Kling models) =================
