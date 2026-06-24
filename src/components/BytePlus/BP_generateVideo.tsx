@@ -15,6 +15,7 @@ import type { LocalFolder } from "../../classes/fileSystem/LocalFolder";
 import { WorkflowOptionSelect } from "../WorkflowOptionSelect";
 import { LocalVideo } from "../../classes/fileSystem/LocalVideo";
 import { LocalAudio } from "../../classes/fileSystem/LocalAudio";
+import { runInAction } from "mobx";
 
 // Video Gen Parameters
 // https://docs.byteplus.com/en/docs/ModelArk/1520757
@@ -44,82 +45,93 @@ export const BytePlus_GenerateVideo: React.FC<BytePlus_GenerateVideoProps> = obs
                     <button
                         className="btn btn-sm btn-outline-success"
                         onClick={async () => {
-                            const content = []
-
-                            // Add Prompt                            
-                            const prompt = (shot.shotJson?.data.generated_video_prompt || shot.shotJson?.data.video_prompt) || "";
-                            if (prompt) content.push(SeedanceAI.textMsg(prompt))
-
-                            // Add First Frame
-                            if (shot.start_frame) {
-                                const first_frame = await shot.start_frame.getBase64();
-                                content.push(
-                                    SeedanceAI.imgMsg(
-                                        `data:${first_frame.mime};base64,${first_frame.rawBase64}`,
-                                        'first_frame'
-                                    )
-                                )
-                            }
-
-                            // Add last Frame
-                            if (shot.end_frame) {
-                                const base64 = await shot.end_frame.getBase64();
-                                content.push(
-                                    SeedanceAI.imgMsg(
-                                        `data:${base64.mime};base64,${base64.rawBase64}`,
-                                        "last_frame"
-                                    )
-                                )
-                            }
-
-                            // References
-                            const references = await shot.references?.GetAI_Images() ?? []
-                            console.log(references);
-                            for (const reference of references) {
-                                content.push(
-                                    SeedanceAI.imgMsg(
-                                        `data:${reference.mime};base64,${reference.rawBase64}`,
-                                        "reference_image"
-                                    )
-                                )
-                            }
-
-                            // Audio Refs
-                            const audio_refs = await shot.references?.getActiveType(LocalAudio) ?? []
-                            for (const audio_ref of audio_refs) {
-                                const base64 = await audio_ref.getBase64();
-                                content.push(
-                                    SeedanceAI.audioMsg(
-                                        `data:${base64.mime};base64,${base64.rawBase64}`,
-                                    )
-                                )
-                            }
-
-                            // TODO Video
-                            const video_refs = await shot.references?.getActiveType(LocalVideo) ?? []
-                            for (const video_ref of video_refs) {
-                                const webUrl = await video_ref.getWebUrl();
-                                content.push(
-                                    SeedanceAI.videoMsg(webUrl)
-                                )
-                            }
-
-
-
-                            const result = await SeedanceAI.generateVideo({
-                                content,
-                                generate_audio: project.projinfo!.getField(gen_audio_field) ?? false,
-                                resolution: project.workflows[wf_name].resolution,
-                                duration: project.workflows[wf_name].duration ? Number(project.workflows[wf_name].duration) : undefined,
-                                ratio: project.workflows[wf_name].aspect_ratio ?? SeedanceAI.options.video.ration.adaptive
+                            runInAction(() => {
+                                shot.is_submitting_video = true;
                             });
 
-                            if (!result) return;
-                            const task = shot.tasksJson!.addTask(result.id, {
-                                provider: ai_providers.BD,
-                            })
-                            await new Promise(res => setTimeout(res, 100));
-                            task.check_status();
+                            try {
+                                const content = []
+
+                                // Add Prompt                            
+                                const prompt = (shot.shotJson?.data.generated_video_prompt || shot.shotJson?.data.video_prompt) || "";
+                                if (prompt) content.push(SeedanceAI.textMsg(prompt))
+
+                                // Add First Frame
+                                if (shot.start_frame) {
+                                    const first_frame = await shot.start_frame.getBase64();
+                                    content.push(
+                                        SeedanceAI.imgMsg(
+                                            `data:${first_frame.mime};base64,${first_frame.rawBase64}`,
+                                            'first_frame'
+                                        )
+                                    )
+                                }
+
+                                // Add last Frame
+                                if (shot.end_frame) {
+                                    const base64 = await shot.end_frame.getBase64();
+                                    content.push(
+                                        SeedanceAI.imgMsg(
+                                            `data:${base64.mime};base64,${base64.rawBase64}`,
+                                            "last_frame"
+                                        )
+                                    )
+                                }
+
+                                // References
+                                const references = await shot.references?.GetAI_Images() ?? []
+                                console.log(references);
+                                for (const reference of references) {
+                                    content.push(
+                                        SeedanceAI.imgMsg(
+                                            `data:${reference.mime};base64,${reference.rawBase64}`,
+                                            "reference_image"
+                                        )
+                                    )
+                                }
+
+                                // Audio Refs
+                                const audio_refs = await shot.references?.getActiveType(LocalAudio) ?? []
+                                for (const audio_ref of audio_refs) {
+                                    const base64 = await audio_ref.getBase64();
+                                    content.push(
+                                        SeedanceAI.audioMsg(
+                                            `data:${base64.mime};base64,${base64.rawBase64}`,
+                                        )
+                                    )
+                                }
+
+                                // TODO Video
+                                const video_refs = await shot.references?.getActiveType(LocalVideo) ?? []
+                                for (const video_ref of video_refs) {
+                                    const webUrl = await video_ref.getWebUrl();
+                                    content.push(
+                                        SeedanceAI.videoMsg(webUrl)
+                                    )
+                                }
+
+
+
+                                const result = await SeedanceAI.generateVideo({
+                                    content,
+                                    generate_audio: project.projinfo!.getField(gen_audio_field) ?? false,
+                                    resolution: project.workflows[wf_name].resolution,
+                                    duration: project.workflows[wf_name].duration ? Number(project.workflows[wf_name].duration) : undefined,
+                                    ratio: project.workflows[wf_name].aspect_ratio ?? SeedanceAI.options.video.ration.adaptive
+                                });
+
+                                if (!result) return;
+                                const task = shot.tasksJson!.addTask(result.id, {
+                                    provider: ai_providers.BD,
+                                })
+                                await new Promise(res => setTimeout(res, 100));
+                                task.check_status();
+
+                            } catch (err) {
+                                console.error("Submitting Video Generation Failed:", err);
+                            } finally {
+                                runInAction(() => { shot.is_submitting_video = false; });
+                            }
                         }}
                     >
                         Generate Seedance Video
