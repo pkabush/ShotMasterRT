@@ -126,6 +126,18 @@ export const KlingNode = memo(
 
                     task_info = await KlingAI.omniVideo(payload);
                 }
+                else if (data.model === KlingAI.options.img2video.model.turbo) {
+
+                    const payload = {
+                        image: first_frame_raw,
+                        prompt,
+                        mode: data.mode,
+                        duration: data.duration,
+                    }
+
+                    task_info = await KlingAI.turbo(payload);
+
+                }
                 else {
                     if (!first_frame_raw) { throw new Error("Missing required input: first_frame"); }
 
