@@ -102,12 +102,14 @@ export const BytePlus_GenerateVideo: React.FC<BytePlus_GenerateVideoProps> = obs
                                 }
 
                                 // TODO Video
+                                let has_video = false;
                                 const video_refs = await shot.references?.getActiveType(LocalVideo) ?? []
                                 for (const video_ref of video_refs) {
                                     const webUrl = await video_ref.getWebUrl();
                                     content.push(
                                         SeedanceAI.videoMsg(webUrl)
                                     )
+                                    has_video = true;
                                 }
 
 
@@ -123,6 +125,13 @@ export const BytePlus_GenerateVideo: React.FC<BytePlus_GenerateVideoProps> = obs
                                 if (!result) return;
                                 const task = shot.tasksJson!.addTask(result.id, {
                                     provider: ai_providers.BD,
+                                    geninfo: {
+                                        generate_audio: project.projinfo!.getField(gen_audio_field) ?? false,
+                                        resolution: project.workflows[wf_name].resolution,
+                                        duration: project.workflows[wf_name].duration ? Number(project.workflows[wf_name].duration) : undefined,
+                                        ratio: project.workflows[wf_name].aspect_ratio ?? SeedanceAI.options.video.ration.adaptive,
+                                        has_video,
+                                    }
                                 })
                                 await new Promise(res => setTimeout(res, 100));
                                 task.check_status();
