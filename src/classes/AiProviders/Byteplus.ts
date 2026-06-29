@@ -1,7 +1,4 @@
 
-
-
-
 export type SeedanceContent =
     | {
         type: "text";
@@ -29,6 +26,7 @@ export class SeedanceAI {
                 "480p": "480p",
                 "720p": "720p",
                 "1080p": "1080p",
+                "4k" : "4k",
             },
             ration: {
                 "adaptive": "adaptive",
@@ -227,6 +225,35 @@ export class SeedanceAI {
             updated_at: data?.updated_at ?? null,
 
             raw: data,
+
+            tokens: data?.usage?.total_tokens || null,
+            task_url: targetUrl,
         };
     }
+
+
+
+    public static prices: Record<Resolution, [number, number]> = {
+        "480p": [4.3, 7],
+        "720p": [4.7, 7.7],
+        "1080p": [4.7, 7.7],
+        "4k": [2.4, 4.0],
+    };
+
+    public static calcPrice(task: any) {
+        const res       = task?.data?.geninfo?.resolution as Resolution | undefined;
+        const has_video = task?.data?.geninfo?.has_video ? 1 : 0;
+
+        console.log(res,task,has_video);
+        if (res && (res in SeedanceAI.prices)) {
+            const price = SeedanceAI.prices[res][has_video]; 
+            return Number(task?.data?.tokens ?? 0) * price / 1e6;
+        }
+
+        return 0;
+    }
+
+
 }
+
+type Resolution = "480p" | "720p" | "1080p" | "4k";

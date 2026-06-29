@@ -90,7 +90,7 @@ export class KlingAI {
         v2_6: "kling-v2-6",
         v3: "kling-v3",
         vo1: "kling-video-o1",
-        turbo : "kling-3.0-turbo",
+        turbo: "kling-3.0-turbo",
       },
       sound: {
         on: "on",
@@ -156,7 +156,7 @@ export class KlingAI {
 
 
   public static async getToken(): Promise<string> {
-    const keys_dict = this.getKeysDict?.();    
+    const keys_dict = this.getKeysDict?.();
     if (!keys_dict) throw new Error("No Kling API keys provided or getKeysDict not set");
 
     return keys_dict.apiKey;
@@ -297,10 +297,10 @@ export class KlingAI {
   public static async getStatus(task_id: string, workflow: string = "text2video") {
 
     const targetUrl = workflow === "klingTurbo" ?
-    `https://api-singapore.klingai.com/tasks?task_ids=${task_id}` : 
-    `https://api-singapore.klingai.com/v1/videos/${workflow}/${task_id}`;
+      `https://api-singapore.klingai.com/tasks?task_ids=${task_id}` :
+      `https://api-singapore.klingai.com/v1/videos/${workflow}/${task_id}`;
 
-    console.log("KLING Check Status", {task_id,workflow,targetUrl});
+    console.log("KLING Check Status", { task_id, workflow, targetUrl });
     const encodedTarget = encodeURIComponent(targetUrl);
     const locUrl = `http://localhost:4000/proxy/${encodedTarget}`;
     const token = await this.getToken();
@@ -323,19 +323,24 @@ export class KlingAI {
       console.log("KLING check status:", data);
 
       // Turbo has different result
-      if ( workflow === "klingTurbo" ){
+      if (workflow === "klingTurbo") {
         console.log("TURBO RES", data.data[0].status, data?.data[0]?.outputs[0]?.url)
 
-      return {
-        status: data?.data[0]?.status,
-        status_msg: "",
-        url: data?.data[0]?.outputs[0]?.url    || null
-      }}
+        return {
+          status: data?.data[0]?.status,
+          status_msg: "",
+          url: data?.data[0]?.outputs[0]?.url || null,
+          tokens: data?.data[0]?.billing[0]?.amount || null,  
+          task_url: targetUrl,
+        }
+      }
 
       return {
         status: data?.data?.task_status || "unknown",
         status_msg: data?.data?.task_status_msg || "",
         url: data?.data?.task_result?.videos?.[0]?.url || null,
+        tokens: data?.data?.final_unit_deduction || null,
+        task_url: targetUrl,
       };
     }
   }
@@ -464,7 +469,7 @@ export class KlingAI {
     } = options;
 
 
-    const payload: any = {settings:{}};
+    const payload: any = { settings: {} };
 
     if (image) {
       payload.contents = [
@@ -476,15 +481,18 @@ export class KlingAI {
     }
 
     if (duration) payload.settings.duration = duration;
-    if (mode != "std" ) payload.settings.resolution = "1080p";
+    if (mode != "std") payload.settings.resolution = "1080p";
 
     const targetUrl = image ? "https://api-singapore.klingai.com/image-to-video/kling-3.0-turbo" : "https://api-singapore.klingai.com//text-to-video/kling-3.0-turbo";
-    console.log("KLING TURBO PAYLOAD",payload,targetUrl);
+    console.log("KLING TURBO PAYLOAD", payload, targetUrl);
     const data = await this.postToKling(targetUrl, payload);
 
     return { id: data.data.id, workflow: "klingTurbo" };
   }
 
+  public static calcPrice(tokens : string) {
+    return Number(tokens) * 0.14;
+  }
 
 }
 

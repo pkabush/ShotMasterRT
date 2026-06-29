@@ -8,6 +8,10 @@ import * as ContextMenu from "@radix-ui/react-context-menu";
 import { MenuItemIcon } from "./MediaFolderGallery";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClipboard, faTrashCan } from "@fortawesome/free-solid-svg-icons";
+import { toJS } from "mobx";
+import { Badge } from "react-bootstrap";
+import { KlingAI } from "../classes/KlingAI";
+import { SeedanceAI } from "../classes/AiProviders/Byteplus";
 
 interface Props {
     task: Task;
@@ -59,6 +63,7 @@ const TaskInfoCard: React.FC<Props> = observer(({ task, show_path = false }) => 
                             )}
 
                             <span className="fw-bold">{task.id}</span>
+                            <span className="text-muted me-2">{task.data.provider}</span>
                             <span className="text-muted">{status}</span>
 
 
@@ -67,12 +72,23 @@ const TaskInfoCard: React.FC<Props> = observer(({ task, show_path = false }) => 
                                 <MediaPreviewSmall media={task.result} />
                             )}
 
+
+
                         </div>
 
                         {/* Right side: buttons */}
                         <div className="d-flex gap-0">
-
                             <span className="text-muted me-2">{task._status_log}</span>
+
+                            {task.data.tokens && <>
+                                <Badge bg="outline-secondary" style={{ fontSize: "16px", color: "#6e9e77" }}>
+                                    {(() => {
+                                        if (task.data.provider === "kling") return KlingAI.calcPrice(task.data.tokens).toFixed(2);                                        
+                                        if (task.data.provider === "bytedance") return SeedanceAI.calcPrice(task).toFixed(2);
+                                        return "";
+                                    })()}$
+                                </Badge>
+                            </>}
 
                             <SimpleButton
                                 label="Check Status"
@@ -81,6 +97,8 @@ const TaskInfoCard: React.FC<Props> = observer(({ task, show_path = false }) => 
                             />
 
                             <LoadingSpinner isLoading={task.is_checking_status} asButton />
+
+
                         </div>
 
                     </div>
@@ -91,13 +109,13 @@ const TaskInfoCard: React.FC<Props> = observer(({ task, show_path = false }) => 
                 <ContextMenu.Content className="ContextMenuContent">
 
                     {task.result && (
-                        <ContextMenu.Item className="ContextMenuItem warning" onClick={() => {task.result?.copyToClipboard()}}>
+                        <ContextMenu.Item className="ContextMenuItem warning" onClick={() => { task.result?.copyToClipboard() }}>
                             <MenuItemIcon><FontAwesomeIcon icon={faClipboard} /></MenuItemIcon>
                             Copy
                         </ContextMenu.Item>
                     )}
 
-                    <ContextMenu.Item className="ContextMenuItem" onClick={() => task.log()}>
+                    <ContextMenu.Item className="ContextMenuItem" onClick={() => { console.log({ task: toJS(task), data: toJS(task.data) }); }}>
                         <MenuItemIcon><FontAwesomeIcon icon={faClipboard} /></MenuItemIcon>
                         Log
                     </ContextMenu.Item>

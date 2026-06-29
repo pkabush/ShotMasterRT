@@ -155,7 +155,6 @@ export class LocalFolder extends LocalItem {
             const encodedTarget = encodeURIComponent(url);
             const locUrl = `http://localhost:4000/proxy/${encodedTarget}`;
 
-
             let response: Response | null = null;
 
             try {
@@ -195,6 +194,9 @@ export class LocalFolder extends LocalItem {
                 const base = urlName || "download";
                 finalName = base.includes(".") ? base : `${base}.${ext}`;
             }
+
+            // Return CHILD if exists
+            //for (const file of this.children) { if (file.name === finalName) return file as LocalFile; }
 
             // Save the file using the existing save_file logic
             const fileHandle = await this.handle.getFileHandle(finalName, { create: true });

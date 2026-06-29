@@ -88,6 +88,7 @@ export const SeedanceNode = memo(
                 )
 
                 // Gather Refereces
+                let has_video = false;
                 for (const reference of references) {
                     // Image Refs
                     if (reference instanceof LocalImage) {
@@ -103,6 +104,7 @@ export const SeedanceNode = memo(
                     if (reference instanceof LocalVideo) {
                         const webUrl = await reference.getWebUrl();
                         content.push(SeedanceAI.videoMsg(webUrl));
+                        has_video = true;
                     }
                     // Audio Refs
                     if (reference instanceof LocalAudio) {
@@ -124,7 +126,17 @@ export const SeedanceNode = memo(
 
 
                 if (!result) return;
-                const task = tasksJson!.addTask(result.id, { provider: ai_providers.BD, })
+                const task = tasksJson!.addTask(result.id, {
+                    provider: ai_providers.BD,
+                    geninfo: {
+                        generate_audio: data.sound ?? false,
+                        resolution: data.resolution,
+                        duration: data.duration ? Number(data.duration) : undefined,
+                        ratio: data.ratio ?? SeedanceAI.options.video.ration.adaptive,
+                        has_video,
+                    }
+                })
+
                 await new Promise(res => setTimeout(res, 100));
                 task.check_status();
 

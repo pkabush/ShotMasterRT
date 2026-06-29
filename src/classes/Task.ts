@@ -114,6 +114,7 @@ export class Task {
     }
 
     log() {
+        console.log("LOG TASK");
         console.log({ task: toJS(this), data: toJS(this.data) });
     }
 
