@@ -74,8 +74,10 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
 
     const nodegraph_api = useNodeGraphApi();
 
-    const exportFlow = useCallback(() => {
-        nodegraphJson.updateField("nodegraphs/nodegraph_001", { nodes, edges, });
+    const exportFlow = useCallback(async () => {
+        await nodegraphJson.updateField("nodegraphs/nodegraph_001", { nodes, edges, });
+        setIsDirty(false);
+        console.log("SAVED GRAPH",nodegraphJson );
     }, [nodegraphJson, nodes, edges]);
 
 
@@ -98,10 +100,24 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
         nodes: any[];
         edges: any[];
     }>({ nodes: [], edges: [] });
+    const [isDirty, setIsDirty] = useState(false);
 
     useEffect(() => {
         latestGraph.current = { nodes, edges };
+        //console.log("Nodes and Edges Changed", nodes, edges);
+        const saved = toJS(nodegraphJson.getField("nodegraphs/nodegraph_001"));
+        const changed =
+            JSON.stringify(saved?.nodes ?? []) !== JSON.stringify(nodes) ||
+            JSON.stringify(saved?.edges ?? []) !== JSON.stringify(edges);
+        setIsDirty(changed);
     }, [nodes, edges]);
+
+    // AUTOSAVE 
+    useEffect(() => {
+        if (!isDirty) return;
+        const timer = setTimeout(() => { exportFlow();console.log("AUTOSAVED") }, 2000);
+        return () => clearTimeout(timer);
+    }, [nodes, edges, isDirty, exportFlow]);
 
     useEffect(() => {
         return () => {
@@ -153,8 +169,8 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
 
                 multiSelectionKeyCode="Shift"
                 selectionKeyCode="Shift"
-                
-                
+
+
                 selectionOnDrag
                 selectionMode={SelectionMode.Partial}
                 panOnDrag={[1]} // only middle mouse button pans the canvas
@@ -263,7 +279,7 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
                             <FontAwesomeIcon icon={(nodegraphJson.parentFolder! instanceof Scene) ? faFilm : faClapperboard} />
                             {nodegraphJson.parentFolder!.name}
                         </Button>
-                        <Button onClick={exportFlow} size="sm" variant="success"> <FontAwesomeIcon icon={faFloppyDisk} /> Save</Button>
+                        <Button onClick={exportFlow} size="sm" variant={isDirty ? "success" : "outline-secondary"}> <FontAwesomeIcon icon={faFloppyDisk} /> {isDirty ? " Save changes" : " Saved"}</Button>
                         <Button onClick={loadFlow} size="sm" variant="secondary"> <FontAwesomeIcon icon={faFileArrowDown} /> Load</Button>
                         <AddNodeUIPanel></AddNodeUIPanel>
                         <Button
