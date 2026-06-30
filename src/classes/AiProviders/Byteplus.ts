@@ -244,7 +244,7 @@ export class SeedanceAI {
         const res       = task?.data?.geninfo?.resolution as Resolution | undefined;
         const has_video = task?.data?.geninfo?.has_video ? 1 : 0;
 
-        console.log(res,task,has_video);
+        //console.log(res,task,has_video);
         if (res && (res in SeedanceAI.prices)) {
             const price = SeedanceAI.prices[res][has_video]; 
             return Number(task?.data?.tokens ?? 0) * price / 1e6;

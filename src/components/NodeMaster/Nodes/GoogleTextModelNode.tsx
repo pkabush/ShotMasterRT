@@ -105,9 +105,9 @@ export const nb_GoogleAI = memo(
 
                     if (out_image_nodes.length == 0) {
                         const saved_image = await GoogleAI.saveResultImage(res, local_file.parentFolder!);
-                        console.log(saved_image)
-                        console.log(local_file)
-                        console.log(local_file.parentFolder!)
+                        //console.log(saved_image)
+                        //console.log(local_file)
+                        //console.log(local_file.parentFolder!)
                         if(!saved_image) return;
 
                         // Create New Node
@@ -130,7 +130,7 @@ export const nb_GoogleAI = memo(
                     
                 }
                 else {
-                    console.log(res);
+                    //console.log(res);
 
                     const out_text_nodes = nodegraph_api.getOutputNodes(id, "out_text", "textNode");
                     if (out_text_nodes.length == 0) {
@@ -149,7 +149,7 @@ export const nb_GoogleAI = memo(
 
                 }
 
-                console.log(getNodes());
+                //console.log(getNodes());
 
             } finally {
                 setLoading(false);
@@ -271,7 +271,7 @@ export const nb_GoogleAI = memo(
                 <NamedOutputHandle id="out_image" index={1} />
                 {/* Multi INPUT HANDLE */}
                 {Array.from({ length: incomingCount + 1 }).map((_, index) => (
-                    <NamedInputHandle id={`input_${index}`} index={index} />
+                    <NamedInputHandle id={`input_${index}`} index={index} key={index}/>
                 ))}
 
             </div >

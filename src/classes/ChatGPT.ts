@@ -37,7 +37,7 @@ export class ChatGPT implements AIProvider {
       //gpt_5_1: "gpt-5.1",
       //gpt_5_mini: "gpt-5-mini",
       //gpt_5_nano: "gpt-5-nano",
-      gpt_5: "gpt-5",
+      //gpt_5: "gpt-5",
       gpt_5_4: "gpt-5.4",
       gpt_5_4_mini: "gpt-5.4-mini",
       gpt_5_5: "gpt-5.5",
@@ -143,7 +143,7 @@ export class ChatGPT implements AIProvider {
   // ---------- img2img function ----------
   public static async img2img(
     prompt?: string,
-    model: string = ChatGPT.options.models.gpt_5,
+    model: string = ChatGPT.options.models.gpt_5_4,
     images?: { rawBase64: string; mime: string; description: string }[],
     resolution?: string,
   ) {
@@ -165,7 +165,7 @@ export class ChatGPT implements AIProvider {
           }
         }
 
-        console.log("img_files", file_images);
+        //console.log("img_files", file_images);
         let result = null;
         if (!images?.length) {
           const payload: any = {
@@ -187,7 +187,8 @@ export class ChatGPT implements AIProvider {
           result = await openai.images.edit(payload);
         }
 
-        console.log("OPENAI RES", result);
+        console.log("OPENAI RES", {...result, ...{model}});
+        ChatGPT.calcPrice( {...result, ...{model}});
 
         if (result && result.data) {
           const image_base64 = result.data[0].b64_json;
@@ -399,6 +400,9 @@ export class ChatGPT implements AIProvider {
         // Get response
         const response = await openai.responses.create(payload);
         console.log("OPENAI RES", response);
+        ChatGPT.calcPrice(response);
+
+
 
         // Return Image or Text
         const imageData = response.output
@@ -438,6 +442,41 @@ export class ChatGPT implements AIProvider {
       throw err;
     }
   }
+
+  public static calcPrice(response: any) {
+    //console.log("Calculating Price", response);
+
+    const model = response.model.replace(/-\d{4}-\d{2}-\d{2}$/, "");
+    //console.log(model);
+
+    const out_price = response.usage.output_tokens * ChatGPT.prices[model].out * 1e-6;
+    const in_price = response.usage.input_tokens * ChatGPT.prices[model].in * 1e-6;
+
+    //console.log("Candidate Tokens", out_price);
+    //console.log("Prompt Tokens", in_price);
+    console.log(`\x1b[32mTotal Price: ${in_price + out_price}$\x1b[0m`);
+
+    return in_price + out_price;
+  }
+
+  public static prices: Record<string, any> = {
+    "gpt-5.5": {
+      out: 30,
+      in: 5,
+    },
+    "gpt-5.4": {
+      out: 15,
+      in: 2.5,
+    },
+    "gpt-5.4-mini": {
+      out: 4.5,
+      in: 0.75,
+    },
+    "gpt-image-2": {
+      out: 30,
+      in: 8,
+    },
+  };
 
 
 }

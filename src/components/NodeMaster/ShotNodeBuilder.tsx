@@ -77,7 +77,7 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
     const exportFlow = useCallback(async () => {
         await nodegraphJson.updateField("nodegraphs/nodegraph_001", { nodes, edges, });
         setIsDirty(false);
-        console.log("SAVED GRAPH",nodegraphJson );
+        console.log("\x1b[94mGRAPH SAVED\x1b[0m");
     }, [nodegraphJson, nodes, edges]);
 
 
@@ -115,7 +115,10 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
     // AUTOSAVE 
     useEffect(() => {
         if (!isDirty) return;
-        const timer = setTimeout(() => { exportFlow();console.log("AUTOSAVED") }, 2000);
+        const timer = setTimeout(() => {
+            exportFlow();
+            //console.log("AUTOSAVED")
+        }, 2000);
         return () => clearTimeout(timer);
     }, [nodes, edges, isDirty, exportFlow]);
 

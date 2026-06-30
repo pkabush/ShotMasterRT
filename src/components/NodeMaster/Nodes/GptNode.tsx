@@ -147,10 +147,9 @@ export const GptNode = memo(
                         updateNodeInternals(set_id);
                     }
 
-
                 }
 
-                console.log(getNodes());
+                //console.log(getNodes());
 
 
             } finally {
@@ -262,7 +261,7 @@ export const GptNode = memo(
                 <NamedOutputHandle id="out_image" index={1} />
                 {/* Multi INPUT HANDLE */}
                 {Array.from({ length: incomingCount + 1 }).map((_, index) => (
-                    <NamedInputHandle id={`input_${index}`} index={index} />
+                    <NamedInputHandle id={`input_${index}`} index={index} key={index}/>
                 ))}
 
             </div >
