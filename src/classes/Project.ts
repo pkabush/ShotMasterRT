@@ -11,6 +11,7 @@ import { KlingAI } from "./KlingAI";
 import { LocalFolder } from "./fileSystem/LocalFolder";
 import { ScriptMaster } from "./ScriptMaster";
 import { SeedanceAI } from "./AiProviders/Byteplus";
+import { CostTracker } from "./AiProviders/CostTracker";
 
 export type ProjectView =
   | { type: "none" }
@@ -169,6 +170,7 @@ export class Project extends LocalFolder {
   selectedPath: string = ""
   selectedSubPath: string = ""
   timelinesDirHandle: LocalFolder | null = null;
+  costTracker: CostTracker | null = null;
   id = 0;
 
   scenesLocalFolder: LocalFolder | null = null;
@@ -187,6 +189,7 @@ export class Project extends LocalFolder {
       selectedScene: observable,
       selectedPath: observable,
       selectedSubPath: observable,
+      costTracker : observable,
       loadFromFolder: action,
       loadScenes: action,
       setView: action,
@@ -239,6 +242,7 @@ export class Project extends LocalFolder {
       await this.userSettingsDB.save();
 
       this.projinfo = await LocalJson.create(this, 'projinfo.json', default_projinfo);
+      this.costTracker = new CostTracker(this.projinfo);
       this.promptinfo = await LocalJson.create(this, 'promps.json');
     });
 

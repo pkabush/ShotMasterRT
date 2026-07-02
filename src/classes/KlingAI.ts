@@ -330,7 +330,7 @@ export class KlingAI {
           status: data?.data[0]?.status,
           status_msg: "",
           url: data?.data[0]?.outputs[0]?.url || null,
-          tokens: data?.data[0]?.billing[0]?.amount || null,  
+          tokens: data?.data?.[0]?.billing?.[0]?.amount ?? null,
           task_url: targetUrl,
         }
       }
@@ -344,6 +344,8 @@ export class KlingAI {
       };
     }
   }
+
+
 
   // ================= OMNI VIDEO (O1) =================
   public static async omniVideo(options: {

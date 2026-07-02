@@ -3,6 +3,7 @@ import { GoogleGenAI as GoogleSDK } from "@google/genai";
 import { LocalImage } from "./fileSystem/LocalImage";
 import type { LocalFolder } from "./fileSystem/LocalFolder";
 import type { AIGenerateParms, AIImageInput, AIProvider, ImageResult } from "./AI_provider";
+import { Project } from "./Project";
 
 // Custom error types for clarity
 export class MissingApiKeyError extends Error { }
@@ -45,7 +46,7 @@ export class GoogleAI implements AIProvider {
 
   // Functions to get/set API key dynamically
   public static getApiKey: (() => string | null) | null = null;
-  public static setApiKey: ((key: string) => void) | null = null;
+  public static setApiKey: ((key: string) => void) | null = null;  
 
   private static getGenAI() {
     const key = this.getApiKey?.() || "";
@@ -96,7 +97,13 @@ export class GoogleAI implements AIProvider {
       const response = await genAI.models.generateContent(payload);
       console.log("GEMINI RES", response);
 
-      console.log("TOKENS USED", response.usageMetadata?.totalTokenCount);
+      // SAVE Gen Data
+      const cost = GoogleAI.calcPrice(response);
+      const proj = Project.getProject();      
+      proj.costTracker?.addCost( response.responseId ?? "", "Google",cost, {
+        model:response.modelVersion,        
+      })
+
 
       // Iterate response parts
       // If IMAGE Modesl
@@ -178,11 +185,6 @@ export class GoogleAI implements AIProvider {
     return res as ImageResult;
   }
 
-
-
-
-
-
   // ---------- img2img function ----------
   public static async sendMessages(
     messages: AIMessage[],
@@ -250,7 +252,14 @@ export class GoogleAI implements AIProvider {
       const response = await genAI.models.generateContent(payload);
 
       console.log("GEMINI RES", response);
-      GoogleAI.calcPrice(response);
+      const cost = GoogleAI.calcPrice(response);
+
+      // SAVE Gen Data
+      const proj = Project.getProject();
+      proj.costTracker?.addCost( response.responseId ?? "", "Google",cost, {
+        model:response.modelVersion,        
+      })
+
 
       // IMAGE RESPONSE
       if (isImageModel) {
@@ -301,7 +310,6 @@ export class GoogleAI implements AIProvider {
     //console.log("Candidate Tokens", out_price);
     //console.log("Prompt Tokens", in_price);
     console.log(`\x1b[32mTotal Price: ${in_price + out_price}$\x1b[0m`);
-
     return in_price + out_price;
   }
 
@@ -332,12 +340,7 @@ export class GoogleAI implements AIProvider {
     },
 
   };
-
-
-
 }
-
-
 
 
 export type AIMessage =

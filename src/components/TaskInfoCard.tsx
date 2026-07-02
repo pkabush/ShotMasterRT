@@ -93,7 +93,7 @@ const TaskInfoCard: React.FC<Props> = observer(({ task, show_path = false }) => 
                             <SimpleButton
                                 label="Check Status"
                                 className="btn-outline-primary btn-sm rounded-0"
-                                onClick={() => { task.check_status() }}
+                                onClick={() => { task.check_status();}}
                             />
 
                             <LoadingSpinner isLoading={task.is_checking_status} asButton />

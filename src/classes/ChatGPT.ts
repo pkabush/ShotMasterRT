@@ -1,6 +1,7 @@
 import OpenAI from "openai";
 import type { AIGenerateParms, AIProvider, ImageResult } from "./AI_provider";
 import type { AIMessage } from "./GoogleAI";
+import { Project } from "./Project";
 
 
 // Custom error types for clarity
@@ -116,9 +117,15 @@ export class ChatGPT implements AIProvider {
 
       console.log("GPT Payload:", payload)
       const response = await client.responses.create(payload);
+      console.log("GPT Response:", response);
+
+      const cost = ChatGPT.calcPrice(response);      
+      // SAVE Gen Data
+      const proj = Project.getProject();        
+      proj.costTracker?.addCost("", "GPT", cost, { model, })
 
       const text = response.output_text;
-      console.log("GPT Response TEXT:", { "text": text });
+      
       return text;
 
     } catch (err: any) {
@@ -138,7 +145,6 @@ export class ChatGPT implements AIProvider {
       throw err;
     }
   }
-
 
   // ---------- img2img function ----------
   public static async img2img(
@@ -187,8 +193,14 @@ export class ChatGPT implements AIProvider {
           result = await openai.images.edit(payload);
         }
 
-        console.log("OPENAI RES", {...result, ...{model}});
-        ChatGPT.calcPrice( {...result, ...{model}});
+        console.log("OPENAI RES", { ...result, ...{ model } });
+        const cost = ChatGPT.calcPrice({ ...result, ...{ model } });
+
+        // SAVE Gen Data
+        const proj = Project.getProject();        
+        proj.costTracker?.addCost("", "GPT", cost, { model, })
+
+
 
         if (result && result.data) {
           const image_base64 = result.data[0].b64_json;
@@ -245,10 +257,13 @@ export class ChatGPT implements AIProvider {
 
         //if (resolution) {          payload.tools[0].size = resolution;        }
 
-
         const response = await openai.responses.create(payload);
-
         console.log("OPENAI RES", response);
+
+        // SAVE Gen Data
+        const cost = ChatGPT.calcPrice(response);
+        const proj = Project.getProject();        
+        proj.costTracker?.addCost("", "GPT", cost, { model, })
 
         const imageData = response.output
           ?.filter((o: any) => o.type === "image_generation_call")
@@ -400,8 +415,13 @@ export class ChatGPT implements AIProvider {
         // Get response
         const response = await openai.responses.create(payload);
         console.log("OPENAI RES", response);
-        ChatGPT.calcPrice(response);
+        const cost = ChatGPT.calcPrice(response);
 
+        // SAVE Gen Data
+        const proj = Project.getProject();
+        proj.costTracker?.addCost(response.id ?? "", "GPT", cost, {
+          model: response.model,
+        })
 
 
         // Return Image or Text

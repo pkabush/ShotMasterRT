@@ -4,6 +4,7 @@ import { Navbar, Nav, Container } from 'react-bootstrap';
 import { MenuColumn } from './MenuColumn';
 import type { SubmenuItemProps } from './SubmenuItem';
 import { Project } from '../classes/Project';
+import { CostDisplay } from './CostDisplay';
 //import TextField from './TextField';
 
 
@@ -34,43 +35,36 @@ export const MenuBar: React.FC<MenuBarProps> = ({ onOpenFolder, recentFolders, o
   const helpMenuItems: Omit<SubmenuItemProps, 'parentKey'>[] = [{ name: 'About' }];
 
   return (
-    <Navbar expand={true}>
-      <Container fluid>
-        <Navbar.Brand>ShotMasterRT</Navbar.Brand>
-        <Nav className="me-auto" style={{ userSelect: 'none' }}>
-          <MenuColumn title="File" items={fileMenuItems} />
-          <MenuColumn title="Edit" items={editMenuItems} />
-          <MenuColumn title="Help" items={helpMenuItems} />
+    <>
+      <Navbar expand={true}>
+        <Container fluid>
+          <Navbar.Brand>ShotMasterRT</Navbar.Brand>
 
-          {project && (<>
-            <MenuColumn
-              title="Settings"
-              onClick={() => project.setView({ type: "settings" })}
-            />
-            <MenuColumn
-              title="Script"
-              onClick={() => project.setView({ type: "script" })}
-            />
+          {/* LEFT SIDE */}
+          <Nav className="me-auto" style={{ userSelect: 'none' }}>
+            <MenuColumn title="File" items={fileMenuItems} />
+            <MenuColumn title="Edit" items={editMenuItems} />
+            <MenuColumn title="Help" items={helpMenuItems} />
 
-            {/**
-            <MenuColumn title="Artbook" onClick={() => project.setView({ type: "artbook" })} />
-             */}
+            {project && (
+              <>
+                <MenuColumn title="Settings" onClick={() => project.setView({ type: "settings" })} />
+                <MenuColumn title="Script" onClick={() => project.setView({ type: "script" })} />
+                <MenuColumn title="TaskView" onClick={() => project.setView({ type: "taskview" })} />
+                <MenuColumn title="PromptView" onClick={() => project.setView({ type: "promptview" })} />
+              </>
+            )}
+          </Nav>
 
-            <MenuColumn
-              title="TaskView"
-              onClick={() => project.setView({ type: "taskview" })}
-            />
+          {/* RIGHT SIDE */}
+          <Nav style={{ userSelect: 'none' }}>
 
-            <MenuColumn
-              title="PromptView"
-              onClick={() => project.setView({ type: "promptview" })}
-            />
+          </Nav>
+        </Container>
+      </Navbar>
 
-          </>
-          )}
 
-        </Nav>
-      </Container>
-    </Navbar>
-  );
+      {project && <CostDisplay project={project} />}
+      </>
+      );
 };

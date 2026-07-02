@@ -4,6 +4,7 @@ import { Project } from "../classes/Project";
 import { StringEditField } from "./StringEditField";
 import SimpleButton from "./Atomic/SimpleButton.tsx";
 import EditableJsonTextField from './EditableJsonTextField';
+import type { Provider } from "../classes/AiProviders/CostTracker.ts";
 
 interface SettingsViewProps {
   project: Project;
@@ -16,7 +17,7 @@ export const SettingsView: React.FC<SettingsViewProps> = observer(({ project }) 
   const [showKeys, setShowKeys] = useState(false);
 
   return (
-    <div style={{ padding: 20 }}>
+    <div style={{ padding: 20 }} className="user-select-none">
       <h3>Settings</h3>
       <SimpleButton onClick={() => { project.log() }} label="LOG Project" />
       <SimpleButton onClick={() => { project.download_asset("assets/server.exe", "server.exe") }} label="Download Server (Windows)" />
@@ -93,6 +94,33 @@ export const SettingsView: React.FC<SettingsViewProps> = observer(({ project }) 
         <br />
         Also you can add shortcut to it - for example "H" is free
       </>
+
+
+      <h4 className="mt-4" onClick={() => { project.costTracker?.log(); }}>Billing</h4>
+
+      <div className="d-flex flex-wrap">
+        {[
+          { name: "Google", key: "Google" },
+          { name: "GPT", key: "GPT" },
+          { name: "kling", key: "kling" },
+          { name: "bytedance", key: "bytedance" },
+        ].map((provider) => {
+          const data = project.costTracker?.getProviderData(
+            provider.key as Provider
+          );
+
+          return (
+            <div key={provider.key} className="border rounded px-3 py-2">
+              <div className="fw-semibold">{provider.name}</div>
+
+              <div className="small text-muted d-flex gap-2">
+                <span className="text-success">  {(data?.totalCost ?? 0).toFixed(2)}$</span>
+                <span>{data?.taskCount ?? 0} tasks</span>
+              </div>
+            </div>
+          );
+        })}
+      </div>
 
 
     </div>

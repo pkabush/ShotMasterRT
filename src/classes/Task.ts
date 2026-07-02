@@ -7,6 +7,7 @@ import { notificationManager } from "./NotificationManager";
 import type { LocalMedia } from "./fileSystem/LocalMedia";
 import { SeedanceAI } from "./AiProviders/Byteplus";
 import type { LocalJson } from "./LocalJson";
+import { Project } from "./Project";
 
 
 
@@ -22,19 +23,7 @@ export class TasksJson {
         });
     }
 
-    /*
-    loadTasks(): void {
-        const tasksData = this.dataJson?.getField("tasks");
-        runInAction(() => {
-            this.tasks = [];
-            if (!tasksData || typeof tasksData !== "object") return;
-            for (const taskId of Object.keys(tasksData)) {
-                this.tasks.push(new Task(this, taskId));
-            }
-        });
-    }
-    */
-
+    
     get tasks(): Task[] {
         const tasksData = this.dataJson?.getField("tasks");
         if (!tasksData || typeof tasksData !== "object") {
@@ -88,8 +77,6 @@ export class TasksJson {
 }
 
 
-
-
 export class Task {
     tasksJson: TasksJson;
     id: string;
@@ -114,8 +101,7 @@ export class Task {
     }
 
     log() {
-        console.log("LOG TASK");
-        console.log({ task: toJS(this), data: toJS(this.data) });
+        console.log("LOG TASK",{ task: toJS(this), data: toJS(this.data) });
     }
 
     delete() {
@@ -136,25 +122,40 @@ export class Task {
     }
 
     async check_status(retries: number = 30, delayMs: number = 15000) {
+        //console.log("started checking status ! ");
         if (![ai_providers.KLING, ai_providers.BD].includes(this.data.provider)) return;
 
         runInAction(() => { this.is_checking_status = true; this._status_log = "start checking"; });
 
-        console.log("started checking status");
+
 
         for (let attempt = 0; attempt <= retries; attempt++) {
             try {
-                console.log("new attempt");
+                //console.log("new attempt");
 
                 // KLING
                 if (this.data.provider == ai_providers.KLING) {
                     const status = await KlingAI.getStatus(this.id, this.data.workflow);
 
-                    console.log("status", status)
+                    //console.log("status", status)
                     this.update(status);
 
                     if ((status?.status === "succeed" || status?.status === "succeeded") && status.url) {
                         await this.downloadResults();
+
+                        // STORE DATA
+                        const cost = KlingAI.calcPrice(this.data.tokens)
+                        const proj = Project.getProject();
+                        proj.costTracker?.addCost(
+                            this.id,
+                            this.data.provider,
+                            cost,
+                            {
+                                task_data: this.data
+                            }
+                        )
+
+
                         this.finish_checking();
                         return;
                     }
@@ -166,16 +167,28 @@ export class Task {
                     }
                 }
 
-                console.log(this.data.provider);
+                //console.log(this.data.provider);
                 // Bytedance
                 if (this.data.provider == ai_providers.BD) {
-                    console.log("Check Bytedance Status");
+                    //console.log("Check Bytedance Status");
                     const status = await SeedanceAI.getStatus(this.id);
 
-                    console.log("status", status)
+                    //console.log("status", status)
                     this.update(status);
 
                     if (status?.status === "succeeded" && status.url) {
+                        // STORE DATA
+                        const cost = SeedanceAI.calcPrice(this)
+                        const proj = Project.getProject();
+                        proj.costTracker?.addCost(
+                            this.id,
+                            this.data.provider,
+                            cost,
+                            {
+                                task_data: this.data,                                
+                            }
+                        )
+
                         await this.downloadResults();
                         this.finish_checking();
                         return;
@@ -235,5 +248,6 @@ export class Task {
     get result(): LocalMedia | null {
         return this.tasksJson.outFolder!.children.find(m => m.name === this.data.result) as LocalMedia ?? null;
     }
-
 }
+
+

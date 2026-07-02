@@ -161,6 +161,10 @@ export const KlingNode = memo(
                     const task = tasksJson!.addTask(task_info.id, {
                         provider: ai_providers.KLING,
                         workflow: task_info.workflow,
+                        model: data.model,
+                        mode: data.mode,
+                        duration: data.duration,
+                        sound: data.sound
                     });
                     // Check Status
                     await new Promise(res => setTimeout(res, 100));
