@@ -1,4 +1,3 @@
-import { toJS } from "mobx";
 
 export type SeedanceContent =
     | {
@@ -242,7 +241,7 @@ export class SeedanceAI {
     };
 
     public static calcPrice(task: any) {
-        console.log("Calculating Price Seedance",toJS(task.data))
+        //console.log("Calculating Price Seedance",toJS(task.data))
         //const res       = task?.data?.geninfo?.resolution as Resolution | undefined;
         const res       = task?.data?.raw?.resolution as Resolution | undefined;
         const has_video = task?.data?.geninfo?.has_video ? 1 : 0;

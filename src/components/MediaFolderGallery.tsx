@@ -34,7 +34,8 @@ interface MediaFolderGalleryProps {
 
 export const MediaFolderGallery: React.FC<MediaFolderGalleryProps> = observer(
     ({ mediaFolder, label = null, itemHeight = 300, showEditWindow = true, defaultCollapsed = false }) => {
-        const [highlightGenParents, setHighlightGenParents] = useState<boolean>(true);
+        const [highlightGenParents, setHighlightGenParents] = useState<boolean>(false);
+        const [autoplay, setAutoplay] = useState<boolean>(true);
         const [currentItemHeight, setCurrentItemHeight] = useState<number>(itemHeight);
 
         if (!mediaFolder || !mediaFolder.handle) return null;
@@ -63,8 +64,10 @@ export const MediaFolderGallery: React.FC<MediaFolderGalleryProps> = observer(
 
 
                                 <SimpleToggle label={"Highlight Gen Relations"} value={highlightGenParents} onToggle={(e) => { setHighlightGenParents(e) }} />
-                                <SimpleButton label="Log" className="btn-outline-secondary btn-sm"
-                                    onClick={() => { mediaFolder.log(); }} />
+                                <SimpleToggle label={"Autoplay"} value={autoplay} onToggle={(e) => { setAutoplay(e) }} />
+
+                                { false && <SimpleButton label="Log" className="btn-outline-secondary btn-sm"
+                                    onClick={() => { mediaFolder?.log(); }} />}
                                 <SimpleButton label="Import URL" className="btn-outline-secondary btn-sm"
                                     onClick={async () => {
                                         try {
@@ -135,6 +138,7 @@ export const MediaFolderGallery: React.FC<MediaFolderGalleryProps> = observer(
                                     highlightGenParents={highlightGenParents}
                                     isSelected={mediaFolder.selectedMedia === mediaItem}
                                     onSelect={(media) => mediaFolder.setSelectedMedia(media)}
+                                    autoplay={autoplay}                                    
                                 />
                             ))}
 
@@ -198,6 +202,7 @@ interface Props {
 
     highlightGenParents?: boolean;
     isSelected: boolean;
+    autoplay?: boolean;
 
     onSelect: (m: LocalMedia) => void;
 }
@@ -206,6 +211,7 @@ const MediaItemCard: React.FC<Props> = ({
     mediaItem,
     height,
     highlightGenParents = false,
+    autoplay = false,
     isSelected,
     onSelect
 }) => {
@@ -219,6 +225,7 @@ const MediaItemCard: React.FC<Props> = ({
                     mediaItem={mediaItem}
                     height={height}
                     onSelectMedia={onSelect}
+                    autoPlay={autoplay}
                 >
                     <AddOutline
                         showOutline={isSelected}

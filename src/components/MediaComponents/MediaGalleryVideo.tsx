@@ -37,7 +37,7 @@ const MediaGalleryVideo: React.FC<Props> = observer(({
     >
 
       {/* Use the MobX-powered MediaVideo */}
-      <MediaVideo
+      <MediaVideo      
         localVideo={localVideo}
         onClick={onClick}
         autoPlay={autoPlay}

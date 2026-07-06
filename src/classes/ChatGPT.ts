@@ -363,6 +363,7 @@ export class ChatGPT implements AIProvider {
           }
         }
 
+        console.log("GPT ASPECT",aspect_ratio,resolution);
         const res = aspectToPixels(aspect_ratio, resolution);
 
         return await this.img2img(
@@ -498,7 +499,6 @@ export class ChatGPT implements AIProvider {
     },
   };
 
-
 }
 
 // Resolutions Mapping
@@ -515,10 +515,10 @@ function roundTo16(value: number): number {
 }
 
 export function aspectToPixels(
-  aspect: string = "9:16",
-  resolution: string = "1K"
+  aspect: string | undefined,
+  resolution: string | undefined,
 ): string | undefined {
-  if ((!aspect || aspect === "none") && (!resolution || resolution === "none"))
+  if (((aspect == null) || aspect === "none") && ((resolution == null) || resolution === "none"))
     return undefined;
 
   // defaults

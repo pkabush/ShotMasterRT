@@ -23,7 +23,7 @@ export class TasksJson {
         });
     }
 
-    
+
     get tasks(): Task[] {
         const tasksData = this.dataJson?.getField("tasks");
         if (!tasksData || typeof tasksData !== "object") {
@@ -34,10 +34,11 @@ export class TasksJson {
         );
     }
 
+    // Setter makes no sense here - replace it with delete task and add task with direct acess to dataJson
     set tasks(tasks: Task[]) {
         const tasksData: Record<string, any> = {};
         for (const task of tasks) {
-            tasksData[task.id] = this.dataJson?.getField(`tasks.${task.id}`) ?? {};
+            tasksData[task.id] = this.dataJson?.getField(`tasks/${task.id}`) ?? {};
         }
         this.dataJson?.updateField("tasks", tasksData);
     }
@@ -52,13 +53,7 @@ export class TasksJson {
     }
 
     removeTask(task: Task) {
-        runInAction(() => {
-            this.tasks = this.tasks.filter(t => t !== task);
-        });
-
-        const tasks = this.dataJson?.getField("tasks") ?? {};
-        delete tasks[task.id as string];
-        this.dataJson?.updateField("tasks", tasks);
+        runInAction(() => { this.tasks = this.tasks.filter(t => t !== task); });
     }
 
     get outFolder() {
@@ -101,7 +96,7 @@ export class Task {
     }
 
     log() {
-        console.log("LOG TASK",{ task: toJS(this), data: toJS(this.data) });
+        console.log("LOG TASK", { task: toJS(this), data: toJS(this.data) });
     }
 
     delete() {
@@ -185,7 +180,7 @@ export class Task {
                             this.data.provider,
                             cost,
                             {
-                                task_data: this.data,                                
+                                task_data: this.data,
                             }
                         )
 
