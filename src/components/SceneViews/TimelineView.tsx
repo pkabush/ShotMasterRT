@@ -57,12 +57,14 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
         return scene.shots_ordered.map(shot => ({
             video: shot.previewMedia,
             shot,
+            label:shot.name
         }));
     }, [scene.shots_ordered]);
 
-    const totalDuration = scene.shots.reduce((sum, s) => {
-        const start = s.previewMedia?.start_timecode ?? 0;
-        const end = s.previewMedia?.end_timecode ?? 2;
+
+    const totalDuration = clips.reduce((sum, s) => {
+        const start = s.video?.start_timecode ?? 0;
+        const end = s.video?.end_timecode ?? 2;
         return sum + (end - start);
     }, 0);
 
@@ -88,7 +90,7 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
                 currentVideo.src = "/assets/sounds/background_music.mp3";
                 currentVideo.volume = 0.01;
 
-                const preview = clips[currentIndex].shot.previewMedia
+                const preview = clips[currentIndex].video
                 if (preview) {
                     if (preview instanceof LocalVideo)
                         currentVideo.src = preview.urlObject ?? "";
@@ -136,9 +138,6 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
             if (!pausedRef.current) {
                 const video = videoRefs.current[currentIndexRef.current];
                 const clip = clips[currentIndexRef.current];
-                //const shot = clip.shot
-                //const duration = shot.previewMedia?.duration ?? 2
-
 
                 if (video && clip) {
                     const time = video.currentTime;
@@ -353,7 +352,7 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
                 {clips.map((clip, i) => (
                     <>
                         <video
-                            key={clip.shot.path}
+                            key={i}
                             ref={(el) => { videoRefs.current[i] = el; }}
                             src={
                                 clip.video instanceof LocalVideo ?
@@ -362,7 +361,7 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
                             }
                             preload="auto"
                             poster={
-                                clip.shot.previewMedia?.urlObject ?? ""
+                                clip.video?.urlObject ?? ""
                             }
                             controls={false}
                             //onEnded={handleEnded}
@@ -386,9 +385,9 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
                 }}>
                     <h3>
                         <Stack direction="horizontal" gap={1}>
-                            <Badge bg="secondary">{clips[currentIndex] ? clips[currentIndex].shot.name : "No"}</Badge>
-                            <Button size="sm" onClick={async () => {
-                                const out_videos = scene.shots_ordered.map((shot) => { return shot.previewMedia instanceof LocalVideo ? shot.previewMedia : null });
+                            <Badge bg="secondary">{clips[currentIndex] ? clips[currentIndex].label : "No"}</Badge>
+                            <Button size="sm" onClick={async () => {                                
+                                const out_videos = clips.map((clip) => { return clip.video instanceof LocalVideo ? clip.video : null });
 
                                 const buffers: Uint8Array[] = [];
                                 for (const video of out_videos) {
@@ -408,7 +407,8 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
 
                             }}>Export</Button>
 
-                            <Button size="sm" onClick={async () => {
+
+                            { false && <Button size="sm" onClick={async () => {
                                 const video = clips[currentIndex].video;
                                 if (!(video instanceof LocalVideo)) return;                                
                                 
@@ -418,7 +418,7 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
 
                                 video.parentFolder!.downloadFromUrl(url);
                                 
-                            }}>Export Shot</Button>
+                            }}>Export Clip</Button>}
                         </Stack>
                     </h3>
 
@@ -619,14 +619,13 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
                 {clips.map((clip, index) => {
                     const video = videoRefs.current[index];
                     const shot = clips[index].shot;
-                    //const duration = shot.previewMedia?.duration ?? 2;
-
-                    const duration = (shot.previewMedia?.end_timecode ?? 2) - (shot.previewMedia?.start_timecode ?? 0);
+                    
+                    const duration = (clips[index].video?.end_timecode ?? 2) - (clips[index].video?.start_timecode ?? 0);
                     const widthPercent = (duration / totalDuration) * 100;
 
                     return (
                         <div
-                            key={clip.shot.path}
+                            key={index}
                             style={{
                                 width: `${widthPercent}%`,
                                 height: "100%",
@@ -643,7 +642,7 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
                                 // SEEK CLICKED CLIP
                                 const rect = e.currentTarget.getBoundingClientRect();
                                 const ratio = (e.clientX - rect.left) / rect.width;
-                                const seek_time = ratio * duration + (shot.previewMedia?.start_timecode ?? 0);
+                                const seek_time = ratio * duration + (clips[index].video?.start_timecode ?? 0);
 
                                 // If same index
                                 if (index === currentIndex) {
@@ -697,10 +696,10 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
                                 bottom: -2,
                                 left: -2,
                             }}>
-                                <Badge bg="success">{clip.shot.name}</Badge>
+                                <Badge bg="success">{clip.label}</Badge>
                             </span>
 
-                            <MediaPreview media={clip.shot.previewMedia} height={"100%"} />
+                            <MediaPreview media={clip.video} height={"100%"} />                            
 
                             {/** STYLUS */}
                             <div
@@ -710,7 +709,7 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
                                     bottom: 0,
                                     width: 4,
                                     background: "red",
-                                    left: `${index === currentIndex ? ((clipTime - shot.previewMedia?.start_timecode) / duration) * 100 : "0"}% `,
+                                    left: `${index === currentIndex ? ((clipTime - clip.video?.start_timecode) / duration) * 100 : "0"}% `,
                                     pointerEvents: "none",
                                     display: index === currentIndex ? "block" : "none",
                                     //display: "none",

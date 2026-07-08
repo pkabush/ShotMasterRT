@@ -17,6 +17,7 @@ import { Badge } from 'react-bootstrap';
 import { Google_GenerateKlingPrompt } from './GoogleNodes/Google_GenerateKlingPrompt';
 import { BytePlus_GenerateVideo } from './BytePlus/BP_generateVideo';
 import { toJS } from 'mobx';
+import { EditableJsonToggleField } from './EditableJsonTextField';
 
 interface Props {
   shot: Shot;
@@ -121,6 +122,8 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
 
           ,
           Generate_VIDEO: <>
+            <EditableJsonToggleField localJson={shot.scene.project.projinfo} field={"auto_load_first_frame"} default_val={false} label="Auto Load First Frame" />
+
             <Kling_GenerateVideo shot={shot} />
             <Kling_MotionControl shot={shot} />
             {false && <Google_GenerateKlingPrompt shot={shot} />}
@@ -135,7 +138,6 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
             <TaskContainer tasksJson={shot.tasksJson!} />
           </>
           ,
-
 
           "Output": <>
             <MediaFolderGallery mediaFolder={shot.MediaFolder_genVideo} />

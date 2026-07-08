@@ -7,8 +7,6 @@ import EditableJsonTextField, { EditableJsonToggleField } from "../EditableJsonT
 import { SeedanceAI } from "../../classes/AiProviders/Byteplus";
 import { ai_providers } from "../../classes/AI_provider";
 import { MediaFolderGallery } from "../MediaFolderGallery";
-import type { LocalMedia } from "../../classes/fileSystem/LocalMedia";
-import MediaGalleryPreview from "../MediaComponents/MediaGallerPreview";
 import { TagsFolderContainer } from "../FolderTags/FolderTagsContainer";
 import { Project } from "../../classes/Project";
 import type { LocalFolder } from "../../classes/fileSystem/LocalFolder";
@@ -179,7 +177,8 @@ export const BytePlus_GenerateVideo: React.FC<BytePlus_GenerateVideoProps> = obs
             }
             content={
                 <>
-                    <EditableJsonToggleField localJson={project.projinfo} field={gen_audio_field} default_val={false} label="Sound" />
+                    <EditableJsonToggleField localJson={project.projinfo} field={gen_audio_field} default_val={false} label="Sound" />                   
+
                     <EditableJsonTextField localJson={shot.shotJson} field="video_prompt" fitHeight />
                     <EditableJsonTextField localJson={shot.shotJson} field="generated_video_prompt" fitHeight />
                     <TagsFolderContainer tags={shot.references} folders={[
@@ -188,10 +187,6 @@ export const BytePlus_GenerateVideo: React.FC<BytePlus_GenerateVideoProps> = obs
                         shot as LocalFolder
                     ]} />
 
-                    {false && <>
-                        <MediaGalleryPreview mediaItem={shot.srcImage as LocalMedia} height={200} />
-                        <MediaGalleryPreview mediaItem={shot.end_frame as LocalMedia} height={200} />
-                    </>}
 
                     <ShotStartEndFramePreview shot={shot} />
 

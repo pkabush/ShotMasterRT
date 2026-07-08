@@ -2,7 +2,7 @@
 import { Scene } from './Scene';
 import { LocalJson } from './LocalJson';
 import { LocalImage } from './fileSystem/LocalImage';
-import { action, makeObservable, observable, runInAction } from "mobx";
+import { action, computed, makeObservable, observable, runInAction } from "mobx";
 import { GoogleAI } from './GoogleAI';
 import { KlingAI, type LipSyncFaceChoose } from './KlingAI';
 import { TasksJson } from './Task';
@@ -58,6 +58,7 @@ export class Shot extends LocalFolder {
       references: observable,
       tasksJson: observable,
       load: action,
+      first_frame:computed,
     });
   }
 
@@ -122,7 +123,10 @@ export class Shot extends LocalFolder {
   }
   // SRC IMAGE WITH FALLBACK TO first image from results folder
   get first_frame(): LocalImage | null {
-    return this.srcImage ?? this.MediaFolder_results?.media[0] as LocalImage;
+    if( this.scene.project.projinfo?.getField("auto_load_first_frame") )
+      return this.srcImage ?? this.MediaFolder_results?.media[0] as LocalImage;
+    else 
+      return this.srcImage;
   }  
   get start_frame(): LocalImage | null {
     return this.MediaFolder_results?.getFirstMediaWithTag("start_frame") as LocalImage;

@@ -92,6 +92,7 @@ export const Kling_GenerateVideo: React.FC<Kling_GenerateVideoProps> = observer(
       }
       content={
         <>
+
           <EditableJsonTextField localJson={shot.shotJson} field="video_prompt" fitHeight />
           <EditableJsonTextField localJson={shot.shotJson} field="generated_video_prompt" fitHeight />
           {false && <Google_GenerateKlingPrompt shot={shot} />}
@@ -190,21 +191,22 @@ export const ShotStartEndFramePreview = observer(
 
     return (
       <Stack direction="horizontal" gap={3}>
-        {shot.srcImage ? (
+        {shot.first_frame ? (
           <MediaGalleryPreview
-            mediaItem={shot.srcImage as LocalMedia}
+            mediaItem={shot.first_frame as LocalMedia}
             height={200}
           >
-            <BottomCenterLabel label="start frame" />
-            <AddOutline color="#29c024e2" showOutline />
-          </MediaGalleryPreview>
-        ) : shot.MediaFolder_results?.media[0] ? (
-          <MediaGalleryPreview
-            mediaItem={shot.MediaFolder_results.media[0] as LocalMedia}
-            height={200}
-          >
-            <BottomCenterLabel label="start - preview" />
-            <AddOutline color="#ffd025e2" showOutline />
+            {shot.first_frame.hasTag("start_frame") ?
+              <>
+                <BottomCenterLabel label="start frame" />
+                <AddOutline color="#29c024e2" showOutline />
+              </>
+              :
+              <>
+                <BottomCenterLabel label="start preview" />
+                <AddOutline color="#c5eb46e2" showOutline />
+              </>
+            }
           </MediaGalleryPreview>
         ) : (
           <EmptyFrame label="No Start Frame" />
