@@ -207,7 +207,7 @@ interface Props {
     onSelect: (m: LocalMedia) => void;
 }
 
-const MediaItemCard: React.FC<Props> = ({
+const MediaItemCard: React.FC<Props> = observer(({
     mediaItem,
     height,
     highlightGenParents = false,
@@ -344,6 +344,6 @@ const MediaItemCard: React.FC<Props> = ({
             </ContextMenu.Portal>
         </ContextMenu.Root>
     );
-};
+});
 
 export default MediaItemCard;

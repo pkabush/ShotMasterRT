@@ -11,8 +11,10 @@ import type { Shot } from "../../classes/Shot";
 import EditableJsonTextField from "../EditableJsonTextField";
 import { Google_GenerateKlingPrompt } from "../GoogleNodes/Google_GenerateKlingPrompt";
 import { CollapsibleContainerAccordion } from "../Atomic/CollapsibleContainer";
-import { Button } from "react-bootstrap";
+import { Button, Stack } from "react-bootstrap";
 import { AI, AllTextModels } from "../../classes/AI_provider";
+import BottomCenterLabel from "../Atomic/MediaElements/BottomCenterLabel";
+import AddOutline from "../Atomic/MediaElements/AddOutline";
 
 interface Kling_GenerateVideoProps {
   shot: Shot;
@@ -79,7 +81,7 @@ export const Kling_GenerateVideo: React.FC<Kling_GenerateVideoProps> = observer(
 
 
           {/* Prompt Generation */}
-          <Button size="sm" variant="outline-success" onClick={async () => {generate_shot_kling_video_prompt(shot)}}> Gen Prompt </Button>
+          <Button size="sm" variant="outline-success" onClick={async () => { generate_shot_kling_video_prompt(shot) }}> Gen Prompt </Button>
           <WorkflowOptionSelect
             workflowName={"Generate_KlingVideoPrompt"}
             optionName={"model"}
@@ -92,10 +94,9 @@ export const Kling_GenerateVideo: React.FC<Kling_GenerateVideoProps> = observer(
         <>
           <EditableJsonTextField localJson={shot.shotJson} field="video_prompt" fitHeight />
           <EditableJsonTextField localJson={shot.shotJson} field="generated_video_prompt" fitHeight />
-          { false && <Google_GenerateKlingPrompt shot={shot} />}
+          {false && <Google_GenerateKlingPrompt shot={shot} />}
 
-          <MediaGalleryPreview mediaItem={shot.srcImage as LocalMedia} height={400} />
-          <MediaGalleryPreview mediaItem={shot.end_frame as LocalMedia} height={400} />
+          <ShotStartEndFramePreview shot={shot} />
 
           <MediaFolderGallery mediaFolder={shot.MediaFolder_results} label="Source Image" itemHeight={300} />
 
@@ -162,3 +163,65 @@ async function generate_shot_kling_video_prompt(shot: Shot) {
   }
 }
 
+
+
+
+
+interface ShotStartEndFramePreviewProps {
+  shot: Shot;
+}
+
+export const ShotStartEndFramePreview = observer(
+  ({ shot }: ShotStartEndFramePreviewProps) => {
+    const EmptyFrame = ({ label }: { label: string }) => (
+      <div
+        style={{
+          width: 150,
+          height: 200,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          border: "2px dashed #a9a851",
+        }}
+      >
+        <span>{label}</span>
+      </div>
+    );
+
+    return (
+      <Stack direction="horizontal" gap={3}>
+        {shot.srcImage ? (
+          <MediaGalleryPreview
+            mediaItem={shot.srcImage as LocalMedia}
+            height={200}
+          >
+            <BottomCenterLabel label="start frame" />
+            <AddOutline color="#29c024e2" showOutline />
+          </MediaGalleryPreview>
+        ) : shot.MediaFolder_results?.media[0] ? (
+          <MediaGalleryPreview
+            mediaItem={shot.MediaFolder_results.media[0] as LocalMedia}
+            height={200}
+          >
+            <BottomCenterLabel label="start - preview" />
+            <AddOutline color="#ffd025e2" showOutline />
+          </MediaGalleryPreview>
+        ) : (
+          <EmptyFrame label="No Start Frame" />
+        )}
+
+        {shot.end_frame ? (
+          <MediaGalleryPreview
+            mediaItem={shot.end_frame as LocalMedia}
+            height={200}
+          >
+            <BottomCenterLabel label="end frame" />
+            <AddOutline color="#2455c0e2" showOutline />
+          </MediaGalleryPreview>
+        ) : (
+          <EmptyFrame label="No End Frame" />
+        )}
+      </Stack>
+    );
+  }
+);

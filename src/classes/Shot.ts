@@ -120,6 +120,10 @@ export class Shot extends LocalFolder {
   get srcImage(): LocalImage | null {
     return this.MediaFolder_results?.getFirstMediaWithTag("start_frame") as LocalImage;
   }
+  // SRC IMAGE WITH FALLBACK TO first image from results folder
+  get first_frame(): LocalImage | null {
+    return this.srcImage ?? this.MediaFolder_results?.media[0] as LocalImage;
+  }  
   get start_frame(): LocalImage | null {
     return this.MediaFolder_results?.getFirstMediaWithTag("start_frame") as LocalImage;
   }
@@ -270,12 +274,12 @@ export class Shot extends LocalFolder {
       if (model === KlingAI.options.omni_video.model.o1) {
         const image_list = [];
 
-        if (this.srcImage) {
+        if (this.first_frame) {
           image_list.push({
-            image_url: (await this.srcImage.getBase64()).rawBase64,
+            image_url: (await this.first_frame.getBase64()).rawBase64,
             type: KlingAI.options.omni_video.image.type.first_frame,
           });
-        }
+        } 
 
         if (this.end_frame) {
           image_list.push({
@@ -297,22 +301,22 @@ export class Shot extends LocalFolder {
       // ================= OMNI VIDEO (kling-video-o1) =================
       else if (model === KlingAI.options.img2video.model.turbo) {
         console.log("Used Turbo Model");
-        const start_frame = this.srcImage ? (await this.srcImage.getBase64()).rawBase64 : undefined;
+        const start_frame = this.first_frame ? (await this.first_frame.getBase64()).rawBase64 : undefined;
 
         task_info = await KlingAI.turbo({
           image: start_frame,
           prompt,
           duration: workflow.duration,
-          mode:workflow.mode ?? "std",
+          mode: workflow.mode ?? "std",
         });
 
-        console.log("TURBO TASK INFO",task_info);
-     
+        console.log("TURBO TASK INFO", task_info);
+
       }
 
       // ================= IMG2VIDEO (default Kling models) =================
-      else if (this.srcImage) {
-        const img_raw = (await this.srcImage.getBase64()).rawBase64;
+      else if (this.first_frame) {
+        const img_raw = (await this.first_frame.getBase64()).rawBase64;
         const img_tail_raw = (await this.end_frame?.getBase64())?.rawBase64;
 
         task_info = await KlingAI.img2video({
@@ -336,7 +340,7 @@ export class Shot extends LocalFolder {
           workflow: "kling_generate_video",
           prompt: prompt,
           model: model,
-          source: this.srcImage?.path,
+          source: this.first_frame?.path,
           end_frame: this.end_frame?.path,
           kling: {
             mode: workflow.mode,

@@ -16,6 +16,7 @@ import { WorkflowOptionSelect } from "../WorkflowOptionSelect";
 import { LocalVideo } from "../../classes/fileSystem/LocalVideo";
 import { LocalAudio } from "../../classes/fileSystem/LocalAudio";
 import { runInAction } from "mobx";
+import { ShotStartEndFramePreview } from "../Kling/Kling_GenerateVideo";
 
 // Video Gen Parameters
 // https://docs.byteplus.com/en/docs/ModelArk/1520757
@@ -57,8 +58,8 @@ export const BytePlus_GenerateVideo: React.FC<BytePlus_GenerateVideoProps> = obs
                                 if (prompt) content.push(SeedanceAI.textMsg(prompt))
 
                                 // Add First Frame
-                                if (shot.start_frame) {
-                                    const first_frame = await shot.start_frame.getBase64();
+                                if (shot.first_frame) {
+                                    const first_frame = await shot.first_frame.getBase64();
                                     content.push(
                                         SeedanceAI.imgMsg(
                                             `data:${first_frame.mime};base64,${first_frame.rawBase64}`,
@@ -186,8 +187,14 @@ export const BytePlus_GenerateVideo: React.FC<BytePlus_GenerateVideoProps> = obs
                         Project.getProject().artbook as LocalFolder,
                         shot as LocalFolder
                     ]} />
-                    <MediaGalleryPreview mediaItem={shot.srcImage as LocalMedia} height={200} />
-                    <MediaGalleryPreview mediaItem={shot.end_frame as LocalMedia} height={200} />
+
+                    {false && <>
+                        <MediaGalleryPreview mediaItem={shot.srcImage as LocalMedia} height={200} />
+                        <MediaGalleryPreview mediaItem={shot.end_frame as LocalMedia} height={200} />
+                    </>}
+
+                    <ShotStartEndFramePreview shot={shot} />
+
                     <MediaFolderGallery mediaFolder={shot.MediaFolder_results} label="Source Image" itemHeight={300} />
 
                 </>
