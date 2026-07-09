@@ -1,12 +1,11 @@
 import { observer } from "mobx-react-lite";
 import type { SceneViewProps } from "../SceneView";
 import { LocalVideo } from "../../classes/fileSystem/LocalVideo";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import MediaPreview from "../MediaComponents/MediaPreview";
 import { Badge, Button, Stack } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBackwardFast, faBackwardStep, faPause, faPlay, faRightFromBracket, faRightToBracket, faRotate, faVolume, faVolumeXmark } from "@fortawesome/free-solid-svg-icons";
-import { Shot } from "../../classes/Shot";
 import { combineVideosFromUint8 } from "../../classes/Ffmpeg/FFmpegService";
 import { mb_trimLocalVideo } from "../../classes/Ffmpeg/mediabunnyService";
 
@@ -31,6 +30,18 @@ export const SceneTimelineView: React.FC<SceneViewProps> = observer(({ scene }) 
 
 const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
 
+    const clips = useMemo(() => {
+        return scene.shots_ordered.map(shot => ({
+            video: shot.previewMedia,
+            shot,
+            label:shot.name
+        }));
+    }, [scene.shots_ordered]);
+
+    const onIndexReorder = useCallback( (old_index:number,new_index:number) => {
+        scene.set_shot_list_index(scene.shots_ordered[old_index], new_index);
+    },[clips,scene])
+
     const SEEK_STEP = 0.1;
 
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -52,15 +63,6 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
         pendingSeekRef.current = null;
         advancedClipRef.current = false;
     }, [scene]);
-
-    const clips = useMemo(() => {
-        return scene.shots_ordered.map(shot => ({
-            video: shot.previewMedia,
-            shot,
-            label:shot.name
-        }));
-    }, [scene.shots_ordered]);
-
 
     const totalDuration = clips.reduce((sum, s) => {
         const start = s.video?.start_timecode ?? 0;
@@ -331,8 +333,6 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
                 setMuted(prev => !prev);
                 return;
             }
-
-
             console.log(e.code);
 
         };
@@ -617,8 +617,7 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
             //onClick={seekToTime}
             >
                 {clips.map((clip, index) => {
-                    const video = videoRefs.current[index];
-                    const shot = clips[index].shot;
+                    const video = videoRefs.current[index];                    
                     
                     const duration = (clips[index].video?.end_timecode ?? 2) - (clips[index].video?.start_timecode ?? 0);
                     const widthPercent = (duration / totalDuration) * 100;
@@ -658,7 +657,8 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
                             // DRAGGABLES
                             draggable={true}
                             onDragStart={(e) => {
-                                e.dataTransfer.setData("LocalFilePath", shot.path);
+                                //e.dataTransfer.setData("LocalFilePath", shot.path);
+                                e.dataTransfer.setData("TimelineDragIndex", index.toString());
                             }}
                             onDragOver={(e) => {
                                 e.preventDefault();
@@ -673,22 +673,17 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
                             onDrop={(e) => {
                                 e.preventDefault();
                                 setDragOver(null);
-                                const local_file_path = e.dataTransfer.getData("LocalFilePath");
-                                const dragged_file = shot.getByAbsPath(local_file_path);
-                                if (dragged_file instanceof Shot) {
-                                    if (dragged_file.scene == shot.scene) {
-                                        // Same sceve - move
-                                        let index = shot.scene.get_shot_list_index(shot);
-                                        // Mouse position inside target
-                                        const rect = e.currentTarget.getBoundingClientRect();
-                                        const mouseX = e.clientX - rect.left;
-                                        const droppedOnRight = mouseX > rect.width / 2;
-                                        if (droppedOnRight) { index += 1; }
-                                        //console.log(index);
-                                        shot.scene.set_shot_list_index(dragged_file, index);
-                                    }
-                                }
 
+                                const dragged_index = e.dataTransfer.getData("TimelineDragIndex");
+                                let new_index = index;
+                                // Mouse position inside target
+                                const rect = e.currentTarget.getBoundingClientRect();
+                                const mouseX = e.clientX - rect.left;
+                                const droppedOnRight = mouseX > rect.width / 2;
+                                if (droppedOnRight) { new_index += 1; }
+                          
+                                //shot.scene.set_shot_list_index(shot.scene.shots_ordered[parseInt(dragged_index)], new_index);
+                                onIndexReorder(parseInt(dragged_index),new_index);
                             }}
                         >
                             <span style={{
@@ -734,9 +729,6 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
                         </div>
                     );
                 })}
-
-
-
 
             </div>
         </div>

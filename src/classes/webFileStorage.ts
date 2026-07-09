@@ -3,7 +3,7 @@
 
 export async function uploadVideoTemp(file: File): Promise<string> {
   try {
-    console.log("[tmpfiles] Uploading:", file.name)
+    /*console.log("[tmpfiles] Uploading:", file.name)
 
     const formData = new FormData()
     formData.append("file", file)
@@ -25,6 +25,52 @@ export async function uploadVideoTemp(file: File): Promise<string> {
 
     // IMPORTANT: Kling needs direct file access
     return url.replace("tmpfiles.org/", "tmpfiles.org/dl/")
+    */
+
+    /*
+    // GOFILE - Requires Premium
+    const form = new FormData();
+    form.append("file", file);
+
+    const res = await fetch(
+      "https://upload.gofile.io/uploadfile",
+      {
+        method: "POST",
+        body: form,
+      }
+    );
+
+    const json = await res.json();
+    console.log("GOFile Upload JSON", json);
+    */
+
+
+    const form = new FormData();
+    form.append("fileToUpload", file);
+    form.append("reqtype", "fileupload");
+
+    const targetUrl = "https://catbox.moe/user/api.php"
+    const encodedTarget = encodeURIComponent(targetUrl);
+    const locUrl = `http://localhost:4000/proxy/${encodedTarget}`;
+
+    const res = await fetch(locUrl, {
+      method: "POST",
+      body: form,
+    });
+
+    if (!res.ok) {
+      throw new Error(`Upload failed: ${res.status}`);
+    }
+
+    const url = await res.text();
+
+    console.log("Catbox URL:", url);
+
+    return url.trim();
+
+
+
+
   } catch (err) {
     console.error("[tmpfiles] Upload failed:", err)
     throw err
