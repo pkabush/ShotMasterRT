@@ -22,7 +22,7 @@ export class CostTracker {
         this.dataJson = dataJson;
         makeObservable(this, {
             dataJson: observable,
-            addCost:action,
+            addCost: action,
         });
     }
 
@@ -112,5 +112,87 @@ export class CostTracker {
         return this.usage.tasks
             .filter(task => task.timestamp >= todayTimestamp)
             .reduce((sum, task) => sum + task.cost, 0);
+    }
+
+
+    async getUsage(
+        username: string = "username",
+        project: string = "proj_name"
+    ) {
+        const tasks = this.usage.tasks.filter(
+            task => typeof task.timestamp === "number" && task.timestamp > 0
+        );
+
+        if (tasks.length === 0) {
+            console.log("No usage data");
+            return "";
+        }
+
+        // Get unique providers automatically
+        const providers = [...new Set(tasks.map(task => task.provider))];
+
+        // Get unique weeks automatically
+        const weeks = [...new Set(
+            tasks.map(task => this.getWeekKey(task.timestamp))
+        )].sort();
+
+        // Header
+        const header = [
+            "Username",
+            "Project",
+            "Provider",
+            ...weeks
+        ].join("\t");
+
+        const rows = providers.map(provider => {
+            const weekCosts = weeks.map(week => {
+                const cost = tasks
+                    .filter(task =>
+                        task.provider === provider &&
+                        this.getWeekKey(task.timestamp) === week
+                    )
+                    .reduce((sum, task) => sum + task.cost, 0);
+
+                return cost.toFixed(4) + "$";
+            });
+
+            return [
+                username,
+                project,
+                provider,
+                ...weekCosts
+            ].join("\t");
+        });
+
+        const result = [
+            header,
+            ...rows
+        ].join("\n");
+
+        console.log(result);
+
+        try {
+            await navigator.clipboard.writeText(result);
+            console.log("Usage copied to clipboard");
+            alert("Usage copied to clipboard");
+        } catch (error) {
+            console.error("Failed to copy usage:", error);
+        }
+
+        return result;
+    }
+
+    private getWeekKey(timestamp: number): string {
+        const date = new Date(timestamp);
+
+        // Get Monday of the current week
+        const day = date.getDay() || 7; // Sunday becomes 7
+        date.setDate(date.getDate() - day + 1);
+
+        const dd = String(date.getDate()).padStart(2, "0");
+        const mm = String(date.getMonth() + 1).padStart(2, "0");
+        const yy = String(date.getFullYear()).slice(-2);
+
+        return `${dd}.${mm}.${yy}`;
     }
 }

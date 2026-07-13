@@ -51,6 +51,7 @@ export type NodeType = keyof typeof nodeTypes;
 export const MultiInputNodes = [
     "googleAiNode",
     "mergeNode",
+    "gptNode",
 ];
 
 

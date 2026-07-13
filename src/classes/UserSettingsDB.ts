@@ -8,6 +8,7 @@ export interface UserSettings {
   lastOpenedFolder: FileSystemDirectoryHandle | null;
   recentFolders: FileSystemDirectoryHandle[];
   api_keys: Record<string, string>;
+  username: string;
 }
 
 const DB_NAME = "ShotMasterRE";
@@ -22,6 +23,7 @@ export class UserSettingsDB {
     lastOpenedFolder: null,
     recentFolders: [],
     api_keys: {},
+    username: "username",
   };
 
   constructor() {

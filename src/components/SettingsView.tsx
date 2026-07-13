@@ -5,6 +5,9 @@ import { StringEditField } from "./StringEditField";
 import SimpleButton from "./Atomic/SimpleButton.tsx";
 import EditableJsonTextField from './EditableJsonTextField';
 import type { Provider } from "../classes/AiProviders/CostTracker.ts";
+import { Button, Stack } from "react-bootstrap";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCopy } from "@fortawesome/free-solid-svg-icons";
 
 interface SettingsViewProps {
   project: Project;
@@ -19,12 +22,21 @@ export const SettingsView: React.FC<SettingsViewProps> = observer(({ project }) 
   return (
     <div style={{ padding: 20 }} className="user-select-none">
       <h3>Settings</h3>
+      <StringEditField
+        label="Username"
+        value={userSettingsDB.data.username || ""}
+        onChange={async (newValue) => {
+          await userSettingsDB.update(data => { data.username = newValue; });
+        }}
+      />
       <SimpleButton onClick={() => { project.log() }} label="LOG Project" />
       <SimpleButton onClick={() => { project.download_asset("assets/server.exe", "server.exe") }} label="Download Server (Windows)" />
       <SimpleButton onClick={() => { project.download_asset("assets/server.zip", "server.zip") }} label="Download Server (MacOS)" />
       <SimpleButton onClick={() => { project.download_asset("assets/Shotmaster_import.Lua", "Shotmaster_import.Lua") }} label="Download Resolve LuaScript" />
 
       <EditableJsonTextField localJson={project.projinfo} field="project_path" fitHeight />
+
+
 
       <h4>API Keys</h4>
       <SimpleButton
@@ -95,8 +107,23 @@ export const SettingsView: React.FC<SettingsViewProps> = observer(({ project }) 
         Also you can add shortcut to it - for example "H" is free
       </>
 
+      <Stack direction="horizontal" gap={1}>
+        <h4 className="mt-4" onClick={() => {
+          project.costTracker?.log();
+        }}>Billing</h4>
 
-      <h4 className="mt-4" onClick={() => { project.costTracker?.log(); }}>Billing</h4>
+        <Button onClick={() => {
+          project.costTracker?.getUsage(project.userSettingsDB.data.username, project.name);
+        }}
+          variant="outline-secondary"
+          size="sm"
+          className="mt-4 d-flex align-items-center justify-content-center"
+        >
+          <FontAwesomeIcon icon={faCopy} />
+        </Button>
+
+      </Stack>
+
 
       <div className="d-flex flex-wrap">
         {[
@@ -121,8 +148,6 @@ export const SettingsView: React.FC<SettingsViewProps> = observer(({ project }) 
           );
         })}
       </div>
-
-
     </div>
   );
 });

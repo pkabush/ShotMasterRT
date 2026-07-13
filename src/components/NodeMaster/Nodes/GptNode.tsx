@@ -1,5 +1,5 @@
-import { memo, useEffect, useState } from "react";
-import { useReactFlow, useStore, useUpdateNodeInternals, type Node, type NodeProps } from "@xyflow/react";
+import { memo, useState } from "react";
+import {  useUpdateNodeInternals, type Node, type NodeProps } from "@xyflow/react";
 import { Button, Stack } from "react-bootstrap";
 import SimpleSelect from "../../Atomic/SimpleSelect";
 import { GoogleAI, type AIMessage } from "../../../classes/GoogleAI";
@@ -22,84 +22,52 @@ export type GptNodeModelType = Node<GptNodeModelData, "gptNodeModel">;
 
 export const GptNode = memo(
     ({ id, data, selected }: NodeProps<GptNodeModelType>) => {
+        const nodegraph_api = useNodeGraphApi();
+        const updateNodeInternals = useUpdateNodeInternals();
+
         const project = Project.getProject();
         const { local_file } = useLocalFile();
 
-        const { getEdges, getNodes, setNodes } = useReactFlow();
-        const setNodeData = (
-            updater: (data: GptNodeModelData) => Partial<GptNodeModelData>
-        ) => {
-            setNodes((nds) =>
-                nds.map((n) =>
-                    n.id === id
-                        ? {
-                            ...n,
-                            data: {
-                                ...n.data,
-                                ...updater(n.data as GptNodeModelData),
-                            },
-                        }
-                        : n
-                )
-            );
-        };
-
         const [loading, setLoading] = useState(false);
 
-        const incomingCount = useStore(
-            (state) => state.edges.reduce((acc, e) => (e.target === id ? acc + 1 : acc), 0)
-        );
-
-        const updateNodeInternals = useUpdateNodeInternals();
-
-        useEffect(() => {
-            updateNodeInternals(id);
-        }, [incomingCount, id, updateNodeInternals]);
-
-        const nodegraph_api = useNodeGraphApi();
+        const incomingCount = nodegraph_api.useDynamicInputHandles(id);
 
         const handleClick = async () => {
-
             setLoading(true);
             try {
-                const edges = getEdges();
-                const nodes = getNodes();
+                const inputNodes = nodegraph_api.getIndexedInputNodes(id);
 
-                const incoming = edges.filter((e) => e.target === id).sort((a, b) => {
-                    const aIndex = parseInt(a.targetHandle?.replace("input_", "") ?? "0");
-                    const bIndex = parseInt(b.targetHandle?.replace("input_", "") ?? "0");
-                    return aIndex - bIndex;
-                });
-                const inputNodes = incoming.map((e) => nodes.find((n) => n.id === e.source));
-
+                // Get messages
                 let messages: AIMessage[] = [];
-
-                for (const node of inputNodes) {
+                for (const node of inputNodes) {                    
                     if (!node) return;
+
+                    console.log(node);
+
                     if (node.type == "textNode" && node.data.text) {
                         messages.push(node.data.text as string);
                     }
                     if (node.type == "localImageNode" && node.data.path) {
                         const image = project.getByAbsPath(node.data.path as string);
-                        //console.log(image);
                         if (image instanceof LocalImage) {
-                            //console.log(await image.getAIImage());
                             messages.push(await image.getAIImage());
                         }
                     }
                 };
 
+                //return;
 
                 const node = nodegraph_api.id2Node(id);
                 if (!node) return;
-
 
                 const model = data.model;
                 const resolution = data.resolution;
                 const aspect_ratio = data.aspect_ratio;
 
+                const res = await ChatGPT.sendMessages(messages, model, aspect_ratio, resolution, data.gen_image);
 
-                const res = await ChatGPT.sendMessages(messages, model, aspect_ratio, resolution,data.gen_image);
+
+                // Create OUTPUT Nodes
 
                 if (!(typeof res === "string")) {
                     const out_image_nodes = nodegraph_api.getOutputNodes(id, "out_image", "localImageNode");
@@ -126,9 +94,6 @@ export const GptNode = memo(
                         nodegraph_api.setNodeData(res_node.id, { path: saved_image?.path });
                         updateNodeInternals(res_node.id);
                     }
-
-
-
                 }
                 else {
                     console.log(res);
@@ -145,13 +110,8 @@ export const GptNode = memo(
                         const set_id = out_text_nodes[0].id;
                         nodegraph_api.setNodeData(set_id, { text: res });
                         updateNodeInternals(set_id);
-                    }
-
+                    }                    
                 }
-
-                //console.log(getNodes());
-
-
             } finally {
                 setLoading(false);
             }
@@ -198,7 +158,9 @@ export const GptNode = memo(
                                         ...Object.values(ChatGPT.options.models)
                                     ]}
                                     onChange={(val: string) => {
-                                        setNodeData(() => ({ model: val, }));
+                                        nodegraph_api.setNodeData(id,
+                                            () => ({ model: val, })
+                                        )
                                     }}
                                 />
                             </>
@@ -207,9 +169,9 @@ export const GptNode = memo(
                             {!(Object.values(ChatGPT.options.image_models).includes(data.model ?? "")) &&
                                 <Button size="sm" variant="warning"
                                     onClick={() => {
-                                        setNodeData((d) => ({
-                                            gen_image: !d.gen_image,
-                                        }));
+                                        nodegraph_api.setNodeData(id,
+                                            (d) => ({ gen_image: !d.gen_image, })
+                                        )
                                     }}>
                                     {(data.gen_image ?? false) ? "Img" : "Text"}
                                 </Button>}
@@ -228,7 +190,9 @@ export const GptNode = memo(
                                         ...Object.values(GoogleAI.options.aspect_ratios)
                                     ]}
                                     onChange={(val: string) => {
-                                        setNodeData(() => ({ aspect_ratio: val, }));
+                                        nodegraph_api.setNodeData(id,
+                                            () => ({ aspect_ratio: val, })
+                                        )
                                     }}
                                 />
 
@@ -239,7 +203,10 @@ export const GptNode = memo(
                                         ...Object.values(GoogleAI.options.resolution)
                                     ]}
                                     onChange={(val: string) => {
-                                        setNodeData(() => ({ resolution: val, }));
+                                        nodegraph_api.setNodeData(id,
+                                            () => ({ resolution: val, })
+                                        )
+
                                     }}
                                 />
                             </>
@@ -261,7 +228,7 @@ export const GptNode = memo(
                 <NamedOutputHandle id="out_image" index={1} />
                 {/* Multi INPUT HANDLE */}
                 {Array.from({ length: incomingCount + 1 }).map((_, index) => (
-                    <NamedInputHandle id={`input_${index}`} index={index} key={index}/>
+                    <NamedInputHandle id={`input_${index}`} index={index} key={index} />
                 ))}
 
             </div >
