@@ -44,6 +44,11 @@ export class CostTracker {
         cost: number,
         data: Record<string, any> = {}
     ) {
+        if (Number.isNaN(cost)) {
+            console.warn("Ignoring NaN cost", { id, provider, data });
+            return;
+        }
+
         console.log("COST NOTED", { id, provider, cost, data });
         const usage = this.usage;
         const timestamp = Date.now();

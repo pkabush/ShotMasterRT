@@ -1,11 +1,9 @@
 import { memo, useState } from "react";
-import {  useUpdateNodeInternals, type Node, type NodeProps } from "@xyflow/react";
+import { type Node, type NodeProps } from "@xyflow/react";
 import { Button, Stack } from "react-bootstrap";
 import SimpleSelect from "../../Atomic/SimpleSelect";
-import { GoogleAI, type AIMessage } from "../../../classes/GoogleAI";
+import { GoogleAI } from "../../../classes/GoogleAI";
 import LoadingSpinner from "../../Atomic/LoadingSpinner";
-import { Project } from "../../../classes/Project";
-import { LocalImage } from "../../../classes/fileSystem/LocalImage";
 import { NamedInputHandle, NamedOutputHandle } from "../Atomic/NamedInput";
 import { useLocalFile } from "../Context/LocalFileContext";
 import { useNodeGraphApi } from "../nodeGraphApi";
@@ -23,11 +21,7 @@ export type GptNodeModelType = Node<GptNodeModelData, "gptNodeModel">;
 export const GptNode = memo(
     ({ id, data, selected }: NodeProps<GptNodeModelType>) => {
         const nodegraph_api = useNodeGraphApi();
-        const updateNodeInternals = useUpdateNodeInternals();
-
-        const project = Project.getProject();
         const { local_file } = useLocalFile();
-
         const [loading, setLoading] = useState(false);
 
         const incomingCount = nodegraph_api.useDynamicInputHandles(id);
@@ -35,87 +29,25 @@ export const GptNode = memo(
         const handleClick = async () => {
             setLoading(true);
             try {
-                const inputNodes = nodegraph_api.getIndexedInputNodes(id);
-
-                // Get messages
-                let messages: AIMessage[] = [];
-                for (const node of inputNodes) {                    
-                    if (!node) return;
-
-                    console.log(node);
-
-                    if (node.type == "textNode" && node.data.text) {
-                        messages.push(node.data.text as string);
-                    }
-                    if (node.type == "localImageNode" && node.data.path) {
-                        const image = project.getByAbsPath(node.data.path as string);
-                        if (image instanceof LocalImage) {
-                            messages.push(await image.getAIImage());
-                        }
-                    }
-                };
-
-                //return;
-
-                const node = nodegraph_api.id2Node(id);
-                if (!node) return;
-
                 const model = data.model;
                 const resolution = data.resolution;
                 const aspect_ratio = data.aspect_ratio;
 
-                const res = await ChatGPT.sendMessages(messages, model, aspect_ratio, resolution, data.gen_image);
+                const msg_packs_messages = await nodegraph_api.gatherInputMessages(id);
+                const msg_packs = nodegraph_api.iterateMessagePacks(msg_packs_messages);
 
+                // Send All messages in parralel
+                await Promise.all(
+                    msg_packs.map(async (messages) => {
+                        const res = await ChatGPT.sendMessages(messages, model, aspect_ratio, resolution, data.gen_image);
+                        await nodegraph_api.saveAiTextImageResponse(id, res, local_file);
+                        return res;
+                    })
+                );
 
-                // Create OUTPUT Nodes
-
-                if (!(typeof res === "string")) {
-                    const out_image_nodes = nodegraph_api.getOutputNodes(id, "out_image", "localImageNode");
-
-                    if (out_image_nodes.length == 0) {
-                        const saved_image = await GoogleAI.saveResultImage(res, local_file.parentFolder!);
-                        console.log(saved_image)
-                        console.log(local_file)
-                        console.log(local_file.parentFolder!)
-                        if (!saved_image) return;
-
-                        // Create New Node
-                        const my_pos = node?.position ?? { x: 0, y: 0 };
-                        const width = node?.measured?.width ?? 400;
-                        const new_id = nodegraph_api.addNode("localImageNode", { x: my_pos.x + width + 120, y: my_pos.y }, { path: saved_image.path })
-                        nodegraph_api.connect(id, new_id, "out_image", "path");
-                    }
-                    else {
-                        const res_node = out_image_nodes[0]
-                        const res_image = local_file.getByAbsPath(res_node.data.path as string) ?? local_file;
-
-                        const saved_image = await GoogleAI.saveResultImage(res, res_image.parentFolder!);
-
-                        nodegraph_api.setNodeData(res_node.id, { path: saved_image?.path });
-                        updateNodeInternals(res_node.id);
-                    }
-                }
-                else {
-                    console.log(res);
-
-                    const out_text_nodes = nodegraph_api.getOutputNodes(id, "out_text", "textNode");
-                    if (out_text_nodes.length == 0) {
-                        // Create New Node
-                        const my_pos = node?.position ?? { x: 0, y: 0 };
-                        const width = node?.measured?.width ?? 400;
-                        const new_id = nodegraph_api.addNode("textNode", { x: my_pos.x + width + 120, y: my_pos.y }, { text: res })
-                        nodegraph_api.connect(id, new_id, "out_text", "input_0");
-                    }
-                    else {
-                        const set_id = out_text_nodes[0].id;
-                        nodegraph_api.setNodeData(set_id, { text: res });
-                        updateNodeInternals(set_id);
-                    }                    
-                }
             } finally {
                 setLoading(false);
             }
-
         };
 
 

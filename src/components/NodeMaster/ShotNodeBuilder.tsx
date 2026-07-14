@@ -161,9 +161,6 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
                                     e.targetHandle === c.targetHandle
                                 )
                         );
-
-
-
                         return addEdge(c, filtered);
                     })
                 }
@@ -285,7 +282,7 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
                         </Button>
                         <Button onClick={exportFlow} size="sm" variant={isDirty ? "success" : "outline-secondary"}> <FontAwesomeIcon icon={faFloppyDisk} /> {isDirty ? " Save changes" : " Saved"}</Button>
                         <Button onClick={loadFlow} size="sm" variant="secondary"> <FontAwesomeIcon icon={faFileArrowDown} /> Load</Button>
-                        <AddNodeUIPanel></AddNodeUIPanel>
+                        <AddNodeUIPanel/>
                         <Button
                             size="sm"
                             variant={showMiniMap ? "secondary" : "outline-secondary"}
@@ -345,7 +342,7 @@ export const AddNodeButton = ({
         <Button
             size="sm"
             variant="warning"
-            onClick={() => addNode(nodeType)}
+            onClick={() => {addNode(nodeType)}}
             onDragStart={(e) => { e.dataTransfer.setData("addNode", nodeType); }}
             draggable={true}
         >

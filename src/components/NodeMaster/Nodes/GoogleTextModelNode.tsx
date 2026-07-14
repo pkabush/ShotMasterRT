@@ -1,11 +1,9 @@
-import { memo, useEffect, useState } from "react";
-import { useReactFlow, useStore, useUpdateNodeInternals, type Node, type NodeProps } from "@xyflow/react";
+import { memo, useState } from "react";
+import { type Node, type NodeProps } from "@xyflow/react";
 import {  Button, Stack } from "react-bootstrap";
 import SimpleSelect from "../../Atomic/SimpleSelect";
-import { GoogleAI, type AIMessage } from "../../../classes/GoogleAI";
+import { GoogleAI } from "../../../classes/GoogleAI";
 import LoadingSpinner from "../../Atomic/LoadingSpinner";
-import { Project } from "../../../classes/Project";
-import { LocalImage } from "../../../classes/fileSystem/LocalImage";
 import { NamedInputHandle, NamedOutputHandle } from "../Atomic/NamedInput";
 import { useLocalFile } from "../Context/LocalFileContext";
 import { useNodeGraphApi } from "../nodeGraphApi";
@@ -22,134 +20,31 @@ export type nb_GoogleTextModelType = Node<nb_GoogleTextModelData, "googleTextMod
 
 export const nb_GoogleAI = memo(
     ({ id, data, selected }: NodeProps<nb_GoogleTextModelType>) => {
-        const project = Project.getProject();
+        const nodegraph_api = useNodeGraphApi();        
         const { local_file } = useLocalFile();
-
-        const { getEdges, getNodes, setNodes } = useReactFlow();
-        const setNodeData = (
-            updater: (data: nb_GoogleTextModelData) => Partial<nb_GoogleTextModelData>
-        ) => {
-            setNodes((nds) =>
-                nds.map((n) =>
-                    n.id === id
-                        ? {
-                            ...n,
-                            data: {
-                                ...n.data,
-                                ...updater(n.data as nb_GoogleTextModelData),
-                            },
-                        }
-                        : n
-                )
-            );
-        };
-
         const [loading, setLoading] = useState(false);
 
-        const incomingCount = useStore(
-            (state) => state.edges.reduce((acc, e) => (e.target === id ? acc + 1 : acc), 0)
-        );
+        const incomingCount = nodegraph_api.useDynamicInputHandles(id);
 
-        const updateNodeInternals = useUpdateNodeInternals();
-
-        useEffect(() => {
-            updateNodeInternals(id);
-        }, [incomingCount, id, updateNodeInternals]);
-
-        const nodegraph_api = useNodeGraphApi();
 
         const handleClick = async () => {
             setLoading(true);
             try {
-                const edges = getEdges();
-                const nodes = getNodes();
-
-                const incoming = edges.filter((e) => e.target === id).sort((a, b) => {
-                    const aIndex = parseInt(a.targetHandle?.replace("input_", "") ?? "0");
-                    const bIndex = parseInt(b.targetHandle?.replace("input_", "") ?? "0");
-                    return aIndex - bIndex;
-                });
-                const inputNodes = incoming.map((e) => nodes.find((n) => n.id === e.source));
-
-                let messages: AIMessage[] = [];
-
-                for (const node of inputNodes) {
-                    if (!node) return;
-                    if (node.type == "textNode" && node.data.text) {
-                        messages.push(node.data.text as string);
-                    }
-                    if (node.type == "localImageNode" && node.data.path) {
-                        const image = project.getByAbsPath(node.data.path as string);
-                        //console.log(image);
-                        if (image instanceof LocalImage) {
-                            //console.log(await image.getAIImage());
-                            messages.push(await image.getAIImage());
-                        }
-                    }
-                };
-
-
-
-                const node = nodegraph_api.id2Node(id);
-                if (!node) return;
-
-
                 const model = data.gen_image ? data.img_model : data.model;
                 const resolution = data.resolution;
                 const aspect_ratio = data.aspect_ratio;
 
-                const res = await GoogleAI.sendMessages(messages, model, aspect_ratio, resolution);
+                const msg_packs_messages = await nodegraph_api.gatherInputMessages(id);
+                const msg_packs = nodegraph_api.iterateMessagePacks(msg_packs_messages);
 
-                if (data.gen_image) {
-                    const out_image_nodes = nodegraph_api.getOutputNodes(id, "out_image", "localImageNode");                    
-
-                    if (out_image_nodes.length == 0) {
-                        const saved_image = await GoogleAI.saveResultImage(res, local_file.parentFolder!);
-                        //console.log(saved_image)
-                        //console.log(local_file)
-                        //console.log(local_file.parentFolder!)
-                        if(!saved_image) return;
-
-                        // Create New Node
-                        const my_pos = node?.position ?? { x: 0, y: 0 };
-                        const width = node?.measured?.width ?? 400;
-                        const new_id = nodegraph_api.addNode("localImageNode", { x: my_pos.x + width + 120, y: my_pos.y }, { path: saved_image.path })
-                        nodegraph_api.connect(id, new_id, "out_image", "path");
-                    }
-                    else {
-                        const res_node = out_image_nodes[0]
-                        const res_image = local_file.getByAbsPath(res_node.data.path as string) ?? local_file;
-                        
-                        const saved_image = await GoogleAI.saveResultImage(res, res_image.parentFolder!);
-                        
-                        nodegraph_api.setNodeData(res_node.id, { path: saved_image?.path });
-                        updateNodeInternals(res_node.id);
-                    }
-
-
-                    
-                }
-                else {
-                    //console.log(res);
-
-                    const out_text_nodes = nodegraph_api.getOutputNodes(id, "out_text", "textNode");
-                    if (out_text_nodes.length == 0) {
-                        // Create New Node
-                        const my_pos = node?.position ?? { x: 0, y: 0 };
-                        const width = node?.measured?.width ?? 400;
-                        const new_id = nodegraph_api.addNode("textNode", { x: my_pos.x + width + 120, y: my_pos.y }, { text: res })
-                        nodegraph_api.connect(id, new_id, "out_text", "input_0");
-                    }
-                    else {
-                        const set_id = out_text_nodes[0].id;
-                        nodegraph_api.setNodeData(set_id, { text: res });
-                        updateNodeInternals(set_id);
-                    }
-
-
-                }
-
-                //console.log(getNodes());
+                // Send All messages in parralel
+                await Promise.all(
+                    msg_packs.map(async (messages) => {
+                        const res = await GoogleAI.sendMessages(messages, model, aspect_ratio, resolution);
+                        await nodegraph_api.saveAiTextImageResponse(id, res, local_file);
+                        return res;
+                    })
+                );
 
             } finally {
                 setLoading(false);
@@ -191,7 +86,7 @@ export const nb_GoogleAI = memo(
                         <Stack direction="horizontal" gap={1}>
                             <Button size="sm" variant="warning"
                                 onClick={() => {
-                                    setNodeData((d) => ({
+                                    nodegraph_api.setNodeData(id,(d) => ({
                                         gen_image: !d.gen_image,
                                     }));
                                 }}>
@@ -206,7 +101,7 @@ export const nb_GoogleAI = memo(
                                             ...Object.values(GoogleAI.options.img_models)
                                         ]}
                                         onChange={(val: string) => {
-                                            setNodeData(() => ({ img_model: val, }));
+                                            nodegraph_api.setNodeData(id,() => ({ img_model: val, }));
                                         }}
                                     />
                                 </>
@@ -218,7 +113,7 @@ export const nb_GoogleAI = memo(
                                             ...Object.values(GoogleAI.options.text_models)
                                         ]}
                                         onChange={(val: string) => {
-                                            setNodeData(() => ({
+                                            nodegraph_api.setNodeData(id,() => ({
                                                 model: val,
                                             }));
                                         }}
@@ -238,7 +133,7 @@ export const nb_GoogleAI = memo(
                                         ...Object.values(GoogleAI.options.aspect_ratios)
                                     ]}
                                     onChange={(val: string) => {
-                                        setNodeData(() => ({ aspect_ratio: val, }));
+                                        nodegraph_api.setNodeData(id,() => ({ aspect_ratio: val, }));
                                     }}
                                 />
 
@@ -249,7 +144,7 @@ export const nb_GoogleAI = memo(
                                         ...Object.values(GoogleAI.options.resolution)
                                     ]}
                                     onChange={(val: string) => {
-                                        setNodeData(() => ({ resolution: val, }));
+                                        nodegraph_api.setNodeData(id,() => ({ resolution: val, }));
                                     }}
                                 />
                             </>
