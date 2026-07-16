@@ -7,7 +7,7 @@ interface Props extends React.VideoHTMLAttributes<HTMLVideoElement> {
   playOnHover?: boolean;
 }
 
-const MediaVideo: React.FC<Props> = observer(({ localVideo, playOnHover = true, ...props }) => {
+const MediaVideo: React.FC<Props> = observer(({ localVideo, playOnHover = true, draggable = true,...props }) => {
   const [loaded, setLoaded] = useState(!!localVideo.urlObject);
   const videoRef = useRef<HTMLVideoElement>(null);
 
@@ -64,7 +64,7 @@ const MediaVideo: React.FC<Props> = observer(({ localVideo, playOnHover = true, 
 
   return (<video src={localVideo.urlObject!} {...props}
     ref={videoRef}
-    draggable
+    draggable={draggable}
     onDragStart={(e) => {
       e.dataTransfer.setData("LocalFilePath", localVideo.path);
     }}

@@ -8,6 +8,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBackwardFast, faBackwardStep, faPause, faPlay, faRightFromBracket, faRightToBracket, faRotate, faVolume, faVolumeXmark } from "@fortawesome/free-solid-svg-icons";
 import { combineVideosFromUint8 } from "../../classes/Ffmpeg/FFmpegService";
 import { mb_trimLocalVideo } from "../../classes/Ffmpeg/mediabunnyService";
+import type { LocalMedia } from "../../classes/fileSystem/LocalMedia";
 
 
 export const SceneTimelineView: React.FC<SceneViewProps> = observer(({ scene }) => {
@@ -21,26 +22,40 @@ export const SceneTimelineView: React.FC<SceneViewProps> = observer(({ scene }) 
         });
     }, [scene]);
 
-    return <>
-        <VideoPlaylist scene={scene} />
-    </>
-});
-
-
-
-const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
-
     const clips = useMemo(() => {
         return scene.shots_ordered.map(shot => ({
             video: shot.previewMedia,
-            shot,
-            label:shot.name
+            label: shot.name
         }));
     }, [scene.shots_ordered]);
 
-    const onIndexReorder = useCallback( (old_index:number,new_index:number) => {
+    const onIndexReorder = useCallback((old_index: number, new_index: number) => {
         scene.set_shot_list_index(scene.shots_ordered[old_index], new_index);
-    },[clips,scene])
+    }, [clips, scene])
+
+
+    return <>
+        <VideoPlaylist clips={clips} onIndexReorder={onIndexReorder} />
+    </>
+});
+
+type VideoClip = {
+    video: LocalMedia | null;
+    label: string;
+};
+
+interface VideoPlaylistProps {
+    clips: VideoClip[];
+    onIndexReorder?: (oldIndex: number, newIndex: number) => void;
+}
+
+
+
+
+export const VideoPlaylist: React.FC<VideoPlaylistProps> = observer(({
+    clips,
+    onIndexReorder,
+}) => {
 
     const SEEK_STEP = 0.1;
 
@@ -62,7 +77,7 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
         setPaused(true);
         pendingSeekRef.current = null;
         advancedClipRef.current = false;
-    }, [scene]);
+    }, [clips]);
 
     const totalDuration = clips.reduce((sum, s) => {
         const start = s.video?.start_timecode ?? 0;
@@ -178,7 +193,7 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
 
         raf = requestAnimationFrame(loop);
         return () => cancelAnimationFrame(raf);
-    }, [scene, clips]);
+    }, [clips]);
 
     // ON Paused
     useEffect(() => {
@@ -386,7 +401,7 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
                     <h3>
                         <Stack direction="horizontal" gap={1}>
                             <Badge bg="secondary">{clips[currentIndex] ? clips[currentIndex].label : "No"}</Badge>
-                            <Button size="sm" onClick={async () => {                                
+                            <Button size="sm" onClick={async () => {
                                 const out_videos = clips.map((clip) => { return clip.video instanceof LocalVideo ? clip.video : null });
 
                                 const buffers: Uint8Array[] = [];
@@ -408,16 +423,16 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
                             }}>Export</Button>
 
 
-                            { false && <Button size="sm" onClick={async () => {
+                            {false && <Button size="sm" onClick={async () => {
                                 const video = clips[currentIndex].video;
-                                if (!(video instanceof LocalVideo)) return;                                
-                                
+                                if (!(video instanceof LocalVideo)) return;
+
                                 const blob = await mb_trimLocalVideo(video);
                                 const url = URL.createObjectURL(blob);
                                 window.open(url);
 
                                 video.parentFolder!.downloadFromUrl(url);
-                                
+
                             }}>Export Clip</Button>}
                         </Stack>
                     </h3>
@@ -617,8 +632,8 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
             //onClick={seekToTime}
             >
                 {clips.map((clip, index) => {
-                    const video = videoRefs.current[index];                    
-                    
+                    const video = videoRefs.current[index];
+
                     const duration = (clips[index].video?.end_timecode ?? 2) - (clips[index].video?.start_timecode ?? 0);
                     const widthPercent = (duration / totalDuration) * 100;
 
@@ -681,9 +696,9 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
                                 const mouseX = e.clientX - rect.left;
                                 const droppedOnRight = mouseX > rect.width / 2;
                                 if (droppedOnRight) { new_index += 1; }
-                          
+
                                 //shot.scene.set_shot_list_index(shot.scene.shots_ordered[parseInt(dragged_index)], new_index);
-                                onIndexReorder(parseInt(dragged_index),new_index);
+                                onIndexReorder?.(parseInt(dragged_index), new_index);
                             }}
                         >
                             <span style={{
@@ -694,7 +709,7 @@ const VideoPlaylist: React.FC<SceneViewProps> = observer(({ scene }) => {
                                 <Badge bg="success">{clip.label}</Badge>
                             </span>
 
-                            <MediaPreview media={clip.video} height={"100%"} />                            
+                            <MediaPreview media={clip.video} height={"100%"} draggable={false} muted={true} />
 
                             {/** STYLUS */}
                             <div

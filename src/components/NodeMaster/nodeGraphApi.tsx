@@ -42,6 +42,9 @@ const defaultNodeData: Record<NodeType, any> = {
     gptNode: {
         gen_image: true,
     },
+    timelineNode: {
+
+    },
 };
 
 export function useNodeGraphApi() {
@@ -281,7 +284,61 @@ export function useNodeGraphApi() {
         },
         [getNamedInputNodes, nodeMap2IndexedNodes]
     );
+    const reorderIndexedInputs = useCallback(
+        (oldIndex: number, targetIndex: number, nodeId: string) => {
+            setEdges(edges => {
+                // Separate indexed input edges from everything else
+                const indexed = edges
+                    .filter(e => {
+                        if (e.target !== nodeId) return false;
+                        return /^input_\d+$/.test(e.targetHandle ?? "");
+                    })
+                    .sort((a, b) => {
+                        const ai = Number(a.targetHandle!.split("_")[1]);
+                        const bi = Number(b.targetHandle!.split("_")[1]);
+                        return ai - bi;
+                    });
 
+                if (oldIndex < 0 || oldIndex >= indexed.length) {
+                    return edges;
+                }
+
+                targetIndex = Math.max(0, Math.min(targetIndex, indexed.length));
+
+                if (oldIndex === targetIndex) {
+                    return edges;
+                }
+
+                const reordered = [...indexed];
+
+                const [moved] = reordered.splice(oldIndex, 1);
+
+                let adjustedIndex = targetIndex;
+                if (oldIndex < targetIndex) {
+                    adjustedIndex--;
+                }
+
+                reordered.splice(adjustedIndex, 0, moved);
+
+                // Renumber sequentially
+                const updated = reordered.map((edge, i) => ({
+                    ...edge,
+                    targetHandle: `input_${i}`,
+                    data: {
+                        ...edge.data,
+                        input_key: `input_${i}`,
+                    },
+                }));
+
+                const map = new Map(updated.map(e => [e.id, e]));
+
+                return edges.map(e => map.get(e.id) ?? e);
+            });
+
+            updateNodeInternals(nodeId);
+        },
+        [setEdges, updateNodeInternals]
+    );
     // Node Data
     const getNodeData = useCallback(
         (id: string) => {
@@ -471,6 +528,7 @@ export function useNodeGraphApi() {
         gatherInputMessages,
         iterateMessagePacks,
         saveAiTextImageResponse,
-        getSelectedNodes
+        getSelectedNodes,
+        reorderIndexedInputs
     };
 }

@@ -157,7 +157,7 @@ export const LocalImageNode = memo(
                     }}
                 >
                     <NodeResizeControl style={controlStyle} minWidth={200} minHeight={100} >
-                        <ResizeIcon />
+                        <NodeResizeIcon />
                     </NodeResizeControl>
 
                     <div
@@ -258,7 +258,7 @@ export const LocalImageNode = memo(
 
 LocalImageNode.displayName = "LocalImageNode";
 
-function ResizeIcon() {
+export function NodeResizeIcon() {
     return (
         <svg
             xmlns="http://www.w3.org/2000/svg"

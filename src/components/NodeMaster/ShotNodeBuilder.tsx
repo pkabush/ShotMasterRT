@@ -32,6 +32,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faA, faBook, faClapperboard, faCodeBranch, faFileArrowDown, faFilm, faFish, faFloppyDisk, faG, faImage, faListOl, type IconDefinition } from "@fortawesome/free-solid-svg-icons";
 import { Scene } from "../../classes/Scene";
 import { GptNode } from "./Nodes/GptNode";
+import { TimelineNode } from "./Nodes/TimeLineNode";
 
 
 
@@ -44,6 +45,7 @@ export const nodeTypes = {
     mergeNode: MergeNode,
     seedanceNode: SeedanceNode,
     gptNode: GptNode,
+    timelineNode: TimelineNode,
 };
 
 export type NodeType = keyof typeof nodeTypes;
@@ -52,6 +54,7 @@ export const MultiInputNodes = [
     "googleAiNode",
     "mergeNode",
     "gptNode",
+    "timelineNode",
 ];
 
 
@@ -310,6 +313,7 @@ const nodes = [
     ["seedanceNode", "Seedance", faFish],
     ["tasksNode", "Tasks", faListOl],
     ["mergeNode", "Merge", faCodeBranch],
+    ["timelineNode", "Timeline", faClapperboard],
 ] as const;
 
 const AddNodeUIPanel = () => (
