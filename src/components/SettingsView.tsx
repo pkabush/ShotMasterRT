@@ -135,6 +135,17 @@ export const SettingsView: React.FC<SettingsViewProps> = observer(({ project }) 
           size="sm"
           className="mt-4 d-flex align-items-center justify-content-center"
           onClick={async () => {
+
+            if (!project.userSettingsDB.data.username) {
+              alert("ERROR: USERNAME is required.");
+              return;
+            }
+
+            if (!project.userSettingsDB.data.api_keys.HOPSHOT_API_KEY) {
+              alert("ERROR: HOPSHOT_APIKEY is required.");
+              return;
+            }
+
             const url = "https://script.google.com/macros/s/AKfycbxvqDnrjDmumcLF8M2s2n5Z0vZ4DklqgNGa3ZFXRyAYQhYbiWVSKX-aMEcFC7Wauxprrw/exec";
             const encodedTarget = encodeURIComponent(url);
             const locUrl = `http://localhost:4000/proxy/${encodedTarget}`;
@@ -143,11 +154,19 @@ export const SettingsView: React.FC<SettingsViewProps> = observer(({ project }) 
             const res = await fetch(locUrl, { method: "POST", body: JSON.stringify(usage_json), });
 
             console.log(res);
+            const data = await res.json();
+            if (data.success) {
+              console.log("%cSUCCESS", "color: green; font-weight: bold;");
+            } else {
+              console.log("%cERROR: " + data.error, "color: red; font-weight: bold;");
+            }
+
 
             const audio = new Audio("assets/sounds/cha-ching-money.mp3");
             audio.volume = 0.25;
             audio.currentTime = 0;
             audio.play().catch((err) => { console.error("Failed to play sound:", err); });
+
 
           }}
         >
