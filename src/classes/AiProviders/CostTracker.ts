@@ -187,6 +187,55 @@ export class CostTracker {
         return result;
     }
 
+    async getUsageJson(
+        username: string = "username",
+        project: string = "proj_name",
+        secret: string = "",
+    ) {
+        const tasks = this.usage.tasks.filter(
+            task => typeof task.timestamp === "number" && task.timestamp > 0
+        );
+
+        if (tasks.length === 0) {
+            const result = {
+                username,
+                project,
+                spendings: 0,
+                secret
+            };
+
+            console.log("Usage JSON", result);
+            return result;
+        }
+
+        const spendings: Record<string, Record<string, number>> = {};
+
+        for (const task of tasks) {
+            const week = this.getWeekKey(task.timestamp);
+
+            if (!spendings[week]) {
+                spendings[week] = {};
+            }
+
+            if (!spendings[week][task.provider]) {
+                spendings[week][task.provider] = 0;
+            }
+
+            spendings[week][task.provider] += task.cost;
+        }
+
+        const result = {
+            username,
+            project,
+            spendings,
+            secret
+        };
+
+        console.log("Usage JSON", result);
+
+        return result;
+    }
+
     private getWeekKey(timestamp: number): string {
         const date = new Date(timestamp);
 

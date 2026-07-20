@@ -7,7 +7,7 @@ import EditableJsonTextField from './EditableJsonTextField';
 import type { Provider } from "../classes/AiProviders/CostTracker.ts";
 import { Button, Stack } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCopy } from "@fortawesome/free-solid-svg-icons";
+import { faCloudArrowUp, faCopy } from "@fortawesome/free-solid-svg-icons";
 
 interface SettingsViewProps {
   project: Project;
@@ -97,6 +97,14 @@ export const SettingsView: React.FC<SettingsViewProps> = observer(({ project }) 
             await userSettingsDB.update(data => { data.api_keys.BP_API_KEY = newValue; });
           }}
         />
+
+        <StringEditField
+          label="HOPSHOT API KEY"
+          value={userSettingsDB.data.api_keys.HOPSHOT_API_KEY || ""}
+          onChange={async (newValue) => {
+            await userSettingsDB.update(data => { data.api_keys.HOPSHOT_API_KEY = newValue; });
+          }}
+        />
       </div>
 
       <>
@@ -122,7 +130,33 @@ export const SettingsView: React.FC<SettingsViewProps> = observer(({ project }) 
           <FontAwesomeIcon icon={faCopy} />
         </Button>
 
+        <Button
+          variant="outline-secondary"
+          size="sm"
+          className="mt-4 d-flex align-items-center justify-content-center"
+          onClick={async () => {
+            const url = "https://script.google.com/macros/s/AKfycbxvqDnrjDmumcLF8M2s2n5Z0vZ4DklqgNGa3ZFXRyAYQhYbiWVSKX-aMEcFC7Wauxprrw/exec";
+            const encodedTarget = encodeURIComponent(url);
+            const locUrl = `http://localhost:4000/proxy/${encodedTarget}`;
+
+            const usage_json = await project.costTracker?.getUsageJson(project.userSettingsDB.data.username, project.name, project.userSettingsDB.data.api_keys.HOPSHOT_API_KEY);
+            const res = await fetch(locUrl, { method: "POST", body: JSON.stringify(usage_json), });
+
+            console.log(res);
+
+            const audio = new Audio("assets/sounds/cha-ching-money.mp3");
+            audio.volume = 0.25;
+            audio.currentTime = 0;
+            audio.play().catch((err) => { console.error("Failed to play sound:", err); });
+
+          }}
+        >
+          <FontAwesomeIcon icon={faCloudArrowUp} />
+        </Button>
+
       </Stack>
+
+
 
 
       <div className="d-flex flex-wrap">
