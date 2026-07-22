@@ -1,8 +1,12 @@
+import { useGoogleStore } from "../contexts/GoogleUserContext";
 
 
 
 export async function uploadVideoTemp(file: File): Promise<string> {
   try {
+
+    const g_url = await useGoogleStore.getState().uploadFileToShotmasterStore(file);
+    return g_url;
     /*console.log("[tmpfiles] Uploading:", file.name)
 
     const formData = new FormData()
@@ -27,8 +31,9 @@ export async function uploadVideoTemp(file: File): Promise<string> {
     return url.replace("tmpfiles.org/", "tmpfiles.org/dl/")
     */
 
+
     /*
-    // GOFILE - Requires Premium
+    // GOFILE - Requires Premium to generate direct links
     const form = new FormData();
     form.append("file", file);
 
@@ -45,6 +50,8 @@ export async function uploadVideoTemp(file: File): Promise<string> {
     */
 
 
+    // CATBOX    
+    /*
     const form = new FormData();
     form.append("fileToUpload", file);
     form.append("reqtype", "fileupload");
@@ -67,14 +74,13 @@ export async function uploadVideoTemp(file: File): Promise<string> {
     console.log("Catbox URL:", url);
 
     return url.trim();
-
-
-
+  */
 
   } catch (err) {
     console.error("[tmpfiles] Upload failed:", err)
     throw err
   }
+
 }
 
 /**

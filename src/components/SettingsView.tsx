@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { observer } from "mobx-react-lite";
 import { Project } from "../classes/Project";
 import { StringEditField } from "./StringEditField";
@@ -29,6 +29,8 @@ export const SettingsView: React.FC<SettingsViewProps> = observer(({ project }) 
           await userSettingsDB.update(data => { data.username = newValue; });
         }}
       />
+
+
       <SimpleButton onClick={() => { project.log() }} label="LOG Project" />
       <SimpleButton onClick={() => { project.download_asset("assets/server.exe", "server.exe") }} label="Download Server (Windows)" />
       <SimpleButton onClick={() => { project.download_asset("assets/server.zip", "server.zip") }} label="Download Server (MacOS)" />
@@ -176,8 +178,6 @@ export const SettingsView: React.FC<SettingsViewProps> = observer(({ project }) 
       </Stack>
 
 
-
-
       <div className="d-flex flex-wrap">
         {[
           { name: "Google", key: "Google" },
@@ -204,3 +204,4 @@ export const SettingsView: React.FC<SettingsViewProps> = observer(({ project }) 
     </div>
   );
 });
+

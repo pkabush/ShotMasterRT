@@ -8,6 +8,8 @@ import { NotificationContainer } from './components/NotificationContainer';
 import { UserSettingsDB } from './classes/UserSettingsDB';
 import { ProjectContext } from './contexts/ProjectContext';
 import { Group, Panel, Separator } from 'react-resizable-panels';
+import { GoogleOAuthProvider } from '@react-oauth/google';
+import { GDriveLoginButton, GoogleLoginButton } from './contexts/GoogleUserContext';
 
 const App: React.FC = observer(() => {
   const [project, setProject] = useState<Project | null>(null);
@@ -62,49 +64,66 @@ const App: React.FC = observer(() => {
 
 
   return (
-    <ProjectContext.Provider value={{ project }}>
-      <div style={{ minHeight: '100vh' }}>
-        <MenuBar
-          onOpenFolder={handleOpenFolder}
-          recentFolders={userSettingsDB.current.data.recentFolders}
-          onOpenRecent={handleOpenRecent}
-          project={project}
-        />
-        {/* Main layout */}
-        <div style={{ height: 'calc(100vh - 56px)' }}>
-          <Group orientation="horizontal" style={{ height: "100%" }}>
+    <GoogleOAuthProvider clientId="897309739659-u0a653m56ddg78n3kvb104uacgc3t52b.apps.googleusercontent.com">
+        <ProjectContext.Provider value={{ project }}>
+          <div style={{ minHeight: '100vh' }}>
+                        
+            
+            <GDriveLoginButton />
+            { false && <GoogleLoginButton />}
 
-            {/* Sidebar */}
-            <Panel defaultSize={250} minSize={10}>
-              <FolderList project={project} />
-            </Panel>
 
-            {/* Resizable separator */}
-            <Separator
-              style={{
-                width: "3px",
-                backgroundColor: "#8f8f8f",
-                cursor: "ew-resize",
-              }}
+            <MenuBar
+              onOpenFolder={handleOpenFolder}
+              recentFolders={userSettingsDB.current.data.recentFolders}
+              onOpenRecent={handleOpenRecent}
+              project={project}
             />
 
-            {/* Content */}
-            <Panel minSize={20}>
-              <div className="d-flex flex-column h-100 overflow-hidden">
-                <div className="flex-grow-1 overflow-auto p-3">
-                  <ContentView project={project} />
-                </div>
-              </div>
-            </Panel>
-          </Group>
-        </div>
+            {/* Main layout */}
+            <div style={{ height: 'calc(100vh - 56px)' }}>
+              <Group orientation="horizontal" style={{ height: "100%" }}>
 
-        <NotificationContainer />
-      </div>
-    </ProjectContext.Provider>
+                {/* Sidebar */}
+                <Panel defaultSize={250} minSize={10}>
+                  <FolderList project={project} />
+                </Panel>
+
+                {/* Resizable separator */}
+                <Separator
+                  style={{
+                    width: "3px",
+                    backgroundColor: "#8f8f8f",
+                    cursor: "ew-resize",
+                  }}
+                />
+
+                {/* Content */}
+                <Panel minSize={20}>
+                  <div className="d-flex flex-column h-100 overflow-hidden">
+                    <div className="flex-grow-1 overflow-auto p-3">
+                      <ContentView project={project} />
+                    </div>
+                  </div>
+                </Panel>
+              </Group>
+            </div>
+
+            <NotificationContainer />
+          </div>
+        </ProjectContext.Provider>
+
+
+
+    </GoogleOAuthProvider>
 
 
   );
 });
 
+
+
+
 export default App;
+
+

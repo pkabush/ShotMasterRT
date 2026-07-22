@@ -11,8 +11,7 @@ export default defineConfig({
   },
   server: {
     headers: {
-      "Cross-Origin-Opener-Policy":        "same-origin",
-      "Cross-Origin-Embedder-Policy":        "require-corp",
+      "Cross-Origin-Opener-Policy":        "same-origin-allow-popups",
     },
   },
   optimizeDeps: {
@@ -20,8 +19,7 @@ export default defineConfig({
   },
   preview: {
     headers: {
-      "Cross-Origin-Opener-Policy": "same-origin",
-      "Cross-Origin-Embedder-Policy": "require-corp",
+      "Cross-Origin-Opener-Policy": " same-origin-allow-popups",
     },
   },
 })
