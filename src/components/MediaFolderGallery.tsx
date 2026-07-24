@@ -66,7 +66,7 @@ export const MediaFolderGallery: React.FC<MediaFolderGalleryProps> = observer(
                                 <SimpleToggle label={"Highlight Gen Relations"} value={highlightGenParents} onToggle={(e) => { setHighlightGenParents(e) }} />
                                 <SimpleToggle label={"Autoplay"} value={autoplay} onToggle={(e) => { setAutoplay(e) }} />
 
-                                { false && <SimpleButton label="Log" className="btn-outline-secondary btn-sm"
+                                {false && <SimpleButton label="Log" className="btn-outline-secondary btn-sm"
                                     onClick={() => { mediaFolder?.log(); }} />}
                                 <SimpleButton label="Import URL" className="btn-outline-secondary btn-sm"
                                     onClick={async () => {
@@ -138,7 +138,7 @@ export const MediaFolderGallery: React.FC<MediaFolderGalleryProps> = observer(
                                     highlightGenParents={highlightGenParents}
                                     isSelected={mediaFolder.selectedMedia === mediaItem}
                                     onSelect={(media) => mediaFolder.setSelectedMedia(media)}
-                                    autoplay={autoplay}                                    
+                                    autoplay={autoplay}
                                 />
                             ))}
 
@@ -320,6 +320,13 @@ const MediaItemCard: React.FC<Props> = observer(({
                     <ContextMenu.Item onClick={() => mediaItem.openInNewTab()} className="ContextMenuItem">
                         <MenuItemIcon><FontAwesomeIcon icon={faClipboard} /></MenuItemIcon>
                         Open in new Tab
+                    </ContextMenu.Item>
+
+                    <ContextMenu.Item onClick={async () => {
+                        console.log(await mediaItem.getWebUrl());
+                    }} className="ContextMenuItem warning">
+                        <MenuItemIcon><FontAwesomeIcon icon={faClipboard} /></MenuItemIcon>
+                        Upload To Server
                     </ContextMenu.Item>
 
                     {shot && (

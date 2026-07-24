@@ -1,138 +1,40 @@
-import { useGoogleStore } from "../contexts/GoogleUserContext";
-
+import { useGoogleStore, WORKER_URL } from "../contexts/GoogleUserContext";
+import { Project } from "./Project";
 
 
 export async function uploadVideoTemp(file: File): Promise<string> {
   try {
-
-    const g_url = await useGoogleStore.getState().uploadFileToShotmasterStore(file);
-    return g_url;
-    /*console.log("[tmpfiles] Uploading:", file.name)
-
-    const formData = new FormData()
-    formData.append("file", file)
-
-    const res = await fetch("https://tmpfiles.org/api/v1/upload", {
-      method: "POST",
-      body: formData
-    })
-
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`)
-    }
-
-    const json = await res.json()
-    console.log("[tmpfiles] Response:", json)
-
-    const url = json?.data?.url
-    if (!url) throw new Error("No URL returned")
-
-    // IMPORTANT: Kling needs direct file access
-    return url.replace("tmpfiles.org/", "tmpfiles.org/dl/")
-    */
-
-
-    /*
-    // GOFILE - Requires Premium to generate direct links
     const form = new FormData();
     form.append("file", file);
+    form.append("project_name", Project.getProject().name);
 
-    const res = await fetch(
-      "https://upload.gofile.io/uploadfile",
-      {
-        method: "POST",
-        body: form,
-      }
-    );
+    const idToken = useGoogleStore.getState().idToken;
 
-    const json = await res.json();
-    console.log("GOFile Upload JSON", json);
-    */
-
-
-    // CATBOX    
-    /*
-    const form = new FormData();
-    form.append("fileToUpload", file);
-    form.append("reqtype", "fileupload");
-
-    const targetUrl = "https://catbox.moe/user/api.php"
-    const encodedTarget = encodeURIComponent(targetUrl);
-    const locUrl = `http://localhost:4000/proxy/${encodedTarget}`;
-
-    const res = await fetch(locUrl, {
+    const response = await fetch(`${WORKER_URL}/uploadstore/upload`, {
       method: "POST",
+      headers: {
+        Authorization: `Bearer ${idToken}`,
+      },
       body: form,
     });
 
-    if (!res.ok) {
-      throw new Error(`Upload failed: ${res.status}`);
-    }
-
-    const url = await res.text();
-
-    console.log("Catbox URL:", url);
-
-    return url.trim();
-  */
+    const data = await response.json();
+    return data.url;
 
   } catch (err) {
     console.error("[tmpfiles] Upload failed:", err)
     throw err
   }
-
 }
 
-/**
- * Check if local file matches tmpfiles URL by filename only
- */
-export function checkFileByName(file: File, url: string): boolean {
+// Server checks if url already exists/ is valid
+export async function ensureUploaded(file: File): Promise<string> {
   try {
-    // Extract filename from URL
-    const urlObj = new URL(url)
-    const pathParts = urlObj.pathname.split("/")
-    const remoteName = pathParts[pathParts.length - 1]
-
-    const nameMatches = file.name === remoteName
-
-    console.log("[checkFileByName]", {
-      localName: file.name,
-      remoteName,
-      nameMatches
-    })
-
-    return nameMatches
-  } catch (err) {
-    console.error("[checkFileByName] Error:", err)
-    return false
-  }
-}
-
-/**
- * Check if URL is valid for the given file; upload if not
- */
-export async function ensureUploaded(file: File, url?: string): Promise<string> {
-  try {
-    // Helper: check if the file matches the URL (case-insensitive, URL-decoded)
-    const checkFileByName = (file: File, url: string) => {
-      const fileName = file.name.toLowerCase()
-      const urlFileName = decodeURIComponent(url.split("/").pop() || "").toLowerCase()
-      return fileName === urlFileName
-    }
-
-    // If a URL is provided, check if it matches the local file
-    if (url && checkFileByName(file, url)) {
-      console.log("[ensureUploaded] Existing URL is valid:", url)
-      return url
-    }
-
-    // Otherwise, upload the file
-    console.log("[ensureUploaded] Uploading file because URL is missing or invalid:", file.name)
     const uploadedUrl = await uploadVideoTemp(file)
-    console.log("[ensureUploaded] Uploaded URL:", uploadedUrl)
     return uploadedUrl
   } catch (err) {
     console.error("[ensureUploaded] Error ensuring file upload:", err)
     throw err
   }
 }
+

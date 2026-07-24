@@ -133,7 +133,7 @@ export const BytePlus_GenerateVideo: React.FC<BytePlus_GenerateVideoProps> = obs
                                     }
                                 })
                                 await new Promise(res => setTimeout(res, 100));
-                                task.check_status();
+                                //task.check_status();
 
                             } catch (err) {
                                 console.error("Submitting Video Generation Failed:", err);

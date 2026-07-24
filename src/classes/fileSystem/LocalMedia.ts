@@ -96,7 +96,7 @@ export class LocalMedia extends LocalFile {
   }
 
   async getWebUrl() {
-    const nextUrl = await webFileStorage.ensureUploaded(await this.getFile(), this.web_url);
+    const nextUrl = await webFileStorage.ensureUploaded(await this.getFile());
     runInAction(() => { this.web_url = nextUrl; });
     return this.web_url;
   }

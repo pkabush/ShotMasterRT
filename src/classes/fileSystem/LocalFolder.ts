@@ -6,6 +6,7 @@ import { LocalImage } from "./LocalImage";
 import { LocalItem } from "./LocalItem";
 import { LocalMedia } from "./LocalMedia";
 import { LocalVideo } from "./LocalVideo";
+import { useGoogleStore, WORKER_URL } from "../../contexts/GoogleUserContext";
 
 export class LocalFolder extends LocalItem {
     handle: FileSystemDirectoryHandle;
@@ -165,8 +166,16 @@ export class LocalFolder extends LocalItem {
                 console.warn("Direct fetch failed, trying local proxy:", err);
                 try {
                     // Fallback to local proxy
-                    response = await fetch(locUrl);
+                    //response = await fetch(locUrl);
                     //if (!response.ok) { throw new Error(`Proxy fetch failed: ${response.statusText}`); }
+
+                    // Fallback to Cloudflare Worker 
+                    const idToken = useGoogleStore.getState().idToken;
+                    response = await fetch(`${WORKER_URL}/download-file?url=${encodedTarget}`,
+                        { headers: { Authorization: `Bearer ${idToken}`, }, }
+                    );
+
+
                 } catch (proxyErr: any) {
                     console.error("Proxy fetch failed:", proxyErr);
                     // Check if it's likely a connection refused error

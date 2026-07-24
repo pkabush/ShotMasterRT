@@ -1,3 +1,4 @@
+import { useGoogleStore, WORKER_URL } from "../../contexts/GoogleUserContext";
 
 export type SeedanceContent =
     | {
@@ -26,7 +27,7 @@ export class SeedanceAI {
                 "480p": "480p",
                 "720p": "720p",
                 "1080p": "1080p",
-                "4k" : "4k",
+                "4k": "4k",
             },
             ration: {
                 "adaptive": "adaptive",
@@ -105,6 +106,9 @@ export class SeedanceAI {
     }
 
     private static async postToSeedance(payload: any) {
+        console.log("Seedance request:", payload);
+
+        /*
         const apiKey = this.getApiKey?.();
         if (!apiKey) throw new Error("No Seedance API key provided");
 
@@ -112,12 +116,22 @@ export class SeedanceAI {
         //const encodedTarget = encodeURIComponent(targetUrl);
         //const locUrl = `http://localhost:4000/proxy/${encodedTarget}`;
 
-        console.log("Seedance request:", payload);
-
+        
         const response = await fetch(targetUrl, {
             method: "POST",
             headers: {
                 "Authorization": `Bearer ${apiKey}`,
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify(payload),
+        });
+        */
+
+        const idToken = useGoogleStore.getState().idToken;
+        const response = await fetch(`${WORKER_URL}/seedance/generate`, {
+            method: "POST",
+            headers: {
+                Authorization: `Bearer ${idToken}`,
                 "Content-Type": "application/json",
             },
             body: JSON.stringify(payload),
@@ -180,6 +194,9 @@ export class SeedanceAI {
 
 
     public static async getStatus(task_id: string) {
+        console.log("SEEDANCE Get Status");
+
+        /*
         if (!task_id) throw new Error("task_id is required");
 
         const apiKey = this.getApiKey?.();
@@ -189,13 +206,23 @@ export class SeedanceAI {
         //const encodedTarget = encodeURIComponent(targetUrl);
         //const locUrl = `http://localhost:4000/proxy/${encodedTarget}`;
 
-        console.log("SEEDANCE Get Status sent");
-
         const response = await fetch(targetUrl, {
             method: "GET",
             headers: {
                 Authorization: `Bearer ${apiKey}`,
                 "Content-Type": "application/json",
+            },
+        });
+        */
+
+        const targetUrl = `${WORKER_URL}/seedance/status/${task_id}`;
+        const idToken = useGoogleStore.getState().idToken;
+        if (!idToken) { throw new Error("Not logged in"); }
+
+        const response = await fetch(targetUrl, {
+            method: "GET",
+            headers: {
+                Authorization: `Bearer ${idToken}`,
             },
         });
 
@@ -243,12 +270,12 @@ export class SeedanceAI {
     public static calcPrice(task: any) {
         //console.log("Calculating Price Seedance",toJS(task.data))
         //const res       = task?.data?.geninfo?.resolution as Resolution | undefined;
-        const res       = task?.data?.raw?.resolution as Resolution | undefined;
+        const res = task?.data?.raw?.resolution as Resolution | undefined;
         const has_video = task?.data?.geninfo?.has_video ? 1 : 0;
 
         //console.log(res,task,has_video);
         if (res && (res in SeedanceAI.prices)) {
-            const price = SeedanceAI.prices[res][has_video]; 
+            const price = SeedanceAI.prices[res][has_video];
             return Number(task?.data?.tokens ?? 0) * price / 1e6;
         }
 

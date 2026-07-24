@@ -9,7 +9,7 @@ import { UserSettingsDB } from './classes/UserSettingsDB';
 import { ProjectContext } from './contexts/ProjectContext';
 import { Group, Panel, Separator } from 'react-resizable-panels';
 import { GoogleOAuthProvider } from '@react-oauth/google';
-import { GDriveLoginButton, GoogleLoginButton } from './contexts/GoogleUserContext';
+import { GoogleLoginButton, WorkerStatus } from './contexts/GoogleUserContext';
 
 const App: React.FC = observer(() => {
   const [project, setProject] = useState<Project | null>(null);
@@ -66,11 +66,10 @@ const App: React.FC = observer(() => {
   return (
     <GoogleOAuthProvider clientId="897309739659-u0a653m56ddg78n3kvb104uacgc3t52b.apps.googleusercontent.com">
         <ProjectContext.Provider value={{ project }}>
-          <div style={{ minHeight: '100vh' }}>
-                        
-            
-            <GDriveLoginButton />
-            { false && <GoogleLoginButton />}
+          <div style={{ minHeight: '100vh' }}>                        
+          
+            { true && <GoogleLoginButton />}
+            <WorkerStatus />
 
 
             <MenuBar
