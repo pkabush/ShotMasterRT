@@ -167,8 +167,8 @@ export const KlingNode = memo(
                         sound: data.sound
                     });
                     // Check Status
-                    await new Promise(res => setTimeout(res, 100));
-                    task.check_status();
+                    //await new Promise(res => setTimeout(res, 100));
+                    //task.check_status();
                 }
 
 

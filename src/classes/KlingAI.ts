@@ -1,3 +1,5 @@
+import { useGoogleStore, WORKER_URL } from "../contexts/GoogleUserContext";
+
 export async function generateKlingToken(
   accessKey: string,
   secretKey: string
@@ -154,7 +156,6 @@ export class KlingAI {
     },
   } as const;
 
-
   public static async getToken(): Promise<string> {
     const keys_dict = this.getKeysDict?.();
     if (!keys_dict) throw new Error("No Kling API keys provided or getKeysDict not set");
@@ -164,6 +165,31 @@ export class KlingAI {
   }
 
   private static async postToKling(targetUrl: string, payload: any) {
+    console.log("Kling request:", payload);
+
+    const idToken = useGoogleStore.getState().idToken;
+    const response = await fetch(
+      //`${WORKER_URL}/kling/generate`
+      `${WORKER_URL}/kling/generate?request_url=${targetUrl}`
+      , {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Seedance request failed: ${errorText}`);
+    }
+
+    const data = await response.json();
+    console.log("Seedance response:", data);
+
+    return data;
+    /*
     const encodedTarget = encodeURIComponent(targetUrl);
     const locUrl = `http://localhost:4000/proxy/${encodedTarget}`;
     const token = await this.getToken();
@@ -187,9 +213,11 @@ export class KlingAI {
     const data = await response.json();
     console.log(`Kling API response from ${targetUrl}:`, data);
     return data;
+    */
   }
 
   // ================= TXT2VIDEO =================
+  /*
   public static async txt2video(prompt: string, model: string = "kling-v1") {
     const payload = { model_name: model, mode: "std", duration: "5", prompt, cfg_scale: 0.5 };
     const targetUrl = "https://api-singapore.klingai.com/v1/videos/text2video";
@@ -197,6 +225,7 @@ export class KlingAI {
     const data = await this.postToKling(targetUrl, payload);
     return { id: data.data.task_id, workflow: "text2video" };
   }
+  */
 
   // ================= IMG2VIDEO =================
   public static async img2video(options: {
@@ -295,7 +324,27 @@ export class KlingAI {
 
   // ================= GET STATUS =================
   public static async getStatus(task_id: string, workflow: string = "text2video") {
+    console.log("KLING Get Status ", task_id, workflow);
 
+    const targetUrl = workflow === "klingTurbo" ?
+      `https://api-singapore.klingai.com/tasks?task_ids=${task_id}` :
+      `https://api-singapore.klingai.com/v1/videos/${workflow}/${task_id}`;
+
+
+    const idToken = useGoogleStore.getState().idToken;
+    if (!idToken) { throw new Error("Not logged in"); }
+
+    const response = await fetch(
+      `${WORKER_URL}/kling/status?request_url=${encodeURIComponent(targetUrl)}`
+      , {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+        },
+      });
+
+    /*
+    // OLD WAY
     const targetUrl = workflow === "klingTurbo" ?
       `https://api-singapore.klingai.com/tasks?task_ids=${task_id}` :
       `https://api-singapore.klingai.com/v1/videos/${workflow}/${task_id}`;
@@ -311,6 +360,7 @@ export class KlingAI {
       method: "GET",
       headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
     });
+    */
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -344,8 +394,6 @@ export class KlingAI {
       };
     }
   }
-
-
 
   // ================= OMNI VIDEO (O1) =================
   public static async omniVideo(options: {
@@ -492,7 +540,7 @@ export class KlingAI {
     return { id: data.data.id, workflow: "klingTurbo" };
   }
 
-  public static calcPrice(tokens : string) {
+  public static calcPrice(tokens: string) {
     return Number(tokens) * 0.14;
   }
 

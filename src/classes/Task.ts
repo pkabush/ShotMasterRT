@@ -12,6 +12,8 @@ import { Project } from "./Project";
 
 
 export class TasksJson {
+    static registry = new Map<string, TasksJson>();
+
     //tasks: Task[] = [];
     dataJson: LocalJson | null = null;
 
@@ -21,8 +23,23 @@ export class TasksJson {
             dataJson: observable,           // observable reference to the LocalJson
             tasks: computed,                 // computed getter/setter
         });
+
+        // Replace existing instance for this path
+        TasksJson.registry.set(dataJson.path, this);
+        console.log("Registered TASKS Json", dataJson.path);
     }
 
+    static getAllTasksJsons(): TasksJson[] {
+        return [...TasksJson.registry.values()];
+    }
+
+    static getTaskById(taskId: string): Task | undefined {
+        for (const tasksJson of this.registry.values()) {
+            const task = tasksJson.tasks.find(t => t.id === taskId);
+            if (task) return task;
+        }
+        return undefined;
+    }
 
     get tasks(): Task[] {
         const tasksData = this.dataJson?.getField("tasks");

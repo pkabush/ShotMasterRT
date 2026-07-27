@@ -3,6 +3,8 @@ import { jwtDecode } from "jwt-decode";
 import {
   GoogleLogin,
 } from "@react-oauth/google";
+import { TasksJson } from "../classes/Task";
+import { Project } from "../classes/Project";
 
 
 interface GoogleUser {
@@ -92,13 +94,30 @@ export const useGoogleStore = create<GoogleStore>(
 
       workerSocket.onmessage = (event) => {
         const message = JSON.parse(event.data);
-
-        console.log(
-          "Worker message:",
-          message
-        );
+        console.log("Worker message:", message);
 
         // handle messages here
+
+        // UPDATE TASK STATUS
+        if (message.type == "task_status") {
+          // Find Task
+          const task = TasksJson.getTaskById(message.data.id);
+          // Update Task Status
+          task?.update(message.data);
+          if (message.data.url) task?.downloadResults();
+          // Note Cost
+          if (message.data.cost) {
+            const proj = Project.getProject();
+            proj.costTracker?.addCost(
+              message.data.id,
+              message.data.provider,
+              message.data.cost,
+              { task_data: message.data }
+            )
+          }
+
+
+        }
       };
 
 
@@ -126,7 +145,6 @@ export const useGoogleStore = create<GoogleStore>(
         });
       };
     },
-
 
     disconnectWorkerWebSocket: () => {
       if (workerSocket) {

@@ -83,17 +83,25 @@ const TaskInfoCard: React.FC<Props> = observer(({ task, show_path = false }) => 
                             {task.data.tokens && <>
                                 <Badge bg="outline-secondary" style={{ fontSize: "16px", color: "#6e9e77" }}>
                                     {(() => {
-                                        if (task.data.provider === "kling") return KlingAI.calcPrice(task.data.tokens).toFixed(2);                                        
+                                        if (task.data.provider === "kling") return KlingAI.calcPrice(task.data.tokens).toFixed(2);
                                         if (task.data.provider === "bytedance") return SeedanceAI.calcPrice(task).toFixed(2);
                                         return "";
                                     })()}$
                                 </Badge>
                             </>}
 
+                            {task.data.cost && <>
+                                <Badge bg="outline-secondary" style={{ fontSize: "16px", color: "#6e9e77" }}>
+                                    {task.data.cost.toFixed(2)}$
+                                </Badge>
+                            </>}
+
+
+
                             <SimpleButton
                                 label="Check Status"
                                 className="btn-outline-primary btn-sm rounded-0"
-                                onClick={() => { task.check_status();}}
+                                onClick={() => { task.check_status(); }}
                             />
 
                             <LoadingSpinner isLoading={task.is_checking_status} asButton />

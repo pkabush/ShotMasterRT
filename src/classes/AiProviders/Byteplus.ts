@@ -192,7 +192,6 @@ export class SeedanceAI {
         };
     }
 
-
     public static async getStatus(task_id: string) {
         console.log("SEEDANCE Get Status");
 
@@ -257,7 +256,6 @@ export class SeedanceAI {
             task_url: targetUrl,
         };
     }
-
 
 
     public static prices: Record<Resolution, [number, number]> = {

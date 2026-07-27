@@ -137,8 +137,8 @@ export const SeedanceNode = memo(
                     }
                 })
 
-                await new Promise(res => setTimeout(res, 100));
-                task.check_status();
+                //await new Promise(res => setTimeout(res, 100));
+                //task.check_status();
 
             } finally {
                 setLoading(false);
