@@ -1,62 +1,7 @@
 import { useGoogleStore, WORKER_URL } from "../contexts/GoogleUserContext";
 
-export async function generateKlingToken(
-  accessKey: string,
-  secretKey: string
-): Promise<string> {
-  const now = Math.floor(Date.now() / 1000);
-
-  const header = {
-    alg: "HS256",
-    typ: "JWT",
-  };
-
-  const payload = {
-    iss: accessKey,
-    exp: now + 1800, // valid 30 min
-    nbf: now - 5,    // valid 5 sec ago
-  };
-
-  const encodedHeader = base64url(JSON.stringify(header));
-  const encodedPayload = base64url(JSON.stringify(payload));
-  const data = `${encodedHeader}.${encodedPayload}`;
-
-  const key = await crypto.subtle.importKey(
-    "raw",
-    new TextEncoder().encode(secretKey),
-    { name: "HMAC", hash: "SHA-256" },
-    false,
-    ["sign"]
-  );
-
-  const signatureBuffer = await crypto.subtle.sign(
-    "HMAC",
-    key,
-    new TextEncoder().encode(data)
-  );
-
-  return `${data}.${base64url(signatureBuffer)}`;
-}
-
-function base64url(input: ArrayBuffer | string): string {
-  let bytes: Uint8Array;
-  if (typeof input === "string") {
-    bytes = new TextEncoder().encode(input);
-  } else {
-    bytes = new Uint8Array(input);
-  }
-
-  let binary = "";
-  for (let i = 0; i < bytes.length; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-
-  return btoa(binary).replace(/=/g, "").replace(/\+/g, "-").replace(/\//g, "_");
-}
 
 export class KlingAI {
-  // Function to dynamically provide keys, similar to ChatGPT.getApiKey
-  public static getKeysDict: (() => { accessKey: string; secretKey: string, apiKey: string } | null) | null = null;
 
   public static videoModels = [
     "kling-v1",
@@ -155,14 +100,6 @@ export class KlingAI {
       },
     },
   } as const;
-
-  public static async getToken(): Promise<string> {
-    const keys_dict = this.getKeysDict?.();
-    if (!keys_dict) throw new Error("No Kling API keys provided or getKeysDict not set");
-
-    return keys_dict.apiKey;
-    //return await generateKlingToken(keys_dict.accessKey, keys_dict.secretKey);
-  }
 
   private static async postToKling(targetUrl: string, payload: any) {
     console.log("Kling request:", payload);

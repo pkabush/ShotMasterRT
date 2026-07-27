@@ -21,92 +21,85 @@ export const SettingsView: React.FC<SettingsViewProps> = observer(({ project }) 
 
   return (
     <div style={{ padding: 20 }} className="user-select-none">
-      <h3>Settings</h3>
-      <StringEditField
-        label="Username"
-        value={userSettingsDB.data.username || ""}
-        onChange={async (newValue) => {
-          await userSettingsDB.update(data => { data.username = newValue; });
-        }}
-      />
+      <h3 onClick={() => { project.log() }}>Settings</h3>
 
-      <SimpleButton onClick={() => { project.log() }} label="LOG Project" />
-      <SimpleButton onClick={() => { project.download_asset("assets/server.exe", "server.exe") }} label="Download Server (Windows)" />
-      <SimpleButton onClick={() => { project.download_asset("assets/server.zip", "server.zip") }} label="Download Server (MacOS)" />
-      <SimpleButton onClick={() => { project.download_asset("assets/Shotmaster_import.Lua", "Shotmaster_import.Lua") }} label="Download Resolve LuaScript" />
+      {false && <>
+        <StringEditField
+          label="Username"
+          value={userSettingsDB.data.username || ""}
+          onChange={async (newValue) => {
+            await userSettingsDB.update(data => { data.username = newValue; });
+          }}
+        />
+
+        <SimpleButton onClick={() => { project.log() }} label="LOG Project" />
+        <SimpleButton onClick={() => { project.download_asset("assets/server.exe", "server.exe") }} label="Download Server (Windows)" />
+        <SimpleButton onClick={() => { project.download_asset("assets/server.zip", "server.zip") }} label="Download Server (MacOS)" />
+      </>}
 
       <EditableJsonTextField localJson={project.projinfo} field="project_path" fitHeight />
+      <SimpleButton onClick={() => { project.download_asset("assets/Shotmaster_import.Lua", "Shotmaster_import.Lua") }} label="Download Resolve LuaScript" />
 
-      <h4>API Keys</h4>
-      <SimpleButton
-        onClick={() => setShowKeys(v => !v)}
-        label={showKeys ? "Hide API Keys" : "Show API Keys"}
-      />
-      <div style={{
-        filter: showKeys ? "none" : "blur(6px)",
-        pointerEvents: showKeys ? "auto" : "none",
-        transition: "filter 0.2s ease",
-      }}>
-        <StringEditField
-          label="GPT API Key"
-          value={userSettingsDB.data.api_keys.GPT_API_KEY || ""}
-          onChange={async (newValue) => {
-            await userSettingsDB.update(data => { data.api_keys.GPT_API_KEY = newValue; });
-          }}
+
+
+      {false && <>
+        <h4>API Keys</h4>
+        <SimpleButton
+          onClick={() => setShowKeys(v => !v)}
+          label={showKeys ? "Hide API Keys" : "Show API Keys"}
         />
-
-        <StringEditField
-          label="Google API Key"
-          value={userSettingsDB.data.api_keys.Google_API_KEY || ""}
-          onChange={async (newValue) => {
-            await userSettingsDB.update(data => { data.api_keys.Google_API_KEY = newValue; });
-          }}
-        />
-
-        {false && <>
+        <div style={{
+          filter: showKeys ? "none" : "blur(6px)",
+          pointerEvents: showKeys ? "auto" : "none",
+          transition: "filter 0.2s ease",
+        }}>
           <StringEditField
-            label="Kling Acess Key"
-            value={userSettingsDB.data.api_keys.Kling_Acess_Key || ""}
+            label="GPT API Key"
+            value={userSettingsDB.data.api_keys.GPT_API_KEY || ""}
             onChange={async (newValue) => {
-              await userSettingsDB.update(data => { data.api_keys.Kling_Acess_Key = newValue; });
+              await userSettingsDB.update(data => { data.api_keys.GPT_API_KEY = newValue; });
             }}
           />
 
           <StringEditField
-            label="Kling Secret Key"
-            value={userSettingsDB.data.api_keys.Kling_Secret_Key || ""}
+            label="Google API Key"
+            value={userSettingsDB.data.api_keys.Google_API_KEY || ""}
             onChange={async (newValue) => {
-              await userSettingsDB.update(data => { data.api_keys.Kling_Secret_Key = newValue; });
+              await userSettingsDB.update(data => { data.api_keys.Google_API_KEY = newValue; });
             }}
           />
-        </>}
 
-        <StringEditField
-          label="Kling API Key"
-          value={userSettingsDB.data.api_keys.Kling_Api_Key || ""}
-          onChange={async (newValue) => {
-            await userSettingsDB.update(data => { data.api_keys.Kling_Api_Key = newValue; });
-          }}
-        />
 
-        <StringEditField
-          label="Seedance API KEY"
-          value={userSettingsDB.data.api_keys.BP_API_KEY || ""}
-          onChange={async (newValue) => {
-            await userSettingsDB.update(data => { data.api_keys.BP_API_KEY = newValue; });
-          }}
-        />
+          <StringEditField
+            label="Kling API Key"
+            value={userSettingsDB.data.api_keys.Kling_Api_Key || ""}
+            onChange={async (newValue) => {
+              await userSettingsDB.update(data => { data.api_keys.Kling_Api_Key = newValue; });
+            }}
+          />
 
-        <StringEditField
-          label="HOPSHOT API KEY"
-          value={userSettingsDB.data.api_keys.HOPSHOT_API_KEY || ""}
-          onChange={async (newValue) => {
-            await userSettingsDB.update(data => { data.api_keys.HOPSHOT_API_KEY = newValue; });
-          }}
-        />
-      </div>
+          <StringEditField
+            label="Seedance API KEY"
+            value={userSettingsDB.data.api_keys.BP_API_KEY || ""}
+            onChange={async (newValue) => {
+              await userSettingsDB.update(data => { data.api_keys.BP_API_KEY = newValue; });
+            }}
+          />
+
+
+          <StringEditField
+            label="HOPSHOT API KEY"
+            value={userSettingsDB.data.api_keys.HOPSHOT_API_KEY || ""}
+            onChange={async (newValue) => {
+              await userSettingsDB.update(data => { data.api_keys.HOPSHOT_API_KEY = newValue; });
+            }}
+          />
+        </div>
+      </>}
+
 
       <>
+        <br />
         To use Lua Script paste it to:
         <br />
         C:\Users\USERNAME\AppData\Roaming\Blackmagic Design\DaVinci Resolve\Support\Fusion\Scripts\Utility

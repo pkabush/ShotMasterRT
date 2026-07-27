@@ -1,7 +1,7 @@
-import OpenAI from "openai";
 import type { AIGenerateParms, AIProvider, ImageResult } from "./AI_provider";
 import type { AIMessage } from "./GoogleAI";
 import { Project } from "./Project";
+import { useGoogleStore, WORKER_URL } from "../contexts/GoogleUserContext";
 
 
 // Custom error types for clarity
@@ -30,6 +30,16 @@ function base64ToFile(base64: any, filename: any, mimeType: any) {
   return new File([blob], filename, { type: mimeType });
 }
 
+function generateImageName(
+  model: string,
+  action: "generate" | "edit"
+) {
+  const timestamp = new Date()
+    .toISOString()
+    .replace(/[:.]/g, "-");
+
+  return `${model}-${action}-${timestamp}`;
+}
 
 export class ChatGPT implements AIProvider {
   public static options = {
@@ -50,17 +60,6 @@ export class ChatGPT implements AIProvider {
     }
   }
 
-
-  // Functions to get/set API key dynamically
-  public static getApiKey: (() => string | null) | null = null;
-  public static setApiKey: ((key: string) => void) | null = null;
-
-  private static getClient() {
-    const key = this.getApiKey?.() || "";
-    if (!key) throw new MissingApiKeyError("No OpenAI API key set");
-    return new OpenAI({ apiKey: key, dangerouslyAllowBrowser: true });
-  }
-
   public static async txt2txt(
     input?: string,
     system_msg?: string,
@@ -68,8 +67,6 @@ export class ChatGPT implements AIProvider {
     images?: { rawBase64: string; mime: string; description?: string }[]
   ) {
     try {
-      const client = this.getClient();
-
       const messages: any[] = [];
 
       // Add system message if provided
@@ -116,32 +113,34 @@ export class ChatGPT implements AIProvider {
       }
 
       console.log("GPT Payload:", payload)
-      const response = await client.responses.create(payload);
+      //const response = await client.responses.create(payload);
+      const idToken = useGoogleStore.getState().idToken;
+      const res = await fetch(`${WORKER_URL}/gpt/generate`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) { throw new Error(await res.text()); }
+      const response = await res.json();
       console.log("GPT Response:", response);
 
-      const cost = ChatGPT.calcPrice(response);      
+
+
       // SAVE Gen Data
-      const proj = Project.getProject();        
-      proj.costTracker?.addCost("", "GPT", cost, { model, })
+      if (response.cost) {
+        const proj = Project.getProject();
+        proj.costTracker?.addCost("", "GPT", response.cost, { model, })
+      }
 
       const text = response.output_text;
-      
+
       return text;
 
     } catch (err: any) {
-      console.error("ChatGPT Error:", err);
-
-      const message = err?.message || "";
-      if (message.includes("Incorrect API key provided") || err instanceof MissingApiKeyError) {
-        const userKey = window.prompt("Your OpenAI API key is missing or invalid. Please enter a valid key:");
-        if (userKey) {
-          this.setApiKey?.(userKey);
-        } else {
-          console.warn("User did not provide a valid API key.");
-        }
-        return null;
-      }
-
       throw err;
     }
   }
@@ -154,8 +153,6 @@ export class ChatGPT implements AIProvider {
     resolution?: string,
   ) {
     try {
-
-      const openai = this.getClient();
 
       if (Object.values(ChatGPT.options.image_models).includes(model)) {
 
@@ -171,39 +168,50 @@ export class ChatGPT implements AIProvider {
           }
         }
 
-        //console.log("img_files", file_images);
-        let result = null;
-        if (!images?.length) {
-          const payload: any = {
-            model,
-            prompt: prompt ?? "",
-          };
-          if (resolution) payload.size = resolution;
-          console.log("GPT_Payload", payload);
-          result = await openai.images.generate(payload);
+        // Create Payload
+        const payload: any = {
+          model,
+          prompt: prompt ?? "",
+        };
+        if (images?.length) {
+          payload.images = images.map(img => ({
+            base64: img.rawBase64,
+            mime: img.mime,
+          }));
         }
-        else {
-          const payload: any = {
-            model,
-            prompt: prompt ?? "",
-            image: file_images,
-          };
-          if (resolution) payload.size = resolution;
-          console.log("GPT_Payload", payload);
-          result = await openai.images.edit(payload);
-        }
+        if (resolution) payload.size = resolution;
 
-        console.log("OPENAI RES", { ...result, ...{ model } });
-        const cost = ChatGPT.calcPrice({ ...result, ...{ model } });
+        console.log("GPT_IMAGE Payload", payload);
+        const idToken = useGoogleStore.getState().idToken;
+        const res = await fetch(`${WORKER_URL}/gpt/generate`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${idToken}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) { throw new Error(await res.text()); }
+        const response = await res.json();
+
+
+        console.log("OPENAI RES", { ...response, ...{ model } });
+
+
+        const name = generateImageName(
+          "gpt-image-2",
+          images?.length ? "edit" : "generate"
+        );
 
         // SAVE Gen Data
-        const proj = Project.getProject();        
-        proj.costTracker?.addCost("", "GPT", cost, { model, })
+        if (response.cost) {
+          const proj = Project.getProject();
+          proj.costTracker?.addCost(name, "GPT", response.cost, { model, })
+        }
 
 
-
-        if (result && result.data) {
-          const image_base64 = result.data[0].b64_json;
+        if (response && response.data) {
+          const image_base64 = response.data[0].b64_json;
           if (!image_base64) return null;
 
           return {
@@ -211,9 +219,8 @@ export class ChatGPT implements AIProvider {
               rawBase64: image_base64,
               mime: "image/png",
             },
-            id: result._request_id!,
+            id: name,
           };
-
         }
       }
       else {
@@ -255,15 +262,25 @@ export class ChatGPT implements AIProvider {
           }],
         };
 
-        //if (resolution) {          payload.tools[0].size = resolution;        }
+        const idToken = useGoogleStore.getState().idToken;
+        const res = await fetch(`${WORKER_URL}/gpt/generate`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${idToken}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) { throw new Error(await res.text()); }
+        const response = await res.json();
 
-        const response = await openai.responses.create(payload);
         console.log("OPENAI RES", response);
 
         // SAVE Gen Data
-        const cost = ChatGPT.calcPrice(response);
-        const proj = Project.getProject();        
-        proj.costTracker?.addCost("", "GPT", cost, { model, })
+        if (response.cost) {
+          const proj = Project.getProject();
+          proj.costTracker?.addCost("", "GPT", response.cost, { model, })
+        }
 
         const imageData = response.output
           ?.filter((o: any) => o.type === "image_generation_call")
@@ -293,7 +310,6 @@ export class ChatGPT implements AIProvider {
         err instanceof MissingApiKeyError
       ) {
         console.log("INPUT GPT KEY!");
-        //this.showKeyPromptWindow();
         return null;
       }
 
@@ -301,7 +317,6 @@ export class ChatGPT implements AIProvider {
       throw err;
     }
   }
-
 
   async generateText(params: AIGenerateParms): Promise<string | null> {
     const text = await ChatGPT.txt2txt(
@@ -340,8 +355,6 @@ export class ChatGPT implements AIProvider {
     gen_image: boolean = true,
   ) {
     try {
-      const openai = this.getClient();
-
       // SWITHC ON MODEL
       if (Object.values(ChatGPT.options.image_models).includes(model)) {
         // Image Model Use Image Generation API
@@ -363,7 +376,7 @@ export class ChatGPT implements AIProvider {
           }
         }
 
-        console.log("GPT ASPECT",aspect_ratio,resolution);
+        console.log("GPT ASPECT", aspect_ratio, resolution);
         const res = aspectToPixels(aspect_ratio, resolution);
 
         return await this.img2img(
@@ -374,6 +387,7 @@ export class ChatGPT implements AIProvider {
         )
       }
       else {
+        // Non Image Models
         const content: any[] = [];
 
         // Gather all the messages
@@ -413,17 +427,28 @@ export class ChatGPT implements AIProvider {
 
         console.log("GPT_MSG_Payload", payload);
 
+        const idToken = useGoogleStore.getState().idToken;
+        const res = await fetch(`${WORKER_URL}/gpt/generate`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${idToken}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload),
+        });
+
+        if (!res.ok) { throw new Error(await res.text()); }
+        const response = await res.json();
+
         // Get response
-        const response = await openai.responses.create(payload);
+        //const response = await openai.responses.create(payload);
         console.log("OPENAI RES", response);
-        const cost = ChatGPT.calcPrice(response);
 
         // SAVE Gen Data
-        const proj = Project.getProject();
-        proj.costTracker?.addCost(response.id ?? "", "GPT", cost, {
-          model: response.model,
-        })
-
+        if (response.cost) {
+          const proj = Project.getProject();
+          proj.costTracker?.addCost("", "GPT", response.cost, { model, })
+        }
 
         // Return Image or Text
         const imageData = response.output
@@ -463,41 +488,7 @@ export class ChatGPT implements AIProvider {
       throw err;
     }
   }
-
-  public static calcPrice(response: any) {
-    //console.log("Calculating Price", response);
-
-    const model = response.model.replace(/-\d{4}-\d{2}-\d{2}$/, "");
-    //console.log(model);
-
-    const out_price = response.usage.output_tokens * ChatGPT.prices[model].out * 1e-6;
-    const in_price = response.usage.input_tokens * ChatGPT.prices[model].in * 1e-6;
-
-    //console.log("Candidate Tokens", out_price);
-    //console.log("Prompt Tokens", in_price);
-    console.log(`\x1b[32mTotal Price: ${in_price + out_price}$\x1b[0m`);
-
-    return in_price + out_price;
-  }
-
-  public static prices: Record<string, any> = {
-    "gpt-5.5": {
-      out: 30,
-      in: 5,
-    },
-    "gpt-5.4": {
-      out: 15,
-      in: 2.5,
-    },
-    "gpt-5.4-mini": {
-      out: 4.5,
-      in: 0.75,
-    },
-    "gpt-image-2": {
-      out: 30,
-      in: 8,
-    },
-  };
+  
 
 }
 

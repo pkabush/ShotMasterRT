@@ -1,9 +1,9 @@
 // classes/GoogleGenAI.ts
-import { GoogleGenAI as GoogleSDK } from "@google/genai";
 import { LocalImage } from "./fileSystem/LocalImage";
 import type { LocalFolder } from "./fileSystem/LocalFolder";
 import type { AIGenerateParms, AIImageInput, AIProvider, ImageResult } from "./AI_provider";
 import { Project } from "./Project";
+import { useGoogleStore, WORKER_URL } from "../contexts/GoogleUserContext";
 
 // Custom error types for clarity
 export class MissingApiKeyError extends Error { }
@@ -44,16 +44,6 @@ export class GoogleAI implements AIProvider {
     }
   }
 
-  // Functions to get/set API key dynamically
-  public static getApiKey: (() => string | null) | null = null;
-  public static setApiKey: ((key: string) => void) | null = null;  
-
-  private static getGenAI() {
-    const key = this.getApiKey?.() || "";
-    //console.log(key);
-    if (!key) throw new MissingApiKeyError("No Google API key set");
-    return new GoogleSDK({ apiKey: key });
-  }
 
   // ---------- img2img function ----------
   public static async img2img(
@@ -64,7 +54,6 @@ export class GoogleAI implements AIProvider {
     resolution?: string,
   ) {
     try {
-      const genAI = this.getGenAI();
       // Add prompt Text
       const contents: any[] = [];
       if (prompt) contents.push({ text: prompt });
@@ -93,17 +82,26 @@ export class GoogleAI implements AIProvider {
         config,
       };
       console.log("Gemini Payload", payload);
+
+
       // Get Response
-      const response = await genAI.models.generateContent(payload);
+      const idToken = useGoogleStore.getState().idToken;
+      const res = await fetch(`${WORKER_URL}/gemini/generate`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) { throw new Error(await res.text()); }
+      const response = await res.json();
       console.log("GEMINI RES", response);
 
       // SAVE Gen Data
-      const cost = GoogleAI.calcPrice(response);
-      const proj = Project.getProject();      
-      proj.costTracker?.addCost( response.responseId ?? "", "Google",cost, {
-        model:response.modelVersion,        
-      })
-
+      const proj = Project.getProject();
+      if (response.cost) proj.costTracker?.addCost(response.responseId ?? "", "Google", response.cost, { model: response.modelVersion, })
 
       // Iterate response parts
       // If IMAGE Modesl
@@ -122,26 +120,15 @@ export class GoogleAI implements AIProvider {
           }
         }
       }
+
       // IF TEXT Model
-      return response.text;
+      const text = response.candidates?.[0]?.content?.parts?.[0]?.text;
+      return text;
+      //return response.text;
 
     } catch (err: any) {
-      const message = err?.message || "";
-      if (message.includes("API key not valid") || message.includes("API_KEY_INVALID") || err instanceof MissingApiKeyError) {
-        this.showKeyPromptWindow()
-        return null;
-      }
       console.error("img2img error", err);
       throw err;
-    }
-  }
-
-  private static showKeyPromptWindow() {
-    const userKey = window.prompt("Your Google API key is missing or invalid. Please enter a valid key:");
-    if (userKey) {
-      this.setApiKey?.(userKey);
-    } else {
-      console.warn("User did not provide a valid API key.");
     }
   }
 
@@ -193,8 +180,6 @@ export class GoogleAI implements AIProvider {
     resolution?: string,
   ) {
     try {
-      const genAI = this.getGenAI();
-
       const contents: any[] = [];
 
       for (const message of messages) {
@@ -222,10 +207,7 @@ export class GoogleAI implements AIProvider {
       }
 
       // Generate Payload
-      const isImageModel = Object.values(
-        GoogleAI.options.img_models
-      ).includes(model);
-
+      const isImageModel = Object.values(GoogleAI.options.img_models).includes(model);
       const config: any = {};
 
       if (isImageModel) {
@@ -249,17 +231,27 @@ export class GoogleAI implements AIProvider {
 
       console.log("Gemini Payload", payload);
 
-      const response = await genAI.models.generateContent(payload);
+      const idToken = useGoogleStore.getState().idToken;
+      const res = await fetch(`${WORKER_URL}/gemini/generate`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${idToken}`,
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) { throw new Error(await res.text()); }
+      const response = await res.json();
+
+      //const response = await genAI.models.generateContent(payload);
 
       console.log("GEMINI RES", response);
-      const cost = GoogleAI.calcPrice(response);
+      //const cost = GoogleAI.calcPrice(response);
 
       // SAVE Gen Data
       const proj = Project.getProject();
-      proj.costTracker?.addCost( response.responseId ?? "", "Google",cost, {
-        model:response.modelVersion,        
-      })
-
+      if (response.cost) proj.costTracker?.addCost(response.responseId ?? "", "Google", response.cost, { model: response.modelVersion, })
 
       // IMAGE RESPONSE
       if (isImageModel) {
@@ -268,6 +260,7 @@ export class GoogleAI implements AIProvider {
 
         for (const part of parts) {
           if (part.inlineData) {
+            console.log("IMAGE FOUND")
             return {
               base64Obj: {
                 rawBase64: part.inlineData.data,
@@ -280,66 +273,16 @@ export class GoogleAI implements AIProvider {
       }
 
       // TEXT RESPONSE
-      return response.text;
+      const text = response.candidates?.[0]?.content?.parts?.[0]?.text;
+      return text;
+      //return response.text;
+
 
     } catch (err: any) {
-      const message = err?.message || "";
-
-      if (
-        message.includes("API key not valid") ||
-        message.includes("API_KEY_INVALID") ||
-        err instanceof MissingApiKeyError
-      ) {
-        this.showKeyPromptWindow();
-        return null;
-      }
-
       console.error("img2img error", err);
       throw err;
     }
   }
-
-  public static calcPrice(response: any) {
-    //console.log("Calculating Price", response);
-
-    const model = response.modelVersion;
-    //console.log("Model: ", model);
-    const out_price = response.usageMetadata.candidatesTokenCount * GoogleAI.prices[model].out * 1e-6;
-    const in_price = response.usageMetadata.promptTokenCount * GoogleAI.prices[model].in * 1e-6;
-
-    //console.log("Candidate Tokens", out_price);
-    //console.log("Prompt Tokens", in_price);
-    console.log(`\x1b[32mTotal Price: ${in_price + out_price}$\x1b[0m`);
-    return in_price + out_price;
-  }
-
-  public static prices: Record<string, any> = {
-    "gemini-3.1-flash-lite": {
-      out: 1.5,
-      in: 0.25,
-    },
-    "gemini-3.1-pro-preview": {
-      out: 12,
-      in: 2,
-    },
-    "gemini-3-flash-preview": {
-      out: 3,
-      in: 0.5,
-    },
-    "gemini-2.5-flash-image": {
-      out: 30,
-      in: 0.3,
-    },
-    "gemini-3-pro-image-preview": {
-      out: 120,
-      in: 2,
-    },
-    "gemini-3.1-flash-image-preview": {
-      out: 60,
-      in: 0.5,
-    },
-
-  };
 }
 
 

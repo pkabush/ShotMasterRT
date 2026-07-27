@@ -57,10 +57,6 @@ export class SeedanceAI {
         }
     }
 
-
-    // Similar pattern to Kling
-    public static getApiKey: (() => string | null) | null = null;
-
     public static textMsg(text: string): SeedanceContent {
         if (!text) throw new Error("textMsg requires text");
         return {
@@ -193,7 +189,7 @@ export class SeedanceAI {
     }
 
     public static async getStatus(task_id: string) {
-        console.log("SEEDANCE Get Status");
+        console.log("SEEDANCE Get Status ", task_id);
 
         /*
         if (!task_id) throw new Error("task_id is required");
@@ -257,7 +253,6 @@ export class SeedanceAI {
         };
     }
 
-
     public static prices: Record<Resolution, [number, number]> = {
         "480p": [4.3, 7],
         "720p": [4.7, 7.7],
@@ -276,10 +271,8 @@ export class SeedanceAI {
             const price = SeedanceAI.prices[res][has_video];
             return Number(task?.data?.tokens ?? 0) * price / 1e6;
         }
-
         return 0;
     }
-
 
 }
 

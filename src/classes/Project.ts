@@ -4,13 +4,10 @@ import { Artbook } from "./Artbook";
 import { UserSettingsDB } from "./UserSettingsDB";
 import { action, computed, makeObservable, observable, runInAction } from "mobx";
 import { Script } from "./Script";
-import { GoogleAI } from "./GoogleAI";
-import { ChatGPT } from "./ChatGPT";
 import { LocalJson } from './LocalJson';
 import { KlingAI } from "./KlingAI";
 import { LocalFolder } from "./fileSystem/LocalFolder";
 import { ScriptMaster } from "./ScriptMaster";
-import { SeedanceAI } from "./AiProviders/Byteplus";
 import { CostTracker } from "./AiProviders/CostTracker";
 
 export type ProjectView =
@@ -316,22 +313,7 @@ export class Project extends LocalFolder {
   }
 
   async loadDB() {
-    await this.userSettingsDB.load();
-    // Init API Key Getter
-    GoogleAI.getApiKey = () => { return this.userSettingsDB.data.api_keys.Google_API_KEY || null; };
-    GoogleAI.setApiKey = async (key: string) => { await this.userSettingsDB.update(data => { data.api_keys.Google_API_KEY = key; }); }
-    ChatGPT.getApiKey = () => { return this.userSettingsDB.data.api_keys.GPT_API_KEY || null; };
-    ChatGPT.setApiKey = async (key: string) => { await this.userSettingsDB.update(data => { data.api_keys.GPT_API_KEY = key; }); };
-
-    SeedanceAI.getApiKey = () => { return this.userSettingsDB.data.api_keys.BP_API_KEY || null; };
-
-    KlingAI.getKeysDict = () => {
-      return {
-        accessKey: this.userSettingsDB.data.api_keys.Kling_Acess_Key,
-        secretKey: this.userSettingsDB.data.api_keys.Kling_Secret_Key,
-        apiKey: this.userSettingsDB.data.api_keys.Kling_Api_Key
-      }
-    }
+    await this.userSettingsDB.load();    
   }
 
   async createScene(sceneName: string) {
