@@ -1,13 +1,10 @@
 //// Task.ts
 import { makeAutoObservable, toJS, runInAction, makeObservable, observable, computed } from "mobx";
 import { getCurrentTimestampUTC, Shot } from "./Shot";
-import { ai_providers } from "./AI_provider";
-import { KlingAI } from "./KlingAI";
 import { notificationManager } from "./NotificationManager";
 import type { LocalMedia } from "./fileSystem/LocalMedia";
-import { SeedanceAI } from "./AiProviders/Byteplus";
 import type { LocalJson } from "./LocalJson";
-import { Project } from "./Project";
+import { useGoogleStore, WORKER_URL } from "../contexts/GoogleUserContext";
 
 
 
@@ -133,104 +130,26 @@ export class Task {
         this._status_log = "";
     }
 
-    async check_status(retries: number = 30, delayMs: number = 15000) {
-        //console.log("started checking status ! ");
-        if (![ai_providers.KLING, ai_providers.BD].includes(this.data.provider)) return;
+    async check_status() {
+        console.log("CHECK STATUS", this);
 
-        runInAction(() => { this.is_checking_status = true; this._status_log = "start checking"; });
+        const targetUrl = `${WORKER_URL}/seedance/status/${this.id}`;
+        const idToken = useGoogleStore.getState().idToken;
+        if (!idToken) { throw new Error("Not logged in"); }
 
+        const response = await fetch(targetUrl, {
+            method: "GET",
+            headers: {
+                Authorization: `Bearer ${idToken}`,
+            },
+        });
 
-
-        for (let attempt = 0; attempt <= retries; attempt++) {
-            try {
-                //console.log("new attempt");
-
-                // KLING
-                if (this.data.provider == ai_providers.KLING) {
-                    const status = await KlingAI.getStatus(this.id, this.data.workflow);
-
-                    //console.log("status", status)
-                    this.update(status);
-
-                    if ((status?.status === "succeed" || status?.status === "succeeded") && status.url) {
-                        await this.downloadResults();
-
-                        // STORE DATA
-                        const cost = KlingAI.calcPrice(this.data.tokens)
-                        const proj = Project.getProject();
-                        proj.costTracker?.addCost(
-                            this.id,
-                            this.data.provider,
-                            cost,
-                            {
-                                task_data: this.data
-                            }
-                        )
-
-
-                        this.finish_checking();
-                        return;
-                    }
-
-                    if (status?.status === "failed") {
-                        console.warn(`Task ${this.id} failed.`);
-                        this.finish_checking();
-                        return;
-                    }
-                }
-
-                //console.log(this.data.provider);
-                // Bytedance
-                if (this.data.provider == ai_providers.BD) {
-                    //console.log("Check Bytedance Status");
-                    const status = await SeedanceAI.getStatus(this.id);
-
-                    //console.log("status", status)
-                    this.update(status);
-
-                    if (status?.status === "succeeded" && status.url) {
-                        // STORE DATA
-                        const cost = SeedanceAI.calcPrice(this)
-                        const proj = Project.getProject();
-                        proj.costTracker?.addCost(
-                            this.id,
-                            this.data.provider,
-                            cost,
-                            {
-                                task_data: this.data,
-                            }
-                        )
-
-                        await this.downloadResults();
-                        this.finish_checking();
-                        return;
-                    }
-
-                    if (["failed", "expired", "cancelled"].includes(status?.status)) {
-                        console.warn(`Task ${this.id} failed.`);
-                        this.finish_checking();
-                        return;
-                    }
-
-                }
-
-
-            } catch (err) {
-                console.error("Status check failed:", err);
-            }
-
-            if (attempt < retries) {
-                runInAction(() => {
-                    this._status_log = `(attempt ${attempt + 1}/${retries})`;
-                });
-
-                await new Promise(res => setTimeout(res, delayMs));
-            }
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(`Seedance status request failed: ${errorText}`);
         }
 
-
-        console.warn(`Task ${this.id} did not finish after ${retries} retries.`);
-        this.finish_checking();
+        console.log("Seedance check status:", await response.text());
     }
 
     async downloadResults() {

@@ -336,7 +336,7 @@ export class Shot extends LocalFolder {
 
       if (!task_info) return;
 
-      const task = this.tasksJson!.addTask(task_info.id, {
+      this.tasksJson!.addTask(task_info.id, {
         provider: ai_providers.KLING,
         workflow: task_info.workflow,
         // Add Gen Info
@@ -353,9 +353,6 @@ export class Shot extends LocalFolder {
           }
         }
       });
-
-      await new Promise(res => setTimeout(res, 100));
-      task.check_status();
 
     } catch (err) {
       console.error("Submitting Video Generation Failed:", err);
@@ -424,7 +421,7 @@ export class Shot extends LocalFolder {
         face_choose
       });
 
-      const task = this.tasksJson!.addTask(task_info.id, {
+      this.tasksJson!.addTask(task_info.id, {
         provider: ai_providers.KLING,
         workflow: task_info.workflow,
         geninfo: {
@@ -433,8 +430,6 @@ export class Shot extends LocalFolder {
           face_choose: face_choose.map(obj => ({ ...obj, sound_file: "" }))
         }
       });
-      await new Promise(res => setTimeout(res, 100));
-      task.check_status();
 
       await new Promise(res => setTimeout(res, 2000));
 
@@ -465,7 +460,7 @@ export class Shot extends LocalFolder {
           keep_original_sound: workflow.keep_original_sound,
         });
 
-        const task = this.tasksJson!.addTask(task_info.id, {
+        this.tasksJson!.addTask(task_info.id, {
           provider: ai_providers.KLING,
           workflow: task_info.workflow,
           // GENINFO
@@ -482,8 +477,6 @@ export class Shot extends LocalFolder {
             }
           }
         })
-        await new Promise(res => setTimeout(res, 100));
-        task.check_status();
 
         await new Promise(res => setTimeout(res, 2000));
       }

@@ -113,10 +113,7 @@ export const MediaFolderGallery: React.FC<MediaFolderGalleryProps> = observer(
 
                                                     const shot = mediaFolder.shot as Shot;
                                                     const task = shot.tasksJson!.addTask(task_info.id, { provider: ai_providers.KLING, workflow: task_info.workflow, geninfo: task_info.geninfo })
-                                                    await new Promise(res => setTimeout(res, 100));
-                                                    console.log("created_task");
 
-                                                    task.check_status();
                                                 }}
                                                 onClose={() => mediaFolder.setSelectedMedia(null)}
                                                 reference_images={(mediaFolder.parentFolder as Shot).MediaFolder_results!.getMediaWithTag("ref_frame") as LocalImage[]}

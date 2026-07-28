@@ -2,8 +2,7 @@
 import { LocalImage } from "./fileSystem/LocalImage";
 import type { LocalFolder } from "./fileSystem/LocalFolder";
 import type { AIGenerateParms, AIImageInput, AIProvider, ImageResult } from "./AI_provider";
-import { Project } from "./Project";
-import { useGoogleStore, WORKER_URL } from "../contexts/GoogleUserContext";
+import { postToWorker } from "./CloudflareWorker/WorkerUtils";
 
 // Custom error types for clarity
 export class MissingApiKeyError extends Error { }
@@ -44,6 +43,58 @@ export class GoogleAI implements AIProvider {
     }
   }
 
+  private static async postToGemini(payload: any) {
+    try {
+      console.log("Gemini Payload", payload);
+      const response = await postToWorker(payload, "gemini/generate");
+      console.log("GEMINI RES", response);
+
+      // SAVE Gen Data
+      /*
+      const proj = Project.getProject();
+      if (response.cost) {
+        proj.costTracker?.addCost(response.responseId ?? "", "Google", response.cost, {
+          model: response.modelVersion,
+        }
+        );
+      }*/
+
+      return response;
+
+    } catch (err) {
+      console.error("Gemini worker error", err);
+      throw err;
+    }
+  }
+
+  private static parseResponse(response: any) {
+    const parts = response?.candidates?.[0]?.content?.parts ?? [];
+
+    // Look for image first
+    for (const part of parts) {
+      if (part.inlineData) {
+        return {
+          base64Obj: {
+            rawBase64: part.inlineData.data,
+            mime: part.inlineData.mimeType || "image/png",
+          },
+          id: response.responseId,
+        };
+      }
+    }
+
+    // Otherwise return text
+    for (const part of parts) {
+      if (part.text) {
+        return part.text;
+      }
+    }
+
+    return null;
+  }
+
+
+
 
   // ---------- img2img function ----------
   public static async img2img(
@@ -81,50 +132,9 @@ export class GoogleAI implements AIProvider {
         contents,
         config,
       };
-      console.log("Gemini Payload", payload);
 
-
-      // Get Response
-      const idToken = useGoogleStore.getState().idToken;
-      const res = await fetch(`${WORKER_URL}/gemini/generate`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${idToken}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) { throw new Error(await res.text()); }
-      const response = await res.json();
-      console.log("GEMINI RES", response);
-
-      // SAVE Gen Data
-      const proj = Project.getProject();
-      if (response.cost) proj.costTracker?.addCost(response.responseId ?? "", "Google", response.cost, { model: response.modelVersion, })
-
-      // Iterate response parts
-      // If IMAGE Modesl
-      if (isImageModel) {
-        const candidates = response?.candidates ?? [];
-        const parts = candidates[0]?.content?.parts ?? [];
-        for (const part of parts) {
-          if (part.inlineData) {
-            return {
-              base64Obj: {
-                rawBase64: part.inlineData.data,
-                mime: part.inlineData.mimeType || "image/png",
-              },
-              id: response.responseId,
-            };
-          }
-        }
-      }
-
-      // IF TEXT Model
-      const text = response.candidates?.[0]?.content?.parts?.[0]?.text;
-      return text;
-      //return response.text;
+      const response = await GoogleAI.postToGemini(payload);
+      return GoogleAI.parseResponse(response);
 
     } catch (err: any) {
       console.error("img2img error", err);
@@ -229,54 +239,8 @@ export class GoogleAI implements AIProvider {
         config,
       };
 
-      console.log("Gemini Payload", payload);
-
-      const idToken = useGoogleStore.getState().idToken;
-      const res = await fetch(`${WORKER_URL}/gemini/generate`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${idToken}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) { throw new Error(await res.text()); }
-      const response = await res.json();
-
-      //const response = await genAI.models.generateContent(payload);
-
-      console.log("GEMINI RES", response);
-      //const cost = GoogleAI.calcPrice(response);
-
-      // SAVE Gen Data
-      const proj = Project.getProject();
-      if (response.cost) proj.costTracker?.addCost(response.responseId ?? "", "Google", response.cost, { model: response.modelVersion, })
-
-      // IMAGE RESPONSE
-      if (isImageModel) {
-        const candidates = response?.candidates ?? [];
-        const parts = candidates[0]?.content?.parts ?? [];
-
-        for (const part of parts) {
-          if (part.inlineData) {
-            console.log("IMAGE FOUND")
-            return {
-              base64Obj: {
-                rawBase64: part.inlineData.data,
-                mime: part.inlineData.mimeType || "image/png",
-              },
-              id: response.responseId,
-            };
-          }
-        }
-      }
-
-      // TEXT RESPONSE
-      const text = response.candidates?.[0]?.content?.parts?.[0]?.text;
-      return text;
-      //return response.text;
-
+      const response = await GoogleAI.postToGemini(payload);
+      return GoogleAI.parseResponse(response);
 
     } catch (err: any) {
       console.error("img2img error", err);

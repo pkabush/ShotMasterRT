@@ -1,8 +1,6 @@
 import type { AIGenerateParms, AIProvider, ImageResult } from "./AI_provider";
 import type { AIMessage } from "./GoogleAI";
-import { Project } from "./Project";
-import { useGoogleStore, WORKER_URL } from "../contexts/GoogleUserContext";
-
+import { postToWorker } from "./CloudflareWorker/WorkerUtils";
 
 // Custom error types for clarity
 export class MissingApiKeyError extends Error { }
@@ -113,28 +111,8 @@ export class ChatGPT implements AIProvider {
       }
 
       console.log("GPT Payload:", payload)
-      //const response = await client.responses.create(payload);
-      const idToken = useGoogleStore.getState().idToken;
-      const res = await fetch(`${WORKER_URL}/gpt/generate`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${idToken}`,
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(payload),
-      });
-
-      if (!res.ok) { throw new Error(await res.text()); }
-      const response = await res.json();
+      const response = await postToWorker(payload, "gpt/generate");
       console.log("GPT Response:", response);
-
-
-
-      // SAVE Gen Data
-      if (response.cost) {
-        const proj = Project.getProject();
-        proj.costTracker?.addCost("", "GPT", response.cost, { model, })
-      }
 
       const text = response.output_text;
 
@@ -181,34 +159,15 @@ export class ChatGPT implements AIProvider {
         }
         if (resolution) payload.size = resolution;
 
-        console.log("GPT_IMAGE Payload", payload);
-        const idToken = useGoogleStore.getState().idToken;
-        const res = await fetch(`${WORKER_URL}/gpt/generate`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${idToken}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(payload),
-        });
-        if (!res.ok) { throw new Error(await res.text()); }
-        const response = await res.json();
-
-
-        console.log("OPENAI RES", { ...response, ...{ model } });
-
+        // POST TO WORKER
+        console.log("GPT Payload:", payload)
+        const response = await postToWorker(payload, "gpt/generate");
+        console.log("GPT Response:", response);
 
         const name = generateImageName(
           "gpt-image-2",
           images?.length ? "edit" : "generate"
         );
-
-        // SAVE Gen Data
-        if (response.cost) {
-          const proj = Project.getProject();
-          proj.costTracker?.addCost(name, "GPT", response.cost, { model, })
-        }
-
 
         if (response && response.data) {
           const image_base64 = response.data[0].b64_json;
@@ -262,25 +221,10 @@ export class ChatGPT implements AIProvider {
           }],
         };
 
-        const idToken = useGoogleStore.getState().idToken;
-        const res = await fetch(`${WORKER_URL}/gpt/generate`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${idToken}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(payload),
-        });
-        if (!res.ok) { throw new Error(await res.text()); }
-        const response = await res.json();
-
-        console.log("OPENAI RES", response);
-
-        // SAVE Gen Data
-        if (response.cost) {
-          const proj = Project.getProject();
-          proj.costTracker?.addCost("", "GPT", response.cost, { model, })
-        }
+        // POST TO WORKER
+        console.log("GPT Payload:", payload)
+        const response = await postToWorker(payload, "gpt/generate");
+        console.log("GPT Response:", response);
 
         const imageData = response.output
           ?.filter((o: any) => o.type === "image_generation_call")
@@ -425,30 +369,10 @@ export class ChatGPT implements AIProvider {
           type: "image_generation" as const,
         }];
 
-        console.log("GPT_MSG_Payload", payload);
-
-        const idToken = useGoogleStore.getState().idToken;
-        const res = await fetch(`${WORKER_URL}/gpt/generate`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${idToken}`,
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(payload),
-        });
-
-        if (!res.ok) { throw new Error(await res.text()); }
-        const response = await res.json();
-
-        // Get response
-        //const response = await openai.responses.create(payload);
-        console.log("OPENAI RES", response);
-
-        // SAVE Gen Data
-        if (response.cost) {
-          const proj = Project.getProject();
-          proj.costTracker?.addCost("", "GPT", response.cost, { model, })
-        }
+        // POST TO WORKER
+        console.log("GPT Payload:", payload)
+        const response = await postToWorker(payload, "gpt/generate");
+        console.log("GPT Response:", response);
 
         // Return Image or Text
         const imageData = response.output
@@ -488,7 +412,7 @@ export class ChatGPT implements AIProvider {
       throw err;
     }
   }
-  
+
 
 }
 

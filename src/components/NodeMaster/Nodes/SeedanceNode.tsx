@@ -136,10 +136,6 @@ export const SeedanceNode = memo(
                         has_video,
                     }
                 })
-
-                //await new Promise(res => setTimeout(res, 100));
-                //task.check_status();
-
             } finally {
                 setLoading(false);
             }

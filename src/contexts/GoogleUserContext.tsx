@@ -5,6 +5,27 @@ import {
 } from "@react-oauth/google";
 import { TasksJson } from "../classes/Task";
 import { Project } from "../classes/Project";
+import { Button, OverlayTrigger, Popover, Stack } from "react-bootstrap";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faLink, faLinkSlash, faUser } from "@fortawesome/free-solid-svg-icons";
+import { useState } from "react";
+
+
+//export const WORKER_URL = "http://localhost:8787";
+//export const WORKER_URL = "https://shotmasterworker.kabushpavel.workers.dev";
+
+const test_web = true
+
+export const WORKER_URL =
+  import.meta.env.DEV && !test_web
+    ? "http://localhost:8787"
+    : "https://shotmasterworker.kabushpavel.workers.dev";
+
+
+const WORKER_WS_URL =
+  import.meta.env.DEV && !test_web
+    ? "ws://localhost:8787"
+    : "wss://shotmasterworker.kabushpavel.workers.dev";
 
 
 interface GoogleUser {
@@ -56,7 +77,7 @@ export const useGoogleStore = create<GoogleStore>(
       set({ idToken: credential, user, });
 
       // connect after login
-      get().connectWorkerWebSocket(user.id);
+      get().connectWorkerWebSocket(user.email);
     },
 
     logout: () => {
@@ -115,8 +136,6 @@ export const useGoogleStore = create<GoogleStore>(
               { task_data: message.data }
             )
           }
-
-
         }
       };
 
@@ -159,44 +178,214 @@ export const useGoogleStore = create<GoogleStore>(
   })
 );
 
-export function GoogleLoginButton() {
-  const login = useGoogleStore((state) => state.login);
+
+export function ConnectWorkerButton() {
+  const user = useGoogleStore((s) => s.user);
+  const status = useGoogleStore((s) => s.websocketStatus);
+
+  const connect = useGoogleStore(
+    (s) => s.connectWorkerWebSocket
+  );
+
+  const disconnect = useGoogleStore(
+    (s) => s.disconnectWorkerWebSocket
+  );
+
+  const connected =
+    status === "connected" || status === "connecting";
+
   return (
-    <GoogleLogin
-      onSuccess={(credentialResponse) => {
-        console.log("CRED RESPONSE", credentialResponse);
-        if (credentialResponse.credential) {
-          login(credentialResponse.credential);
+    <Button
+      onClick={() => {
+        if (!user) return;
+
+        if (connected) {
+          disconnect();
+        } else {
+          connect(user.email);
         }
       }}
-
-      onError={() => {
-        console.log("Login Failed");
+      variant={
+        connected
+          ? "outline-success"
+          : "outline-secondary"
+      }
+      disabled={!user}
+      title={
+        !user
+          ? "Login to connect worker"
+          : connected
+            ? "Disconnect worker"
+            : "Connect worker"
+      }
+      style={{
+        width: 42,
+        height: 42,
+        borderRadius: "50%",
+        padding: 0,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
       }}
-    />
+    >
+      <FontAwesomeIcon
+        icon={connected ? faLink : faLinkSlash}
+      />
+    </Button>
   );
 }
 
 
-export const WORKER_URL = "http://localhost:8787";
-//export const WORKER_URL = "https://shotmasterworker.kabushpavel.workers.dev";
+export function UserCircle() {
+  const user = useGoogleStore((s) => s.user);
+  const login = useGoogleStore((s) => s.login);
+  const logout = useGoogleStore((s) => s.logout);
 
-const WORKER_WS_URL =
-  import.meta.env.DEV
-    ? "ws://localhost:8787"
-    : "wss://shotmasterworker.kabushpavel.workers.dev";
+  const [showLogin, setShowLogin] = useState(false);
 
-
-export function WorkerStatus() {
-
-  const status = useGoogleStore(
-    s => s.websocketStatus
-  );
-
-
-  return (
-    <div>
-      Worker websocket: {status}
+  // Hidden GoogleLogin mounted immediately
+  const hiddenGoogleLogin = !user && (
+    <div style={{ position: "absolute", opacity: 0, pointerEvents: "none" }}>
+      <GoogleLogin
+        useOneTap
+        auto_select
+        onSuccess={(credentialResponse) => {
+          if (credentialResponse.credential) {
+            login(credentialResponse.credential);
+          }
+        }}
+        onError={() => console.log("Login Failed")}
+      />
     </div>
   );
+
+  if (!user) {
+    return (
+      <>
+        {hiddenGoogleLogin}
+
+        <OverlayTrigger
+          trigger="click"
+          placement="bottom"
+          rootClose
+          show={showLogin}
+          onToggle={(next) => setShowLogin(next)}
+          overlay={
+            <Popover>
+              <Popover.Body>
+                <GoogleLogin
+                  onSuccess={(credentialResponse) => {
+                    if (credentialResponse.credential) {
+                      login(credentialResponse.credential);
+                      setShowLogin(false);
+                    }
+                  }}
+                  onError={() => console.log("Login Failed")}
+                />
+              </Popover.Body>
+            </Popover>
+          }
+        >
+          <Button
+            variant="light"
+            style={{
+              width: 42,
+              height: 42,
+              borderRadius: "50%",
+              padding: 0,
+            }}
+          >
+            <FontAwesomeIcon icon={faUser} />
+          </Button>
+        </OverlayTrigger>
+      </>
+    );
+  }
+
+  return (
+    <OverlayTrigger
+      trigger="click"
+      placement="bottom"
+      rootClose
+      overlay={
+        <Popover>
+          <Popover.Body>
+            <div className="text-center">
+              <img
+                src={user.picture}
+                alt={user.name}
+                style={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: "50%",
+                  marginBottom: 10,
+                }}
+              />
+
+              <div>
+                <strong>{user.name}</strong>
+              </div>
+
+              <div
+                style={{
+                  fontSize: 13,
+                  color: "#666",
+                  marginBottom: 10,
+                }}
+              >
+                {user.email}
+              </div>
+
+              <Button
+                variant="outline-danger"
+                size="sm"
+                onClick={logout}
+              >
+                Logout
+              </Button>
+            </div>
+          </Popover.Body>
+        </Popover>
+      }
+    >
+      <Button
+        variant="light"
+        style={{
+          width: 42,
+          height: 42,
+          borderRadius: "50%",
+          padding: 0,
+          overflow: "hidden",
+        }}
+      >
+        <img
+          src={user.picture}
+          alt={user.name}
+          style={{
+            width: "100%",
+            height: "100%",
+            objectFit: "cover",
+          }}
+        />
+      </Button>
+    </OverlayTrigger>
+  );
+}
+
+export function LoginCircles() {
+  return <div
+    style={{
+      position: "fixed",
+      top: 16,
+      right: 16,
+      zIndex: 9999,
+      overflow: "visible",
+    }}
+  >
+    <Stack direction="horizontal" gap={1}>
+      <ConnectWorkerButton />
+      <UserCircle />
+    </Stack>
+  </div>
+
 }

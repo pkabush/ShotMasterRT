@@ -345,9 +345,6 @@ const VideoEditWindow: React.FC<VideoEditWindowProps> = ({
                                                 const task = shot.tasksJson!.addTask(result.id, {
                                                     provider: ai_providers.BD,
                                                 })
-                                                await new Promise(res => setTimeout(res, 100));
-                                                task.check_status();
-
                                             }}
                                             label="Generate"
                                             is_loading={generating}

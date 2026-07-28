@@ -9,7 +9,8 @@ import { UserSettingsDB } from './classes/UserSettingsDB';
 import { ProjectContext } from './contexts/ProjectContext';
 import { Group, Panel, Separator } from 'react-resizable-panels';
 import { GoogleOAuthProvider } from '@react-oauth/google';
-import { GoogleLoginButton, WorkerStatus } from './contexts/GoogleUserContext';
+import { LoginCircles } from './contexts/GoogleUserContext';
+
 
 const App: React.FC = observer(() => {
   const [project, setProject] = useState<Project | null>(null);
@@ -65,52 +66,50 @@ const App: React.FC = observer(() => {
 
   return (
     <GoogleOAuthProvider clientId="897309739659-u0a653m56ddg78n3kvb104uacgc3t52b.apps.googleusercontent.com">
-        <ProjectContext.Provider value={{ project }}>
-          <div style={{ minHeight: '100vh' }}>                        
-          
-            { true && <GoogleLoginButton />}
-            <WorkerStatus />
+      <ProjectContext.Provider value={{ project }}>
+        <div style={{ minHeight: '100vh' }}>
 
+          <LoginCircles />
 
-            <MenuBar
-              onOpenFolder={handleOpenFolder}
-              recentFolders={userSettingsDB.current.data.recentFolders}
-              onOpenRecent={handleOpenRecent}
-              project={project}
-            />
+          <MenuBar
+            onOpenFolder={handleOpenFolder}
+            recentFolders={userSettingsDB.current.data.recentFolders}
+            onOpenRecent={handleOpenRecent}
+            project={project}
+          />
 
-            {/* Main layout */}
-            <div style={{ height: 'calc(100vh - 56px)' }}>
-              <Group orientation="horizontal" style={{ height: "100%" }}>
+          {/* Main layout */}
+          <div style={{ height: 'calc(100vh - 56px)' }}>
+            <Group orientation="horizontal" style={{ height: "100%" }}>
 
-                {/* Sidebar */}
-                <Panel defaultSize={250} minSize={10}>
-                  <FolderList project={project} />
-                </Panel>
+              {/* Sidebar */}
+              <Panel defaultSize={250} minSize={10}>
+                <FolderList project={project} />
+              </Panel>
 
-                {/* Resizable separator */}
-                <Separator
-                  style={{
-                    width: "3px",
-                    backgroundColor: "#8f8f8f",
-                    cursor: "ew-resize",
-                  }}
-                />
+              {/* Resizable separator */}
+              <Separator
+                style={{
+                  width: "3px",
+                  backgroundColor: "#8f8f8f",
+                  cursor: "ew-resize",
+                }}
+              />
 
-                {/* Content */}
-                <Panel minSize={20}>
-                  <div className="d-flex flex-column h-100 overflow-hidden">
-                    <div className="flex-grow-1 overflow-auto p-3">
-                      <ContentView project={project} />
-                    </div>
+              {/* Content */}
+              <Panel minSize={20}>
+                <div className="d-flex flex-column h-100 overflow-hidden">
+                  <div className="flex-grow-1 overflow-auto p-3">
+                    <ContentView project={project} />
                   </div>
-                </Panel>
-              </Group>
-            </div>
-
-            <NotificationContainer />
+                </div>
+              </Panel>
+            </Group>
           </div>
-        </ProjectContext.Provider>
+
+          <NotificationContainer />
+        </div>
+      </ProjectContext.Provider>
 
 
 

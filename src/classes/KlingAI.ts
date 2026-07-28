@@ -259,79 +259,6 @@ export class KlingAI {
     };
   }
 
-  // ================= GET STATUS =================
-  public static async getStatus(task_id: string, workflow: string = "text2video") {
-    console.log("KLING Get Status ", task_id, workflow);
-
-    const targetUrl = workflow === "klingTurbo" ?
-      `https://api-singapore.klingai.com/tasks?task_ids=${task_id}` :
-      `https://api-singapore.klingai.com/v1/videos/${workflow}/${task_id}`;
-
-
-    const idToken = useGoogleStore.getState().idToken;
-    if (!idToken) { throw new Error("Not logged in"); }
-
-    const response = await fetch(
-      `${WORKER_URL}/kling/status?request_url=${encodeURIComponent(targetUrl)}`
-      , {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${idToken}`,
-        },
-      });
-
-    /*
-    // OLD WAY
-    const targetUrl = workflow === "klingTurbo" ?
-      `https://api-singapore.klingai.com/tasks?task_ids=${task_id}` :
-      `https://api-singapore.klingai.com/v1/videos/${workflow}/${task_id}`;
-
-    console.log("KLING Check Status", { task_id, workflow, targetUrl });
-    const encodedTarget = encodeURIComponent(targetUrl);
-    const locUrl = `http://localhost:4000/proxy/${encodedTarget}`;
-    const token = await this.getToken();
-
-    console.log("KLING_AI Get Status sent");
-
-    const response = await fetch(locUrl, {
-      method: "GET",
-      headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
-    });
-    */
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Task status request failed: ${errorText}`);
-    }
-
-    const contentType = response.headers.get("content-type") || "";
-    if (contentType.includes("application/json")) {
-      const data = await response.json();
-      console.log("KLING check status:", data);
-
-      // Turbo has different result
-      if (workflow === "klingTurbo") {
-        console.log("TURBO RES", data.data[0].status, data?.data[0]?.outputs[0]?.url)
-
-        return {
-          status: data?.data[0]?.status,
-          status_msg: "",
-          url: data?.data[0]?.outputs[0]?.url || null,
-          tokens: data?.data?.[0]?.billing?.[0]?.amount ?? null,
-          task_url: targetUrl,
-        }
-      }
-
-      return {
-        status: data?.data?.task_status || "unknown",
-        status_msg: data?.data?.task_status_msg || "",
-        url: data?.data?.task_result?.videos?.[0]?.url || null,
-        tokens: data?.data?.final_unit_deduction || null,
-        task_url: targetUrl,
-      };
-    }
-  }
-
   // ================= OMNI VIDEO (O1) =================
   public static async omniVideo(options: {
     prompt: string;
@@ -476,11 +403,6 @@ export class KlingAI {
 
     return { id: data.data.id, workflow: "klingTurbo" };
   }
-
-  public static calcPrice(tokens: string) {
-    return Number(tokens) * 0.14;
-  }
-
 }
 
 export interface LipSyncFaceChoose {

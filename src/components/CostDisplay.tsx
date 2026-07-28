@@ -63,7 +63,7 @@ export const CostDisplay: React.FC<CostDisplayProps> = observer(({ project }) =>
       style={{
         position: "fixed",
         top: 10,
-        right: 10,
+        right: 110,
         zIndex: 9999,
         background: "rgba(0,0,0,0.6)",
         padding: "6px 10px",

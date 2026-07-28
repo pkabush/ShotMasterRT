@@ -10,8 +10,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClipboard, faTrashCan } from "@fortawesome/free-solid-svg-icons";
 import { toJS } from "mobx";
 import { Badge } from "react-bootstrap";
-import { KlingAI } from "../classes/KlingAI";
-import { SeedanceAI } from "../classes/AiProviders/Byteplus";
 
 interface Props {
     task: Task;
@@ -21,13 +19,17 @@ interface Props {
 const statusColors: Record<string, string> = {
     submitted: "gray",
     processing: "orange",
+    running: "orange",
     succeed: "green",
+    succeeded: "green",
     failed: "red",
 };
 
 const TaskInfoCard: React.FC<Props> = observer(({ task, show_path = false }) => {
     const status = task.status;
     const color = statusColors[status] ?? "gray";
+
+    const loading = ["running", "processing"].includes(status);
 
     const onDelete = useCallback(() => {
         if (window.confirm(`Delete task ${task.id}?`)) {
@@ -80,23 +82,11 @@ const TaskInfoCard: React.FC<Props> = observer(({ task, show_path = false }) => 
                         <div className="d-flex gap-0">
                             <span className="text-muted me-2">{task._status_log}</span>
 
-                            {task.data.tokens && <>
-                                <Badge bg="outline-secondary" style={{ fontSize: "16px", color: "#6e9e77" }}>
-                                    {(() => {
-                                        if (task.data.provider === "kling") return KlingAI.calcPrice(task.data.tokens).toFixed(2);
-                                        if (task.data.provider === "bytedance") return SeedanceAI.calcPrice(task).toFixed(2);
-                                        return "";
-                                    })()}$
-                                </Badge>
-                            </>}
-
                             {task.data.cost && <>
                                 <Badge bg="outline-secondary" style={{ fontSize: "16px", color: "#6e9e77" }}>
                                     {task.data.cost.toFixed(2)}$
                                 </Badge>
                             </>}
-
-
 
                             <SimpleButton
                                 label="Check Status"
@@ -104,7 +94,8 @@ const TaskInfoCard: React.FC<Props> = observer(({ task, show_path = false }) => 
                                 onClick={() => { task.check_status(); }}
                             />
 
-                            <LoadingSpinner isLoading={task.is_checking_status} asButton />
+                            {false && <LoadingSpinner isLoading={task.is_checking_status} asButton />}
+                            <LoadingSpinner isLoading={loading} asButton />
 
 
                         </div>

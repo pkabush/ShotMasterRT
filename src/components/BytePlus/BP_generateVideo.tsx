@@ -122,7 +122,8 @@ export const BytePlus_GenerateVideo: React.FC<BytePlus_GenerateVideoProps> = obs
                                 });
 
                                 if (!result) return;
-                                const task = shot.tasksJson!.addTask(result.id, {
+
+                                shot.tasksJson!.addTask(result.id, {
                                     provider: ai_providers.BD,
                                     geninfo: {
                                         generate_audio: project.projinfo!.getField(gen_audio_field) ?? false,
@@ -132,8 +133,6 @@ export const BytePlus_GenerateVideo: React.FC<BytePlus_GenerateVideoProps> = obs
                                         has_video,
                                     }
                                 })
-                                await new Promise(res => setTimeout(res, 100));
-                                //task.check_status();
 
                             } catch (err) {
                                 console.error("Submitting Video Generation Failed:", err);

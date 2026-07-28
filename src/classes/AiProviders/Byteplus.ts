@@ -1,4 +1,4 @@
-import { useGoogleStore, WORKER_URL } from "../../contexts/GoogleUserContext";
+import { postToWorker } from "../CloudflareWorker/WorkerUtils";
 
 export type SeedanceContent =
     | {
@@ -103,44 +103,8 @@ export class SeedanceAI {
 
     private static async postToSeedance(payload: any) {
         console.log("Seedance request:", payload);
-
-        /*
-        const apiKey = this.getApiKey?.();
-        if (!apiKey) throw new Error("No Seedance API key provided");
-
-        const targetUrl = "https://ark.ap-southeast.bytepluses.com/api/v3/contents/generations/tasks";
-        //const encodedTarget = encodeURIComponent(targetUrl);
-        //const locUrl = `http://localhost:4000/proxy/${encodedTarget}`;
-
-        
-        const response = await fetch(targetUrl, {
-            method: "POST",
-            headers: {
-                "Authorization": `Bearer ${apiKey}`,
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(payload),
-        });
-        */
-
-        const idToken = useGoogleStore.getState().idToken;
-        const response = await fetch(`${WORKER_URL}/seedance/generate`, {
-            method: "POST",
-            headers: {
-                Authorization: `Bearer ${idToken}`,
-                "Content-Type": "application/json",
-            },
-            body: JSON.stringify(payload),
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Seedance request failed: ${errorText}`);
-        }
-
-        const data = await response.json();
+        const data = await postToWorker(payload, "seedance/generate");
         console.log("Seedance response:", data);
-
         return data;
     }
 
@@ -187,93 +151,4 @@ export class SeedanceAI {
             raw: data,
         };
     }
-
-    public static async getStatus(task_id: string) {
-        console.log("SEEDANCE Get Status ", task_id);
-
-        /*
-        if (!task_id) throw new Error("task_id is required");
-
-        const apiKey = this.getApiKey?.();
-        if (!apiKey) throw new Error("No Seedance API key provided");
-
-        const targetUrl = `https://ark.ap-southeast.bytepluses.com/api/v3/contents/generations/tasks/${task_id}`;
-        //const encodedTarget = encodeURIComponent(targetUrl);
-        //const locUrl = `http://localhost:4000/proxy/${encodedTarget}`;
-
-        const response = await fetch(targetUrl, {
-            method: "GET",
-            headers: {
-                Authorization: `Bearer ${apiKey}`,
-                "Content-Type": "application/json",
-            },
-        });
-        */
-
-        const targetUrl = `${WORKER_URL}/seedance/status/${task_id}`;
-        const idToken = useGoogleStore.getState().idToken;
-        if (!idToken) { throw new Error("Not logged in"); }
-
-        const response = await fetch(targetUrl, {
-            method: "GET",
-            headers: {
-                Authorization: `Bearer ${idToken}`,
-            },
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Seedance status request failed: ${errorText}`);
-        }
-
-        const data = await response.json();
-        console.log("Seedance check status:", data);
-
-        return {
-            id: data?.id || null,
-
-            status: data?.status || "unknown",
-            status_msg: data?.status_msg || "",
-
-            url: data?.content?.video_url || null,
-
-            // useful extras (Seedance actually gives nice metadata)
-            duration: data?.duration ?? null,
-            ratio: data?.ratio ?? null,
-            resolution: data?.resolution ?? null,
-            fps: data?.framespersecond ?? null,
-
-            created_at: data?.created_at ?? null,
-            updated_at: data?.updated_at ?? null,
-
-            raw: data,
-
-            tokens: data?.usage?.total_tokens || null,
-            task_url: targetUrl,
-        };
-    }
-
-    public static prices: Record<Resolution, [number, number]> = {
-        "480p": [4.3, 7],
-        "720p": [4.7, 7.7],
-        "1080p": [4.7, 7.7],
-        "4k": [2.4, 4.0],
-    };
-
-    public static calcPrice(task: any) {
-        //console.log("Calculating Price Seedance",toJS(task.data))
-        //const res       = task?.data?.geninfo?.resolution as Resolution | undefined;
-        const res = task?.data?.raw?.resolution as Resolution | undefined;
-        const has_video = task?.data?.geninfo?.has_video ? 1 : 0;
-
-        //console.log(res,task,has_video);
-        if (res && (res in SeedanceAI.prices)) {
-            const price = SeedanceAI.prices[res][has_video];
-            return Number(task?.data?.tokens ?? 0) * price / 1e6;
-        }
-        return 0;
-    }
-
 }
-
-type Resolution = "480p" | "720p" | "1080p" | "4k";
