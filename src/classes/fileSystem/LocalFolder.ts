@@ -154,7 +154,7 @@ export class LocalFolder extends LocalItem {
 
         try {
             const encodedTarget = encodeURIComponent(url);
-            const locUrl = `http://localhost:4000/proxy/${encodedTarget}`;
+            //const locUrl = `http://localhost:4000/proxy/${encodedTarget}`;
 
             let response: Response | null = null;
 

@@ -30,7 +30,7 @@ export const KlingNode = memo(
 
         const nodegraph_api = useNodeGraphApi();
 
-        const { tasks_json} = useLocalFile();        
+        const { tasks_json } = useLocalFile();
 
         const handleClick = async () => {
             setLoading(true);
@@ -158,14 +158,15 @@ export const KlingNode = memo(
 
                 // Create Task
                 if (task_info) {
-                    const task = tasksJson!.addTask(task_info.id, {
-                        provider: ai_providers.KLING,
-                        workflow: task_info.workflow,
-                        model: data.model,
-                        mode: data.mode,
-                        duration: data.duration,
-                        sound: data.sound
-                    });
+                    //const task =
+                        tasksJson!.addTask(task_info.id, {
+                            provider: ai_providers.KLING,
+                            workflow: task_info.workflow,
+                            model: data.model,
+                            mode: data.mode,
+                            duration: data.duration,
+                            sound: data.sound
+                        });
                 }
 
 

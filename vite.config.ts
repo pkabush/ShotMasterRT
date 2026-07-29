@@ -5,13 +5,15 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   base: '/ShotMasterRT/',
   plugins: [react()],
+  /*
   build: {
     outDir: 'docs',
     emptyOutDir: true
   },
+  */
   server: {
     headers: {
-      "Cross-Origin-Opener-Policy":        "same-origin-allow-popups",
+      "Cross-Origin-Opener-Policy": "same-origin-allow-popups",
     },
   },
   optimizeDeps: {
@@ -19,7 +21,7 @@ export default defineConfig({
   },
   preview: {
     headers: {
-      "Cross-Origin-Opener-Policy": " same-origin-allow-popups",
+      "Cross-Origin-Opener-Policy": "same-origin-allow-popups",
     },
   },
 })

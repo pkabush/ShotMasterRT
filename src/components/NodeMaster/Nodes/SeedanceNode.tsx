@@ -126,7 +126,8 @@ export const SeedanceNode = memo(
 
 
                 if (!result) return;
-                const task = tasksJson!.addTask(result.id, {
+                //const task = 
+                tasksJson!.addTask(result.id, {
                     provider: ai_providers.BD,
                     geninfo: {
                         generate_audio: data.sound ?? false,

@@ -104,7 +104,7 @@ const VideoEditWindow: React.FC<VideoEditWindowProps> = ({
         }
     };
 
-    const [useVideoEditor,setUseVideoEditor] = useState(false);
+    const [useVideoEditor, setUseVideoEditor] = useState(false);
 
     return (
         <div className="border d-flex flex-column position-relative" style={{ height: "700px" }}>
@@ -144,7 +144,7 @@ const VideoEditWindow: React.FC<VideoEditWindowProps> = ({
                                     right: "2px",
                                     zIndex: 10,
                                 }}
-                                onClick={() => {setUseVideoEditor((prev) => (!prev))}}
+                                onClick={() => { setUseVideoEditor((prev) => (!prev)) }}
                             >
                                 <FontAwesomeIcon icon={faScissors} />
                             </Button>
@@ -342,7 +342,8 @@ const VideoEditWindow: React.FC<VideoEditWindowProps> = ({
                                                 });
 
                                                 if (!result) return;
-                                                const task = shot.tasksJson!.addTask(result.id, {
+                                                //const task = 
+                                                shot.tasksJson!.addTask(result.id, {
                                                     provider: ai_providers.BD,
                                                 })
                                             }}

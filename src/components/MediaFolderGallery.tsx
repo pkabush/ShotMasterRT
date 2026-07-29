@@ -112,7 +112,8 @@ export const MediaFolderGallery: React.FC<MediaFolderGalleryProps> = observer(
                                                     console.log("Video task created:", task_info);
 
                                                     const shot = mediaFolder.shot as Shot;
-                                                    const task = shot.tasksJson!.addTask(task_info.id, { provider: ai_providers.KLING, workflow: task_info.workflow, geninfo: task_info.geninfo })
+                                                    //const task =
+                                                        shot.tasksJson!.addTask(task_info.id, { provider: ai_providers.KLING, workflow: task_info.workflow, geninfo: task_info.geninfo })
 
                                                 }}
                                                 onClose={() => mediaFolder.setSelectedMedia(null)}
