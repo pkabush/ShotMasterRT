@@ -14,7 +14,7 @@ import { useState } from "react";
 //export const WORKER_URL = "http://localhost:8787";
 //export const WORKER_URL = "https://shotmasterworker.kabushpavel.workers.dev";
 
-const test_web = true
+const test_web = false
 
 export const WORKER_URL =
   import.meta.env.DEV && !test_web

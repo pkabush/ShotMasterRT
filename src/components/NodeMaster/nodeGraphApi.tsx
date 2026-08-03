@@ -9,6 +9,7 @@ import { LocalImage } from "../../classes/fileSystem/LocalImage";
 import { Project } from "../../classes/Project";
 import { GoogleAI } from "../../classes/GoogleAI";
 import type { LocalFile } from "../../classes/fileSystem/LocalFile";
+import { LocalVideo } from "../../classes/fileSystem/LocalVideo";
 
 
 const defaultNodeData: Record<NodeType, any> = {
@@ -421,6 +422,10 @@ export function useNodeGraphApi() {
                         const image = project.getByAbsPath(node.data.path as string);
                         if (image instanceof LocalImage) {
                             messages.push(await image.getAIImage());
+                        }
+
+                        if (image instanceof LocalVideo) {
+                            messages.push(await image.getBase64());
                         }
                     }
                     break;

@@ -14,6 +14,12 @@ export type AIImageInput = {
     description: string;    
 };
 
+export type AIVideoInput = {
+  rawBase64: string;
+  mime: string;
+  description?: string;
+};
+
 export type AIGenerateParms = {
     prompt?: string;
     system?: string;

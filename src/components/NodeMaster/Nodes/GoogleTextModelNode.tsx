@@ -37,7 +37,9 @@ export const nb_GoogleAI = memo(
                 const msg_packs_messages = await nodegraph_api.gatherInputMessages(id);
                 const msg_packs = nodegraph_api.iterateMessagePacks(msg_packs_messages);
 
-                // Send All messages in parralel
+                console.log("Messages",msg_packs);
+
+                // Send All messages in parralel                
                 await Promise.all(
                     msg_packs.map(async (messages) => {
                         const res = await GoogleAI.sendMessages(messages, model, aspect_ratio, resolution);
@@ -45,6 +47,7 @@ export const nb_GoogleAI = memo(
                         return res;
                     })
                 );
+                
 
             } finally {
                 setLoading(false);

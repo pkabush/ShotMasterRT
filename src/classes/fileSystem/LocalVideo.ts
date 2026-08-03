@@ -1,9 +1,11 @@
 import { LocalMedia } from './LocalMedia';
 import type { LocalFolder } from './LocalFolder';
 import { runInAction } from 'mobx';
+import { arrayBufferToBase64 } from './LocalImage';
 
 // LocalVideo.ts
 export class LocalVideo extends LocalMedia {
+    base64Data: { rawBase64: string; mime: string } | null = null; // cache for Base64 + MIME
 
   // Optional: create from Base64 (rare for videos, but possible)
   static async fromBase64(
@@ -31,6 +33,25 @@ export class LocalVideo extends LocalMedia {
       throw err;
     }
   }
+
+  async getBase64(): Promise<{ rawBase64: string; mime: string }> {
+    if (this.base64Data) return this.base64Data;
+
+    try {
+      const file = await this.getFile();
+      const arrayBuffer = await file.arrayBuffer();
+      const mime = file.type;
+      const rawBase64 = arrayBufferToBase64(arrayBuffer);
+
+      this.base64Data = { rawBase64, mime };
+      return this.base64Data;
+    } catch (err) {
+      console.error("Failed to create Base64 from file:", err);
+      return { rawBase64: "", mime: "image/png" };
+    }
+  }
+
+  
 
 
   private _durationPromise: Promise<void> | null = null;
