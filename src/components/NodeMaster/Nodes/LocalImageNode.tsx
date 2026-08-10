@@ -26,10 +26,10 @@ export type LocalImageNodeDate = {
     path: string;
 };
 
-export type LocalImageNodeType = Node<LocalImageNodeDate, "textNode">;
+export type LocalImageNodeType = Node<LocalImageNodeDate, "localImageNode">;
 
 
-const controlStyle = {
+export const nodeResizeControlStyle = {
     background: 'transparent',
     border: 'none',
 };
@@ -156,7 +156,7 @@ export const LocalImageNode = memo(
                         transition: "all 0.15s ease",
                     }}
                 >
-                    <NodeResizeControl style={controlStyle} minWidth={200} minHeight={100} >
+                    <NodeResizeControl style={nodeResizeControlStyle} minWidth={200} minHeight={100} >
                         <NodeResizeIcon />
                     </NodeResizeControl>
 
@@ -295,6 +295,7 @@ import FullPageOverlay from "../../Containers/FullPageOverlay";
 import DrawingCanvas from "../../DrawingCanvas/DrawingCanvas";
 import { LocalImage } from "../../../classes/fileSystem/LocalImage";
 import { useLocalFile } from "../Context/LocalFileContext";
+import type { NodeDefinition } from "../NodeDefinition/NodeDefinition";
 
 export const NodeMediaFolderGallery: React.FC<NodeMediaFolderGalleryProps> = observer(
     ({ mediaFolder, onPathClick }) => {
@@ -437,4 +438,22 @@ const FolderPreview = ({ localFolder, onClick, label }: FolderPreviewProps) => {
 
         </div>
     );
+};
+
+
+export const LocalImageNodeDefinition: NodeDefinition<LocalImageNodeDate, "localImageNode", any> = {
+    type: "localImageNode",
+    icon: faImage,
+    displayName: "Local Image",
+
+    component: LocalImageNode,
+
+    defaultData: {
+        path: "/"
+    },
+
+    getNodeOutputData: ({ node, outputId }) => {
+        console.log("GET",node,outputId);
+        return null
+    },
 };

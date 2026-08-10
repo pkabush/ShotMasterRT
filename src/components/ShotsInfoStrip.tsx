@@ -1,5 +1,5 @@
 // ShotsInfoStrip
-import React from 'react';
+import React, { useState } from 'react';
 import { Scene } from '../classes/Scene';
 import { observer } from 'mobx-react-lite';
 import ShotStripPreview from './ShotStripPreview';
@@ -9,13 +9,17 @@ import SimpleButton from './Atomic/SimpleButton';
 import LoadingButton from './Atomic/LoadingButton';
 import { Button } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
+import { faChevronLeft, faChevronRight, faClipboard } from '@fortawesome/free-solid-svg-icons';
+import * as ContextMenu from "@radix-ui/react-context-menu";
+import { MenuItemIcon } from './MediaFolderGallery';
 
 interface Props {
   scene: Scene;
 }
 
 const ShotsInfoStrip: React.FC<Props> = observer(({ scene }) => {
+  const [autoplay,setAutoplay] = useState(true);
+
   const handleAddShot = async (e: any) => {
     if (e.ctrlKey) {
       const newShot = await scene.createShot();
@@ -33,20 +37,42 @@ const ShotsInfoStrip: React.FC<Props> = observer(({ scene }) => {
     <div className="d-flex flex-column gap-2">
       {/* Resizable strip for shot previews */}
       <ResizableContainer initialHeight={200}>
-        <div className="d-flex overflow-auto gap-2 h-100">
-          {scene.shots_ordered.map((shot) => (
-            <ShotStripPreview
-              key={shot.name}
-              shot={shot}
-              isSelected={scene.selectedShot === shot}
-              onClick={() => { scene.selectShot(shot) }}
-            />
-          ))}
+        <ContextMenu.Root>
 
-          <div className="mt-2">
-            <SimpleButton label="+ Add Shot" onClick={handleAddShot} />
-          </div>
-        </div>
+          <ContextMenu.Trigger>
+            <div className="d-flex overflow-auto gap-2 h-100">
+              {scene.shots_ordered.map((shot) => (
+                <ShotStripPreview
+                  key={shot.name}
+                  shot={shot}
+                  isSelected={scene.selectedShot === shot}
+                  onClick={() => { scene.selectShot(shot) }}
+                  autoplay={autoplay}
+                />
+              ))}
+
+              {false &&
+                <div className="mt-2">
+                  <SimpleButton label="+ Add Shot" onClick={handleAddShot} />
+                </div>}
+
+
+            </div>
+          </ContextMenu.Trigger>
+
+          <ContextMenu.Portal>
+            <ContextMenu.Content className="ContextMenuContent">
+
+              <ContextMenu.Item className="ContextMenuItem" onClick={() => { console.log("Click") }}>
+                <MenuItemIcon><FontAwesomeIcon icon={faClipboard} /></MenuItemIcon>
+                Log
+              </ContextMenu.Item>
+
+
+            </ContextMenu.Content>
+          </ContextMenu.Portal>
+        </ContextMenu.Root>
+
       </ResizableContainer>
 
       {/* Buttons */}
@@ -57,6 +83,10 @@ const ShotsInfoStrip: React.FC<Props> = observer(({ scene }) => {
         <SimpleButton label="+ Add Shot" onClick={handleAddShot}
           tooltip='Creates New SHOT.
 Hold CTRL to auto Name Shot.'/>
+
+        <Button size='sm' variant={autoplay ? "success" : "outline-secondary"} onClick={()=>{
+          setAutoplay((v)=> {return !v});
+        }}> Autoplay</Button>
 
         {scene.selectedShot &&
           <>

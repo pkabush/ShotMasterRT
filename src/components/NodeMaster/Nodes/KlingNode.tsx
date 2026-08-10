@@ -12,6 +12,8 @@ import { Shot } from "../../../classes/Shot";
 import { ai_providers } from "../../../classes/AI_provider";
 import { LocalVideo } from "../../../classes/fileSystem/LocalVideo";
 import { useLocalFile } from "../Context/LocalFileContext";
+import type { NodeDefinition } from "../NodeDefinition/NodeDefinition";
+import { faFilm } from "@fortawesome/free-solid-svg-icons";
 
 
 export type KlingNodeModelData = {
@@ -21,7 +23,7 @@ export type KlingNodeModelData = {
     sound?: string;
 };
 
-export type KlingNodeType = Node<KlingNodeModelData, "KlingModel">;
+export type KlingNodeType = Node<KlingNodeModelData, "klingNode">;
 
 export const KlingNode = memo(
     ({ id, data, selected }: NodeProps<KlingNodeType>) => {
@@ -281,3 +283,19 @@ KlingNode.displayName = "KlingNode";
 
 
 
+export const KlingNodeDefinition: NodeDefinition<KlingNodeModelData, "klingNode", any> = {
+    type: "klingNode",
+    icon: faFilm,
+    displayName: "Kling",
+
+    component: KlingNode,
+
+    defaultData: {
+
+    },
+
+    getNodeOutputData: ({ node, outputId }) => {
+        console.log("GET",node,outputId);
+        return null
+    },
+};

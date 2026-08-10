@@ -5,6 +5,8 @@ import {
   type NodeProps,
 } from "@xyflow/react";
 import { NamedInputHandle, NamedOutputHandle } from "../Atomic/NamedInput";
+import type { NodeDefinition } from "../NodeDefinition/NodeDefinition";
+import { faA } from "@fortawesome/free-solid-svg-icons";
 
 export type TextNodeData = {
   text: string;
@@ -89,3 +91,21 @@ export const TextNode = memo(
 );
 
 TextNode.displayName = "TextNode";
+
+
+export const TextNodeDefinition: NodeDefinition<TextNodeData, "textNode", any> = {
+    type: "textNode",
+    icon: faA,
+    displayName: "Text Node",
+
+    component: TextNode,
+
+    defaultData: {
+      text:""
+    },
+
+    getNodeOutputData: ({ node, outputId }) => {
+        console.log("GET",node,outputId);
+        return null
+    },
+};

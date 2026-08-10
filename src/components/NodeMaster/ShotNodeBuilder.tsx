@@ -13,42 +13,50 @@ import {
 } from "@xyflow/react";
 
 import "@xyflow/react/dist/style.css";
-import { TextNode } from "./Nodes/TextNode";
+import "../../css/Nodegraph.css";
 import { Button, Stack } from "react-bootstrap";
 import type { LocalJson } from "../../classes/LocalJson";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { nb_GoogleAI } from "./Nodes/GoogleTextModelNode";
-import { LocalImageNode } from "./Nodes/LocalImageNode";
+import { GoogleNodeDefinition } from "./Nodes/GoogleTextModelNode";
+import { LocalImageNodeDefinition } from "./Nodes/LocalImageNode";
 import { LocalFileProvider } from "./Context/LocalFileContext";
 import { useNodeGraphApi } from "./nodeGraphApi";
 import { FlowClipboard } from "./Tools/FLowClipboard";
 import { toJS } from "mobx";
-import { KlingNode } from "./Nodes/KlingNode";
-import { ShotTasksNode } from "./Nodes/ShotTasksNode";
-import { MergeNode } from "./Nodes/MergeNode";
-import { SeedanceNode } from "./Nodes/SeedanceNode";
+import { KlingNodeDefinition } from "./Nodes/KlingNode";
+import { ShotTasksNodeDefinition } from "./Nodes/ShotTasksNode";
+import { MergeNodeDefinition } from "./Nodes/MergeNode";
+import { SeedanceNodeDefinition } from "./Nodes/SeedanceNode";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faA, faBook, faClapperboard, faCodeBranch, faFileArrowDown, faFilm, faFish, faFloppyDisk, faG, faImage, faListOl, type IconDefinition } from "@fortawesome/free-solid-svg-icons";
+import { faClapperboard, faFileArrowDown, faFilm, faFloppyDisk } from "@fortawesome/free-solid-svg-icons";
 import { Scene } from "../../classes/Scene";
-import { GptNode } from "./Nodes/GptNode";
-import { TimelineNode } from "./Nodes/TimeLineNode";
+import { GptNodeDefinition } from "./Nodes/GptNode";
+import { TimelineNodeDefinition } from "./Nodes/TimeLineNode";
+import { ScriptNodeDefinition } from "./Nodes/ScriptNode";
+import { TestNodeDefinition } from "./Nodes/TestNode";
+import type { NodeDefinitionMetadata } from "./NodeDefinition/NodeDefinition";
+import { TextNodeDefinition } from "./Nodes/TextNode";
 
+export const nodeDefinitions = {
+    textNode: TextNodeDefinition,
+    localImageNode: LocalImageNodeDefinition,
+    googleAiNode: GoogleNodeDefinition,
+    gptNode: GptNodeDefinition,
+    klingNode: KlingNodeDefinition,
+    seedanceNode: SeedanceNodeDefinition,
+    tasksNode: ShotTasksNodeDefinition,
+    mergeNode: MergeNodeDefinition,
+    timelineNode: TimelineNodeDefinition,
+    scriptNode: ScriptNodeDefinition,
+    testNode: TestNodeDefinition,
+} as const;
 
+export const nodeTypes = Object.fromEntries(
+    Object.entries(nodeDefinitions).map(([type, definition]) => [type, definition.component,])
+);
 
-export const nodeTypes = {
-    textNode: TextNode,
-    googleAiNode: nb_GoogleAI,
-    localImageNode: LocalImageNode,
-    klingNode: KlingNode,
-    tasksNode: ShotTasksNode,
-    mergeNode: MergeNode,
-    seedanceNode: SeedanceNode,
-    gptNode: GptNode,
-    timelineNode: TimelineNode,
-};
-
-export type NodeType = keyof typeof nodeTypes;
+export type NodeType = keyof typeof nodeDefinitions;
 
 export const MultiInputNodes = [
     "googleAiNode",
@@ -285,7 +293,7 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
                         </Button>
                         <Button onClick={exportFlow} size="sm" variant={isDirty ? "success" : "outline-secondary"}> <FontAwesomeIcon icon={faFloppyDisk} /> {isDirty ? " Save changes" : " Saved"}</Button>
                         <Button onClick={loadFlow} size="sm" variant="secondary"> <FontAwesomeIcon icon={faFileArrowDown} /> Load</Button>
-                        <AddNodeUIPanel/>
+                        <AddNodeUIPanel />
                         <Button
                             size="sm"
                             variant={showMiniMap ? "secondary" : "outline-secondary"}
@@ -304,53 +312,33 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
 }
 
 
-const nodes = [
-    ["textNode", "Text Node", faA],
-    ["localImageNode", "LocalImage", faImage],
-    ["googleAiNode", "Google", faBook],
-    ["gptNode", "Gpt", faG],
-    ["klingNode", "Kling", faFilm],
-    ["seedanceNode", "Seedance", faFish],
-    ["tasksNode", "Tasks", faListOl],
-    ["mergeNode", "Merge", faCodeBranch],
-    ["timelineNode", "Timeline", faClapperboard],
-] as const;
-
 const AddNodeUIPanel = () => (
     <>
-        {nodes.map(([nodeType, label, icon]) => (
-            <AddNodeButton
-                key={nodeType}
-                nodeType={nodeType}
-                label={label}
-                icon={icon}
+        {Object.values(nodeDefinitions).map((nodeDef) => (
+            <AddNodeDefinithionButton
+                key={nodeDef.type}
+                nodeDef={nodeDef}
             />
         ))}
     </>
 );
 
-
-interface AddNodeButtonProps {
-    nodeType: NodeType;
-    label: string;
-    icon: IconDefinition;
+interface AddNodeDefinitionButtonProps {
+    nodeDef: NodeDefinitionMetadata;
 }
-export const AddNodeButton = ({
-    nodeType,
-    label,
-    icon,
-}: AddNodeButtonProps) => {
+
+export const AddNodeDefinithionButton = ({ nodeDef }: AddNodeDefinitionButtonProps) => {
     const { addNode } = useNodeGraphApi();
 
     return (
         <Button
             size="sm"
             variant="warning"
-            onClick={() => {addNode(nodeType)}}
-            onDragStart={(e) => { e.dataTransfer.setData("addNode", nodeType); }}
+            onClick={() => { addNode(nodeDef.type as NodeType) }}
+            onDragStart={(e) => { e.dataTransfer.setData("addNode", nodeDef.type); }}
             draggable={true}
         >
-            <FontAwesomeIcon icon={icon} /> {label}
+            <FontAwesomeIcon icon={nodeDef.icon} /> {nodeDef.displayName}
         </Button>
     );
 };

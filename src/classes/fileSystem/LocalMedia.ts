@@ -8,6 +8,7 @@ import { runInAction, makeObservable, observable, action, computed, override } f
 import type { LocalFolder } from "./LocalFolder";
 import { Tags } from "../Tags";
 import { Project } from "../Project";
+import { postToWorker } from "../CloudflareWorker/WorkerUtils";
 
 // LocalMediaInterface.ts
 export class LocalMedia extends LocalFile {
@@ -101,6 +102,27 @@ export class LocalMedia extends LocalFile {
     return this.web_url;
   }
 
+  async getGoogleFileURL() {
+    const gfile = this.mediaJson?.getField("GoogleFile");
+
+    if(gfile) {
+      console.log("File Stored",gfile);
+      return gfile.part;
+    }
+    
+    console.log("Get Google File URL");
+    const form = new FormData();
+    form.append("file", await this.getFile());
+
+    const uploaded = await postToWorker(form, "gemini/upload");
+    console.log("Uploaded to google filesAPI:", uploaded);
+    console.log("GFiles json",JSON.stringify(uploaded, null, 2));
+
+    this.mediaJson?.updateField("GoogleFile",uploaded);
+
+    return uploaded.part;
+  }
+
   async getUrlObject(): Promise<string> {
     if (this.urlObject) return this.urlObject; // already loaded
     if (this._urlPromise) return this._urlPromise; // already loading
@@ -161,14 +183,11 @@ export class LocalMedia extends LocalFile {
     if (this.hasTag(tag)) { this.removeTag(tag); }
     else { this.addTag(tag); }
   }
-
   async openInNewTab() {
     try {
       const url = await this.getUrlObject();
-
       const tabName = this.path.replace(/[\/\\]/g, "_");
       window.open(url, tabName, "noopener,noreferrer");
-
     } catch (err) {
       console.error("Failed to open media in new tab:", err);
     }
@@ -229,7 +248,6 @@ export class LocalMedia extends LocalFile {
       console.error("Copy To Clipboard Error", err);
     }
   }
-
   get duration() {
     return this._duration ?? 3;
   }
@@ -245,7 +263,6 @@ export class LocalMedia extends LocalFile {
   set end_timecode(timecode) {
     this.mediaJson?.updateField("end_timecode", timecode);
   }
-
   get aspect() {
     return (this._width ?? 100) / (this._height ?? 100);
   }

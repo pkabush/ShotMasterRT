@@ -7,6 +7,8 @@ import LoadingSpinner from "../../Atomic/LoadingSpinner";
 import { NamedInputHandle, NamedOutputHandle } from "../Atomic/NamedInput";
 import { useLocalFile } from "../Context/LocalFileContext";
 import { useNodeGraphApi } from "../nodeGraphApi";
+import type { NodeDefinition } from "../NodeDefinition/NodeDefinition";
+import { faBook } from "@fortawesome/free-solid-svg-icons";
 
 export type nb_GoogleTextModelData = {
     model?: string;
@@ -16,7 +18,7 @@ export type nb_GoogleTextModelData = {
     aspect_ratio?: string;
 };
 
-export type nb_GoogleTextModelType = Node<nb_GoogleTextModelData, "googleTextModel">;
+export type nb_GoogleTextModelType = Node<nb_GoogleTextModelData, "googleAiNode">;
 
 export const nb_GoogleAI = memo(
     ({ id, data, selected }: NodeProps<nb_GoogleTextModelType>) => {
@@ -39,6 +41,7 @@ export const nb_GoogleAI = memo(
 
                 console.log("Messages",msg_packs);
 
+                
                 // Send All messages in parralel                
                 await Promise.all(
                     msg_packs.map(async (messages) => {
@@ -180,4 +183,21 @@ export const nb_GoogleAI = memo(
 nb_GoogleAI.displayName = "ButtonNode";
 
 
+
+export const GoogleNodeDefinition: NodeDefinition<nb_GoogleTextModelData, "googleAiNode", any> = {
+    type: "googleAiNode",
+    icon: faBook,
+    displayName: "Google",
+
+    component: nb_GoogleAI,
+
+    defaultData: {
+
+    },
+
+    getNodeOutputData: ({ node, outputId }) => {
+        console.log("GET",node,outputId);
+        return null
+    },
+};
 

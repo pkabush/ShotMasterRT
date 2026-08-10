@@ -8,6 +8,8 @@ import { NamedInputHandle, NamedOutputHandle } from "../Atomic/NamedInput";
 import { useLocalFile } from "../Context/LocalFileContext";
 import { useNodeGraphApi } from "../nodeGraphApi";
 import { ChatGPT } from "../../../classes/ChatGPT";
+import type { NodeDefinition } from "../NodeDefinition/NodeDefinition";
+import { faG } from "@fortawesome/free-solid-svg-icons";
 
 export type GptNodeModelData = {
     model?: string;
@@ -16,7 +18,7 @@ export type GptNodeModelData = {
     aspect_ratio?: string;
 };
 
-export type GptNodeModelType = Node<GptNodeModelData, "gptNodeModel">;
+export type GptNodeModelType = Node<GptNodeModelData, "gptNode">;
 
 export const GptNode = memo(
     ({ id, data, selected }: NodeProps<GptNodeModelType>) => {
@@ -171,4 +173,21 @@ export const GptNode = memo(
 GptNode.displayName = "ButtonNode";
 
 
+
+export const GptNodeDefinition: NodeDefinition<GptNodeModelData, "gptNode", any> = {
+    type: "gptNode",
+    icon: faG,
+    displayName: "Gpt",
+
+    component: GptNode,
+
+    defaultData: {
+
+    },
+
+    getNodeOutputData: ({ node, outputId }) => {
+        console.log("GET",node,outputId);
+        return null
+    },
+};
 

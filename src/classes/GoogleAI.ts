@@ -3,6 +3,7 @@ import { LocalImage } from "./fileSystem/LocalImage";
 import type { LocalFolder } from "./fileSystem/LocalFolder";
 import type { AIGenerateParms, AIImageInput, AIProvider, ImageResult } from "./AI_provider";
 import { postToWorker } from "./CloudflareWorker/WorkerUtils";
+import { LocalVideo } from "./fileSystem/LocalVideo";
 
 // Custom error types for clarity
 export class MissingApiKeyError extends Error { }
@@ -204,6 +205,18 @@ export class GoogleAI implements AIProvider {
           continue;
         }
 
+        // Plain string
+        if (message instanceof LocalVideo) {
+          console.log("Local Video Message",message);
+
+          const gfile_part = await message.getGoogleFileURL()
+          console.log("GFile Message part",gfile_part)
+
+          contents.push(gfile_part);
+
+          continue;
+        }
+
         // Raw image object
         if ("rawBase64" in message && "mime" in message) {
           contents.push({
@@ -252,4 +265,5 @@ export class GoogleAI implements AIProvider {
 
 export type AIMessage =
   | string
-  | AIImageInput;
+  | AIImageInput
+  | LocalVideo;

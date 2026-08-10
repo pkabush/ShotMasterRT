@@ -13,11 +13,12 @@ interface Props {
   shot: Shot;
   isSelected: boolean;
   onClick: (shot: Shot) => void;
+  autoplay?: boolean;
 }
 
 
 
-const ShotStripPreview: React.FC<Props> = observer(({ shot, isSelected, onClick }) => {
+const ShotStripPreview: React.FC<Props> = observer(({ shot, isSelected,autoplay, onClick }) => {
 
   const [dragSide, setDragSide] = React.useState<"left" | "right" | null>(null);
 
@@ -79,9 +80,10 @@ const ShotStripPreview: React.FC<Props> = observer(({ shot, isSelected, onClick 
             objectFit: 'contain',
             display: 'block',
           }}
-          autoPlay={true}
+          autoPlay={autoplay}
           loop={true}
           muted={true}
+          
         />
 
       ) : (

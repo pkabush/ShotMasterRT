@@ -1,0 +1,5 @@
+.react-flow__edge.selected .react-flow__edge-path {
+    stroke: #ffcc00 !important;
+    stroke-width: 7px !important;
+    filter: drop-shadow(0 0 4px #ffcc00);
+}

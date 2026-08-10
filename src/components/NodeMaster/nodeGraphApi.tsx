@@ -2,51 +2,13 @@
 
 import { useCallback, useEffect } from "react";
 import { useReactFlow, type XYPosition, type Node, type Edge, useUpdateNodeInternals, useStore } from "@xyflow/react";
-import type { NodeType } from "./ShotNodeBuilder";
-import { KlingAI } from "../../classes/KlingAI";
-import { SeedanceAI } from "../../classes/AiProviders/Byteplus";
+import { nodeDefinitions, type NodeType } from "./ShotNodeBuilder";
 import { LocalImage } from "../../classes/fileSystem/LocalImage";
 import { Project } from "../../classes/Project";
 import { GoogleAI } from "../../classes/GoogleAI";
 import type { LocalFile } from "../../classes/fileSystem/LocalFile";
 import { LocalVideo } from "../../classes/fileSystem/LocalVideo";
 
-
-const defaultNodeData: Record<NodeType, any> = {
-    textNode: {
-        text: "New node",
-    },
-    googleAiNode: {
-        prompt: "Ask something...",
-        response: "",
-    },
-    localImageNode: {
-        path: "",
-    },
-    klingNode: {
-        model: KlingAI.options.img2video.model.v3,
-        mode: KlingAI.options.img2video.mode.std,
-        duration: KlingAI.options.img2video.duration.five,
-        sound: KlingAI.options.img2video.sound.off,
-    },
-    tasksNode: {
-    },
-    mergeNode: {
-
-    },
-    seedanceNode: {
-        resolution: SeedanceAI.options.video.resolution.default,
-        duration: SeedanceAI.options.video.duration.default,
-        ratio: SeedanceAI.options.video.ration.adaptive,
-        sound: true,
-    },
-    gptNode: {
-        gen_image: true,
-    },
-    timelineNode: {
-
-    },
-};
 
 export function useNodeGraphApi() {
     const { getNodes, setNodes, getEdges, setEdges, screenToFlowPosition } = useReactFlow();
@@ -102,7 +64,8 @@ export function useNodeGraphApi() {
                 type,
                 position: finalPosition,
                 data: {
-                    ...defaultNodeData[type],
+                    ...nodeDefinitions[type].defaultData,
+                    //...defaultNodeData[type],
                     ...data,
                 },
                 ...(size ? { width: size[0], height: size[1], } : {}),
@@ -243,6 +206,35 @@ export function useNodeGraphApi() {
         },
         [getNodes, getEdges]
     );
+    const in2out = useCallback(
+        (
+            nodeId: string,
+            input_key: string
+        ): { node: Node; output_key: string } | undefined => {
+            const nodes = getNodes();
+            const edges = getEdges();
+
+            const edge = edges.find(
+                (e) =>
+                    e.target === nodeId &&
+                    e.targetHandle === input_key
+            );
+
+            if (!edge) return undefined;
+
+            const node = nodes.find((n) => n.id === edge.source);
+            if (!node) return undefined;
+
+            //console.log("edge",edge);
+
+            return {
+                node,
+                output_key: edge.sourceHandle! ,
+            };
+        },
+        [getNodes, getEdges]
+    );
+
     const getNamedInputNodes = useCallback(
         (nodeId: string, input_key?: string, type?: string) => {
             const nodes = getNodes();
@@ -425,7 +417,8 @@ export function useNodeGraphApi() {
                         }
 
                         if (image instanceof LocalVideo) {
-                            messages.push(await image.getBase64());
+                            //messages.push(await image.getBase64());
+                            messages.push(image);
                         }
                     }
                     break;
@@ -534,6 +527,7 @@ export function useNodeGraphApi() {
         iterateMessagePacks,
         saveAiTextImageResponse,
         getSelectedNodes,
-        reorderIndexedInputs
+        reorderIndexedInputs,
+        in2out
     };
 }

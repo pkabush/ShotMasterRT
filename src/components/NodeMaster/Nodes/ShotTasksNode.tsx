@@ -9,6 +9,8 @@ import { useNodeGraphApi } from "../nodeGraphApi";
 import { Shot } from "../../../classes/Shot";
 import TaskContainer from "../../TaskContainer";
 import { useLocalFile } from "../Context/LocalFileContext";
+import type { NodeDefinition } from "../NodeDefinition/NodeDefinition";
+import { faListOl } from "@fortawesome/free-solid-svg-icons";
 
 
 
@@ -16,7 +18,7 @@ export type ShotTasksModelData = {
 
 };
 
-export type ShotTasksModelType = Node<ShotTasksModelData, "tasksModel">;
+export type ShotTasksModelType = Node<ShotTasksModelData, "tasksNode">;
 
 export const ShotTasksNode = memo(
     //@ts-ignore
@@ -85,4 +87,18 @@ export const ShotTasksNode = memo(
 ShotTasksNode.displayName = "ButtonNode";
 
 
+export const ShotTasksNodeDefinition: NodeDefinition<ShotTasksModelData, "tasksNode", any> = {
+    type: "tasksNode",
+    icon: faListOl,
+    displayName: "Tasks",
 
+    component: ShotTasksNode,
+
+    defaultData: {
+    },
+
+    getNodeOutputData: ({ node, outputId }) => {
+        console.log("GET",node,outputId);
+        return null
+    },
+};

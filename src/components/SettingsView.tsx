@@ -8,6 +8,7 @@ import type { Provider } from "../classes/AiProviders/CostTracker.ts";
 import { Button, Stack } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCloudArrowUp, faCopy } from "@fortawesome/free-solid-svg-icons";
+import { useGoogleStore } from "../contexts/GoogleUserContext.tsx";
 
 interface SettingsViewProps {
   project: Project;
@@ -98,6 +99,9 @@ export const SettingsView: React.FC<SettingsViewProps> = observer(({ project }) 
       </>}
 
 
+
+
+
       <>
         <br />
         To use Lua Script paste it to:
@@ -106,6 +110,8 @@ export const SettingsView: React.FC<SettingsViewProps> = observer(({ project }) 
         <br />
         Also you can add shortcut to it - for example "H" is free
       </>
+
+
 
       <Stack direction="horizontal" gap={1}>
         <h4 className="mt-4" onClick={() => {
@@ -128,7 +134,11 @@ export const SettingsView: React.FC<SettingsViewProps> = observer(({ project }) 
           className="mt-4 d-flex align-items-center justify-content-center"
           onClick={async () => {
 
-            if (!project.userSettingsDB.data.username) {
+            const gstore = useGoogleStore.getState();
+            console.log(gstore.user?.email);
+            const name = gstore.user?.email;            
+
+            if (!name) {
               alert("ERROR: USERNAME is required.");
               return;
             }
@@ -142,7 +152,7 @@ export const SettingsView: React.FC<SettingsViewProps> = observer(({ project }) 
             const encodedTarget = encodeURIComponent(url);
             const locUrl = `http://localhost:4000/proxy/${encodedTarget}`;
 
-            const usage_json = await project.costTracker?.getUsageJson(project.userSettingsDB.data.username, project.name, project.userSettingsDB.data.api_keys.HOPSHOT_API_KEY);
+            const usage_json = await project.costTracker?.getUsageJson(name, project.name, project.userSettingsDB.data.api_keys.HOPSHOT_API_KEY);
             const res = await fetch(locUrl, { method: "POST", body: JSON.stringify(usage_json), });
 
             console.log(res);
@@ -168,6 +178,7 @@ export const SettingsView: React.FC<SettingsViewProps> = observer(({ project }) 
       </Stack>
 
 
+
       <div className="d-flex flex-wrap">
         {[
           { name: "Google", key: "Google" },
@@ -191,6 +202,16 @@ export const SettingsView: React.FC<SettingsViewProps> = observer(({ project }) 
           );
         })}
       </div>
+
+      <br />
+      <StringEditField
+        label="HOPSHOT API KEY"
+        value={userSettingsDB.data.api_keys.HOPSHOT_API_KEY || ""}
+        onChange={async (newValue) => {
+          await userSettingsDB.update(data => { data.api_keys.HOPSHOT_API_KEY = newValue; });
+        }}
+      />
+
     </div>
   );
 });

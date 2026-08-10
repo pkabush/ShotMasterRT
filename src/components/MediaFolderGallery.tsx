@@ -113,7 +113,7 @@ export const MediaFolderGallery: React.FC<MediaFolderGalleryProps> = observer(
 
                                                     const shot = mediaFolder.shot as Shot;
                                                     //const task =
-                                                        shot.tasksJson!.addTask(task_info.id, { provider: ai_providers.KLING, workflow: task_info.workflow, geninfo: task_info.geninfo })
+                                                    shot.tasksJson!.addTask(task_info.id, { provider: ai_providers.KLING, workflow: task_info.workflow, geninfo: task_info.geninfo })
 
                                                 }}
                                                 onClose={() => mediaFolder.setSelectedMedia(null)}
@@ -320,12 +320,22 @@ const MediaItemCard: React.FC<Props> = observer(({
                         Open in new Tab
                     </ContextMenu.Item>
 
+                    {false &&
+                        <ContextMenu.Item onClick={async () => {
+                            console.log(await mediaItem.getWebUrl());
+                        }} className="ContextMenuItem warning">
+                            <MenuItemIcon><FontAwesomeIcon icon={faClipboard} /></MenuItemIcon>
+                            Upload To Server
+                        </ContextMenu.Item>}
+
+
                     <ContextMenu.Item onClick={async () => {
-                        console.log(await mediaItem.getWebUrl());
+                        console.log(await mediaItem.getGoogleFileURL());
                     }} className="ContextMenuItem warning">
                         <MenuItemIcon><FontAwesomeIcon icon={faClipboard} /></MenuItemIcon>
-                        Upload To Server
+                        Get Google File URL
                     </ContextMenu.Item>
+
 
                     {shot && (
                         <ContextMenu.Item

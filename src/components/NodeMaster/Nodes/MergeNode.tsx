@@ -1,6 +1,8 @@
 import { memo, useEffect } from "react";
 import { useStore, useUpdateNodeInternals, type Node, type NodeProps } from "@xyflow/react";
 import { NamedInputHandle, NamedOutputHandle } from "../Atomic/NamedInput";
+import type { NodeDefinition } from "../NodeDefinition/NodeDefinition";
+import { faCodeBranch } from "@fortawesome/free-solid-svg-icons";
 
 
 export type MergeNodeModelData = {
@@ -57,3 +59,19 @@ MergeNode.displayName = "ButtonNode";
 
 
 
+
+export const MergeNodeDefinition: NodeDefinition<MergeNodeModelData, "mergeNode", any> = {
+    type: "mergeNode",
+    icon: faCodeBranch,
+    displayName: "Merge",
+
+    component: MergeNode,
+
+    defaultData: {
+    },
+
+    getNodeOutputData: ({ node, outputId }) => {
+        console.log("GET",node,outputId);
+        return null
+    },
+};

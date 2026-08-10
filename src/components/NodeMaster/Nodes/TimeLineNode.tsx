@@ -5,13 +5,15 @@ import { useNodeGraphApi } from "../nodeGraphApi";
 import { Project } from "../../../classes/Project";
 import { VideoPlaylist } from "../../SceneViews/TimelineView";
 import { NodeResizeIcon } from "./LocalImageNode";
+import type { NodeDefinition } from "../NodeDefinition/NodeDefinition";
+import { faClapperboard } from "@fortawesome/free-solid-svg-icons";
 
 
 export type TimelineNodeModelData = {
 
 };
 
-export type TimelineNodeModelType = Node<TimelineNodeModelData, "mergeNode">;
+export type TimelineNodeModelType = Node<TimelineNodeModelData, "timelineNode">;
 
 const controlStyle = {
     background: 'transparent',
@@ -110,3 +112,20 @@ TimelineNode.displayName = "ButtonNode";
 
 
 
+
+export const TimelineNodeDefinition: NodeDefinition<TimelineNodeModelData, "timelineNode", any> = {
+    type: "timelineNode",
+    icon: faClapperboard,
+    displayName: "Timeline",
+
+    component: TimelineNode,
+
+    defaultData: {
+      text:""
+    },
+
+    getNodeOutputData: ({ node, outputId }) => {
+        console.log("GET",node,outputId);
+        return null
+    },
+};

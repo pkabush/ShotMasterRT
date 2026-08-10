@@ -15,6 +15,8 @@ import { LocalAudio } from "../../../classes/fileSystem/LocalAudio";
 import { useLocalFile } from "../Context/LocalFileContext";
 import { TasksJson } from "../../../classes/Task";
 import type { LocalJson } from "../../../classes/LocalJson";
+import type { NodeDefinition } from "../NodeDefinition/NodeDefinition";
+import { faFish } from "@fortawesome/free-solid-svg-icons";
 
 export type SeedanceNodeModelData = {
     resolution?: string;
@@ -23,7 +25,7 @@ export type SeedanceNodeModelData = {
     sound?: boolean;
 };
 
-export type SeedanceNodeType = Node<SeedanceNodeModelData, "SeedanceModel">;
+export type SeedanceNodeType = Node<SeedanceNodeModelData, "seedanceNode">;
 
 export const SeedanceNode = memo(
     ({ id, data, selected }: NodeProps<SeedanceNodeType>) => {
@@ -248,3 +250,19 @@ SeedanceNode.displayName = "SeedanceNode";
 
 
 
+
+export const SeedanceNodeDefinition: NodeDefinition<SeedanceNodeModelData, "seedanceNode", any> = {
+    type: "seedanceNode",
+    icon: faFish,
+    displayName: "Seedance",
+
+    component: SeedanceNode,
+
+    defaultData: {
+    },
+
+    getNodeOutputData: ({ node, outputId }) => {
+        console.log("GET",node,outputId);
+        return null
+    },
+};
