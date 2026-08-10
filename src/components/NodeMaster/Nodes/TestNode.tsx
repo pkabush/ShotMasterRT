@@ -69,14 +69,8 @@ export const TestNode = memo(
 
                         if (!input?.node.type) return;
                         const node_definition = nodeDefinitions[input.node.type as NodeType];
-                        if(!node_definition.getNodeOutputData) return;
-                        const data = node_definition.getNodeOutputData(
-                            {
-                                node: input.node,
-                                outputId: input.output_key,
-                            }
-
-                        );
+                        if (!node_definition.getNodeOutputData) return;
+                        const data = node_definition.getNodeOutputData(input);
 
                         console.log("out_data", data);
 

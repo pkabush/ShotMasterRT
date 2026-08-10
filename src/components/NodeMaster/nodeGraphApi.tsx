@@ -210,7 +210,7 @@ export function useNodeGraphApi() {
         (
             nodeId: string,
             input_key: string
-        ): { node: Node; output_key: string } | undefined => {
+        ): { node: Node; outputId: string } | undefined => {
             const nodes = getNodes();
             const edges = getEdges();
 
@@ -229,7 +229,7 @@ export function useNodeGraphApi() {
 
             return {
                 node,
-                output_key: edge.sourceHandle! ,
+                outputId: edge.sourceHandle! ,
             };
         },
         [getNodes, getEdges]
