@@ -137,7 +137,7 @@ export const ScriptNodeDefinition: NodeDefinition<ScriptNodeData, "scriptNode", 
 
     getNodeOutputData: ({ node, outputId }) => {
         const project = Project.getProject();
-        console.log("GET SCRIPT DATA");
+        //console.log("GET SCRIPT DATA");
 
         switch (outputId) {
             case "full_script":

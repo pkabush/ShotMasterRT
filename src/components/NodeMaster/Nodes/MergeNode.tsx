@@ -3,6 +3,7 @@ import { useStore, useUpdateNodeInternals, type Node, type NodeProps } from "@xy
 import { NamedInputHandle, NamedOutputHandle } from "../Atomic/NamedInput";
 import type { NodeDefinition } from "../NodeDefinition/NodeDefinition";
 import { faCodeBranch } from "@fortawesome/free-solid-svg-icons";
+import { useNodeGraphApi } from "../nodeGraphApi";
 
 
 export type MergeNodeModelData = {
@@ -70,8 +71,11 @@ export const MergeNodeDefinition: NodeDefinition<MergeNodeModelData, "mergeNode"
     defaultData: {
     },
 
-    getNodeOutputData: ({ node, outputId }) => {
-        console.log("GET",node,outputId);
-        return null
+    getNodeOutputData: ({ node, api }) => {
+
+        const multiInputs = api.getConnectedMultiInputNames(node.id);
+        const output = multiInputs.map(inputName => api.in2Data(node.id, inputName));
+                        
+        return output;
     },
 };

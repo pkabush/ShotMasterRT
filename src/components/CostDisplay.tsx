@@ -14,10 +14,10 @@ type FloatDelta = {
 export const CostDisplay: React.FC<CostDisplayProps> = observer(({ project }) => {
   const costTracker = project.costTracker;
 
-  if (!costTracker) return null;
 
-  const total = costTracker.totalCost();
-  const daily = costTracker.totalCostToday();
+  // Hooks MUST always run, regardless of costTracker
+  const total = costTracker?.totalCost() ?? 0;
+  const daily = costTracker?.totalCostToday() ?? 0;
 
   const prevRef = useRef(total);
   const idRef = useRef(0);
@@ -57,6 +57,8 @@ export const CostDisplay: React.FC<CostDisplayProps> = observer(({ project }) =>
       prevRef.current = total;
     }
   }, [total]);
+
+  if (!costTracker) return null;
 
   return (
     <div

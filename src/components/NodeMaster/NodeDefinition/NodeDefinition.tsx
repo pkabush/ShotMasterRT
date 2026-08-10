@@ -2,6 +2,9 @@
 import type { ComponentType } from "react";
 import type { Node, NodeProps, } from "@xyflow/react";
 import type { IconDefinition } from "@fortawesome/free-solid-svg-icons";
+import type { NodeGraphApi } from "../nodeGraphApi";
+
+
 
 export type NodeDefinition<
     TData extends Record<string, unknown>,
@@ -19,6 +22,7 @@ export type NodeDefinition<
     getNodeOutputData?: (args: {
         node: Node;
         outputId: string;
+        api: NodeGraphApi;
     }) => TOutput;
 
     /** Optional lifecycle / behavior functions */

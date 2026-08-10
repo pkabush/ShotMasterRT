@@ -64,12 +64,14 @@ const App: React.FC = observer(() => {
   }, []);
 
 
+
   return (
     <GoogleOAuthProvider clientId="897309739659-u0a653m56ddg78n3kvb104uacgc3t52b.apps.googleusercontent.com">
       <ProjectContext.Provider value={{ project }}>
         <div style={{ minHeight: '100vh' }}>
 
           <LoginCircles />
+
 
           <MenuBar
             onOpenFolder={handleOpenFolder}
@@ -79,6 +81,9 @@ const App: React.FC = observer(() => {
           />
 
           {/* Main layout */}
+
+
+
           <div style={{ height: 'calc(100vh - 56px)' }}>
             <Group orientation="horizontal" style={{ height: "100%" }}>
 
@@ -108,7 +113,11 @@ const App: React.FC = observer(() => {
           </div>
 
           <NotificationContainer />
+
+
         </div>
+
+
       </ProjectContext.Provider>
 
 

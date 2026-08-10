@@ -421,7 +421,7 @@ const FolderPreview = ({ localFolder, onClick, label }: FolderPreviewProps) => {
                 <br />
                 <div style={{
                     //fontSize:15
-                    color:"#7f8290"
+                    color: "#7f8290"
                 }}>
                     {!label && <>
                         {image_count != 0 && <>
@@ -453,7 +453,11 @@ export const LocalImageNodeDefinition: NodeDefinition<LocalImageNodeDate, "local
     },
 
     getNodeOutputData: ({ node, outputId }) => {
-        console.log("GET",node,outputId);
+        const project = Project.getProject();
+        return project.getByAbsPath(node.data.path as string) as LocalFile;
+
+
+        console.log("GET", node, outputId);
         return null
     },
 };

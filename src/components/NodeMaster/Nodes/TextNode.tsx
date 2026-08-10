@@ -104,8 +104,7 @@ export const TextNodeDefinition: NodeDefinition<TextNodeData, "textNode", any> =
       text:""
     },
 
-    getNodeOutputData: ({ node, outputId }) => {
-        console.log("GET",node,outputId);
-        return null
+    getNodeOutputData: ({ node }) => {
+        return node.data.text as string;
     },
 };

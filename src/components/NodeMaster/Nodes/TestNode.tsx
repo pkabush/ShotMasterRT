@@ -6,7 +6,6 @@ import {
 import { NamedInputHandle, NamedOutputHandle } from "../Atomic/NamedInput";
 import { Button } from "react-bootstrap";
 import { useNodeGraphApi } from "../nodeGraphApi";
-import { nodeDefinitions, type NodeType } from "../ShotNodeBuilder";
 import type { NodeDefinition } from "../NodeDefinition/NodeDefinition";
 import { faKey } from "@fortawesome/free-solid-svg-icons";
 
@@ -20,6 +19,10 @@ export const TestNode = memo(
     ({ id, selected }: NodeProps<TestNodeType>) => {
 
         const nodegraph_api = useNodeGraphApi();
+
+        const incomingCount = nodegraph_api.useDynamicInputHandles(id);
+
+
 
         return (
             <div
@@ -63,23 +66,32 @@ export const TestNode = memo(
 
                 <Button size="sm" variant="warning"
                     onClick={() => {
+                        console.log(nodegraph_api.in2Data(id, "input_0"));
+                    }}>
+                    Log Input_0
+                </Button>
 
-                        const input = nodegraph_api.in2out(id, "in");
-                        console.log(input);
+                <Button size="sm" variant="warning"
+                    onClick={() => {
 
-                        if (!input?.node.type) return;
-                        const node_definition = nodeDefinitions[input.node.type as NodeType];
-                        if (!node_definition.getNodeOutputData) return;
-                        const data = node_definition.getNodeOutputData(input);
-
-                        console.log("out_data", data);
+                        const multiInputs = nodegraph_api.getConnectedMultiInputNames(id);
+                        const output = multiInputs.map(inputName => nodegraph_api.in2Data(id, inputName));
+                        
+                        console.log("MULTI INPUT DATA", output);
 
                     }}>
-                    Log Input
+                    Log All Inputs
                 </Button>
 
 
-                <NamedInputHandle id="in" />
+
+
+
+                {/* Multi INPUT HANDLE */}
+                {Array.from({ length: incomingCount + 1 }).map((_, index) => (
+                    <NamedInputHandle id={`input_${index}`} index={index} key={index} />
+                ))}
+
                 <NamedOutputHandle id="out" />
 
 

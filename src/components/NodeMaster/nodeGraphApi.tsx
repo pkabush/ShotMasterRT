@@ -229,8 +229,25 @@ export function useNodeGraphApi() {
 
             return {
                 node,
-                outputId: edge.sourceHandle! ,
+                outputId: edge.sourceHandle!,
             };
+        },
+        [getNodes, getEdges]
+    );
+    const in2Data = useCallback(
+        (
+            nodeId: string,
+            input_key: string
+        ): any | undefined => {
+            const input = in2out(nodeId, input_key);
+            if (!input?.node.type) return undefined;
+            const node_definition = nodeDefinitions[input.node.type as NodeType];
+            if (!node_definition.getNodeOutputData) return undefined;
+            return node_definition.getNodeOutputData({
+                node: input.node,
+                outputId: input.outputId,
+                api
+            });
         },
         [getNodes, getEdges]
     );
@@ -390,6 +407,23 @@ export function useNodeGraphApi() {
 
         return incomingCount;
     };
+    const getConnectedMultiInputNames = useCallback(
+        (nodeId: string): string[] => {
+            return getEdges()
+                .filter(
+                    (e) =>
+                        e.target === nodeId &&
+                        /^input_\d+$/.test(e.targetHandle ?? "")
+                )
+                .map((e) => e.targetHandle!)
+                .sort((a, b) => {
+                    const indexA = Number(a.split("_")[1]);
+                    const indexB = Number(b.split("_")[1]);
+                    return indexA - indexB;
+                });
+        },
+        [getEdges]
+    );
 
 
     // Message inputs gather
@@ -507,7 +541,7 @@ export function useNodeGraphApi() {
     );
 
 
-    return {
+    const api = {
         addNode,
         removeNode,
         duplicateNode,
@@ -528,6 +562,12 @@ export function useNodeGraphApi() {
         saveAiTextImageResponse,
         getSelectedNodes,
         reorderIndexedInputs,
-        in2out
+        in2out,
+        in2Data,
+        getConnectedMultiInputNames,
     };
+
+    return api;
 }
+
+export type NodeGraphApi = ReturnType<typeof useNodeGraphApi>;

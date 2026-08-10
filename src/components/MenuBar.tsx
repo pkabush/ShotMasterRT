@@ -64,7 +64,9 @@ export const MenuBar: React.FC<MenuBarProps> = ({ onOpenFolder, recentFolders, o
       </Navbar>
 
 
+
       {project && <CostDisplay project={project} />}
-      </>
-      );
+
+    </>
+  );
 };
