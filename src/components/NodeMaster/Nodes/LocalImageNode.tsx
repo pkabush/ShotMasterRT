@@ -248,6 +248,8 @@ export const LocalImageNode = memo(
                     </div>
 
                     <NamedOutputHandle id="path" />
+                    <NamedOutputHandle id="children" index={1} />
+                    <NamedOutputHandle id="children_recursive" index={2} />
                     <NamedInputHandle id="path" />
 
                 </div>
@@ -449,15 +451,26 @@ export const LocalImageNodeDefinition: NodeDefinition<LocalImageNodeDate, "local
     component: LocalImageNode,
 
     defaultData: {
-        path: "/"
+        path: ""
     },
 
     getNodeOutputData: ({ node, outputId }) => {
-        const project = Project.getProject();
-        return project.getByAbsPath(node.data.path as string) as LocalFile;
+        const project = Project.getProject();        
+
+        switch (outputId) {
+            case "path":
+                return project.getByAbsPath(node.data.path as string) as LocalFile;
+
+            case "children": {
+                const folder = project.getByAbsPath(node.data.path as string) as LocalFolder;
+                return [folder.getType(LocalImage)];
+            }
 
 
-        console.log("GET", node, outputId);
-        return null
+            default:
+                throw new Error(
+                    `Unknown output "${outputId}" for Script Node`
+                );
+        }
     },
 };

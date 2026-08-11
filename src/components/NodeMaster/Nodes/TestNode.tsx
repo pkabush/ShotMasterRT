@@ -19,10 +19,7 @@ export const TestNode = memo(
     ({ id, selected }: NodeProps<TestNodeType>) => {
 
         const nodegraph_api = useNodeGraphApi();
-
         const incomingCount = nodegraph_api.useDynamicInputHandles(id);
-
-
 
         return (
             <div
@@ -66,26 +63,26 @@ export const TestNode = memo(
 
                 <Button size="sm" variant="warning"
                     onClick={() => {
-                        console.log(nodegraph_api.in2Data(id, "input_0"));
+                        const node = nodegraph_api.in2out(id,"input_0")
+                        console.log("Input_0 Node:",node);
+                        //const data = nodegraph_api.in2Data(id, "input_0") 
+                       // console.log("Input 0 Data",data);
+                        //const msg_packs = nodegraph_api.iterateMessagePacks(data);
+                        //console.log("Input_0",{node, data, msg_packs});
                     }}>
                     Log Input_0
                 </Button>
 
+
                 <Button size="sm" variant="warning"
                     onClick={() => {
-
-                        const multiInputs = nodegraph_api.getConnectedMultiInputNames(id);
-                        const output = multiInputs.map(inputName => nodegraph_api.in2Data(id, inputName));
-                        
-                        console.log("MULTI INPUT DATA", output);
-
+                        //const multiInputs = nodegraph_api.getConnectedMultiInputNames(id);
+                        //const output = multiInputs.map(inputName => nodegraph_api.in2Data(id, inputName));    
+                        //console.log("MULTI INPUT DATA", output);
+                        console.log("MULTI INPUT DATA", nodegraph_api.multiIn2Data(id));
                     }}>
-                    Log All Inputs
+                    Log Multi Input Data
                 </Button>
-
-
-
-
 
                 {/* Multi INPUT HANDLE */}
                 {Array.from({ length: incomingCount + 1 }).map((_, index) => (

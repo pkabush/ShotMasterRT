@@ -251,6 +251,13 @@ export function useNodeGraphApi() {
         },
         [getNodes, getEdges]
     );
+    const multiIn2Data = useCallback(
+        (id: string,): any | undefined => {
+            const multiInputs = api.getConnectedMultiInputNames(id);
+            return multiInputs.map(inputName => api.in2Data(id, inputName));
+        },
+        [getNodes, getEdges]
+    );
 
     const getNamedInputNodes = useCallback(
         (nodeId: string, input_key?: string, type?: string) => {
@@ -509,8 +516,9 @@ export function useNodeGraphApi() {
     // Save AI Image/Text Response
     const saveAiTextImageResponse = useCallback(
         async (nodeId: string, res: any, local_file: LocalFile) => {
+            // IMAGE RESPONSE            
             if (typeof res !== "string") {
-                // Image Response
+                // Image Response                
                 const outImageNode = getOutputNodes(nodeId, "out_image", "localImageNode")[0];
                 if (!outImageNode) {
                     // Dont Have Image Node
@@ -528,14 +536,18 @@ export function useNodeGraphApi() {
             }
 
             // Text response
+            /*
             const outTextNode = getOutputNodes(nodeId, "out_text", "textNode")[0];
-
             if (!outTextNode) {
                 const newId = addNode("textNode", nodeId, { text: res, });
                 connect(nodeId, newId, "out_text", "input_0");
             } else {
                 setNodeData(outTextNode.id, { text: res, });
-            }
+            }*/
+            // Always create New Text
+            const newId = addNode("textNode", nodeId, { text: res, });
+            connect(nodeId, newId, "out_text", "input_0");
+
         },
         [addNode, connect, getOutputNodes, setNodeData]
     );
@@ -565,6 +577,7 @@ export function useNodeGraphApi() {
         in2out,
         in2Data,
         getConnectedMultiInputNames,
+        multiIn2Data
     };
 
     return api;

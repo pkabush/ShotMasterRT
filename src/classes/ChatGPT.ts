@@ -1,6 +1,7 @@
 import type { AIGenerateParms, AIProvider, ImageResult } from "./AI_provider";
 import type { AIMessage } from "./GoogleAI";
 import { postToWorker } from "./CloudflareWorker/WorkerUtils";
+import { LocalImage } from "./fileSystem/LocalImage";
 
 // Custom error types for clarity
 export class MissingApiKeyError extends Error { }
@@ -318,6 +319,16 @@ export class ChatGPT implements AIProvider {
             images.push(message);
             continue;
           }
+          // Local Image
+          if (message instanceof LocalImage) {
+            const image = await message.getAIImage()
+            images.push({
+              rawBase64: image.rawBase64,
+              mime: image.mime,
+              description: ""
+            });
+            continue;
+          }
         }
 
         console.log("GPT ASPECT", aspect_ratio, resolution);
@@ -349,6 +360,16 @@ export class ChatGPT implements AIProvider {
             content.push({
               type: "input_image",
               image_url: `data:${message.mime};base64,${message.rawBase64}`,
+            });
+            continue;
+          }
+
+          // Local Image
+          if (message instanceof LocalImage) {
+            const image = await message.getAIImage()
+            content.push({
+              type: "input_image",
+              image_url: `data:${image.mime};base64,${image.rawBase64}`,
             });
             continue;
           }

@@ -205,15 +205,24 @@ export class GoogleAI implements AIProvider {
           continue;
         }
 
-        // Plain string
+        // Local Video
         if (message instanceof LocalVideo) {
-          console.log("Local Video Message",message);
-
+          console.log("Local Video Message", message);
           const gfile_part = await message.getGoogleFileURL()
-          console.log("GFile Message part",gfile_part)
-
+          console.log("GFile Message part", gfile_part)
           contents.push(gfile_part);
+          continue;
+        }
 
+        // Local Image
+        if (message instanceof LocalImage) {
+          const image = await message.getAIImage()
+          contents.push({
+            inlineData: {
+              data: image.rawBase64,
+              mimeType: image.mime,
+            },
+          });
           continue;
         }
 
@@ -266,4 +275,5 @@ export class GoogleAI implements AIProvider {
 export type AIMessage =
   | string
   | AIImageInput
-  | LocalVideo;
+  | LocalVideo
+  | LocalImage;

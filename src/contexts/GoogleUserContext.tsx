@@ -8,8 +8,7 @@ import { Project } from "../classes/Project";
 import { Button, OverlayTrigger, Popover, Stack } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLink, faLinkSlash, faUser } from "@fortawesome/free-solid-svg-icons";
-import { useState } from "react";
-
+import { useEffect, useState } from "react";
 
 //export const WORKER_URL = "http://localhost:8787";
 //export const WORKER_URL = "https://shotmasterworker.kabushpavel.workers.dev";
@@ -39,6 +38,7 @@ interface GoogleUser {
 interface GoogleStore {
   user: GoogleUser | null;
   idToken: string | null;
+  idTokenExpiresAt: number | null;
   driveAccessToken: string | null;
 
   websocketStatus:
@@ -60,6 +60,7 @@ export const useGoogleStore = create<GoogleStore>(
   (set, get) => ({
     user: null,
     idToken: null,
+    idTokenExpiresAt: null,
     driveAccessToken: null,
 
     websocketStatus: "disconnected",
@@ -74,7 +75,11 @@ export const useGoogleStore = create<GoogleStore>(
         picture: decoded.picture,
       };
 
-      set({ idToken: credential, user, });
+      set({
+        idToken: credential,
+        idTokenExpiresAt: decoded.exp ? decoded.exp * 1000 : null,
+        user,
+      });
 
       // connect after login
       get().connectWorkerWebSocket(user.email);
@@ -86,6 +91,7 @@ export const useGoogleStore = create<GoogleStore>(
         user: null,
         driveAccessToken: null,
         idToken: null,
+        idTokenExpiresAt: null,
       });
     },
 
@@ -243,23 +249,43 @@ export function UserCircle() {
 
   const [showLogin, setShowLogin] = useState(false);
 
+  const expiresAt = useGoogleStore((s) => s.idTokenExpiresAt);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [needsRefresh, setNeedsRefresh] = useState(false);
+
   // Hidden GoogleLogin mounted immediately
-  const hiddenGoogleLogin = !user && (
+  const hiddenGoogleLogin = (!user || needsRefresh) && (
     <div style={{ position: "absolute", opacity: 0, pointerEvents: "none" }}>
       <GoogleLogin
+        key={refreshKey}
         useOneTap
         auto_select
         onSuccess={(credentialResponse) => {
           if (credentialResponse.credential) {
             login(credentialResponse.credential);
           }
+          setNeedsRefresh(false);
         }}
         onError={() => console.log("Login Failed")}
       />
     </div>
   );
 
-  if (!user) {
+  useEffect(() => {
+    if (!user || !expiresAt) return;
+    const FIVE_MINUTES = 45 * 60 * 1000;
+
+    const interval = setInterval(() => {
+      console.log("5-minute timer triggered: Refreshing Google Token...");
+      setRefreshKey((k) => k + 1);
+      setNeedsRefresh(true);
+    }, FIVE_MINUTES);
+
+    return () => clearInterval(interval);
+  }, [expiresAt, user]);
+
+
+  if (!user || needsRefresh) {
     return (
       <>
         {hiddenGoogleLogin}
@@ -326,6 +352,8 @@ export function UserCircle() {
                 <strong>{user.name}</strong>
               </div>
 
+              <GoogleLoginExpiryTimer />
+
               <div
                 style={{
                   fontSize: 13,
@@ -343,6 +371,23 @@ export function UserCircle() {
               >
                 Logout
               </Button>
+
+
+              <Button
+                variant="outline-warning"
+                size="sm"
+                onClick={() => {
+                  console.log("Manual Refresh...");
+                  setRefreshKey((k) => k + 1);
+                  setNeedsRefresh(true);
+                }}
+              >
+                Refresh
+              </Button>
+
+
+
+
             </div>
           </Popover.Body>
         </Popover>
@@ -388,4 +433,58 @@ export function LoginCircles() {
     </Stack>
   </div>
 
+}
+
+
+
+
+function GoogleLoginExpiryTimer() {
+  const expiresAt = useGoogleStore((s) => s.idTokenExpiresAt);
+  const logout = useGoogleStore((s) => s.logout);
+
+  const [timeLeft, setTimeLeft] = useState("");
+
+  useEffect(() => {
+    if (!expiresAt) {
+      setTimeLeft("");
+      return;
+    }
+
+    const update = () => {
+      const diff = expiresAt - Date.now();
+
+      if (diff <= 0) {
+        setTimeLeft("Expired");
+        logout();
+        return;
+      }
+
+      const totalSeconds = Math.floor(diff / 1000);
+      const minutes = Math.floor(totalSeconds / 60);
+      const seconds = totalSeconds % 60;
+
+      setTimeLeft(`${minutes}:${seconds.toString().padStart(2, "0")}`);
+    };
+
+    update();
+
+    const interval = window.setInterval(update, 1000);
+
+    return () => window.clearInterval(interval);
+  }, [expiresAt, logout]);
+
+  if (!expiresAt) return null;
+
+  return (
+    <div
+      style={{
+        fontSize: 12,
+        color: "#888",
+        marginTop: 2,
+        marginBottom: 8,
+      }}
+    >
+      Login expires in {timeLeft}
+    </div>
+  );
 }

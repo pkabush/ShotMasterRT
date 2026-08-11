@@ -36,20 +36,22 @@ export const nb_GoogleAI = memo(
                 const resolution = data.resolution;
                 const aspect_ratio = data.aspect_ratio;
 
-                const msg_packs_messages = await nodegraph_api.gatherInputMessages(id);
-                const msg_packs = nodegraph_api.iterateMessagePacks(msg_packs_messages);
+                //const msg_packs_messages = await nodegraph_api.gatherInputMessages(id);
+                //const msg_packs = nodegraph_api.iterateMessagePacks(msg_packs_messages);
+
+                const multi_in_data = nodegraph_api.multiIn2Data(id).flat(1);
+                const msg_packs = nodegraph_api.iterateMessagePacks(multi_in_data);
 
                 console.log("Messages",msg_packs);
-
                 
-                // Send All messages in parralel                
+                // Send All messages in parralel 
                 await Promise.all(
                     msg_packs.map(async (messages) => {
                         const res = await GoogleAI.sendMessages(messages, model, aspect_ratio, resolution);
                         await nodegraph_api.saveAiTextImageResponse(id, res, local_file);
                         return res;
                     })
-                );
+                );           
                 
 
             } finally {

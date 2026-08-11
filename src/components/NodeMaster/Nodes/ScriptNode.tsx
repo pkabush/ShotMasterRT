@@ -114,6 +114,7 @@ export const ScriptNode = memo(
 
                 <NamedOutputHandle id="full_script" />
                 <NamedOutputHandle id="selected_scene" index={1} />
+                <NamedOutputHandle id="scenes" index={2} />
 
             </div>
         );
@@ -124,7 +125,7 @@ ScriptNode.displayName = "ScriptNode";
 
 
 
-export const ScriptNodeDefinition: NodeDefinition<ScriptNodeData, "scriptNode", string> = {
+export const ScriptNodeDefinition: NodeDefinition<ScriptNodeData, "scriptNode", any> = {
     type: "scriptNode",
     icon: faSubscript,
     displayName: "Script Node",
@@ -154,6 +155,12 @@ export const ScriptNodeDefinition: NodeDefinition<ScriptNodeData, "scriptNode", 
                     project.script?.scenes.get(selectedScene) ?? ""
                 );
             }
+
+            case "scenes": {
+                const scenes = project.script?.scenes;
+                return [[...scenes!.values()]];
+            }
+
 
             default:
                 throw new Error(

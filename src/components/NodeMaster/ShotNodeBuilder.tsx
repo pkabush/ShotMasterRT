@@ -37,6 +37,7 @@ import { ScriptNodeDefinition } from "./Nodes/ScriptNode";
 import { TestNodeDefinition } from "./Nodes/TestNode";
 import type { NodeDefinitionMetadata } from "./NodeDefinition/NodeDefinition";
 import { TextNodeDefinition } from "./Nodes/TextNode";
+import { LocalFileToPathNodeDefinition } from "./Nodes/LocalFileToPathNode";
 
 export const nodeDefinitions = {
     textNode: TextNodeDefinition,
@@ -50,6 +51,7 @@ export const nodeDefinitions = {
     timelineNode: TimelineNodeDefinition,
     scriptNode: ScriptNodeDefinition,
     testNode: TestNodeDefinition,
+    localFileToPathNode: LocalFileToPathNodeDefinition,
 } as const;
 
 export const nodeTypes = Object.fromEntries(
