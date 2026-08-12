@@ -28,6 +28,8 @@ export type NodeDefinition<
     /** Optional lifecycle / behavior functions */
     onCreate?: (node: Node<TData, TType>) => void;
     onDelete?: (node: Node<TData, TType>) => void;
+
+    operations?: any;
 };
 
 export type AnyNodeDefinition = NodeDefinition<

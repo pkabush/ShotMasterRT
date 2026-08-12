@@ -10,6 +10,7 @@ import { MenuItemIcon } from './MediaFolderGallery.tsx';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faClipboard, faTrashCan } from '@fortawesome/free-solid-svg-icons';
 import { ModularScript, ScriptMaster } from '../classes/ScriptMaster.ts';
+import LocalFolderTreeItem from './TreeView/LocalFolderTreeItem.tsx';
 
 type FolderListProps = {
   project: Project | null;
@@ -22,7 +23,6 @@ const FolderList: React.FC<FolderListProps> = observer(({ project }) => {
   const handleAddScene = async () => {
     const sceneName = prompt("Enter new scene name");
     if (!sceneName) return;
-
     await project.createScene(sceneName);
   };
 
@@ -125,9 +125,6 @@ const FolderList: React.FC<FolderListProps> = observer(({ project }) => {
         </CollapsibleAccordionCard>
 
 
-
-
-
         <CollapsibleAccordionCard label='Scenes' headerExtra={
           <SimpleButton label="+" onClick={handleAddScene} />}
           openColor='#3564bc' closedColor='#425484'>
@@ -141,9 +138,6 @@ const FolderList: React.FC<FolderListProps> = observer(({ project }) => {
 
           </div>
         </CollapsibleAccordionCard>
-
-
-
 
 
         <CollapsibleAccordionCard label='Scripts' headerExtra={
@@ -346,10 +340,16 @@ const FolderList: React.FC<FolderListProps> = observer(({ project }) => {
           </div>
         </CollapsibleAccordionCard>
 
+        <LocalFolderTreeItem localFolder={project.nodeTreeLocalFolder!} />
+        
 
       </Accordion>
     </div>
   );
 });
+
+
+
+
 
 export default FolderList;

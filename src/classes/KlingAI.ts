@@ -1,5 +1,4 @@
-import { useGoogleStore, WORKER_URL } from "../contexts/GoogleUserContext";
-
+import { postToWorker } from "./CloudflareWorker/WorkerUtils";
 
 export class KlingAI {
 
@@ -104,65 +103,10 @@ export class KlingAI {
   private static async postToKling(targetUrl: string, payload: any) {
     console.log("Kling request:", payload);
 
-    const idToken = useGoogleStore.getState().idToken;
-    const response = await fetch(
-      //`${WORKER_URL}/kling/generate`
-      `${WORKER_URL}/kling/generate?request_url=${targetUrl}`
-      , {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${idToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Seedance request failed: ${errorText}`);
-    }
-
-    const data = await response.json();
-    console.log("Seedance response:", data);
-
-    return data;
-    /*
-    const encodedTarget = encodeURIComponent(targetUrl);
-    const locUrl = `http://localhost:4000/proxy/${encodedTarget}`;
-    const token = await this.getToken();
-
-    console.log(`Kling API request to ${targetUrl}:`, payload);
-
-    const response = await fetch(locUrl, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(payload),
+    return postToWorker(payload, "kling/generate", {
+      request_url: targetUrl,
     });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Kling API request failed: ${errorText}`);
-    }
-
-    const data = await response.json();
-    console.log(`Kling API response from ${targetUrl}:`, data);
-    return data;
-    */
   }
-
-  // ================= TXT2VIDEO =================
-  /*
-  public static async txt2video(prompt: string, model: string = "kling-v1") {
-    const payload = { model_name: model, mode: "std", duration: "5", prompt, cfg_scale: 0.5 };
-    const targetUrl = "https://api-singapore.klingai.com/v1/videos/text2video";
-
-    const data = await this.postToKling(targetUrl, payload);
-    return { id: data.data.task_id, workflow: "text2video" };
-  }
-  */
 
   // ================= IMG2VIDEO =================
   public static async img2video(options: {

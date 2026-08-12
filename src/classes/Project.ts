@@ -171,6 +171,7 @@ export class Project extends LocalFolder {
   id = 0;
 
   scenesLocalFolder: LocalFolder | null = null;
+  nodeTreeLocalFolder: LocalFolder | null = null;
 
   constructor(parentFolder: FileSystemDirectoryHandle, userSettingsDB: UserSettingsDB) {
     console.log("OPENING PROJECT", parentFolder);
@@ -263,6 +264,13 @@ export class Project extends LocalFolder {
       const scenesFolder = await this.handle.getDirectoryHandle("SCENES", { create: true });
       this.scenesLocalFolder = new LocalFolder(this, scenesFolder);
       await this.scenesLocalFolder.load_subfolders(Scene);
+
+      // Load NodegraphsTree
+      this.nodeTreeLocalFolder = await LocalFolder.open(this, "NodeTree", LocalFolder);
+      this.nodeTreeLocalFolder.load_subfolders()
+      this.nodeTreeLocalFolder.load_files()
+
+
     } catch (err) {
       console.error("Error loading scenes:", err);
     }

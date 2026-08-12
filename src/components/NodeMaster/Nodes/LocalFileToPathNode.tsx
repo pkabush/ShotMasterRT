@@ -4,7 +4,7 @@ import { NamedInputHandle, NamedOutputHandle } from "../Atomic/NamedInput";
 import { Button } from "react-bootstrap";
 import { useNodeGraphApi } from "../nodeGraphApi";
 import type { NodeDefinition } from "../NodeDefinition/NodeDefinition";
-import {  faLeftRight } from "@fortawesome/free-solid-svg-icons";
+import { faLeftRight } from "@fortawesome/free-solid-svg-icons";
 
 export type LocalFileToPathNodeData = {
 };
@@ -131,7 +131,22 @@ export const LocalFileToPathNodeDefinition: NodeDefinition<LocalFileToPathNodeDa
     defaultData: {
     },
 
-    getNodeOutputData: ({ node, outputId }) => {
+    getNodeOutputData: ({ node, outputId, api }) => {
+        const data = api.in2Data(node.id, "in");
+
+        const files = Array.isArray(data)
+            ? data.flat(Infinity)
+            : data
+                ? [data]
+                : [];
+
+        const newPaths = files
+            .map((file: any) => file?.path)
+            .filter(Boolean)
+            .join("\n");
+
+        return newPaths;
+
         console.log("GET", node, outputId);
         return null
     },

@@ -455,7 +455,7 @@ export const LocalImageNodeDefinition: NodeDefinition<LocalImageNodeDate, "local
     },
 
     getNodeOutputData: ({ node, outputId }) => {
-        const project = Project.getProject();        
+        const project = Project.getProject();
 
         switch (outputId) {
             case "path":
@@ -464,6 +464,11 @@ export const LocalImageNodeDefinition: NodeDefinition<LocalImageNodeDate, "local
             case "children": {
                 const folder = project.getByAbsPath(node.data.path as string) as LocalFolder;
                 return [folder.getType(LocalImage)];
+            }
+
+            case "children_recursive": {
+                const folder = project.getByAbsPath(node.data.path as string) as LocalFolder;
+                return [folder.getType(LocalImage,{deep:true})];
             }
 
 

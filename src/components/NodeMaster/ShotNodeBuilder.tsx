@@ -38,6 +38,7 @@ import { TestNodeDefinition } from "./Nodes/TestNode";
 import type { NodeDefinitionMetadata } from "./NodeDefinition/NodeDefinition";
 import { TextNodeDefinition } from "./Nodes/TextNode";
 import { LocalFileToPathNodeDefinition } from "./Nodes/LocalFileToPathNode";
+import { MultiTextNodeDefinition } from "./Nodes/MultiTextNode";
 
 export const nodeDefinitions = {
     textNode: TextNodeDefinition,
@@ -52,6 +53,7 @@ export const nodeDefinitions = {
     scriptNode: ScriptNodeDefinition,
     testNode: TestNodeDefinition,
     localFileToPathNode: LocalFileToPathNodeDefinition,
+    multiTextNode: MultiTextNodeDefinition,
 } as const;
 
 export const nodeTypes = Object.fromEntries(
@@ -81,6 +83,19 @@ export const SceneNodeBuilderWithProvider: React.FC<SceneNodeBuilderProps> = ({ 
 export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJson }) => {
     const [nodes, setNodes, onNodesChange] = useNodesState<any>([]);
     const [edges, setEdges, onEdgesChange] = useEdgesState<any>([]);
+
+    // Listen To ALT Pressd for navigation
+    const [altPressed, setAltPressed] = useState(false);    
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => { if (e.key === "Alt") { setAltPressed(true); } };
+        const handleKeyUp = (e: KeyboardEvent) => { if (e.key === "Alt") { setAltPressed(false); } };
+        window.addEventListener("keydown", handleKeyDown);
+        window.addEventListener("keyup", handleKeyUp);
+        return () => {
+            window.removeEventListener("keydown", handleKeyDown);
+            window.removeEventListener("keyup", handleKeyUp);
+        };
+    }, []);
 
     // Minimap Toggle
     const [showMiniMap, setShowMiniMap] = useState(false);
@@ -185,9 +200,12 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
                 selectionKeyCode="Shift"
 
 
-                selectionOnDrag
+                selectionOnDrag={!altPressed}
                 selectionMode={SelectionMode.Partial}
-                panOnDrag={[1]} // only middle mouse button pans the canvas
+                
+                //panOnDrag={[1]} // only middle mouse button pans the canvas
+                panOnDrag={altPressed ? [0, 1] : [1]}
+
                 //selectionOnDrag={false} // left drag won't create a selection box
                 elementsSelectable={true} // nodes selectable with left click
                 nodesDraggable={true} // nodes still draggable (see note below)

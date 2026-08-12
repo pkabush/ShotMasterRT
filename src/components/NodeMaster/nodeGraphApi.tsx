@@ -8,6 +8,7 @@ import { Project } from "../../classes/Project";
 import { GoogleAI } from "../../classes/GoogleAI";
 import type { LocalFile } from "../../classes/fileSystem/LocalFile";
 import { LocalVideo } from "../../classes/fileSystem/LocalVideo";
+import { MultiTextNodeDefinition } from "./Nodes/MultiTextNode";
 
 
 export function useNodeGraphApi() {
@@ -544,9 +545,31 @@ export function useNodeGraphApi() {
             } else {
                 setNodeData(outTextNode.id, { text: res, });
             }*/
+
             // Always create New Text
-            const newId = addNode("textNode", nodeId, { text: res, });
-            connect(nodeId, newId, "out_text", "input_0");
+            //const newId = addNode("textNode", nodeId, { text: res, });
+            //connect(nodeId, newId, "out_text", "input_0");
+
+
+
+            // Multi Text
+            const outTextNode = getOutputNodes(nodeId, "out_text", "multiTextNode")[0];
+            if (!outTextNode) {
+                // No Multi Text Node yet → create one
+                const newId = addNode("multiTextNode", nodeId, { texts: [res], selected_text: 0, });
+                connect(nodeId, newId, "out_text", "in"
+                );
+            } else {
+                // Multi Text Node already exists → add another text
+                const operation = MultiTextNodeDefinition.operations?.addText;
+                if (operation) {
+                    const updatedData = operation({ node: outTextNode, text: res, api });
+                    setNodeData(outTextNode.id, updatedData);
+                }
+            }
+
+
+
 
         },
         [addNode, connect, getOutputNodes, setNodeData]

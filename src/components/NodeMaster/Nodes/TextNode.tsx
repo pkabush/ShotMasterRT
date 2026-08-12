@@ -94,17 +94,17 @@ TextNode.displayName = "TextNode";
 
 
 export const TextNodeDefinition: NodeDefinition<TextNodeData, "textNode", any> = {
-    type: "textNode",
-    icon: faA,
-    displayName: "Text Node",
+  type: "textNode",
+  icon: faA,
+  displayName: "Text Node",
 
-    component: TextNode,
+  component: TextNode,
 
-    defaultData: {
-      text:""
-    },
+  defaultData: {
+    text: "",
+  },
 
-    getNodeOutputData: ({ node }) => {
-        return node.data.text as string;
-    },
+  getNodeOutputData: ({ node }) => {
+    return node.data.text as string;
+  },
 };

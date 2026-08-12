@@ -51,6 +51,9 @@ export class ChatGPT implements AIProvider {
       gpt_5_4: "gpt-5.4",
       gpt_5_4_mini: "gpt-5.4-mini",
       gpt_5_5: "gpt-5.5",
+      gpt_5_6_sol : "gpt-5.6-sol",
+      gpt_5_6_terra : "gpt-5.6-terra",
+      gpt_5_6_luna : "gpt-5.6-luna",
       gpt_image_2: "gpt-image-2",
     },
     image_models: {

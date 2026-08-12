@@ -3,7 +3,7 @@ import React from "react";
 type SimpleSelectProps = {
   value: string;
   options: string[];
-  onChange?: (value: string) => void;
+  onChange?: (value: string, index: number) => void;
   label?: string;
   className?: string;
   colorMap?: Record<string, string>; // optional
@@ -32,21 +32,24 @@ const SimpleSelect: React.FC<SimpleSelectProps> = ({
         style={
           selectedColor
             ? {
-                backgroundColor: selectedColor,
-                borderColor: selectedColor,
-              }
+              backgroundColor: selectedColor,
+              borderColor: selectedColor,
+            }
             : undefined
         }
       >
         <select
           className="form-select form-select-sm border-0 rounded-0"
           value={value}
-          onChange={(e) => onChange?.(e.target.value)}
+          onChange={(e) => {
+            const index = e.target.selectedIndex;
+            onChange?.(e.target.value, index);
+          }}
           style={
             selectedColor
               ? {
-                  backgroundColor: selectedColor,
-                }
+                backgroundColor: selectedColor,
+              }
               : undefined
           }
         >
