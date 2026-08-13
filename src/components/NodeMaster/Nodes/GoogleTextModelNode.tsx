@@ -43,15 +43,17 @@ export const nb_GoogleAI = memo(
                 const msg_packs = nodegraph_api.iterateMessagePacks(multi_in_data);
 
                 console.log("Messages",msg_packs);
+
+
                 
-                // Send All messages in parralel 
+                // Send All messages in parralel                 
                 await Promise.all(
-                    msg_packs.map(async (messages) => {
+                    msg_packs.map(async (messages,index) => {
                         const res = await GoogleAI.sendMessages(messages, model, aspect_ratio, resolution);
-                        await nodegraph_api.saveAiTextImageResponse(id, res, local_file);
+                        await nodegraph_api.saveAiTextImageResponse(id, res, local_file,index);
                         return res;
                     })
-                );           
+                );                           
                 
 
             } finally {

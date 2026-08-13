@@ -516,7 +516,7 @@ export function useNodeGraphApi() {
 
     // Save AI Image/Text Response
     const saveAiTextImageResponse = useCallback(
-        async (nodeId: string, res: any, local_file: LocalFile) => {
+        async (nodeId: string, res: any, local_file: LocalFile,index?: number) => {
             // IMAGE RESPONSE            
             if (typeof res !== "string") {
                 // Image Response                
@@ -536,40 +536,20 @@ export function useNodeGraphApi() {
                 return;
             }
 
-            // Text response
-            /*
-            const outTextNode = getOutputNodes(nodeId, "out_text", "textNode")[0];
-            if (!outTextNode) {
-                const newId = addNode("textNode", nodeId, { text: res, });
-                connect(nodeId, newId, "out_text", "input_0");
-            } else {
-                setNodeData(outTextNode.id, { text: res, });
-            }*/
-
-            // Always create New Text
-            //const newId = addNode("textNode", nodeId, { text: res, });
-            //connect(nodeId, newId, "out_text", "input_0");
-
-
-
             // Multi Text
             const outTextNode = getOutputNodes(nodeId, "out_text", "multiTextNode")[0];
             if (!outTextNode) {
                 // No Multi Text Node yet → create one
                 const newId = addNode("multiTextNode", nodeId, { texts: [res], selected_text: 0, });
-                connect(nodeId, newId, "out_text", "in"
-                );
+                connect(nodeId, newId, "out_text", "in");
             } else {
                 // Multi Text Node already exists → add another text
                 const operation = MultiTextNodeDefinition.operations?.addText;
                 if (operation) {
-                    const updatedData = operation({ node: outTextNode, text: res, api });
+                    const updatedData = operation({ node: outTextNode, text: res, api, index });
                     setNodeData(outTextNode.id, updatedData);
                 }
             }
-
-
-
 
         },
         [addNode, connect, getOutputNodes, setNodeData]

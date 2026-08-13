@@ -6,7 +6,7 @@ import { ScriptView } from "./ScriptView";
 import { ArtbookView } from "./Artbook/ArtbookView";
 import TaskView from "./TaskView";
 import { Button } from "react-bootstrap";
-import { SceneView } from "./SceneView";
+import { SceneView } from "./Scene/SceneView";
 import { Character } from "../classes/Artbook/Character";
 import { ArtbookCharacterView } from "./Artbook/ArtboookCharacterView";
 import { PromptView } from "./PromptView";

@@ -1,15 +1,16 @@
 import { observer } from "mobx-react-lite";
-import type { Scene } from "../classes/Scene";
+import type { Scene } from "../../classes/Scene";
 import { Badge, Button, Stack } from "react-bootstrap";
-import SimpleButton from "./Atomic/SimpleButton";
-import TabsContainer from "./TabsContainer";
+import SimpleButton from "../Atomic/SimpleButton";
+import TabsContainer from "../TabsContainer";
 import SceneInfoCard from "./SceneInfoCard";
-import ShotsInfoStrip from "./ShotsInfoStrip";
-import { SceneTimelineView } from "./SceneViews/TimelineView";
-import { SceneNodeBuilderWithProvider } from "./NodeMaster/ShotNodeBuilder";
+import ShotsInfoStrip from "./Shot/ShotsInfoStrip";
+
+import { SceneNodeBuilderWithProvider } from "../NodeMaster/ShotNodeBuilder";
 import { useState } from "react";
-import ResizableContainer from "./ResizableContainer";
-import ShotStripPreview from "./ShotStripPreview";
+import ResizableContainer from "../ResizableContainer";
+import ShotStripPreview from "../ShotStripPreview";
+import { SceneTimelineView } from "./TimelineView";
 
 
 export interface SceneViewProps {

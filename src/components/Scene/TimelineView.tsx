@@ -1,5 +1,5 @@
 import { observer } from "mobx-react-lite";
-import type { SceneViewProps } from "../SceneView";
+import type { SceneViewProps } from "../Scene/SceneView";
 import { LocalVideo } from "../../classes/fileSystem/LocalVideo";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import MediaPreview from "../MediaComponents/MediaPreview";

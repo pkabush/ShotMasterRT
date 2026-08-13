@@ -211,4 +211,17 @@ export class Tags {
             }
         }
     }
+
+    addTagsListFromText(list: string) {
+        list.split("\n").map(
+            (tag: string) => {
+                if (this.dataJson!.getByAbsPath(tag)) {
+                    this.addTag(tag);
+                } else {
+                    console.log("MISSING TAG: ", tag)
+                }
+            })
+
+
+    }
 }

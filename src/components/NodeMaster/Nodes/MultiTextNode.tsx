@@ -278,14 +278,30 @@ export const MultiTextNodeDefinition: NodeDefinition<
     },
 
     operations: {
-        addText: ({ node, api, text }: any) => {
-            const texts = [...node.data.texts, text];
+        addText: ({ node, api, text, index }: any) => {
+            const texts = [...node.data.texts];
+
+            const targetIndex =
+                index === undefined
+                    ? texts.length
+                    : Number(index);
+
+            if (!Number.isInteger(targetIndex) || targetIndex < 0) {
+                throw new Error(`Invalid text index "${index}"`);
+            }
+
+            while (texts.length <= targetIndex) {
+                texts.push("");
+            }
+
+            texts[targetIndex] = text;
 
             api.setNodeData(node.id, {
                 ...node.data,
                 texts,
-                selected_text: texts.length - 1,
+                selected_text: targetIndex,
             });
         },
+
     },
 };

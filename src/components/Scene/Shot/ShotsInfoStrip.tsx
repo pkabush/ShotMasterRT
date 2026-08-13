@@ -1,17 +1,17 @@
 // ShotsInfoStrip
 import React, { useState } from 'react';
-import { Scene } from '../classes/Scene';
+import { Scene } from '../../../classes/Scene';
 import { observer } from 'mobx-react-lite';
-import ShotStripPreview from './ShotStripPreview';
-import ResizableContainer from './ResizableContainer';
+import ShotStripPreview from '../../ShotStripPreview';
+import ResizableContainer from '../../ResizableContainer';
 import ShotInfoCard from './ShotInfoCard'; // Import the new ShotInfoCard
-import SimpleButton from './Atomic/SimpleButton';
-import LoadingButton from './Atomic/LoadingButton';
+import SimpleButton from '../../Atomic/SimpleButton';
+import LoadingButton from '../../Atomic/LoadingButton';
 import { Button } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronLeft, faChevronRight, faClipboard } from '@fortawesome/free-solid-svg-icons';
 import * as ContextMenu from "@radix-ui/react-context-menu";
-import { MenuItemIcon } from './MediaFolderGallery';
+import { MenuItemIcon } from '../../MediaFolderGallery';
 
 interface Props {
   scene: Scene;

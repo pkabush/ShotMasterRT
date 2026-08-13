@@ -3,10 +3,10 @@ import { NodeResizeControl, useStore, type Node, type NodeProps } from "@xyflow/
 import { NamedInputHandle, NamedOutputHandle } from "../Atomic/NamedInput";
 import { useNodeGraphApi } from "../nodeGraphApi";
 import { Project } from "../../../classes/Project";
-import { VideoPlaylist } from "../../SceneViews/TimelineView";
 import { NodeResizeIcon } from "./LocalImageNode";
 import type { NodeDefinition } from "../NodeDefinition/NodeDefinition";
 import { faClapperboard } from "@fortawesome/free-solid-svg-icons";
+import { VideoPlaylist } from "../../Scene/TimelineView";
 
 
 export type TimelineNodeModelData = {

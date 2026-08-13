@@ -39,6 +39,7 @@ import type { NodeDefinitionMetadata } from "./NodeDefinition/NodeDefinition";
 import { TextNodeDefinition } from "./Nodes/TextNode";
 import { LocalFileToPathNodeDefinition } from "./Nodes/LocalFileToPathNode";
 import { MultiTextNodeDefinition } from "./Nodes/MultiTextNode";
+import { RegexSplitNodeDefinition } from "./Nodes/RegexSplitNode";
 
 export const nodeDefinitions = {
     textNode: TextNodeDefinition,
@@ -54,6 +55,7 @@ export const nodeDefinitions = {
     testNode: TestNodeDefinition,
     localFileToPathNode: LocalFileToPathNodeDefinition,
     multiTextNode: MultiTextNodeDefinition,
+    regexSplitNode : RegexSplitNodeDefinition,
 } as const;
 
 export const nodeTypes = Object.fromEntries(
@@ -209,8 +211,6 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
                 //selectionOnDrag={false} // left drag won't create a selection box
                 elementsSelectable={true} // nodes selectable with left click
                 nodesDraggable={true} // nodes still draggable (see note below)
-
-
 
 
 

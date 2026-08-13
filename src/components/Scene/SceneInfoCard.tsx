@@ -1,17 +1,15 @@
 import React from "react";
 import { observer } from "mobx-react-lite"; // <--- important
-import { Scene } from "../classes/Scene";
-import EditableJsonTextField from "./EditableJsonTextField";
-import SimpleSelect from "./Atomic/SimpleSelect";
-import LoadingSpinner from "./Atomic/LoadingSpinner";
-import { models } from "../classes/ChatGPT";
-import SettingsButton from "./Atomic/SettingsButton";
-import { TagsFolderContainer } from "./FolderTags/FolderTagsContainer";
-import type { LocalFolder } from "../classes/fileSystem/LocalFolder";
-import { WorkflowOptionSelect, WorkflowTextField } from "./WorkflowOptionSelect";
-import { AllTextModels } from "../classes/AI_provider";
+import { Scene } from "../../classes/Scene";
+import EditableJsonTextField from "../EditableJsonTextField";
+import LoadingSpinner from "../Atomic/LoadingSpinner";
+import SettingsButton from "../Atomic/SettingsButton";
+import { TagsFolderContainer } from "../FolderTags/FolderTagsContainer";
+import type { LocalFolder } from "../../classes/fileSystem/LocalFolder";
+import { WorkflowOptionSelect, WorkflowTextField } from "../WorkflowOptionSelect";
+import { AllTextModels } from "../../classes/AI_provider";
 import { Button } from "react-bootstrap";
-import { CollapsibleContainerAccordion } from "./Atomic/CollapsibleContainer";
+import { CollapsibleContainerAccordion } from "../Atomic/CollapsibleContainer";
 
 interface Props {
   scene: Scene;
@@ -26,6 +24,8 @@ const SceneInfoCard: React.FC<Props> = observer(({ scene }) => { // <--- observe
     scene.createShotsFromShotsJson();
   };
 
+  const split_into_shots_wf_name = "split_scene_into_shots"
+
   return (
     <div>
       {/** GENERATE SHOTS JSON */}
@@ -36,13 +36,14 @@ const SceneInfoCard: React.FC<Props> = observer(({ scene }) => { // <--- observe
             <button className="btn btn-sm btn-outline-success" onClick={async () => {
               const res = await scene.generateShotsJson()
               scene.sceneJson?.updateField("shotsjson", res);
-            }}> Split Into Shots </button>
-            {/**Model Selector */}
-            <SimpleSelect
-              value={scene.project.workflows.split_scene_into_shots.model ?? models[0]}
-              options={models}
-              onChange={(val) => { scene.project.updateWorkflow("split_scene_into_shots", "model", val); }}
+            }}> Split Into Shots </button>            
+            {/* Model Selector */}
+            <WorkflowOptionSelect
+              workflowName={split_into_shots_wf_name}
+              optionName={"model"}
+              values={AllTextModels}
             />
+
             {/**Loading Spinner */}
             <LoadingSpinner isLoading={scene.is_generating_shotsjson} asButton />
           </>
@@ -53,19 +54,19 @@ const SceneInfoCard: React.FC<Props> = observer(({ scene }) => { // <--- observe
             <CollapsibleContainerAccordion label="Prompt" defaultCollapsed={true}>
               <div className="p-2">
 
-                <EditableJsonTextField localJson={scene.project.projinfo} field="workflows/split_scene_into_shots/system_message" fitHeight collapsed={true}/>
-                <EditableJsonTextField localJson={scene.project.projinfo} field="workflows/split_scene_into_shots/prompt" fitHeight collapsed={true}/>
+                <EditableJsonTextField localJson={scene.project.projinfo} field="workflows/split_scene_into_shots/system_message" fitHeight collapsed={true} />
+                <EditableJsonTextField localJson={scene.project.projinfo} field="workflows/split_scene_into_shots/prompt" fitHeight collapsed={true} />
                 <EditableJsonTextField localJson={scene.sceneJson} field="split_prompt" fitHeight />
               </div>
             </CollapsibleContainerAccordion>
-            <EditableJsonTextField localJson={scene.sceneJson} field="shotsjson" fitHeight collapsed={true}/>
+            <EditableJsonTextField localJson={scene.sceneJson} field="shotsjson" fitHeight collapsed={true} />
           </>
         }
       />
 
       <GenTagsButton scene={scene} />
 
-      <EditableJsonTextField localJson={scene.sceneJson} field="script" fitHeight collapsed={true}/>
+      <EditableJsonTextField localJson={scene.sceneJson} field="script" fitHeight collapsed={true} />
 
       <TagsFolderContainer tags={scene.references} folders={[scene.project, scene.project.artbook as LocalFolder, scene]} />
 
