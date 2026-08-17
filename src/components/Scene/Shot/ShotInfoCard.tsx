@@ -1,7 +1,7 @@
 // ShotInfoCard.tsx
 import React from 'react';
 import { observer } from 'mobx-react-lite';
-import { Badge, Button } from 'react-bootstrap';
+import { Badge } from 'react-bootstrap';
 import { toJS } from 'mobx';
 import { Shot } from '../../../classes/Shot';
 import SimpleSelect from '../../Atomic/SimpleSelect';
@@ -21,9 +21,8 @@ import { Kling_LipSync } from '../../Kling/Kling_LipSync';
 import { TagsFolderContainer } from '../../FolderTags/FolderTagsContainer';
 import { Project } from '../../../classes/Project';
 import type { LocalFolder } from '../../../classes/fileSystem/LocalFolder';
-import SettingsButton from '../../Atomic/SettingsButton';
-import { WorkflowOptionSelect, WorkflowTextField } from '../../WorkflowOptionSelect';
-import { AI, AllTextModels } from '../../../classes/AI_provider';
+import { ShotFindReferencesButton } from './Actions/ShotFindReferences';
+import { ShotGenerateMissingReferencesButton } from './Actions/ShotGenerateMissingReferences';
 
 
 interface Props {
@@ -59,30 +58,6 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
             onChange={(val) => { shot.shotJson?.updateField("shot_state", val) }}
             colorMap={Shot.shot_states}
           />
-
-          {/**
-          <SimpleToggle
-            label="Finished Image"
-            value={!!shot.shotJson.data?.finished_image} // <-- controlled from JSON
-            onToggle={(state) => {
-              if (shot.shotJson) {
-                shot.shotJson.updateField('finished_image', state);
-              }
-            }}
-            activeColor='#848000'
-          />
-
-          <SimpleToggle
-            label="Finished"
-            value={!!shot.shotJson.data?.finished} // <-- controlled from JSON
-            onToggle={(state) => {
-              if (shot.shotJson) {
-                shot.shotJson.updateField('finished', state);
-                if(state) shot.shotJson.updateField('finished_image', state);
-              }
-            }}
-          />
-           */}
 
           <MultiStateToggle
             states={Shot.shot_states}
@@ -155,13 +130,12 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
           "StoryCrush": <>
             <EditableJsonTextField localJson={shot.shotJson} field="description" fitHeight />
 
-            <SC_GenTagsButton shot={shot} />
-            <SC_FindRefsToGenerate shot={shot} />
             <TagsFolderContainer tags={shot.references} folders={[Project.getProject(), Project.getProject().artbook as LocalFolder]} />
 
-
+            {false && <ShotFindReferencesButton shot={shot} />}
+            <ShotGenerateMissingReferencesButton shot={shot} />
           </>
-
+          
         }}
       />
 
@@ -175,120 +149,4 @@ export default ShotInfoCard;
 
 
 
-export const SC_GenTagsButton: React.FC<Props> = observer(({ shot }) => {
-  const wf_name = "find_shot_refs_from_description"
-  const output = "find_shot_refs_from_description_output"
 
-  return <div>
-    <SettingsButton
-      className="mb-2"
-      buttons={
-        <>
-          <button className="btn btn-sm btn-outline-success" onClick={async () => {
-            console.log("FIND REFS")
-
-            const workflow = shot.scene.project.workflows[wf_name]
-
-            const prompt = `
-${workflow.prompt ?? ""}
-
-Desctiption:
-${shot.shotJson?.data.description}
-
-
-REFS DICTIONARY:
-${shot.scene.project.artbook?.tags_list.join("\n")}
-
-`;
-            const res = await AI.GenerateText({
-              prompt: prompt,
-              model: workflow.model ?? AllTextModels[0],
-            })
-            shot.shotJson!.updateField(output, res);
-            shot.references?.addTagsListFromText(shot.shotJson?.getField(output));
-          }} >
-            Find References
-          </button>
-
-          {/* Model Selector */}
-          <WorkflowOptionSelect
-            workflowName={wf_name}
-            optionName={"model"}
-            values={AllTextModels}
-          />
-          {/* Loading Spinner */}
-          {/*<LoadingSpinner isLoading={shot.is_generating_tags} asButton /> */}
-
-          <Button size='sm' onClick={() => {
-            shot.references?.addTagsListFromText(shot.shotJson?.getField(output));
-          }}>Add Refs</Button>
-
-        </>
-      }
-      content={
-        <>
-          <WorkflowTextField workflowName={wf_name} optionName={"prompt"} />
-          <EditableJsonTextField localJson={shot.shotJson} field={output} />
-        </>
-      }
-    />
-  </div>;
-});
-
-
-export const SC_FindRefsToGenerate: React.FC<Props> = observer(({ shot }) => {
-  const wf_name = "sc_find_refs_to_generate"
-  const output = "sc_find_refs_to_generate_output"
-
-  return <div>
-    <SettingsButton
-      className="mb-2"
-      buttons={
-        <>
-          <button className="btn btn-sm btn-outline-success" onClick={async () => {
-            const workflow = shot.scene.project.workflows[wf_name]            
-
-            const prompt = `
-${workflow.prompt ?? ""}
-
-Desctiption:
-${shot.shotJson?.data.description}
-
-
-Paths to references I Already have:
-${ shot.references?.get_active_tags.join("\n") }
-
-`;
-
-            
-            const res = await AI.GenerateText({
-              prompt: prompt,
-              model: workflow.model ?? AllTextModels[0],
-            })
-            shot.shotJson!.updateField(output, res);            
-
-          }} >
-            Generate Missing References
-          </button>
-
-          {/* Model Selector */}
-          <WorkflowOptionSelect
-            workflowName={wf_name}
-            optionName={"model"}
-            values={AllTextModels}
-          />
-          {/* Loading Spinner */}
-          {/*<LoadingSpinner isLoading={shot.is_generating_tags} asButton /> */}
-
-
-        </>
-      }
-      content={
-        <>
-          <WorkflowTextField workflowName={wf_name} optionName={"prompt"} />
-          <EditableJsonTextField localJson={shot.shotJson} field={output} />
-        </>
-      }
-    />
-  </div>;
-});

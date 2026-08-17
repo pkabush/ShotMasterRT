@@ -148,7 +148,6 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
   );
 
   return (
-
     <CollapsibleContainerAccordion
       label={label}
       headerExtra={defaultHeaderExtra}
@@ -182,7 +181,6 @@ const GenericTextEditor: React.FC<GenericTextEditorProps> = ({
 
       {children}
     </CollapsibleContainerAccordion>
-
   );
 };
 

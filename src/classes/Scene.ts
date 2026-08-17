@@ -4,7 +4,6 @@ import { Shot } from './Shot';
 import { action, computed, makeObservable, observable, runInAction } from "mobx";
 import { Project } from './Project';
 //import { GoogleAI } from './GoogleAI';
-import { ChatGPT } from './ChatGPT';
 import Prompt from './Prompt';
 import * as ResolveUtils from './ResolveUtils';
 import { LocalFolder } from './fileSystem/LocalFolder';
@@ -185,37 +184,6 @@ export class Scene extends LocalFolder {
 
   get script() {
     return this.sceneJson?.data?.script;
-  }
-
-  async generateShotsJson(): Promise<string | null> {
-    if (!this.sceneJson?.data?.script) return null;
-
-    runInAction(() => { this.is_generating_shotsjson = true; });
-
-    const scriptText = this.sceneJson.data.script;
-
-    const prompt = `
-${this.project.workflows.split_scene_into_shots.prompt}
-
-${this.sceneJson.data.split_prompt}
-
-SCRIPT:
-${scriptText}
-`;
-
-    const system_msg = this.project.projinfo?.getField("workflows/split_scene_into_shots/system_message")
-
-    try {
-      // Call ChatGPT with prompt + system message
-      const res = await ChatGPT.txt2txt(prompt, system_msg, this.project?.projinfo?.getField("workflows/split_scene_into_shots/model"));
-      // txt2txt returns string | null
-      return res;
-    } catch (err) {
-      console.error("Error generating shots JSON:", err);
-      return null;
-    } finally {
-      runInAction(() => { this.is_generating_shotsjson = false; });
-    }
   }
 
   // Scene.ts
