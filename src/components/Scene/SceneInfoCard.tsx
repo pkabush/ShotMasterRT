@@ -6,6 +6,7 @@ import { TagsFolderContainer } from "../FolderTags/FolderTagsContainer";
 import type { LocalFolder } from "../../classes/fileSystem/LocalFolder";
 import { FindSceneReferencesButton } from "./Actions/FindSceneReferences";
 import { SplitSceneIntoShotsButton } from "./Actions/SplitSceneIntoShots";
+import { GenerateAllShotReferences } from "./Actions/GenerateAllShotReferences";
 
 interface Props {
   scene: Scene;
@@ -22,6 +23,8 @@ const SceneInfoCard: React.FC<Props> = observer(({ scene }) => { // <--- observe
       <SplitSceneIntoShotsButton scene={scene} />
 
       <FindSceneReferencesButton scene={scene} />
+
+      <GenerateAllShotReferences scene={scene} />
 
       <EditableJsonTextField localJson={scene.sceneJson} field="script" fitHeight collapsed={true} />
 

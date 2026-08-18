@@ -14,13 +14,16 @@ interface Props {
     scene: Scene;
 }
 
+const wf_name = "split_scene_into_shots"
+const wf_loading = `${wf_name}/loading`
+
+
+
 export const SplitSceneIntoShotsButton: React.FC<Props> = observer(({ scene }) => {
 
-    const handleCreateShots = async () => {
-        scene.createShotsFromShotsJson();
-    };
+    const loading = scene.sceneJson?.getField(wf_loading) ?? false;
 
-    const split_into_shots_wf_name = "split_scene_into_shots"
+    const shots = parseShotsJson(scene);
 
     return <SettingsButton className="mb-2"
         buttons={
@@ -28,22 +31,31 @@ export const SplitSceneIntoShotsButton: React.FC<Props> = observer(({ scene }) =
                 {/**Button */}
                 <button className="btn btn-sm btn-outline-success" onClick={async () => {
                     ActionSceneGenerateShotsJson(scene);
-                }}> Split Into Shots </button>
+                }}> Generate Shot Descriptions</button>
 
                 {/* Model Selector */}
                 <WorkflowOptionSelect
-                    workflowName={split_into_shots_wf_name}
+                    workflowName={wf_name}
                     optionName={"model"}
                     values={AllTextModels}
                 />
 
                 {/**Loading Spinner */}
-                <LoadingSpinner isLoading={scene.is_generating_shotsjson} asButton />
+                <LoadingSpinner isLoading={loading} asButton />
+
+                <Button size="sm" variant={shots ? "success" : "outline-secondary"}>
+                    Shots: {Object.keys(shots ?? {}).length}
+                </Button>
+
+                <Button
+                    size="sm"
+                    variant="outline-primary"
+                    onClick={() => { ActionSceneCreateShotsFromJson(scene); }}
+                >Create Shots</Button>
             </>
         }
         content={
             <>
-                <Button onClick={handleCreateShots} size="sm" className="mb-2">Create Shots From Json</Button>
                 <CollapsibleContainerAccordion label="Prompt" defaultCollapsed={true}>
                     <div className="p-2">
 
@@ -61,11 +73,10 @@ export const SplitSceneIntoShotsButton: React.FC<Props> = observer(({ scene }) =
 
 export async function ActionSceneGenerateShotsJson(scene: Scene): Promise<string | null> {
     if (!scene.sceneJson || !scene.sceneJson?.data?.script) return null;
-    runInAction(() => { scene.is_generating_shotsjson = true; });
 
-    const wf_name = "split_scene_into_shots"
+    runInAction(() => { scene.sceneJson?.updateField(wf_loading, true); });
+
     const workflow = scene.project.workflows[wf_name]
-
 
     const scriptText = scene.sceneJson.data.script;
 
@@ -94,6 +105,78 @@ ${scriptText}
         console.error("Error generating shots JSON:", err);
         return null;
     } finally {
-        runInAction(() => { scene.is_generating_shotsjson = false; });
+        runInAction(() => {
+            scene.sceneJson?.updateField(wf_loading, false);
+        });
+    }
+}
+
+export function parseShotsJson(
+    scene: Scene
+): Record<string, Record<string, any>> | null {
+    try {
+        const shotsJson = scene.sceneJson?.data?.shotsjson;
+
+        if (!shotsJson) {
+            console.warn("No shots JSON found in scene.");
+            return null;
+        }
+
+        const parsed: unknown = JSON.parse(shotsJson);
+
+        // Must be a non-null object and not an array
+        if (
+            typeof parsed !== "object" ||
+            parsed === null ||
+            Array.isArray(parsed)
+        ) {
+            return null;
+        }
+
+        const shots = parsed as Record<string, unknown>;
+
+        // Every shot must be an object
+        for (const [shotKey, shotInfo] of Object.entries(shots)) {
+            if (
+                typeof shotKey !== "string" ||
+                !shotInfo ||
+                typeof shotInfo !== "object" ||
+                Array.isArray(shotInfo)
+            ) {
+                return null;
+            }
+        }
+
+        return shots as Record<string, Record<string, any>>;
+    } catch (err) {
+        //console.error("Invalid shots JSON:", err);
+        return null;
+    }
+}
+
+export async function ActionSceneCreateShotsFromJson(scene: Scene) {
+    const shotsData = parseShotsJson(scene);
+
+    if (!shotsData) {
+        alert("Error: The shots JSON is invalid. Please check the format.");
+        return;
+    }
+
+    for (const [shotKey, shotInfo] of Object.entries(shotsData)) {
+        try {
+            const shot = await scene.createShot(shotKey);
+
+            if (!shot) {
+                console.error(`Failed to create shot ${shotKey}`);
+                continue;
+            }
+
+            if (shot.shotJson) {
+                Object.assign(shot.shotJson.data, shotInfo);
+                await shot.shotJson.save();
+            }
+        } catch (err) {
+            console.error(`Error creating shot ${shotKey}:`, err);
+        }
     }
 }

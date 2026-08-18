@@ -8,7 +8,6 @@ import Prompt from './Prompt';
 import * as ResolveUtils from './ResolveUtils';
 import { LocalFolder } from './fileSystem/LocalFolder';
 import { Tags } from './Tags';
-import { AI } from './AI_provider';
 import { Storyboard } from './Storyboard';
 
 const default_sceneInfoJson = {
@@ -23,17 +22,12 @@ const default_sceneInfoJson = {
 export class Scene extends LocalFolder {
   sceneJson: LocalJson | null = null;
   nodeGraphJson: LocalJson | null = null;
-  is_generating_shotsjson = false;
   is_generating_tags = false;
   is_generating_all_shot_images = false;
   split_shots_prompt: Prompt | null = null;
   selectedShot: Shot | null = null;
   references: Tags | null = null;
   storyboard: Storyboard | null = null;
-
-  workflows = {
-    generate_tags: "generate_tags_for_scene"
-  }
 
   fields = {
     generated_tags_list: "generated_tags_list"
@@ -50,7 +44,6 @@ export class Scene extends LocalFolder {
     makeObservable(this, {
       sceneJson: observable,
       nodeGraphJson: observable,
-      is_generating_shotsjson: observable,
       is_generating_tags: observable,
       is_generating_all_shot_images: observable,
       split_shots_prompt: observable,
@@ -187,47 +180,6 @@ export class Scene extends LocalFolder {
   }
 
   // Scene.ts
-  async createShotsFromShotsJson() {
-    if (!this.sceneJson?.data?.shotsjson) {
-      console.warn("No shots JSON found in scene.");
-      return;
-    }
-
-    let shotsData: Record<string, any>;
-    try {
-      shotsData = JSON.parse(this.sceneJson.data.shotsjson);
-    } catch (err) {
-      console.error("Invalid shots JSON:", err);
-      alert("Error: The shots JSON is invalid. Please check the format.");
-      return;
-    }
-
-    for (const shotKey of Object.keys(shotsData)) {
-      const shotInfo = shotsData[shotKey];
-      if (!shotInfo || typeof shotInfo !== "object") {
-        console.warn(`Skipping invalid shot data for key: ${shotKey}`);
-        continue;
-      }
-
-      try {
-        const shot = await this.createShot(shotKey);
-        if (!shot) {
-          console.error(`Failed to create shot ${shotKey}`);
-          continue;
-        }
-
-        // Save shot details to its JSON
-        if (shot.shotJson) {
-          Object.assign(shot.shotJson.data, shotInfo);
-          await shot.shotJson.save();
-        }
-
-      } catch (err) {
-        console.error(`Error creating shot ${shotKey}:`, err);
-      }
-    }
-  }
-
   async generateAllShotImages() {
     runInAction(() => {
       this.is_generating_all_shot_images = true;
@@ -295,32 +247,6 @@ export class Scene extends LocalFolder {
 
     timeline.log()
     timeline.save(this.project.timelinesDirHandle?.handle!);
-  }
-
-  async generateTags() {
-    runInAction(() => { this.is_generating_tags = true; });
-    const workflow = this.project.workflows[this.workflows.generate_tags]
-
-    const prompt = `
-${workflow.prompt ?? ""}
-
-SCRIPT:
-${this.sceneJson?.data.script}
-
-SHOTS JSON:
-${this.sceneJson?.data.shotsjson}
-
-REFS DICTIONARY:
-${this.project.artbook?.tags_list.join("\n")}
-
-`;
-
-    const res = await AI.GenerateText({
-      prompt: prompt,
-      model: workflow.model!,
-    })
-    this.sceneJson?.updateField(this.fields.generated_tags_list, res);
-    runInAction(() => { this.is_generating_tags = false; });
   }
 
   addGeneratedTags() {
