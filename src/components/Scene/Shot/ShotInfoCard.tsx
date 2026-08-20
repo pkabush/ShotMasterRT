@@ -23,6 +23,8 @@ import { Project } from '../../../classes/Project';
 import type { LocalFolder } from '../../../classes/fileSystem/LocalFolder';
 import { ShotFindReferencesButton } from './Actions/ShotFindReferences';
 import { ShotGenerateMissingReferencesButton } from './Actions/ShotGenerateMissingReferences';
+import { ShotGenerateVideoPrompt } from './Actions/ShotGenerateVideoPrompt';
+import { ShotGenerateShotlist } from './Actions/ShotGenerateShotList';
 
 
 interface Props {
@@ -134,8 +136,12 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
 
             {false && <ShotFindReferencesButton shot={shot} />}
             <ShotGenerateMissingReferencesButton shot={shot} />
+            <ShotGenerateShotlist shot={shot} />
+            <ShotGenerateVideoPrompt shot={shot} />
+
+
           </>
-          
+
         }}
       />
 
