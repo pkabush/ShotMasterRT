@@ -18,6 +18,7 @@ export const WF_ShotGenerateShotlist = {
     wf_name,
     wf_output,
     wf_loading,
+    run:ActionGenerateShotlist
 }
 
 
@@ -58,8 +59,6 @@ export const ShotGenerateShotlist: React.FC<Props> = observer(({ shot }) => {
         />
     </div>;
 });
-
-
 
 
 export async function ActionGenerateShotlist(shot: Shot) {

@@ -16,28 +16,31 @@ export const MediaPreviewSmall: React.FC<MediaPreviewSmallProps> = ({
   media,
   previewHeight = 300,
   inlinePreviewHeight = 25,
-  filenameVisibleChars = 8,
   hoverPosition = "bottom",
   openOnClick = true,
 }) => {
   if (!media) return null;
 
-  const displayName = truncateFilename(media.name, filenameVisibleChars);
-
-  // Set the hover preview position based on prop
-  const hoverStyle: React.CSSProperties =
-    hoverPosition === "top"
-      ? { bottom: "100%", top: "auto" }
-      : { top: "100%", bottom: "auto" };
-
   return (
-    <div className="d-inline-block position-relative"
+    <div
+      className="position-relative"
+      style={{
+        width: "100%",
+        minWidth: 0,
+      }}
       draggable={true}
       onDragStart={(e) => {
         console.log("DragStart");
         e.dataTransfer.setData("LocalFilePath", media.path);
-      }}>
-      <div className="d-flex align-items-center">
+      }}
+    >
+      <div
+        className="d-flex align-items-center"
+        style={{
+          width: "100%",
+          minWidth: 0,
+        }}
+      >
         {/* Small inline preview */}
         <MediaGalleryPreview
           mediaItem={media}
@@ -45,39 +48,63 @@ export const MediaPreviewSmall: React.FC<MediaPreviewSmallProps> = ({
           autoPlay={false}
         />
 
-        {/* Clickable text */}
-        <span
-          className="text-muted"
-          style={{ cursor: openOnClick ? "pointer" : "default" }}
-          onClick={openOnClick ? () => media.openInNewTab() : undefined}
-          title={media.name} // full filename on hover
+        {/* Filename + hover preview */}
+        <div
+          className="position-relative media-filename-wrapper"
+          style={{
+            minWidth: 0,
+            flex: "1 1 0%",
+          }}
         >
-          {displayName}
-        </span>
+          {/* Clickable text */}
+          <span
+            className="text-muted text-truncate d-block"
+            style={{
+              cursor: openOnClick ? "pointer" : "default",
+            }}
+            onClick={
+              openOnClick ? () => media.openInNewTab() : undefined
+            }
+            title={media.name}
+          >
+            {media.name}
+          </span>
+
+          {/* Hover preview */}
+          <div
+            className="position-absolute d-none shadow border rounded bg-white media-hover-preview"
+            style={{
+              zIndex: 1050,
+              left: 100,
+              width: "max-content",
+              ...(hoverPosition === "top"
+                ? {
+                  bottom: "100%",
+                  top: "auto",
+                }
+                : {
+                  top: "100%",
+                  bottom: "auto",
+                }),
+            }}
+          >
+            <MediaGalleryPreview
+              mediaItem={media}
+              height={previewHeight}
+            />
+          </div>
+        </div>
       </div>
 
-      {/* Hover preview */}
-      <div
-        className="position-absolute d-none shadow border rounded bg-white"
-        style={{
-          zIndex: 1050,
-          left: "100%",
-          width: "max-content",
-          ...hoverStyle,
-        }}
-      >
-        <MediaGalleryPreview mediaItem={media} height={previewHeight} />
-      </div>
-
-      {/* Show hover preview on hover */}
+      {/* Show hover preview */}
       <style>
         {`
-          .d-inline-block.position-relative:hover > div.position-absolute {
-            display: block !important;
-          }
-        `}
+        .media-filename-wrapper:hover > .media-hover-preview {
+          display: block !important;
+        }
+      `}
       </style>
-    </div >
+    </div>
   );
 };
 

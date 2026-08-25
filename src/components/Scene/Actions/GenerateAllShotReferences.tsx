@@ -1,9 +1,10 @@
 import { observer } from "mobx-react-lite";
 import type { Scene } from "../../../classes/Scene";
 import { Button } from "react-bootstrap";
-import { ActionShotGenerateMissingReferencesDescription, WF_ShotGenerateMissingReferences } from "../Shot/Actions/ShotGenerateMissingReferences";
+import { WF_ShotGenerateMissingReferences } from "../Shot/Actions/ShotGenerateMissingReferences";
 import LoadingSpinner from "../../Atomic/LoadingSpinner";
 import SettingsButton from "../../Atomic/SettingsButton";
+import { WF_ShotGenerateShotlist } from "../Shot/Actions/ShotGenerateShotList";
 
 
 interface Props {
@@ -26,8 +27,9 @@ export const GenerateAllShotReferences: React.FC<Props> = observer(({ scene }) =
         (shot) => shot.shotJson?.getField(WF_ShotGenerateMissingReferences.wf_loading_images)
     ).length;
 
-
-
+    const n_generating_shotLists = shots.filter(
+        (shot) => shot.shotJson?.getField(WF_ShotGenerateShotlist.wf_loading)
+    ).length;
 
     return <>
         <SettingsButton
@@ -44,7 +46,11 @@ export const GenerateAllShotReferences: React.FC<Props> = observer(({ scene }) =
                                 await Promise.all(
                                     scene.shots.map(async (shot) => {
                                         console.log(shot);
-                                        await ActionShotGenerateMissingReferencesDescription(shot);
+
+                                        await Promise.all([
+                                            WF_ShotGenerateShotlist.run(shot),
+                                            WF_ShotGenerateMissingReferences.run(shot)
+                                        ]);
                                     })
                                 )
                             } finally {
@@ -66,6 +72,10 @@ export const GenerateAllShotReferences: React.FC<Props> = observer(({ scene }) =
 
                     <Button size="sm" variant={n_generating_images == 0 ? "outline-secondary" : "warning"}>
                         Images: {n_generating_images}
+                    </Button>
+
+                    <Button size="sm" variant={n_generating_shotLists == 0 ? "outline-secondary" : "warning"}>
+                        ShotLists: {n_generating_shotLists}
                     </Button>
 
 

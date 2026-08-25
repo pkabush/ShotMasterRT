@@ -107,7 +107,7 @@ export const TagsFolderContainer: React.FC<TagsContainerProps> = observer(({
                                         <Stack direction="horizontal" gap={0}>
                                             <div
                                                 className={`rounded-circle mx-2 ${active ? 'bg-success' : 'border border-secondary'}`}
-                                                style={{ width: '15px', height: '15px', }}
+                                                style={{ width: '15px', height: '15px', flexShrink: 0, }}
                                                 onClick={() => {
                                                     tags.toggle(tag);
                                                 }}
@@ -156,7 +156,7 @@ export const TagsFolderContainer: React.FC<TagsContainerProps> = observer(({
                                             <Stack direction="horizontal" gap={0}>
                                                 <div
                                                     className={`rounded-circle mx-2 ${active ? 'bg-warning' : 'border border-warning'}`}
-                                                    style={{ width: '15px', height: '15px', }}
+                                                    style={{ width: '15px', height: '15px', flexShrink: 0, }}
                                                     onClick={() => {
                                                         tags.toggle(tag);
                                                     }}

@@ -29,6 +29,7 @@ export const WF_ShotGenerateMissingReferences = {
     wf_name_genImages,
     wf_loading,
     wf_loading_images,
+    run: ActionShotGenerateMissingReferencesDescription,
 }
 
 

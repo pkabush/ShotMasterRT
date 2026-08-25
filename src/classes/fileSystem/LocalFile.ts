@@ -42,7 +42,7 @@ export class LocalFile extends LocalItem {
     return this._file!;
   }
 
-  async copyToFolder(targetFolder: LocalFolder, new_name?: string): Promise<LocalFile> {
+  async copyToFolder(targetFolder: LocalFolder, new_name?: string, forceReplace = false): Promise<LocalFile> {
     const file = await this.getFile();
 
     // Determine the final file name
@@ -57,18 +57,19 @@ export class LocalFile extends LocalItem {
     let newHandle: FileSystemFileHandle;
 
     try {
-      // Try to get existing file
       newHandle = await targetFolder.handle.getFileHandle(finalName);
-      const existingFile = await newHandle.getFile();
 
-      if (existingFile.size === file.size) {
-        // Same size → do nothing, return existing file
-        return new LocalFile(targetFolder, newHandle);
+      if (!forceReplace) {
+        const existingFile = await newHandle.getFile();
+
+        if (existingFile.size === file.size) {
+          return new LocalFile(targetFolder, newHandle);
+        }
       }
-      // Different size → overwrite
     } catch (err) {
-      // File doesn't exist → create it
-      newHandle = await targetFolder.handle.getFileHandle(finalName, { create: true });
+      newHandle = await targetFolder.handle.getFileHandle(finalName, {
+        create: true,
+      });
     }
 
     // Write the contents (overwrite if needed)
@@ -77,7 +78,7 @@ export class LocalFile extends LocalItem {
     await writable.close();
 
     // Return a new LocalFile instance
-    return targetFolder.load_file(newHandle);
+    return await targetFolder.load_file(newHandle);
   }
 
   async load(): Promise<void> {

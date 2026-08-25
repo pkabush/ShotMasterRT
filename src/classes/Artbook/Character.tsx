@@ -112,11 +112,17 @@ export class Character extends MediaFolder {
     }
 
     async setVariationImage(variationName: string, image?: LocalImage) {
+        // Delete First
+        const prev_image = this.getVariationImage(variationName);
+        if(prev_image) prev_image.delete();
+
         const selectedImage = image ?? this.MediaFolder_results?.selectedMedia;
+        console.log("Selected Image",selectedImage);
         if (!selectedImage) return;
 
-        await selectedImage.copyToFolder(this, variationName);
+        await selectedImage.copyToFolder(this, variationName,true);
         console.log(variationName);
+        
     }
 
     async generateLook(variationName: string) {
