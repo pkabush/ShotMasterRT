@@ -8,6 +8,12 @@ import type { MediaFolder } from "../../../../classes/MediaFolder";
 import { LocalImage } from "../../../../classes/fileSystem/LocalImage";
 import { useEffect, useRef, useState } from "react";
 import type { LocalFolder } from "../../../../classes/fileSystem/LocalFolder";
+import { AI, AllImageModels } from "../../../../classes/AI_provider";
+import { GoogleAI } from "../../../../classes/GoogleAI";
+import SettingsButton from "../../../Atomic/SettingsButton";
+import { WorkflowOptionSelect, WorkflowTextField } from "../../../WorkflowOptionSelect";
+import LoadingSpinner from "../../../Atomic/LoadingSpinner";
+import { Project } from "../../../../classes/Project";
 
 
 interface Props {
@@ -15,7 +21,13 @@ interface Props {
 }
 
 
+const wf_name = "wf_image_censor";
+const wf_loading = `${wf_name}/loading`;
+
+
 export const ShotAddFramesFromPrevious: React.FC<Props> = observer(({ shot }) => {
+
+    const loading = shot.shotJson?.getField(wf_loading) ?? false;
 
     const scene = shot.scene;
     const index = scene.get_shot_list_index(shot);
@@ -97,253 +109,297 @@ export const ShotAddFramesFromPrevious: React.FC<Props> = observer(({ shot }) =>
         }
     }, [previewVideo, previewVideo?.previewFrames.length]);
 
-
     return (
-        <CollapsibleContainerAccordion label="Prev Shot Keyframes" defaultCollapsed={true}>
-            <div
-                style={{
-                    width: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                }}
-            >
-                {/* Top: Video + Buttons */}
+        <>
+            <SettingsButton buttons={
+                <>
+                    <Button size="sm" variant="outline-success"
+
+                        onClick={async () => {
+                            if (!previewVideo) return;
+
+                            shot.shotJson?.updateField(wf_loading, true);
+
+                            try {
+                                if (previewVideo.previewFrames.length === 0) {
+                                    await previewVideo.extractPreviews(previewInterval);
+                                }
+
+                                const image = await savePreviewStrip(previewVideo, shot.MediaFolder_results!, `${prevShot.name}_PreviewStrip.png`);
+                                //shot.references?.addTag(image);
+
+                                const censored = await censorImage(image);
+
+                                if (censored)
+                                    shot.references?.addTag(censored);
+                            } finally {
+                                shot.shotJson?.updateField(wf_loading, false);
+                            }
+                        }}
+
+                    > Extract Framelist And Censor </Button>
+
+                    <WorkflowOptionSelect
+                        workflowName={wf_name}
+                        optionName={"model"}
+                        values={AllImageModels}
+                    />
+
+                    <LoadingSpinner isLoading={loading} asButton />
+                </>
+            }
+                content={
+                    <>
+                        <WorkflowTextField workflowName={wf_name} optionName={"prompt"} />
+                    </>
+                }
+            />
+            <CollapsibleContainerAccordion label="Prev Shot Keyframes" defaultCollapsed={true} >
                 <div
                     style={{
                         width: "100%",
-                        height: "600px",
                         display: "flex",
+                        flexDirection: "column",
                     }}
                 >
-                    {/* Video */}
+                    {/* Top: Video + Buttons */}
                     <div
                         style={{
-                            flex: 1,
-                            minWidth: 0,
-                            display: "flex",
-                            justifyContent: "center",
-                            alignItems: "center",
-                        }}
-                    >
-                        {previewVideo && (
-                            <video
-                                ref={videoRef}
-                                src={previewVideo.urlObject!}
-                                controls
-                                style={{
-                                    maxWidth: "100%",
-                                    maxHeight: "600px",
-                                    display: "block",
-                                }}
-                            />
-                        )}
-                    </div>
-
-                    {/* Buttons */}
-                    <div
-                        style={{
-                            width: "250px",
+                            width: "100%",
                             height: "600px",
-                            flexShrink: 0,
-                            borderLeft: "1px solid #444",
                             display: "flex",
-                            flexDirection: "column",
-                            boxSizing: "border-box",
                         }}
                     >
+                        {/* Video */}
                         <div
                             style={{
-                                padding: "4px",
+                                flex: 1,
+                                minWidth: 0,
                                 display: "flex",
-                                flexDirection: "column",
-                                gap: "4px",
+                                justifyContent: "center",
+                                alignItems: "center",
                             }}
                         >
-                            <Button
-                                size="sm"
-                                onClick={captureFrame}
-                                disabled={!previewVideo}
-                            >
-                                Save Current Frame
-                            </Button>
+                            {previewVideo && (
+                                <video
+                                    ref={videoRef}
+                                    src={previewVideo.urlObject!}
+                                    controls
+                                    style={{
+                                        maxWidth: "100%",
+                                        maxHeight: "600px",
+                                        display: "block",
+                                    }}
+                                />
+                            )}
+                        </div>
 
+                        {/* Buttons */}
+                        <div
+                            style={{
+                                width: "250px",
+                                height: "600px",
+                                flexShrink: 0,
+                                borderLeft: "1px solid #444",
+                                display: "flex",
+                                flexDirection: "column",
+                                boxSizing: "border-box",
+                            }}
+                        >
                             <div
                                 style={{
+                                    padding: "4px",
                                     display: "flex",
+                                    flexDirection: "column",
                                     gap: "4px",
-                                    alignItems: "center",
                                 }}
                             >
                                 <Button
                                     size="sm"
-                                    onClick={() => { previewVideo?.clearPreviews(); }}
+                                    onClick={captureFrame}
                                     disabled={!previewVideo}
-                                    style={{ flex: 1 }}
                                 >
-                                    Extract Previews
+                                    Save Current Frame
                                 </Button>
 
-                                <input
-                                    type="number"
-                                    min="0.01"
-                                    step="0.1"
-                                    value={previewInterval}
-                                    onChange={(e) => {
-                                        const value = Number(e.target.value);
-                                        if (value > 0) {
-                                            setPreviewInterval(value);
-                                        }
-                                    }}
-                                    style={{
-                                        width: "60px",
-                                        height: "31px",
-                                        padding: "2px 5px",
-                                        boxSizing: "border-box",
-                                    }}
-                                    title="Frame extraction interval in seconds"
-                                />
-                            </div>
-
-                            <Button
-                                size="sm"
-                                onClick={async () => {
-                                    if (!previewVideo) return;
-                                    const image = await savePreviewStrip(previewVideo, shot.MediaFolder_results!, `${prevShot.name}_PreviewStrip.png`);
-                                    shot.references?.addTag(image);
-                                }}
-                                disabled={!previewVideo}
-                            >
-                                Save Preview Strip
-                            </Button>
-
-                            <Button
-                                size="sm"
-                                onClick={() => {
-                                    void saveAllPreviewsAsReferences();
-                                }}
-                                disabled={
-                                    !previewVideo ||
-                                    previewVideo.previewFrames.length === 0
-                                }
-                            >
-                                Save All Previews as References
-                            </Button>
-
-
-                            <Button size="sm" variant="secondary" onClick={() => {
-                                if (previewVideo) {
-                                    shot.references?.addTag(previewVideo);
-                                }
-                            }} >
-                                Add Prev Vod As REF
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-
-
-                {/* Bottom: Full-width previews */}
-                {/* Bottom: Full-width previews */}
-                {previewVideo && previewVideo.previewFrames.length > 0 && (
-                    <div
-                        style={{
-                            width: "100%",
-                            borderTop: "1px solid #444",
-                            boxSizing: "border-box",
-                            overflowX: "auto",
-                        }}
-                    >
-                        <div
-                            style={{
-                                display: "flex",
-                                width: "max-content",
-                                gap: "4px",
-                            }}
-                        >
-                            {previewVideo.previewFrames.map((frame) => (
                                 <div
-                                    key={frame.time}
                                     style={{
-                                        position: "relative",
-                                        height: "200px",
-                                        flexShrink: 0,
-                                        cursor: "pointer",
-                                        overflow: "hidden",
-                                    }}
-                                    onClick={() => {
-                                        if (videoRef.current) {
-                                            videoRef.current.currentTime = frame.time;
-                                        }
-                                    }}
-                                    onDoubleClick={() => {
-                                        void savePreviewAsReference(frame);
+                                        display: "flex",
+                                        gap: "4px",
+                                        alignItems: "center",
                                     }}
                                 >
-                                    <img
-                                        src={frame.url}
-                                        alt={`Frame at ${frame.time.toFixed(2)}s`}
-                                        style={{
-                                            height: "200px",
-                                            width: "auto",
-                                            display: "block",
-                                        }}
-                                    />
-
-                                    {/* Small delete cross */}
-                                    <button
-                                        type="button"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            previewVideo.removePreview(frame);
-                                        }}
-                                        style={{
-                                            position: "absolute",
-                                            top: "4px",
-                                            right: "4px",
-                                            width: "20px",
-                                            height: "20px",
-                                            padding: 0,
-                                            border: "none",
-                                            borderRadius: "50%",
-                                            background: "rgba(0, 0, 0, 0.7)",
-                                            color: "white",
-                                            fontSize: "14px",
-                                            lineHeight: "20px",
-                                            textAlign: "center",
-                                            cursor: "pointer",
-                                            zIndex: 10,
-                                        }}
-                                        title="Remove preview"
+                                    <Button
+                                        size="sm"
+                                        onClick={() => { previewVideo?.clearPreviews(); }}
+                                        disabled={!previewVideo}
+                                        style={{ flex: 1 }}
                                     >
-                                        ×
-                                    </button>
+                                        Extract Previews
+                                    </Button>
 
-                                    {/* Timestamp overlay */}
-                                    <div
+                                    <input
+                                        type="number"
+                                        min="0.01"
+                                        step="0.1"
+                                        value={previewInterval}
+                                        onChange={(e) => {
+                                            const value = Number(e.target.value);
+                                            if (value > 0) {
+                                                setPreviewInterval(value);
+                                            }
+                                        }}
                                         style={{
-                                            position: "absolute",
-                                            bottom: "4px",
-                                            left: "4px",
+                                            width: "60px",
+                                            height: "31px",
                                             padding: "2px 5px",
-                                            background: "rgba(0, 0, 0, 0.75)",
-                                            color: "#fff",
-                                            fontSize: "12px",
-                                            fontFamily: "monospace",
-                                            lineHeight: "1.2",
-                                            pointerEvents: "none",
+                                            boxSizing: "border-box",
                                         }}
-                                    >
-                                        {frame.time.toFixed(2)}s
-                                    </div>
+                                        title="Frame extraction interval in seconds"
+                                    />
                                 </div>
-                            ))}
+
+                                <Button
+                                    size="sm"
+                                    onClick={async () => {
+                                        if (!previewVideo) return;
+                                        const image = await savePreviewStrip(previewVideo, shot.MediaFolder_results!, `${prevShot.name}_PreviewStrip.png`);
+                                        shot.references?.addTag(image);
+                                    }}
+                                    disabled={!previewVideo}
+                                >
+                                    Save Preview Strip
+                                </Button>
+
+                                <Button
+                                    size="sm"
+                                    onClick={() => {
+                                        void saveAllPreviewsAsReferences();
+                                    }}
+                                    disabled={
+                                        !previewVideo ||
+                                        previewVideo.previewFrames.length === 0
+                                    }
+                                >
+                                    Save All Previews as References
+                                </Button>
+
+
+                                <Button size="sm" variant="secondary" onClick={() => {
+                                    if (previewVideo) {
+                                        shot.references?.addTag(previewVideo);
+                                    }
+                                }} >
+                                    Add Prev Vod As REF
+                                </Button>
+                            </div>
                         </div>
                     </div>
-                )}
 
 
-            </div>
-        </CollapsibleContainerAccordion>
+                    {/* Bottom: Full-width previews */}
+                    {/* Bottom: Full-width previews */}
+                    {previewVideo && previewVideo.previewFrames.length > 0 && (
+                        <div
+                            style={{
+                                width: "100%",
+                                borderTop: "1px solid #444",
+                                boxSizing: "border-box",
+                                overflowX: "auto",
+                            }}
+                        >
+                            <div
+                                style={{
+                                    display: "flex",
+                                    width: "max-content",
+                                    gap: "4px",
+                                }}
+                            >
+                                {previewVideo.previewFrames.map((frame) => (
+                                    <div
+                                        key={frame.time}
+                                        style={{
+                                            position: "relative",
+                                            height: "200px",
+                                            flexShrink: 0,
+                                            cursor: "pointer",
+                                            overflow: "hidden",
+                                        }}
+                                        onClick={() => {
+                                            if (videoRef.current) {
+                                                videoRef.current.currentTime = frame.time;
+                                            }
+                                        }}
+                                        onDoubleClick={() => {
+                                            void savePreviewAsReference(frame);
+                                        }}
+                                    >
+                                        <img
+                                            src={frame.url}
+                                            alt={`Frame at ${frame.time.toFixed(2)}s`}
+                                            style={{
+                                                height: "200px",
+                                                width: "auto",
+                                                display: "block",
+                                            }}
+                                        />
+
+                                        {/* Small delete cross */}
+                                        <button
+                                            type="button"
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                previewVideo.removePreview(frame);
+                                            }}
+                                            style={{
+                                                position: "absolute",
+                                                top: "4px",
+                                                right: "4px",
+                                                width: "20px",
+                                                height: "20px",
+                                                padding: 0,
+                                                border: "none",
+                                                borderRadius: "50%",
+                                                background: "rgba(0, 0, 0, 0.7)",
+                                                color: "white",
+                                                fontSize: "14px",
+                                                lineHeight: "20px",
+                                                textAlign: "center",
+                                                cursor: "pointer",
+                                                zIndex: 10,
+                                            }}
+                                            title="Remove preview"
+                                        >
+                                            ×
+                                        </button>
+
+                                        {/* Timestamp overlay */}
+                                        <div
+                                            style={{
+                                                position: "absolute",
+                                                bottom: "4px",
+                                                left: "4px",
+                                                padding: "2px 5px",
+                                                background: "rgba(0, 0, 0, 0.75)",
+                                                color: "#fff",
+                                                fontSize: "12px",
+                                                fontFamily: "monospace",
+                                                lineHeight: "1.2",
+                                                pointerEvents: "none",
+                                            }}
+                                        >
+                                            {frame.time.toFixed(2)}s
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+
+                </div>
+            </CollapsibleContainerAccordion>
+        </>
     );
 })
 
@@ -432,4 +488,21 @@ async function savePreviewStrip(
         outputFolder,
         filename,
     );
+}
+
+
+export async function censorImage(image: LocalImage) {
+    const project = Project.getProject()
+    const workflow = project.workflows[wf_name];
+
+    const res = await AI.GenerateImage({
+        prompt: workflow.prompt,
+        model: workflow.model ?? AllImageModels[0],
+        images: [await image.getAIImage()],
+    });
+
+    if (res) res.id = `${image.name_no_extension}_censored`;
+    const resImage = await GoogleAI.saveResultImage(res, image.parentFolder as LocalFolder);
+
+    return resImage;
 }

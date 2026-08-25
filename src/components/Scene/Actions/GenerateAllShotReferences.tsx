@@ -5,6 +5,7 @@ import { WF_ShotGenerateMissingReferences } from "../Shot/Actions/ShotGenerateMi
 import LoadingSpinner from "../../Atomic/LoadingSpinner";
 import SettingsButton from "../../Atomic/SettingsButton";
 import { WF_ShotGenerateShotlist } from "../Shot/Actions/ShotGenerateShotList";
+import { EditableJsonToggleField } from "../../EditableJsonTextField";
 
 
 interface Props {
@@ -13,6 +14,9 @@ interface Props {
 
 const wf_name = "wf_scene_generate_all_shot_references";
 const wf_loading = `${wf_name}/loading`;
+const wf_gen_shotlists = `${wf_name}/generate_shotlists`;
+const wf_gen_missingRefs = `${wf_name}/generate_missing_references`;
+
 
 export const GenerateAllShotReferences: React.FC<Props> = observer(({ scene }) => {
 
@@ -47,10 +51,13 @@ export const GenerateAllShotReferences: React.FC<Props> = observer(({ scene }) =
                                     scene.shots.map(async (shot) => {
                                         console.log(shot);
 
+                                        const gen_shotlists = scene.project.projinfo!.getField(wf_gen_shotlists) ?? true;
+                                        const gen_missing_refs = scene.project.projinfo!.getField(wf_gen_missingRefs) ?? true;
+
                                         await Promise.all([
-                                            WF_ShotGenerateShotlist.run(shot),
-                                            WF_ShotGenerateMissingReferences.run(shot)
-                                        ]);
+                                            gen_shotlists && WF_ShotGenerateShotlist.run(shot),
+                                            gen_missing_refs && WF_ShotGenerateMissingReferences.run(shot)
+                                        ].filter(Boolean));
                                     })
                                 )
                             } finally {
@@ -82,7 +89,13 @@ export const GenerateAllShotReferences: React.FC<Props> = observer(({ scene }) =
 
                 </>
             }
-            content={<></>}
+            content={<>
+                <EditableJsonToggleField localJson={scene.project.projinfo} field={wf_gen_shotlists} default_val={true} label="Generate Descriptions" />
+                <EditableJsonToggleField localJson={scene.project.projinfo} field={wf_gen_missingRefs} default_val={true} label="Generate Missing References" />
+
+
+
+            </>}
         />
 
     </>

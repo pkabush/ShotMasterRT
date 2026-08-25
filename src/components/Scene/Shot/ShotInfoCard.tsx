@@ -26,6 +26,7 @@ import { ShotGenerateMissingReferencesButton } from './Actions/ShotGenerateMissi
 import { ShotGenerateVideoPrompt } from './Actions/ShotGenerateVideoPrompt';
 import { ShotGenerateShotlist } from './Actions/ShotGenerateShotList';
 import { ShotAddFramesFromPrevious } from './Actions/ShotAddFramesFromPrevious';
+import { WF_ShotGenerateStagingImage } from './Actions/ShotGenerateStageing';
 
 
 interface Props {
@@ -138,8 +139,12 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
             {false && <ShotFindReferencesButton shot={shot} />}
             <ShotGenerateMissingReferencesButton shot={shot} />
             <ShotGenerateShotlist shot={shot} />
-            <ShotGenerateVideoPrompt shot={shot} />
+            <WF_ShotGenerateStagingImage.component shot={shot} />
             <ShotAddFramesFromPrevious shot={shot} />
+
+
+
+            <ShotGenerateVideoPrompt shot={shot} />
 
 
           </>
