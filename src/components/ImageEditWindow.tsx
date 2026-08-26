@@ -12,15 +12,18 @@ import MediaGalleryPreview from "./MediaComponents/MediaGallerPreview";
 import BottomCenterLabel from "./Atomic/MediaElements/BottomCenterLabel";
 import RefImagesPreview from "./MediaComponents/RefImagesPreview";
 import { ChatGPT } from "../classes/ChatGPT";
-import { WorkflowOptionSelect } from "./WorkflowOptionSelect";
+import { WorkflowOptionSelect, WorkflowTextField } from "./WorkflowOptionSelect";
 import { useProject } from "../contexts/ProjectContext";
 import { TagsFolderContainer } from "./FolderTags/FolderTagsContainer";
 import { Project } from "../classes/Project";
-import { Button,   Stack } from "react-bootstrap";
+import { Button, Stack } from "react-bootstrap";
 import FullPageOverlay from "./Containers/FullPageOverlay";
 import DrawingCanvas from "./DrawingCanvas/DrawingCanvas";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBrush } from "@fortawesome/free-solid-svg-icons";
+import SettingsButton from "./Atomic/SettingsButton";
+import { WF_Image_censor } from "./Scene/Shot/Actions/ShotAddFramesFromPrevious";
+import { AllImageModels } from "../classes/AI_provider";
 
 interface ImageEditWindowProps {
   localImage: LocalImage;
@@ -103,7 +106,6 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
           source: localImage.path,
         })
       }
-
 
     } catch (err) {
       console.error("GenerateImage failed:", err);
@@ -241,7 +243,6 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
                         defaultValue={GoogleAI.options.img_models.flash_image}
                         label="Model:"
                       />
-
                     </div>
 
 
@@ -289,9 +290,33 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
                   </div>
 
                 </>,
+
+                CensorImage: <>
+                  <SettingsButton buttons={
+                    <>
+                      <Button size="sm" variant="outline-success"
+                        onClick={async () => {
+                          const res_image = await WF_Image_censor.run(localImage);
+                          console.log("Censored Image", res_image);
+                        }}
+                      > Censor Image </Button>
+
+                      <WorkflowOptionSelect
+                        workflowName={WF_Image_censor.name}
+                        optionName={"model"}
+                        values={AllImageModels}
+                      />
+                    </>
+                  }
+                    content={
+                      <>
+                        <WorkflowTextField workflowName={WF_Image_censor.name} optionName={"prompt"} />
+                      </>
+                    }
+                  />
+                </>
               }}
             />
-
           </div>
         </Panel>
       </Group>
@@ -301,13 +326,8 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
       <DrawingCanvas image={localImage} onClose={() => { setShowCanvas(false) }} />
     </FullPageOverlay>
 
-
   </>);
 
-
-
-}
-
-);
+});
 
 export default ImageEditWindow;

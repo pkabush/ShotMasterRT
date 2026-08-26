@@ -296,8 +296,6 @@ export const ShotAddFramesFromPrevious: React.FC<Props> = observer(({ shot }) =>
                         </div>
                     </div>
 
-
-                    {/* Bottom: Full-width previews */}
                     {/* Bottom: Full-width previews */}
                     {previewVideo && previewVideo.previewFrames.length > 0 && (
                         <div
@@ -396,7 +394,6 @@ export const ShotAddFramesFromPrevious: React.FC<Props> = observer(({ shot }) =>
                         </div>
                     )}
 
-
                 </div>
             </CollapsibleContainerAccordion>
         </>
@@ -453,7 +450,6 @@ export async function extractVideoFrame(
     );
 }
 
-
 export async function savePreviewFrame(
     frame: LocalVideoPreview,
     outputFolder: MediaFolder,
@@ -505,4 +501,10 @@ export async function censorImage(image: LocalImage) {
     const resImage = await GoogleAI.saveResultImage(res, image.parentFolder as LocalFolder);
 
     return resImage;
+}
+
+export const WF_Image_censor = {
+    name: wf_name,
+    loading: wf_loading,
+    run: censorImage,
 }
