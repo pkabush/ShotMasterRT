@@ -7,6 +7,7 @@ import type { LocalFolder } from "../../classes/fileSystem/LocalFolder";
 import { FindSceneReferencesButton } from "./Actions/FindSceneReferences";
 import { SplitSceneIntoShotsButton } from "./Actions/SplitSceneIntoShots";
 import { GenerateAllShotReferences } from "./Actions/GenerateAllShotReferences";
+import { SceneGenerateItemReferencesComponent } from "./Actions/GenerateSceneItemReferences";
 
 interface Props {
   scene: Scene;
@@ -25,6 +26,8 @@ const SceneInfoCard: React.FC<Props> = observer(({ scene }) => { // <--- observe
       <FindSceneReferencesButton scene={scene} />
 
       <GenerateAllShotReferences scene={scene} />
+
+      <SceneGenerateItemReferencesComponent scene={scene} />
 
       <EditableJsonTextField localJson={scene.sceneJson} field="script" fitHeight collapsed={true} />
 

@@ -36,7 +36,7 @@ export const WF_ShotGenerateMissingReferences = {
 export const ShotGenerateMissingReferencesButton: React.FC<Props> = observer(({ shot }) => {
     const project = shot.scene.project;
 
-    const missingRefs = parseMissingRefsJson(shot);
+    const missingRefs = parseMissingRefsJson(shot.shotJson?.getField(output));
     const loading = shot.shotJson?.getField(wf_loading) ?? false;
     const loading_images = shot.shotJson?.getField(wf_loading_images) ?? false;
 
@@ -117,15 +117,15 @@ export const ShotGenerateMissingReferencesButton: React.FC<Props> = observer(({ 
     </div>;
 });
 
-type MissingReference = {
+export type MissingReference = {
     name: string;
     prompt: string;
     sourceReferences: string[];
     [key: string]: unknown;
 };
 
-function parseMissingRefsJson(shot: Shot): MissingReference[] | null {
-    const value = shot.shotJson?.getField(output);
+export function parseMissingRefsJson(value:any): MissingReference[] | null {
+    //const value = shot.shotJson?.getField(output);
 
     if (typeof value !== "string") {
         return null;
@@ -211,7 +211,7 @@ export async function ActionGenerateReferences(shot: Shot) {
     shot.shotJson?.updateField(`${wf_name_genImages}/loading`, true);
 
     try {
-        const missingRefs = parseMissingRefsJson(shot);
+        const missingRefs = parseMissingRefsJson(shot.shotJson?.getField(output));
 
         if (missingRefs === null) {
             console.error(
