@@ -130,7 +130,7 @@ export class KlingAI {
       image,
       prompt,
       model = KlingAI.options.img2video.model.v2_6,
-      duration = KlingAI.options.img2video.duration,
+      duration = KlingAI.options.img2video.duration.five,
       mode = KlingAI.options.img2video.mode.std,
       cfg_scale = 0.5,
       static_mask,

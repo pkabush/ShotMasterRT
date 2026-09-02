@@ -35,6 +35,8 @@ export const KlingNode = memo(
         const { tasks_json } = useLocalFile();
 
         const handleClick = async () => {
+            console.log("KLING DATA",data);
+
             setLoading(true);
             try {
                 let task_info: { id: string; workflow: string } | null = null;
