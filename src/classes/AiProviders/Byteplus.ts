@@ -52,6 +52,10 @@ export class SeedanceAI {
                 "13": "13",
                 "14": "14",
                 "15": "15",
+            },
+            models: {
+                "seed_2.0":"dreamina-seedance-2-0-260128",
+                "seed_2.5":"dreamina-seedance-2-5-260628",
             }
 
         }

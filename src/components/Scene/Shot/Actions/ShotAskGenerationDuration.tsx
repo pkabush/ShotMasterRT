@@ -5,8 +5,9 @@ import { WorkflowOptionSelect, WorkflowTextField } from "../../../WorkflowOption
 import { AI, AllTextModels } from "../../../../classes/AI_provider";
 import LoadingSpinner from "../../../Atomic/LoadingSpinner";
 import EditableJsonTextField from "../../../EditableJsonTextField";
+import { SeedanceAI } from "../../../../classes/AiProviders/Byteplus";
 
-const wf_name = "shot_generate_shotlist"
+const wf_name = "shot_ask_generation_duration"
 const wf_output = `${wf_name}/output`
 const wf_loading = `${wf_name}/loading`
 
@@ -14,16 +15,16 @@ interface Props {
     shot: Shot;
 }
 
-export const WF_ShotGenerateShotlist = {
+export const WF_ShotAskGenerationDuration = {
     wf_name,
     wf_output,
     wf_loading,
-    run:ActionGenerateShotlist
+    run: ActionAskGenerationDuration
 }
 
 
 
-export const ShotGenerateShotlist: React.FC<Props> = observer(({ shot }) => {
+export const ShotAskGenerationDuration: React.FC<Props> = observer(({ shot }) => {
 
     const loading = shot.shotJson?.getField(wf_loading) ?? false;
 
@@ -33,24 +34,19 @@ export const ShotGenerateShotlist: React.FC<Props> = observer(({ shot }) => {
             buttons={
                 <>
                     <button className="btn btn-sm btn-outline-success"
-                        onClick={async () => {
-                            ActionGenerateShotlist(shot);
-                        }} >
-                        Generate Shotlist
+                        onClick={async () => { ActionAskGenerationDuration(shot); }} >
+                        Ask Duration
                     </button>
 
                     {/* Model Selector */}
                     <WorkflowOptionSelect workflowName={wf_name} optionName={"model"} values={AllTextModels} />
-
                     <LoadingSpinner isLoading={loading} asButton />
-
                 </>
             }
             content={
                 <>
                     <WorkflowTextField workflowName={wf_name} optionName={"prompt"} />
                     <EditableJsonTextField localJson={shot.shotJson} field={wf_output} />
-
                 </>
             }
         />
@@ -58,14 +54,11 @@ export const ShotGenerateShotlist: React.FC<Props> = observer(({ shot }) => {
 });
 
 
-export async function ActionGenerateShotlist(shot: Shot) {
+export async function ActionAskGenerationDuration(shot: Shot) {
     const project = shot.scene.project;
-
     shot.shotJson?.updateField(wf_loading, true);
 
     try {
-
-
         const workflow = shot.scene.project.workflows[wf_name];
 
         const prompt = `
@@ -73,8 +66,10 @@ export async function ActionGenerateShotlist(shot: Shot) {
 
         Generation Description:
         ${shot.shotJson?.data.description}
-`;
 
+        Shotlist:
+        ${shot.shotJson?.data.shot_generate_shotlist.output}
+`;
 
         const model =
             project.workflows[wf_name].model ??
@@ -85,9 +80,19 @@ export async function ActionGenerateShotlist(shot: Shot) {
             model,
         });
 
-
         await shot.shotJson!.updateField(wf_output, res);
 
+        try {
+            const duration = res?.split("\n")[0];
+            if (
+                duration &&
+                Object.values(SeedanceAI.options.video.duration).includes(duration)
+            ) {                
+                project.projinfo?.updateField("workflows/seedance_gen_video/duration",duration);
+            }
+        } catch (e) {
+            console.log("Could not Extract Duration from response", e)
+        }
 
     } finally {
         shot.shotJson?.updateField(wf_loading, false);

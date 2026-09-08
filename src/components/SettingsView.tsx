@@ -3,7 +3,7 @@ import { observer } from "mobx-react-lite";
 import { Project } from "../classes/Project";
 import { StringEditField } from "./StringEditField";
 import SimpleButton from "./Atomic/SimpleButton.tsx";
-import EditableJsonTextField from './EditableJsonTextField';
+import EditableJsonTextField, { EditableJsonToggleField } from './EditableJsonTextField';
 import type { Provider } from "../classes/AiProviders/CostTracker.ts";
 import { Button, Stack } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -38,8 +38,13 @@ export const SettingsView: React.FC<SettingsViewProps> = observer(({ project }) 
         <SimpleButton onClick={() => { project.download_asset("assets/server.zip", "server.zip") }} label="Download Server (MacOS)" />
       </>}
 
+      <EditableJsonToggleField localJson={project.projinfo} field={"debug_log"} default_val={false} label="Debug_log" />
+
       <EditableJsonTextField localJson={project.projinfo} field="project_path" fitHeight />
+
+
       <SimpleButton onClick={() => { project.download_asset("assets/Shotmaster_import.Lua", "Shotmaster_import.Lua") }} label="Download Resolve LuaScript" />
+
 
 
 
@@ -136,7 +141,7 @@ export const SettingsView: React.FC<SettingsViewProps> = observer(({ project }) 
 
             const gstore = useGoogleStore.getState();
             console.log(gstore.user?.email);
-            const name = gstore.user?.email;            
+            const name = gstore.user?.email;
 
             if (!name) {
               alert("ERROR: USERNAME is required.");

@@ -22,6 +22,7 @@ export type SeedanceNodeModelData = {
     resolution?: string;
     duration?: string;
     ratio?: string;
+    model?: string;
     sound?: boolean;
 };
 
@@ -123,7 +124,8 @@ export const SeedanceNode = memo(
                     generate_audio: data.sound ?? false,
                     resolution: data.resolution,
                     duration: data.duration ? Number(data.duration) : undefined,
-                    ratio: data.ratio ?? SeedanceAI.options.video.ration.adaptive
+                    ratio: data.ratio ?? SeedanceAI.options.video.ration.adaptive,
+                    model: data.model ? data.model : undefined,
                 });
 
 
@@ -175,6 +177,18 @@ export const SeedanceNode = memo(
                     </div>
 
                     <Stack>
+                        <SimpleSelect
+                            label="model"
+                            value={data.model ?? SeedanceAI.options.video.models["seed_2.0"]}
+                            options={Object.values(SeedanceAI.options.video.models)}
+                            onChange={(val: string) => {
+                                nodegraph_api.setNodeData(id, {
+                                    ...nodegraph_api.getNodeData(id),
+                                    ...{ model: val }
+                                });
+                            }}
+                        />
+
                         {/** Resolution */}
                         <SimpleSelect
                             label="resolution"
@@ -199,6 +213,7 @@ export const SeedanceNode = memo(
                                 });
                             }}
                         />
+
 
                         <SimpleSelect
                             label="ratio"
@@ -262,7 +277,7 @@ export const SeedanceNodeDefinition: NodeDefinition<SeedanceNodeModelData, "seed
     },
 
     getNodeOutputData: ({ node, outputId }) => {
-        console.log("GET",node,outputId);
+        console.log("GET", node, outputId);
         return null
     },
 };

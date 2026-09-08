@@ -27,6 +27,7 @@ import { ShotGenerateVideoPrompt } from './Actions/ShotGenerateVideoPrompt';
 import { ShotGenerateShotlist } from './Actions/ShotGenerateShotList';
 import { ShotAddFramesFromPrevious } from './Actions/ShotAddFramesFromPrevious';
 import { WF_ShotGenerateStagingImage } from './Actions/ShotGenerateStageing';
+import { ShotAskGenerationDuration } from './Actions/ShotAskGenerationDuration';
 
 
 interface Props {
@@ -142,9 +143,17 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
             <WF_ShotGenerateStagingImage.component shot={shot} />
             <ShotAddFramesFromPrevious shot={shot} />
 
-
+            <ShotAskGenerationDuration shot={shot} />
 
             <ShotGenerateVideoPrompt shot={shot} />
+
+            <br />
+            <br />
+            <h3>Video Generation:</h3>
+
+            <BytePlus_GenerateVideo shot={shot} />
+            <TaskContainer tasksJson={shot.tasksJson!} />
+            <MediaFolderGallery mediaFolder={shot.MediaFolder_genVideo} defaultCollapsed={true}/>
 
 
           </>
