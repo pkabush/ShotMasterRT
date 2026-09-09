@@ -8,13 +8,16 @@ export async function postToWorker(
 ) {
     try {
         const idToken = useGoogleStore.getState().idToken;
-        const email = useGoogleStore.getState().user?.email ?? "";
+        //const email = useGoogleStore.getState().user?.email ?? "";
+        const username = useGoogleStore.getState().user?.name ?? "";
         const project = Project.getProject();
-        const debug_log = project.projinfo?.getField("debug_log") ? "true" : "false";
+        //const debug_log = project.projinfo?.getField("debug_log") ? "true" : "false";
+        const debug_log = useGoogleStore.getState().debug_log ? "true" : "false";
 
         const params = new URLSearchParams({
             project_name: project.name,
-            email:email,
+            //email:email,
+            username:username,
             debug_log:debug_log,
             ...additional_url_params,
         });

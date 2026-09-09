@@ -41,6 +41,9 @@ interface GoogleStore {
   idTokenExpiresAt: number | null;
   driveAccessToken: string | null;
 
+  debug_log: boolean;
+  setDebugLog: (enabled: boolean) => void;
+
   websocketStatus:
   | "disconnected"
   | "connecting"
@@ -62,6 +65,12 @@ export const useGoogleStore = create<GoogleStore>(
     idToken: null,
     idTokenExpiresAt: null,
     driveAccessToken: null,
+
+    debug_log: false,
+
+    setDebugLog: (enabled: boolean) => {
+      set({ debug_log: enabled });
+    },
 
     websocketStatus: "disconnected",
 
@@ -284,6 +293,9 @@ export function UserCircle() {
     return () => clearInterval(interval);
   }, [expiresAt, user]);
 
+  const debugLog = useGoogleStore((s) => s.debug_log);
+  const setDebugLog = useGoogleStore((s) => s.setDebugLog);
+
 
   if (!user || needsRefresh) {
     return (
@@ -386,6 +398,35 @@ export function UserCircle() {
               </Button>
 
 
+              <div
+                style={{
+                  marginTop: 10,
+                  paddingTop: 10,
+                  borderTop: "1px solid #ddd",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: 8,
+                  fontSize: 13,
+                }}
+              >
+                <input
+                  id="debug-log-toggle"
+                  type="checkbox"
+                  checked={debugLog}
+                  onChange={(e) => setDebugLog(e.target.checked)}
+                />
+
+                <label
+                  htmlFor="debug-log-toggle"
+                  style={{
+                    margin: 0,
+                    cursor: "pointer",
+                  }}
+                >
+                  Debug log
+                </label>
+              </div>
 
 
             </div>

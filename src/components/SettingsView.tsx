@@ -38,7 +38,7 @@ export const SettingsView: React.FC<SettingsViewProps> = observer(({ project }) 
         <SimpleButton onClick={() => { project.download_asset("assets/server.zip", "server.zip") }} label="Download Server (MacOS)" />
       </>}
 
-      <EditableJsonToggleField localJson={project.projinfo} field={"debug_log"} default_val={false} label="Debug_log" />
+      { false && <EditableJsonToggleField localJson={project.projinfo} field={"debug_log"} default_val={false} label="Debug_log" /> }
 
       <EditableJsonTextField localJson={project.projinfo} field="project_path" fitHeight />
 
