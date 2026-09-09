@@ -111,10 +111,9 @@ export const BytePlus_GenerateVideo: React.FC<BytePlus_GenerateVideoProps> = obs
                                     has_video = true;
                                 }
 
-
-
                                 const result = await SeedanceAI.generateVideo({
                                     content,
+                                    model:  project.workflows[wf_name].model ?? SeedanceAI.options.video.models["seed_2.0"],
                                     generate_audio: project.projinfo!.getField(gen_audio_field) ?? false,
                                     resolution: project.workflows[wf_name].resolution,
                                     duration: project.workflows[wf_name].duration ? Number(project.workflows[wf_name].duration) : undefined,
@@ -127,6 +126,7 @@ export const BytePlus_GenerateVideo: React.FC<BytePlus_GenerateVideoProps> = obs
                                     provider: ai_providers.BD,
                                     geninfo: {
                                         generate_audio: project.projinfo!.getField(gen_audio_field) ?? false,
+                                        model:  project.workflows[wf_name].model ?? SeedanceAI.options.video.models["seed_2.0"],
                                         resolution: project.workflows[wf_name].resolution,
                                         duration: project.workflows[wf_name].duration ? Number(project.workflows[wf_name].duration) : undefined,
                                         ratio: project.workflows[wf_name].aspect_ratio ?? SeedanceAI.options.video.ration.adaptive,
@@ -167,8 +167,14 @@ export const BytePlus_GenerateVideo: React.FC<BytePlus_GenerateVideoProps> = obs
                         values={Object.values(SeedanceAI.options.video.ration)}
                         defaultValue={SeedanceAI.options.video.ration.adaptive}
                     />
-
-
+                    <WorkflowOptionSelect
+                        project={project}
+                        workflowName={wf_name}
+                        optionName="model"
+                        label="Model:"
+                        values={Object.values(SeedanceAI.options.video.models)}
+                        defaultValue={SeedanceAI.options.video.models["seed_2.0"]}
+                    />
 
                     {/* Loading Spinner */}
                     <LoadingSpinner isLoading={shot.is_submitting_video} asButton />

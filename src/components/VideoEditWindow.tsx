@@ -251,7 +251,6 @@ const VideoEditWindow: React.FC<VideoEditWindowProps> = ({
                                         <Stack direction="horizontal">
                                             <EditableJsonToggleField localJson={localVideo.mediaJson} field={"seedance_edit/generate_audio"} default_val={false} label="Sound" />
 
-
                                             <WorkflowOptionSelect
                                                 project={project}
                                                 workflowName={seedance_edit_wf}
@@ -275,7 +274,14 @@ const VideoEditWindow: React.FC<VideoEditWindowProps> = ({
                                                 values={Object.values(SeedanceAI.options.video.ration)}
                                                 defaultValue={SeedanceAI.options.video.ration.adaptive}
                                             />
-
+                                            <WorkflowOptionSelect
+                                                project={project}
+                                                workflowName={seedance_edit_wf}
+                                                optionName="model"
+                                                label="Model:"
+                                                values={Object.values(SeedanceAI.options.video.models)}
+                                                defaultValue={SeedanceAI.options.video.models["seed_2.0"]}
+                                            />
 
                                         </Stack>
 
@@ -335,6 +341,7 @@ const VideoEditWindow: React.FC<VideoEditWindowProps> = ({
 
                                                 const result = await SeedanceAI.generateVideo({
                                                     content,
+                                                    model:  project.workflows[seedance_edit_wf].model ?? SeedanceAI.options.video.models["seed_2.0"],
                                                     generate_audio: localVideo.mediaJson?.getField("seedance_edit/generate_audio") ?? false,
                                                     resolution: project.workflows[seedance_edit_wf]?.resolution,
                                                     duration: project.workflows[seedance_edit_wf]?.duration ? Number(project.workflows[seedance_edit_wf].duration) : undefined,
