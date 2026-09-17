@@ -172,11 +172,11 @@ export class Tags {
         const currentTags = [...this.tags];
         const index = currentTags.indexOf(path);
 
-        if (index === -1) return;
+        if (index === -1 || currentTags.length === 0) return;
 
-        const newIndex = index + offset;
-
-        if (newIndex < 0 || newIndex >= currentTags.length) return;
+        const newIndex =
+            ((index + offset) % currentTags.length + currentTags.length) %
+            currentTags.length;
 
         currentTags.splice(index, 1);
         currentTags.splice(newIndex, 0, path);
