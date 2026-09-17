@@ -117,7 +117,11 @@ export const MediaFolderGallery: React.FC<MediaFolderGalleryProps> = observer(
 
                                                 }}
                                                 onClose={() => mediaFolder.setSelectedMedia(null)}
-                                                reference_images={(mediaFolder.parentFolder as Shot).MediaFolder_results!.getMediaWithTag("ref_frame") as LocalImage[]}
+                                                reference_images={
+                                                    mediaFolder.parentFolder instanceof Shot
+                                                        ? (mediaFolder.parentFolder.MediaFolder_results?.getMediaWithTag("ref_frame") as LocalImage[]) ?? []
+                                                        : []
+                                                }
                                             />
                                         </>
                                     ) : null

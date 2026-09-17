@@ -8,6 +8,7 @@ import { FindSceneReferencesButton } from "./Actions/FindSceneReferences";
 import { SplitSceneIntoShotsButton } from "./Actions/SplitSceneIntoShots";
 import { GenerateAllShotReferences } from "./Actions/GenerateAllShotReferences";
 import { SceneGenerateItemReferencesComponent } from "./Actions/GenerateSceneItemReferences";
+import { MediaFolderGallery } from "../MediaFolderGallery";
 
 interface Props {
   scene: Scene;
@@ -33,6 +34,7 @@ const SceneInfoCard: React.FC<Props> = observer(({ scene }) => { // <--- observe
 
       <TagsFolderContainer tags={scene.references} folders={[scene.project, scene.project.artbook as LocalFolder, scene]} />
 
+      <MediaFolderGallery mediaFolder={scene} defaultCollapsed={true}/>
       <div style={{ height: "500px" }}></div>
     </div>
   );

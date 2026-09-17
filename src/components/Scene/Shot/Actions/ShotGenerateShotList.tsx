@@ -27,6 +27,8 @@ export const ShotGenerateShotlist: React.FC<Props> = observer(({ shot }) => {
 
     const loading = shot.shotJson?.getField(wf_loading) ?? false;
 
+    const first_shot = shot.scene.shots_ordered.indexOf(shot) === 0;
+
     return <div>
         <SettingsButton
             className="mb-2"
@@ -48,9 +50,8 @@ export const ShotGenerateShotlist: React.FC<Props> = observer(({ shot }) => {
             }
             content={
                 <>
-                    <WorkflowTextField workflowName={wf_name} optionName={"prompt"} />
+                    <WorkflowTextField workflowName={first_shot ? wf_name : wf_name + "_next" } optionName={"prompt"} />
                     <EditableJsonTextField localJson={shot.shotJson} field={wf_output} />
-
                 </>
             }
         />
@@ -60,19 +61,23 @@ export const ShotGenerateShotlist: React.FC<Props> = observer(({ shot }) => {
 
 export async function ActionGenerateShotlist(shot: Shot) {
     const project = shot.scene.project;
+    const shot_index = shot.scene.shots_ordered.indexOf(shot)
+    const first_shot = shot_index === 0;
 
     shot.shotJson?.updateField(wf_loading, true);
 
     try {
 
 
-        const workflow = shot.scene.project.workflows[wf_name];
+        const workflow = shot.scene.project.workflows[ first_shot ? wf_name : wf_name + "_next" ];
 
         const prompt = `
         ${workflow.prompt ?? ""}
 
         Generation Description:
         ${shot.shotJson?.data.description}
+
+        ${first_shot ? "" : 'Previous Shotlist:\n' + shot.scene.shots_ordered[shot_index-1].shotJson?.getField( wf_output ) }
 `;
 
 

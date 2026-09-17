@@ -9,6 +9,7 @@ import * as ResolveUtils from './ResolveUtils';
 import { LocalFolder } from './fileSystem/LocalFolder';
 import { Tags } from './Tags';
 import { Storyboard } from './Storyboard';
+import { MediaFolder } from './MediaFolder';
 
 const default_sceneInfoJson = {
   tags: [],
@@ -19,7 +20,7 @@ const default_sceneInfoJson = {
   },
 }
 
-export class Scene extends LocalFolder {
+export class Scene extends MediaFolder {
   sceneJson: LocalJson | null = null;
   nodeGraphJson: LocalJson | null = null;
   is_generating_tags = false;
