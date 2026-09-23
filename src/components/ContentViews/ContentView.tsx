@@ -1,16 +1,17 @@
 import React from "react";
 import { observer } from "mobx-react-lite";
-import { Project } from "../classes/Project";
-import { SettingsView } from "./SettingsView";
-import { ScriptView } from "./ScriptView";
-import { ArtbookView } from "./Artbook/ArtbookView";
-import TaskView from "./TaskView";
+import { Project } from "../../classes/Project";
+import { SettingsView } from "../SettingsView";
+import { ScriptView } from "../ScriptView";
+import { ArtbookView } from "../Artbook/ArtbookView";
+import TaskView from "../TaskView";
 import { Button } from "react-bootstrap";
-import { SceneView } from "./Scene/SceneView";
-import { Character } from "../classes/Artbook/Character";
-import { ArtbookCharacterView } from "./Artbook/ArtboookCharacterView";
-import { PromptView } from "./PromptView";
-import { ScriptMasterView } from "./ScriptMaster/ScriptMasterView";
+import { SceneView } from "../Scene/SceneView";
+import { Character } from "../../classes/Artbook/Character";
+import { ArtbookCharacterView } from "../Artbook/ArtboookCharacterView";
+import { PromptView } from "../PromptView";
+import { ScriptMasterView } from "../ScriptMaster/ScriptMasterView";
+import { StatsView } from "./StatsView/StatsView";
 
 interface ContentViewProps {
   project: Project | null;
@@ -59,7 +60,8 @@ export const ContentView: React.FC<ContentViewProps> = observer(({ project }) =>
       return <PromptView />
     case "scriptmaster":
       return <ScriptMasterView />
-
+    case "stats":
+      return <StatsView />
 
 
     default:

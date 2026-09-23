@@ -17,8 +17,8 @@ export async function postToWorker(
         const params = new URLSearchParams({
             project_name: project.name,
             //email:email,
-            username:username,
-            debug_log:debug_log,
+            username: username,
+            debug_log: debug_log,
             ...additional_url_params,
         });
 
@@ -58,6 +58,39 @@ export async function postToWorker(
         }
 
         return response;
+    } catch (err) {
+        console.error(`Worker error (${subpath})`, err);
+        throw err;
+    }
+}
+
+export async function getFromWorker(
+    subpath: string,
+    additional_url_params: Record<string, string> = {}
+) {
+    try {
+        const idToken = useGoogleStore.getState().idToken;
+
+        const params = new URLSearchParams(additional_url_params);
+
+        const query = params.toString();
+
+        const url = query
+            ? `${WORKER_URL}/${subpath}?${query}`
+            : `${WORKER_URL}/${subpath}`;
+
+        const res = await fetch(url, {
+            method: "GET",
+            headers: {
+                Authorization: `Bearer ${idToken}`,
+            },
+        });
+
+        if (!res.ok) {
+            throw new Error(await res.text());
+        }
+
+        return await res.json();
     } catch (err) {
         console.error(`Worker error (${subpath})`, err);
         throw err;

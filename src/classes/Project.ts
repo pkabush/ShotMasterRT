@@ -19,7 +19,8 @@ export type ProjectView =
   | { type: "taskview" }
   | { type: "charview" }
   | { type: "promptview" }
-  | { type: "scriptmaster" };
+  | { type: "scriptmaster" }
+  | { type: "stats" };
 
 const default_projinfo = {
   "gpt_model": "gpt-4o-mini",

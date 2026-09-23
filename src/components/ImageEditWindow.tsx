@@ -31,13 +31,16 @@ interface ImageEditWindowProps {
   reference_images?: LocalImage[];
 }
 
+const MAX_PENDING_GENERATIONS = 5;
+
 const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
   localImage,
   onClose,
   reference_images = [],
 }) => {
   const [url, setUrl] = useState<string | null>(null);
-  const [generating, setGenerating] = useState(false);
+  const [pendingGenerations, setPendingGenerations] = useState(0);
+  const generating = pendingGenerations > 0;
   const { project } = useProject();
 
   const [showCanvas, setShowCanvas] = useState(false);
@@ -53,7 +56,14 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
   }, [localImage]);
 
   const handleGenerate = async () => {
-    setGenerating(true);
+    if (pendingGenerations >= MAX_PENDING_GENERATIONS) {
+      console.log("MAX GENERATIONS REACHED! wait for others to finish, or reopen edit window");
+      return;
+    }
+
+    setPendingGenerations(prev => prev + 1);
+
+
     try {
       const base64Obj = await localImage.getBase64(); // uses cached Base64 if available
       const refs = await Promise.all(reference_images.map(img => img.getBase64()));
@@ -110,7 +120,7 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
     } catch (err) {
       console.error("GenerateImage failed:", err);
     } finally {
-      setGenerating(false);
+      setPendingGenerations(prev => Math.max(0, prev - 1));
     }
   };
 
@@ -207,7 +217,7 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
                       <LoadingButton
                         className="btn-outline-success"
                         onClick={handleGenerate}
-                        label="Generate"
+                        label={generating ? `Generating : ${pendingGenerations} left` : "Generate"}
                         is_loading={generating}
                       />
 

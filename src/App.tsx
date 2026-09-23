@@ -3,7 +3,7 @@ import { observer } from 'mobx-react-lite';
 import { MenuBar } from './components/MenuBar';
 import FolderList from './components/FolderList';
 import { Project } from './classes/Project';
-import { ContentView } from "./components/ContentView";
+import { ContentView } from "./components/ContentViews/ContentView";
 import { NotificationContainer } from './components/NotificationContainer';
 import { UserSettingsDB } from './classes/UserSettingsDB';
 import { ProjectContext } from './contexts/ProjectContext';

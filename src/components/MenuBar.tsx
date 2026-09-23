@@ -5,8 +5,6 @@ import { MenuColumn } from './MenuColumn';
 import type { SubmenuItemProps } from './SubmenuItem';
 import { Project } from '../classes/Project';
 import { CostDisplay } from './CostDisplay';
-//import TextField from './TextField';
-
 
 interface MenuBarProps {
   onOpenFolder: () => void;
@@ -52,8 +50,12 @@ export const MenuBar: React.FC<MenuBarProps> = ({ onOpenFolder, recentFolders, o
                 <MenuColumn title="Script" onClick={() => project.setView({ type: "script" })} />
                 <MenuColumn title="TaskView" onClick={() => project.setView({ type: "taskview" })} />
                 <MenuColumn title="PromptView" onClick={() => project.setView({ type: "promptview" })} />
+                <MenuColumn title="Stats" onClick={() => project.setView({ type: "stats" })} />
               </>
             )}
+
+
+
           </Nav>
 
           {/* RIGHT SIDE */}
