@@ -80,7 +80,7 @@ interface StatsPopUpProps extends React.ComponentPropsWithoutRef<typeof Popover>
  * Uses forwardRef so OverlayTrigger can directly inject position styles & refs.
  */
 export const StatsPopUp = React.forwardRef<HTMLDivElement, StatsPopUpProps>(
-    ({ summary, id, className = "", ...props }, ref) => {
+    ({ summary, id, className = "", style, ...props }, ref) => {
         const metadataLabel = [summary.userEmail, summary.date]
             .filter(Boolean)
             .join(" • ");
@@ -90,6 +90,10 @@ export const StatsPopUp = React.forwardRef<HTMLDivElement, StatsPopUpProps>(
                 id={id}
                 ref={ref}
                 className={`shadow-lg border-secondary-subtle ${className}`}
+                style={{
+                    maxWidth: "fit-content", // Overrides default 276px Bootstrap limit
+                    ...style,                // Preserves Popper positioning styles passed by OverlayTrigger
+                }}
                 {...props}
             >
                 <Popover.Header as="h6" className="fw-bold py-2 px-3 d-flex justify-content-between align-items-center">
@@ -103,7 +107,7 @@ export const StatsPopUp = React.forwardRef<HTMLDivElement, StatsPopUpProps>(
                     </div>
                     <span className="badge bg-secondary ms-2">{summary.totalRequests} reqs</span>
                 </Popover.Header>
-                <Popover.Body className="p-2">
+                <Popover.Body className="p-2 overflow-auto" style={{ maxHeight: "400px" }}>
                     <Table striped bordered hover size="sm" className="m-0 small">
                         <thead>
                             <tr className="text-muted small">
@@ -164,6 +168,8 @@ export const StatsPopUp = React.forwardRef<HTMLDivElement, StatsPopUpProps>(
 );
 
 StatsPopUp.displayName = "StatsPopUp";
+
+
 
 export const UsageCellPreview: React.FC<UsageCellPreviewProps> = ({
     summary,
