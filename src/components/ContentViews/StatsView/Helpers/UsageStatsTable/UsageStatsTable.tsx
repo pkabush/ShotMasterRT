@@ -139,6 +139,8 @@ export function buildUserStats(
         totalCost: 0,
         totalDuration: 0,
         providers: {},
+        userEmail: row.user_email,
+        date: row.date,
       };
     }
 
@@ -175,6 +177,7 @@ export function buildUserStats(
       totalCost: 0,
       totalDuration: 0,
       providers: {},
+      userEmail: email,
     };
 
     for (const date of dates) {
@@ -236,6 +239,7 @@ export function calculateGrandTotals(
       totalCost: 0,
       totalDuration: 0,
       providers: {},
+      date: dateKey,
     };
   }
 

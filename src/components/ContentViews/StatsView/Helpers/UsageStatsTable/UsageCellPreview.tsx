@@ -19,6 +19,8 @@ export type UsageSummary = {
     totalCost: number;
     totalDuration: number;
     providers: Record<string, ProviderStat>;
+    date?: string;
+    userEmail?: string;
 };
 
 interface UsageCellPreviewProps {
@@ -79,6 +81,10 @@ interface StatsPopUpProps extends React.ComponentPropsWithoutRef<typeof Popover>
  */
 export const StatsPopUp = React.forwardRef<HTMLDivElement, StatsPopUpProps>(
     ({ summary, id, className = "", ...props }, ref) => {
+        const metadataLabel = [summary.userEmail, summary.date]
+            .filter(Boolean)
+            .join(" • ");
+
         return (
             <Popover
                 id={id}
@@ -87,8 +93,15 @@ export const StatsPopUp = React.forwardRef<HTMLDivElement, StatsPopUpProps>(
                 {...props}
             >
                 <Popover.Header as="h6" className="fw-bold py-2 px-3 d-flex justify-content-between align-items-center">
-                    <span>Provider Breakdown</span>
-                    <span className="badge bg-secondary">{summary.totalRequests} reqs</span>
+                    <div>
+                        <div>Provider Breakdown</div>
+                        {metadataLabel && (
+                            <div className="text-muted fw-normal small" style={{ fontSize: "0.75rem" }}>
+                                {metadataLabel}
+                            </div>
+                        )}
+                    </div>
+                    <span className="badge bg-secondary ms-2">{summary.totalRequests} reqs</span>
                 </Popover.Header>
                 <Popover.Body className="p-2">
                     <Table striped bordered hover size="sm" className="m-0 small">
