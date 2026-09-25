@@ -224,11 +224,13 @@ export class GoogleAI implements AIProvider {
         // Local Image
         if (message instanceof LocalImage) {
           // Upload To Google FILES Api
+          /*
           const gfile_part = await message.getGoogleFileURL()
           console.log("GFile Message part", gfile_part)
           contents.push(gfile_part);
+          */
 
-          /*
+          
           const image = await message.getAIImage()
           contents.push({
             inlineData: {
@@ -236,7 +238,7 @@ export class GoogleAI implements AIProvider {
               mimeType: image.mime,
             },
           });
-          */
+          
           continue;
         }
 
