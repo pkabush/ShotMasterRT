@@ -157,7 +157,7 @@ export class Tags {
         );
 
         return tagImages;
-    }
+    }    
 
     getActiveType<T extends LocalItem>(type: new (...args: any[]) => T): T[] {
         const project = Project.getProject();

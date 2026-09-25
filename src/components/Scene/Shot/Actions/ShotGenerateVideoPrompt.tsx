@@ -98,12 +98,12 @@ export async function ActionGenerateVideoPrompt(shot: Shot) {
         References Ordered:
 `;
 
-        const images = await shot.references?.GetAI_Images();
+        //const images = await shot.references?.GetAI_Images();
+        const images = shot.references?.active_images;
 
         const model =
             project.workflows[wf_name].model ??
             AllTextModels[0];
-
 
         const res = await AI.GenerateText({
             prompt,

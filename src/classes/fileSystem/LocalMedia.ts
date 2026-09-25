@@ -105,22 +105,131 @@ export class LocalMedia extends LocalFile {
   async getGoogleFileURL() {
     const gfile = this.mediaJson?.getField("GoogleFile");
 
-    if(gfile) {
-      console.log("File Stored",gfile);
+    if (gfile) {
+      console.log("File Stored", gfile);
       return gfile.part;
     }
-    
+
     console.log("Get Google File URL");
     const form = new FormData();
     form.append("file", await this.getFile());
 
     const uploaded = await postToWorker(form, "gemini/upload");
     console.log("Uploaded to google filesAPI:", uploaded);
-    console.log("GFiles json",JSON.stringify(uploaded, null, 2));
+    console.log("GFiles json", JSON.stringify(uploaded, null, 2));
 
-    this.mediaJson?.updateField("GoogleFile",uploaded);
+    this.mediaJson?.updateField("GoogleFile", uploaded);
 
     return uploaded.part;
+  }
+
+  async isR2FileAvailable(): Promise<boolean> {
+    const r2Url = this.mediaJson?.getField("R2_url");
+
+    if (!r2Url) {
+      return false;
+    }
+
+    try {
+      const url = new URL(r2Url);
+
+      const marker = "/files/downloadR2/";
+
+      if (!url.pathname.startsWith(marker)) {
+        return false;
+      }
+
+      const key = url.pathname.slice(marker.length);
+
+      const checkUrl =
+        `${url.origin}/files/checkR2/${key}`;
+
+      const response = await fetch(checkUrl, {
+        method: "HEAD",
+      });
+
+      return response.ok;
+
+    } catch (err) {
+      console.error("[R2] Availability check failed:", err);
+      return false;
+    }
+  }
+
+  async uploadToR2(): Promise<string> {
+    const r2_url = this.mediaJson?.getField("R2_url");
+
+    if (r2_url) {
+      const exists = await this.isR2FileAvailable();
+
+      if (exists) {
+        console.log("R2 file still exists:", r2_url);
+        return r2_url;
+      }
+
+      console.log("R2 file expired/deleted, uploading again...");
+    }
+
+    try {
+      // Get the actual local file
+      const file = await this.getFile();
+
+      // Ask Worker for a presigned R2 upload URL
+      const response = await postToWorker(
+        {
+          filename: file.name,
+          contentType: file.type || undefined,
+          size: file.size,
+        },
+        "files/uploadR2"
+      );
+
+      const {
+        uploadUrl,
+        url,
+        key,
+      } = response;
+
+      if (!uploadUrl || !url) {
+        throw new Error("Worker did not return R2 upload URL");
+      }
+
+      // Upload directly to R2
+      const uploadResponse = await fetch(uploadUrl, {
+        method: "PUT",
+        headers: file.type
+          ? {
+            "Content-Type": file.type,
+          }
+          : undefined,
+        body: file,
+      });
+
+      if (!uploadResponse.ok) {
+        throw new Error(
+          `R2 upload failed: ${uploadResponse.status} ${await uploadResponse.text()}`
+        );
+      }
+
+      // Store the authenticated Worker URL
+      runInAction(() => {
+        this.web_url = url;
+      });
+
+      console.log("[R2] Uploaded:", {
+        key,
+        url,
+        filename: file.name,
+        size: file.size,
+      });
+
+      this.mediaJson?.updateField("R2_url", url);
+      return url;
+
+    } catch (err) {
+      console.error("[R2] Upload failed:", err);
+      throw err;
+    }
   }
 
   async getUrlObject(): Promise<string> {

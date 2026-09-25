@@ -51,9 +51,9 @@ export class ChatGPT implements AIProvider {
       gpt_5_4: "gpt-5.4",
       gpt_5_4_mini: "gpt-5.4-mini",
       gpt_5_5: "gpt-5.5",
-      gpt_5_6_sol : "gpt-5.6-sol",
-      gpt_5_6_terra : "gpt-5.6-terra",
-      gpt_5_6_luna : "gpt-5.6-luna",
+      gpt_5_6_sol: "gpt-5.6-sol",
+      gpt_5_6_terra: "gpt-5.6-terra",
+      gpt_5_6_luna: "gpt-5.6-luna",
       gpt_image_2: "gpt-image-2",
     },
     image_models: {
@@ -267,30 +267,19 @@ export class ChatGPT implements AIProvider {
   }
 
   async generateText(params: AIGenerateParms): Promise<string | null> {
-    const text = await ChatGPT.txt2txt(
-      params.prompt,
-      params.system,
-      params.model,
-      params.images
-    );
-
-    return text
+    const messages: AIMessage[] = [];
+    if (params.prompt) { messages.push(params.prompt); }
+    if (params.images?.length) { messages.push(...params.images); }
+    const res = await ChatGPT.sendMessages(messages, params.model);
+    return res
   }
 
   async generateImage(params: AIGenerateParms): Promise<ImageResult | null> {
-
-    const resolution = aspectToPixels(params.aspect_ratio, params.resolution);
-
-    // Only gpt-image supports resolution, other models only give 1024x1024/ 2x3 of same res
-    const res = await ChatGPT.img2img(
-      params.prompt,
-      params.model,
-      params.images,
-      resolution
-    );
-
+    const messages: AIMessage[] = [];
+    if (params.prompt) { messages.push(params.prompt); }
+    if (params.images?.length) { messages.push(...params.images); }
+    const res = await ChatGPT.sendMessages(messages, params.model, params.aspect_ratio, params.resolution);
     if (!res) return null;
-
     return res;
   }
 
@@ -369,10 +358,12 @@ export class ChatGPT implements AIProvider {
 
           // Local Image
           if (message instanceof LocalImage) {
-            const image = await message.getAIImage()
+            //const image = await message.getAIImage()
+            const img_url = await message.uploadToR2();
             content.push({
               type: "input_image",
-              image_url: `data:${image.mime};base64,${image.rawBase64}`,
+              //image_url: `data:${image.mime};base64,${image.rawBase64}`,
+              image_url: img_url,
             });
             continue;
           }
@@ -417,8 +408,6 @@ export class ChatGPT implements AIProvider {
         const text = response.output_text;
         return text;
       }
-
-      return null;
 
     } catch (err: any) {
       const message = err?.message || "";

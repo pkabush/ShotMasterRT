@@ -107,7 +107,7 @@ export const StatsPopUp = React.forwardRef<HTMLDivElement, StatsPopUpProps>(
                     </div>
                     <span className="badge bg-secondary ms-2">{summary.totalRequests} reqs</span>
                 </Popover.Header>
-                <Popover.Body className="p-2 overflow-auto" style={{ maxHeight: "400px" }}>
+                <Popover.Body className="p-2 overflow-auto">
                     <Table striped bordered hover size="sm" className="m-0 small">
                         <thead>
                             <tr className="text-muted small">

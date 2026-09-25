@@ -1,4 +1,5 @@
 import { ChatGPT } from "./ChatGPT";
+import type { LocalImage } from "./fileSystem/LocalImage";
 import { GoogleAI } from "./GoogleAI";
 
 export const ai_providers = {
@@ -23,7 +24,7 @@ export type AIVideoInput = {
 export type AIGenerateParms = {
     prompt?: string;
     system?: string;
-    images?: AIImageInput[];
+    images?: AIImageInput[] | LocalImage[];
     model: string;
     aspect_ratio?: string;
     resolution? : string;

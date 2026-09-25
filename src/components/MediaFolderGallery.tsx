@@ -340,6 +340,13 @@ const MediaItemCard: React.FC<Props> = observer(({
                         Get Google File URL
                     </ContextMenu.Item>
 
+                    <ContextMenu.Item onClick={async () => {
+                        console.log(await mediaItem.uploadToR2());
+                    }} className="ContextMenuItem warning">
+                        <MenuItemIcon><FontAwesomeIcon icon={faClipboard} /></MenuItemIcon>
+                        Upload To R2
+                    </ContextMenu.Item>
+
 
                     {shot && (
                         <ContextMenu.Item

@@ -49,17 +49,6 @@ export class GoogleAI implements AIProvider {
       console.log("Gemini Payload", payload);
       const response = await postToWorker(payload, "gemini/generate");
       console.log("GEMINI RES", response);
-
-      // SAVE Gen Data
-      /*
-      const proj = Project.getProject();
-      if (response.cost) {
-        proj.costTracker?.addCost(response.responseId ?? "", "Google", response.cost, {
-          model: response.modelVersion,
-        }
-        );
-      }*/
-
       return response;
 
     } catch (err) {
@@ -93,8 +82,6 @@ export class GoogleAI implements AIProvider {
 
     return null;
   }
-
-
 
 
   // ---------- img2img function ----------
@@ -162,16 +149,35 @@ export class GoogleAI implements AIProvider {
   }
 
   async generateText(params: AIGenerateParms): Promise<string | null> {
-    const res = await GoogleAI.img2img(
+    const messages: AIMessage[] = [];
+
+    if (params.prompt) {
+      messages.push(params.prompt);
+    }
+
+    if (params.images?.length) {
+      messages.push(...params.images);
+    }
+
+    console.log("Gathered Messages", messages);
+    const res = await GoogleAI.sendMessages(messages, params.model);
+
+    /*const res = await GoogleAI.img2img(
       params.prompt,
       params.model,
       params.images,
-    );
+    );*/
     if (!res) return null;
     return res as string;
   }
 
   async generateImage(params: AIGenerateParms): Promise<ImageResult | null> {
+    const messages: AIMessage[] = [];
+    if (params.prompt) { messages.push(params.prompt); }
+    if (params.images?.length) { messages.push(...params.images); }
+    const res = await GoogleAI.sendMessages(messages, params.model, params.aspect_ratio, params.resolution);
+
+    /*
     const res = await GoogleAI.img2img(
       params.prompt,
       params.model,
@@ -179,6 +185,7 @@ export class GoogleAI implements AIProvider {
       params.aspect_ratio,
       params.resolution,
     );
+    */
     if (!res) return null;
     return res as ImageResult;
   }
@@ -216,6 +223,12 @@ export class GoogleAI implements AIProvider {
 
         // Local Image
         if (message instanceof LocalImage) {
+          // Upload To Google FILES Api
+          const gfile_part = await message.getGoogleFileURL()
+          console.log("GFile Message part", gfile_part)
+          contents.push(gfile_part);
+
+          /*
           const image = await message.getAIImage()
           contents.push({
             inlineData: {
@@ -223,6 +236,7 @@ export class GoogleAI implements AIProvider {
               mimeType: image.mime,
             },
           });
+          */
           continue;
         }
 

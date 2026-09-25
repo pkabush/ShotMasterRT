@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, {  useMemo, useState } from "react";
 import { Form } from "react-bootstrap";
 
 export interface DateSpan {
@@ -27,6 +27,18 @@ const getSunday = (monday: Date) => {
     sunday.setHours(23, 59, 59, 999);
 
     return sunday;
+};
+
+export const getCurrentWeekSpan = (): DateSpan => {
+  const today = new Date();
+
+  const monday = getMonday(today);
+  const sunday = getSunday(monday);
+
+  return {
+    startDate: monday,
+    endDate: sunday,
+  };
 };
 
 const formatDate = (date: Date) =>

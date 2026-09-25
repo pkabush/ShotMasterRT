@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import TabsContainer from "../../TabsContainer";
-import WeekPicker, { type DateSpan } from "./Helpers/WeekPicker";
+import WeekPicker, { getCurrentWeekSpan, type DateSpan } from "./Helpers/WeekPicker";
 import { Button } from "react-bootstrap";
 import { getFromWorker } from "../../../classes/CloudflareWorker/WorkerUtils";
 import { UsageStatsTable, type DailyUsageStats } from "./Helpers/UsageStatsTable/UsageStatsTable";
 
 
-interface StatsViewProps {}
+interface StatsViewProps { }
 
 function formatDate(date: Date): string {
   return date.toISOString().split("T")[0];
@@ -29,7 +29,7 @@ function getDatesBetween(start: Date, end: Date): Date[] {
 }
 
 export const StatsView: React.FC<StatsViewProps> = () => {
-  const [dateSpan, setDateSpan] = useState<DateSpan>();
+  const [dateSpan, setDateSpan] = useState<DateSpan>(getCurrentWeekSpan);
   const [stats, setStats] = useState<DailyUsageStats[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -55,7 +55,7 @@ export const StatsView: React.FC<StatsViewProps> = () => {
               end_date: formatDate(dateSpan.endDate),
             });
             setStats(response.data);
-            console.log(response.data);
+            //console.log(response.data);
           } catch (error) {
             console.error("Failed to get stats:", error);
             setStats([]);
