@@ -165,7 +165,7 @@ export class ChatGPT implements AIProvider {
 
         // POST TO WORKER
         console.log("GPT Payload:", payload)
-        const response = await postToWorker(payload, "gpt/generate");
+        const response = await postToWorker(payload, "gpt/generate-image");
         console.log("GPT Response:", response);
 
         const name = generateImageName(
@@ -405,8 +405,19 @@ export class ChatGPT implements AIProvider {
           };
         }
 
-        const text = response.output_text;
-        return text;
+        const finalAnswer = response.output
+          ?.filter((o: any) => o.type === "message")
+          ?.filter((o: any) => o.phase === "final_answer")
+          ?.flatMap((o: any) =>
+            o.content
+              ?.filter((c: any) => c.type === "output_text")
+              ?.map((c: any) => c.text)
+          )
+          ?.join("");
+
+        return finalAnswer || "";
+        //const text = response.output_text;
+        //return text;
       }
 
     } catch (err: any) {
