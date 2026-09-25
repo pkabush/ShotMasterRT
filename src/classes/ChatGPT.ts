@@ -358,12 +358,12 @@ export class ChatGPT implements AIProvider {
 
           // Local Image
           if (message instanceof LocalImage) {
-            //const image = await message.getAIImage()
-            const img_url = await message.uploadToR2();
+            const image = await message.getAIImage()
+            //const img_url = await message.uploadToR2();
             content.push({
               type: "input_image",
-              //image_url: `data:${image.mime};base64,${image.rawBase64}`,
-              image_url: img_url,
+              image_url: `data:${image.mime};base64,${image.rawBase64}`,
+              //image_url: img_url,
             });
             continue;
           }
