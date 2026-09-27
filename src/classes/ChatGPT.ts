@@ -62,71 +62,6 @@ export class ChatGPT implements AIProvider {
     }
   }
 
-  public static async txt2txt(
-    input?: string,
-    system_msg?: string,
-    model: string = "gpt-4o-mini",  // default value    
-    images?: { rawBase64: string; mime: string; description?: string }[]
-  ) {
-    try {
-      const messages: any[] = [];
-
-      // Add system message if provided
-      if (system_msg) {
-        messages.push({ role: "system", content: system_msg });
-      }
-
-      // Add user text message if provided
-      const content: any[] = [];
-
-      if (input) {
-        content.push({
-          type: "input_text",
-          text: input,
-        });
-      }
-
-      if (images?.length) {
-        for (const img of images) {
-          if (!img?.rawBase64 || !img?.mime) continue;
-
-          if (img.description) {
-            content.push({
-              type: "input_text",
-              text: img.description,
-            });
-          }
-
-          content.push({
-            type: "input_image",
-            image_url: `data:${img.mime};base64,${img.rawBase64}`,
-          });
-        }
-      }
-
-      messages.push({
-        role: "user",
-        content
-      });
-
-      const payload = {
-        model: model,
-        input: messages,
-      }
-
-      console.log("GPT Payload:", payload)
-      const response = await postToWorker(payload, "gpt/generate");
-      console.log("GPT Response:", response);
-
-      const text = response.output_text;
-
-      return text;
-
-    } catch (err: any) {
-      throw err;
-    }
-  }
-
   // ---------- img2img function ----------
   public static async img2img(
     prompt?: string,
@@ -138,6 +73,7 @@ export class ChatGPT implements AIProvider {
 
       if (Object.values(ChatGPT.options.image_models).includes(model)) {
 
+        /*
         const file_images: File[] = [];
         // Add images        
         let img_id = 0;
@@ -149,12 +85,14 @@ export class ChatGPT implements AIProvider {
             img_id++;
           }
         }
+          */
 
         // Create Payload
         const payload: any = {
           model,
           prompt: prompt ?? "",
         };
+        
         if (images?.length) {
           payload.images = images.map(img => ({
             base64: img.rawBase64,
@@ -279,7 +217,6 @@ export class ChatGPT implements AIProvider {
     if (params.prompt) { messages.push(params.prompt); }
     if (params.images?.length) { messages.push(...params.images); }
     const res = await ChatGPT.sendMessages(messages, params.model, params.aspect_ratio, params.resolution);
-    if (!res) return null;
     return res;
   }
 

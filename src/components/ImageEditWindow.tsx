@@ -23,7 +23,7 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBrush } from "@fortawesome/free-solid-svg-icons";
 import SettingsButton from "./Atomic/SettingsButton";
 import { WF_Image_censor } from "./Scene/Shot/Actions/ShotAddFramesFromPrevious";
-import { AllImageModels } from "../classes/AI_provider";
+import { AI, AllImageModels } from "../classes/AI_provider";
 
 interface ImageEditWindowProps {
   localImage: LocalImage;
@@ -60,9 +60,7 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
       console.log("MAX GENERATIONS REACHED! wait for others to finish, or reopen edit window");
       return;
     }
-
     setPendingGenerations(prev => prev + 1);
-
 
     try {
       const base64Obj = await localImage.getBase64(); // uses cached Base64 if available
@@ -88,22 +86,18 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
       ]
 
       const model = project?.workflows?.edit_image?.model ?? GoogleAI.options.img_models.flash_image
-      const aspectRatio = project?.workflows?.edit_image?.aspect_ratio ?? GoogleAI.options.aspect_ratios.r9x16
+      const aspect_ratio = project?.workflows?.edit_image?.aspect_ratio ?? GoogleAI.options.aspect_ratios.r9x16
       const resolution = project?.workflows?.edit_image?.resolution ?? GoogleAI.options.resolution.none
 
-      // Check IF Google      
-      if (Object.values(GoogleAI.options.img_models).includes(model)) {
-        const result = await GoogleAI.img2img(prompt || "", model, images, aspectRatio, resolution);
-        console.log("Image generated:", result);
-        genImage = await GoogleAI.saveResultImage(result, localImage.parentFolder as LocalFolder);
-      }
-
-      if (Object.values(ChatGPT.options.models).includes(model)) {
-        console.log("GPT Model", model);
-        const result = await ChatGPT.img2img(prompt || "", model, images);
-        console.log("Image generated:", result);
-        genImage = await GoogleAI.saveResultImage(result, localImage.parentFolder as LocalFolder);
-      }
+      // Add Images and resolution
+      const res = await AI.GenerateImage({
+        prompt,
+        model,
+        aspect_ratio,
+        resolution,
+        images
+      })
+      genImage = await GoogleAI.saveResultImage(res, localImage.parentFolder as LocalFolder);
 
       console.log("GENERATED IMAGE", genImage);
       if (genImage) {

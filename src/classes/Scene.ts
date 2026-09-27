@@ -4,7 +4,6 @@ import { Shot } from './Shot';
 import { action, computed, makeObservable, observable, runInAction } from "mobx";
 import { Project } from './Project';
 //import { GoogleAI } from './GoogleAI';
-import Prompt from './Prompt';
 import * as ResolveUtils from './ResolveUtils';
 import { LocalFolder } from './fileSystem/LocalFolder';
 import { Tags } from './Tags';
@@ -25,7 +24,6 @@ export class Scene extends MediaFolder {
   nodeGraphJson: LocalJson | null = null;
   is_generating_tags = false;
   is_generating_all_shot_images = false;
-  split_shots_prompt: Prompt | null = null;
   selectedShot: Shot | null = null;
   references: Tags | null = null;
   storyboard: Storyboard | null = null;
@@ -47,7 +45,6 @@ export class Scene extends MediaFolder {
       nodeGraphJson: observable,
       is_generating_tags: observable,
       is_generating_all_shot_images: observable,
-      split_shots_prompt: observable,
       selectedShot: observable,
       references: observable,
       finishedShotsNum: computed,
