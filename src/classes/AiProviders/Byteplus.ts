@@ -66,11 +66,11 @@ export class SeedanceAI {
                 "27": "27",
                 "28": "28",
                 "29": "29",
-                "30": "30",                
+                "30": "30",
             },
             models: {
-                "seed_2.0":"dreamina-seedance-2-0-260128",
-                "seed_2.5":"dreamina-seedance-2-5-260628",
+                "seed_2.0": "dreamina-seedance-2-0-260128",
+                "seed_2.5": "dreamina-seedance-2-5-260628",
             }
 
         }
@@ -122,7 +122,15 @@ export class SeedanceAI {
 
     private static async postToSeedance(payload: any) {
         console.log("Seedance request:", payload);
-        const data = await postToWorker(payload, "seedance/generate");
+        const hasVideo = payload.content.some((item: any) => item.type === "video_url");
+        // CALLBACK ONLY WORKS FOR SERVER        
+        const callback = new URL(`https://shotmasterworker.kabushpavel.workers.dev/seedance/callback`);
+        //const callback = new URL(`https://subalate-evia-squelchingly.ngrok-free.dev/seedance/callback`);
+
+        callback.searchParams.set("hasVideo", hasVideo);
+        payload.callback_url = callback.toString();
+
+        const data = await postToWorker(payload, "seedance/generate", { model: payload.model, });
         console.log("Seedance response:", data);
         return data;
     }
