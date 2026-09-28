@@ -73,7 +73,7 @@ export abstract class LocalItem {
     getByAbsPath<T extends LocalItem>(
         targetPath: string,
         type?: new (...args: any[]) => T
-    ): T | null {        
+    ): T | null {
         return this.root.getByPath(targetPath, type);
     }
 
@@ -99,5 +99,21 @@ export abstract class LocalItem {
                 if (index !== -1) { this.parentFolder!.children.splice(index, 1); }
             });
         }
+    }
+
+    getParentOfType<T extends LocalItem>(
+        type: new (...args: any[]) => T
+    ): T | null {
+        let current = this.parentFolder;
+
+        while (current) {
+            if (current instanceof type) {
+                return current as T;
+            }
+
+            current = current.parentFolder;
+        }
+
+        return null;
     }
 }

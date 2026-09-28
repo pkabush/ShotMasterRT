@@ -14,7 +14,7 @@ import {
 
 import "@xyflow/react/dist/style.css";
 import "../../css/Nodegraph.css";
-import { Button, Stack } from "react-bootstrap";
+import { Button, ButtonGroup, Dropdown, DropdownButton, Stack } from "react-bootstrap";
 import type { LocalJson } from "../../classes/LocalJson";
 
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -29,7 +29,7 @@ import { ShotTasksNodeDefinition } from "./Nodes/ShotTasksNode";
 import { MergeNodeDefinition } from "./Nodes/MergeNode";
 import { SeedanceNodeDefinition } from "./Nodes/SeedanceNode";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faClapperboard, faFileArrowDown, faFilm, faFloppyDisk } from "@fortawesome/free-solid-svg-icons";
+import { faClapperboard, faCopy, faFileArrowDown, faFilm, faFloppyDisk, faPlus, faTerminal, faTrashCan } from "@fortawesome/free-solid-svg-icons";
 import { Scene } from "../../classes/Scene";
 import { GptNodeDefinition } from "./Nodes/GptNode";
 import { TimelineNodeDefinition } from "./Nodes/TimeLineNode";
@@ -40,6 +40,7 @@ import { TextNodeDefinition } from "./Nodes/TextNode";
 import { LocalFileToPathNodeDefinition } from "./Nodes/LocalFileToPathNode";
 import { MultiTextNodeDefinition } from "./Nodes/MultiTextNode";
 import { RegexSplitNodeDefinition } from "./Nodes/RegexSplitNode";
+import { Shot } from "../../classes/Shot";
 
 export const nodeDefinitions = {
     textNode: TextNodeDefinition,
@@ -55,7 +56,7 @@ export const nodeDefinitions = {
     testNode: TestNodeDefinition,
     localFileToPathNode: LocalFileToPathNodeDefinition,
     multiTextNode: MultiTextNodeDefinition,
-    regexSplitNode : RegexSplitNodeDefinition,
+    regexSplitNode: RegexSplitNodeDefinition,
 } as const;
 
 export const nodeTypes = Object.fromEntries(
@@ -87,7 +88,7 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
     const [edges, setEdges, onEdgesChange] = useEdgesState<any>([]);
 
     // Listen To ALT Pressd for navigation
-    const [altPressed, setAltPressed] = useState(false);    
+    const [altPressed, setAltPressed] = useState(false);
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => { if (e.key === "Alt") { setAltPressed(true); } };
         const handleKeyUp = (e: KeyboardEvent) => { if (e.key === "Alt") { setAltPressed(false); } };
@@ -169,6 +170,9 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
         event.dataTransfer.dropEffect = 'move';
     }, []);
 
+    //const scene = (nodegraphJson.parentFolder! instanceof Scene) ? nodegraphJson.parentFolder : nodegraphJson.parentFolder.
+    const scene = nodegraphJson.getParentOfType(Scene);
+
     return <div style={{
         width: "100%",
         height: "80vh",
@@ -201,17 +205,15 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
                 multiSelectionKeyCode="Shift"
                 selectionKeyCode="Shift"
 
-
                 selectionOnDrag={!altPressed}
                 selectionMode={SelectionMode.Partial}
-                
+
                 //panOnDrag={[1]} // only middle mouse button pans the canvas
                 panOnDrag={altPressed ? [0, 1] : [1]}
 
                 //selectionOnDrag={false} // left drag won't create a selection box
                 elementsSelectable={true} // nodes selectable with left click
                 nodesDraggable={true} // nodes still draggable (see note below)
-
 
 
                 minZoom={0.025}
@@ -307,10 +309,44 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
 
                 <Panel position="top-left">
                     <Stack gap={1}>
-                        <Button variant="secondary" onClick={() => { console.log({ nodes, edges, nodegraphJson }) }}>
-                            <FontAwesomeIcon icon={(nodegraphJson.parentFolder! instanceof Scene) ? faFilm : faClapperboard} />
-                            {nodegraphJson.parentFolder!.name}
-                        </Button>
+                        {scene &&
+                            <DropdownButton
+                                as={ButtonGroup}
+                                drop={'end'}
+                                variant="secondary"
+                                title={nodegraphJson.parentFolder!.name}
+                            >
+                                <Dropdown.Item eventKey={scene.name} onClick={() => scene.selectShot(null)}>
+                                    <FontAwesomeIcon icon={faClapperboard} />
+                                    {scene.name}
+                                </Dropdown.Item>
+                                <Dropdown.Divider />
+                                {scene?.shots_ordered.map((shot) => {
+                                    return <Dropdown.Item eventKey={shot.name} onClick={() => scene.selectShot(shot)}>
+                                        <FontAwesomeIcon icon={faFilm} />
+                                        {shot.name}
+                                    </Dropdown.Item>
+                                })}
+                                <Dropdown.Divider />
+                                <Dropdown.Item eventKey="1" onClick={async () => {
+                                    const new_shot = await scene.createShot();
+                                    scene.selectShot(new_shot);
+                                }} >
+                                    <FontAwesomeIcon icon={faPlus} />
+                                    Add Shot
+                                </Dropdown.Item>
+
+                                {nodegraphJson.parentFolder instanceof Shot && <>
+                                    <Dropdown.Item eventKey="2"><FontAwesomeIcon icon={faCopy} /> Duplicate Shot</Dropdown.Item>
+                                    <Dropdown.Item eventKey="2" onClick={() => {
+                                        nodegraphJson.parentFolder?.delete(true);
+                                        scene.selectShot(null);
+                                    }}><FontAwesomeIcon icon={faTrashCan} /> Delete Shot</Dropdown.Item></>}
+
+                                <Dropdown.Item eventKey="2" onClick={() => { console.log({ nodes, edges, nodegraphJson }) }}><FontAwesomeIcon icon={faTerminal} />Log</Dropdown.Item>
+
+                            </DropdownButton>
+                        }
                         <Button onClick={exportFlow} size="sm" variant={isDirty ? "success" : "outline-secondary"}> <FontAwesomeIcon icon={faFloppyDisk} /> {isDirty ? " Save changes" : " Saved"}</Button>
                         <Button onClick={loadFlow} size="sm" variant="secondary"> <FontAwesomeIcon icon={faFileArrowDown} /> Load</Button>
                         <AddNodeUIPanel />
