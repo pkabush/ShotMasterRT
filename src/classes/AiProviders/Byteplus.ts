@@ -1,3 +1,4 @@
+import { useGoogleStore } from "../../contexts/GoogleUserContext";
 import { postToWorker } from "../CloudflareWorker/WorkerUtils";
 
 export type SeedanceContent =
@@ -13,6 +14,12 @@ export type SeedanceContent =
         role?: "reference_image" | "first_frame" | "last_frame";
     };
 
+
+const test_web = false
+export const SEEDANCE_CALLBACK_URL =
+    import.meta.env.DEV && !test_web        
+        ? `https://subalate-evia-squelchingly.ngrok-free.dev/seedance/callback`
+        : `https://shotmasterworker.kabushpavel.workers.dev/seedance/callback`;
 
 
 export class SeedanceAI {
@@ -124,10 +131,12 @@ export class SeedanceAI {
         console.log("Seedance request:", payload);
         const hasVideo = payload.content.some((item: any) => item.type === "video_url");
         // CALLBACK ONLY WORKS FOR SERVER        
-        const callback = new URL(`https://shotmasterworker.kabushpavel.workers.dev/seedance/callback`);
+        //const callback = new URL(`https://shotmasterworker.kabushpavel.workers.dev/seedance/callback`);
         //const callback = new URL(`https://subalate-evia-squelchingly.ngrok-free.dev/seedance/callback`);
+        const callback = new URL(SEEDANCE_CALLBACK_URL);
 
         callback.searchParams.set("hasVideo", hasVideo);
+        callback.searchParams.set("user", useGoogleStore.getState().user?.email ?? "");
         payload.callback_url = callback.toString();
 
         const data = await postToWorker(payload, "seedance/generate", { model: payload.model, });
