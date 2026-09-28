@@ -55,14 +55,19 @@ export class ChatGPT implements AIProvider {
       gpt_5_6_terra: "gpt-5.6-terra",
       gpt_5_6_luna: "gpt-5.6-luna",
       gpt_image_2: "gpt-image-2",
+      gpt_image_2_2_sunburst: "gpt-image-2.5-sunburst",
+      gpt_image_2_2_flare: "gpt-image-2.5-flare",
     },
     image_models: {
       gpt_image_2: "gpt-image-2",
-
+      gpt_image_2_2_sunburst: "gpt-image-2.5-sunburst",
+      gpt_image_2_2_flare: "gpt-image-2.5-flare",
     }
   }
 
   // ---------- img2img function ----------
+  // Used only for IMAGE Models that send form data and not messages
+  /*
   public static async img2img(
     prompt?: string,
     model: string = ChatGPT.options.models.gpt_5_4,
@@ -73,7 +78,6 @@ export class ChatGPT implements AIProvider {
 
       if (Object.values(ChatGPT.options.image_models).includes(model)) {
 
-        /*
         const file_images: File[] = [];
         // Add images        
         let img_id = 0;
@@ -85,20 +89,20 @@ export class ChatGPT implements AIProvider {
             img_id++;
           }
         }
-          */
 
         // Create Payload
         const payload: any = {
           model,
           prompt: prompt ?? "",
         };
-        
+
         if (images?.length) {
           payload.images = images.map(img => ({
             base64: img.rawBase64,
             mime: img.mime,
           }));
         }
+
         if (resolution) payload.size = resolution;
 
         // POST TO WORKER
@@ -124,65 +128,85 @@ export class ChatGPT implements AIProvider {
           };
         }
       }
+
+      return null;
+
+    } catch (err: any) {
+      const message = err?.message || "";
+
+      if (
+        message.includes("API key") ||
+        message.includes("invalid_api_key") ||
+        err instanceof MissingApiKeyError
+      ) {
+        console.log("INPUT GPT KEY!");
+        return null;
+      }
+
+      console.error("img2img error", err);
+      throw err;
+    }
+  }
+  */
+
+  public static async img2img(
+    prompt?: string,
+    model: string = ChatGPT.options.models.gpt_5_4,
+    images?: { rawBase64: string; mime: string; description: string }[],
+    resolution?: string,
+  ) {
+    try {
+      if (!Object.values(ChatGPT.options.image_models).includes(model)) { return null; }
+
+      // Filter out invalid images first
+      const validImages = images?.filter((img) => img?.rawBase64 && img?.mime) ?? [];
+      let response: any;
+      let isEdit = false;
+
+      /*
+       * No images:
+       * Send normal JSON to /v1/images/generations
+       */
+      if (validImages.length === 0) {
+        const payload: any = { model, prompt: prompt ?? "", };
+        if (resolution) { payload.size = resolution; }
+        console.log("GPT image request:", payload);
+        response = await postToWorker(payload, "gpt/generate-image", { model });
+      }
+
+      /*
+       * Images present:
+       * Send multipart/form-data to /v1/images/edits
+       */
       else {
-        // RESPONSES API
+        isEdit = true;
+        const form = new FormData();
+        form.append("model", model);
+        form.append("prompt", prompt ?? "");
 
-        const content: any[] = [];
-        if (prompt) content.push({ type: "input_text", text: prompt });
+        if (resolution) { form.append("size", resolution); }
 
-        // Add images
-        if (images?.length) {
-          for (const img of images) {
-            if (!img?.rawBase64 || !img?.mime) continue;
-
-            if (img.description) {
-              content.push({
-                type: "input_text",
-                text: img.description,
-              });
-            }
-
-            content.push({
-              type: "input_image",
-              image_url: `data:${img.mime};base64,${img.rawBase64}`,
-            });
-          }
+        let img_id = 0;
+        for (const img of validImages) {
+          const extension = img.mime.split("/")[1]?.split("+")[0] || "png";
+          const file = base64ToFile(img.rawBase64, `image${img_id}.${extension}`, img.mime);
+          // OpenAI edits API expects image[]
+          form.append("image[]", file);
+          img_id++;
         }
 
+        console.log("GPT image request:", { model, prompt, imageCount: img_id, resolution });
+        response = await postToWorker(form, "gpt/generate-image", { model });
+      }
 
-        const payload: any = {
-          model,
-          input: [
-            {
-              role: "user" as const,
-              content,
-            },
-          ],
-          tools: [{
-            type: "image_generation" as const,
-          }],
-        };
+      console.log("GPT Response:", response);
 
-        // POST TO WORKER
-        console.log("GPT Payload:", payload)
-        const response = await postToWorker(payload, "gpt/generate");
-        console.log("GPT Response:", response);
+      const name = generateImageName(model, isEdit ? "edit" : "generate");
 
-        const imageData = response.output
-          ?.filter((o: any) => o.type === "image_generation_call")
-          ?.map((o: any) => o.result);
-
-        if (imageData?.length) {
-          const base64 = imageData[0];
-
-          return {
-            base64Obj: {
-              rawBase64: base64,
-              mime: "image/png",
-            },
-            id: response.id,
-          };
-        }
+      if (response?.data) {
+        const image_base64 = response.data[0]?.b64_json;
+        if (!image_base64) { return null; }
+        return { base64Obj: { rawBase64: image_base64, mime: "image/png", }, id: name, };
       }
 
       return null;
