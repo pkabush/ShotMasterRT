@@ -57,33 +57,31 @@ export const BytePlus_GenerateVideo: React.FC<BytePlus_GenerateVideoProps> = obs
 
                                 // Add First Frame
                                 if (shot.first_frame) {
-                                    const first_frame = await shot.first_frame.getBase64();
                                     content.push(
-                                        SeedanceAI.imgMsg(
-                                            `data:${first_frame.mime};base64,${first_frame.rawBase64}`,
+                                        await SeedanceAI.imgMsg(
+                                            shot.first_frame,                                            
                                             'first_frame'
                                         )
                                     )
                                 }
 
                                 // Add last Frame
-                                if (shot.end_frame) {
-                                    const base64 = await shot.end_frame.getBase64();
+                                if (shot.end_frame) {                                    
                                     content.push(
-                                        SeedanceAI.imgMsg(
-                                            `data:${base64.mime};base64,${base64.rawBase64}`,
+                                        await SeedanceAI.imgMsg(
+                                            shot.end_frame,
                                             "last_frame"
                                         )
                                     )
                                 }
 
                                 // References
-                                const references = await shot.references?.GetAI_Images() ?? []
+                                const references = shot.references?.active_images ?? []
                                 console.log(references);
                                 for (const reference of references) {
                                     content.push(
-                                        SeedanceAI.imgMsg(
-                                            `data:${reference.mime};base64,${reference.rawBase64}`,
+                                        await SeedanceAI.imgMsg(
+                                            reference,
                                             "reference_image"
                                         )
                                     )

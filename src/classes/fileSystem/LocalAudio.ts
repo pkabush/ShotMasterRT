@@ -52,7 +52,7 @@ export class LocalAudio extends LocalMedia {
       await writable.close();
 
       // Return LocalAudio with cached base64Data
-      const audio = new LocalAudio(folder,fileHandle);
+      const audio = new LocalAudio(folder, fileHandle);
       audio.base64Data = base64Obj; // cache
       return audio;
     } catch (err) {
@@ -61,7 +61,33 @@ export class LocalAudio extends LocalMedia {
     }
   }
 
-    async getDuration(): Promise<number> {
+  static async fromBlob(
+    blob: Blob,
+    folder: LocalFolder,
+    filename: string
+  ): Promise<LocalAudio> {
+    try {
+
+      const fileHandle = await folder.handle.getFileHandle(filename, { create: true });
+      const writable = await fileHandle.createWritable();
+
+      await writable.write(blob);
+      await writable.close();
+
+      const audio = new LocalAudio(folder, fileHandle);
+      // Don't need to convert the entire audio file to Base64 here.
+      // It can be loaded lazily by getBase64() if needed.
+      audio.base64Data = null;
+
+      return audio;
+    } catch (err) {
+      console.error("Failed to create LocalAudio from Blob:", err);
+      throw err;
+    }
+  }
+
+
+  async getDuration(): Promise<number> {
     const file = await this.getFile();
     const objectUrl = URL.createObjectURL(file);
 

@@ -336,6 +336,19 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
                                     Add Shot
                                 </Dropdown.Item>
 
+                                <Dropdown.Item eventKey="1" onClick={async () => {
+                                    const shotName = prompt("Enter new shot name:");
+                                    if (!shotName) return;
+                                    const new_shot = await scene.createShot(shotName);
+                                    scene.selectShot(new_shot);
+                                }} >
+                                    <FontAwesomeIcon icon={faPlus} />
+                                    Add Named Shot
+                                </Dropdown.Item>
+
+
+
+
                                 {nodegraphJson.parentFolder instanceof Shot && <>
                                     <Dropdown.Item eventKey="2"><FontAwesomeIcon icon={faCopy} /> Duplicate Shot</Dropdown.Item>
                                     <Dropdown.Item eventKey="2" onClick={() => {

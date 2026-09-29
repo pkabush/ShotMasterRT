@@ -9,6 +9,7 @@ import { Button, Stack } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCloudArrowUp, faCopy } from "@fortawesome/free-solid-svg-icons";
 import { useGoogleStore } from "../contexts/GoogleUserContext.tsx";
+import { SeedanceSendImagesToggle } from "./BytePlus/SeedanceHelper.tsx";
 
 interface SettingsViewProps {
   project: Project;
@@ -38,7 +39,7 @@ export const SettingsView: React.FC<SettingsViewProps> = observer(({ project }) 
         <SimpleButton onClick={() => { project.download_asset("assets/server.zip", "server.zip") }} label="Download Server (MacOS)" />
       </>}
 
-      { false && <EditableJsonToggleField localJson={project.projinfo} field={"debug_log"} default_val={false} label="Debug_log" /> }
+      {false && <EditableJsonToggleField localJson={project.projinfo} field={"debug_log"} default_val={false} label="Debug_log" />}
 
       <EditableJsonTextField localJson={project.projinfo} field="project_path" fitHeight />
 
@@ -217,6 +218,7 @@ export const SettingsView: React.FC<SettingsViewProps> = observer(({ project }) 
         }}
       />
 
+      <SeedanceSendImagesToggle />
     </div>
   );
 });

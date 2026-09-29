@@ -262,8 +262,6 @@ export async function combineAndTrim(
     }
 }
 
-
-
 export async function combineVideosFromUint8(
     videos: Uint8Array[]
 ): Promise<Blob> {
@@ -323,5 +321,83 @@ export async function combineVideosFromUint8(
 
         try { await ffmpeg.deleteFile("list.txt"); } catch { }
         try { await ffmpeg.deleteFile("final.mp4"); } catch { }
+    }
+}
+
+export async function combineVideosFromBlobs(
+    videos: Blob[]
+): Promise<Blob> {
+    const uint8Videos = await Promise.all(
+        videos.map(async (video) => {
+            return new Uint8Array(await video.arrayBuffer());
+        })
+    );
+
+    return combineVideosFromUint8(uint8Videos);
+}
+
+// --------------------------------
+export async function imageBlobToVideo(
+    image: Blob,
+    audio: Blob
+): Promise<Blob> {
+    const ffmpeg = FFmpegService.instance;
+
+    const imageName = "input-image";
+    const audioName = "input-audio";
+    const outputName = "output.mp4";
+
+    try {
+        await ffmpeg.writeFile(
+            imageName,
+            new Uint8Array(await image.arrayBuffer())
+        );
+
+        await ffmpeg.writeFile(
+            audioName,
+            new Uint8Array(await audio.arrayBuffer())
+        );
+
+        await ffmpeg.exec([
+            "-loop", "1",
+            "-framerate", "24",
+            "-i", imageName,
+
+            "-i", audioName,
+
+            "-map", "0:v:0",
+            "-map", "1:a:0",
+
+            "-c:v", "libx264",
+            "-preset", "ultrafast",
+            "-tune", "stillimage",
+            "-crf", "35",
+
+            // Very long GOP because the image never changes.
+            "-g", "300",
+            "-keyint_min", "300",
+            "-sc_threshold", "0",
+
+            "-pix_fmt", "yuv420p",
+
+            "-c:a", "aac",
+            "-b:a", "96k",
+
+            "-shortest",
+
+            "-movflags", "+faststart",
+
+            outputName,
+        ]);
+
+
+        const data = await ffmpeg.readFile(outputName);
+
+        return new Blob([data.slice(0)], { type: "video/mp4" });
+
+    } finally {
+        await ffmpeg.deleteFile(imageName);
+        await ffmpeg.deleteFile(audioName);
+        await ffmpeg.deleteFile(outputName);
     }
 }

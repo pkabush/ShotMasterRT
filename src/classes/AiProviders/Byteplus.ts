@@ -1,5 +1,7 @@
+import { getSeedanceSendImages } from "../../components/BytePlus/SeedanceHelper";
 import { useGoogleStore } from "../../contexts/GoogleUserContext";
 import { postToWorker } from "../CloudflareWorker/WorkerUtils";
+import { LocalImage } from "../fileSystem/LocalImage";
 
 export type SeedanceContent =
     | {
@@ -17,7 +19,7 @@ export type SeedanceContent =
 
 const test_web = false
 export const SEEDANCE_CALLBACK_URL =
-    import.meta.env.DEV && !test_web        
+    import.meta.env.DEV && !test_web
         ? `https://subalate-evia-squelchingly.ngrok-free.dev/seedance/callback`
         : `https://shotmasterworker.kabushpavel.workers.dev/seedance/callback`;
 
@@ -91,14 +93,28 @@ export class SeedanceAI {
         };
     }
 
-    public static imgMsg(
-        url: string,
+    public static async imgMsg(
+        url: string | LocalImage,
         role: "reference_image" | "first_frame" | "last_frame" | undefined = "reference_image"
-    ): SeedanceContent {
+    ): Promise<SeedanceContent> {
         if (!url) throw new Error("imgMsg requires a url");
+
+        let parsed_url;
+        if (url instanceof LocalImage) {
+            if (getSeedanceSendImages())
+                parsed_url = await url.uploadToR2();
+            else {
+                const base64 = await url.getBase64();
+                parsed_url = `data:${base64.mime};base64,${base64.rawBase64}`;
+            }
+        }
+        else {
+            parsed_url = url;
+        }
+
         return {
             type: "image_url",
-            image_url: { url },
+            image_url: { url:parsed_url },
             ...(role ? { role } : {}),
         };
     }

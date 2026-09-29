@@ -402,5 +402,7 @@ export type Workflow = {
   character_orientation?: string;
   keep_original_sound?: string;
   system_message?: string;
-  resolution?: string;
+  resolution?: string;  
+  voice?: string;  
+  speed?: string;
 };

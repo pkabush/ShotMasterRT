@@ -4,7 +4,8 @@ import { Project } from "../Project";
 export async function postToWorker(
     payload: any,
     subpath: string,
-    additional_url_params: Record<string, string> = {}
+    additional_url_params: Record<string, string> = {},
+    responseType: "json" | "blob" = "json",
 ) {
     try {
         const idToken = useGoogleStore.getState().idToken;
@@ -44,6 +45,11 @@ export async function postToWorker(
 
         if (!res.ok) {
             throw new Error(await res.text());
+        }
+
+        // Return binary response when requested.
+        if (responseType === "blob") {
+            return await res.blob();
         }
 
         const response = await res.json();

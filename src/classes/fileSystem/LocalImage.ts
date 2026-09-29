@@ -6,6 +6,11 @@ import { runInAction } from 'mobx';
 export class LocalImage extends LocalMedia {
   base64Data: { rawBase64: string; mime: string } | null = null; // cache for Base64 + MIME
 
+  async toBlob(): Promise<Blob> {
+    const file = await this.getFile();
+    return new Blob([await file.arrayBuffer()], { type: file.type || "image/png", });
+  }
+
   // Returns Base64 string and MIME, caching it
   async getBase64(): Promise<{ rawBase64: string; mime: string }> {
     if (this.base64Data) return this.base64Data;
@@ -75,7 +80,7 @@ export class LocalImage extends LocalMedia {
   private _imageMetaPromise: Promise<void> | null = null;
 
   async ensureImageMetaLoaded() {
-    if (this._width && this._height ) return;
+    if (this._width && this._height) return;
     if (this._imageMetaPromise) return this._imageMetaPromise;
 
     this._imageMetaPromise = (async () => {

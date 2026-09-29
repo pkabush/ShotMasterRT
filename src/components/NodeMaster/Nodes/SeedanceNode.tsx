@@ -18,6 +18,7 @@ import type { LocalJson } from "../../../classes/LocalJson";
 import type { NodeDefinition } from "../NodeDefinition/NodeDefinition";
 import { faFish } from "@fortawesome/free-solid-svg-icons";
 
+
 export type SeedanceNodeModelData = {
     resolution?: string;
     duration?: string;
@@ -59,8 +60,6 @@ export const SeedanceNode = memo(
                 const last_frame_node = nodegraph_api.getInputNodes(id, "last_frame")[0]
                 const first_frame = project.getByAbsPath((first_frame_node?.data?.path as string) ?? "", LocalImage)
                 const last_frame = project.getByAbsPath((last_frame_node?.data?.path as string) ?? "", LocalImage)
-                const first_frame_raw = (await first_frame?.getBase64());
-                const last_frame_raw = (await last_frame?.getBase64());
 
                 // GET MERGE INPUTS
                 const references = [];
@@ -77,15 +76,15 @@ export const SeedanceNode = memo(
                 // Create Seedance Content
                 const content = []
                 if (prompt) content.push(SeedanceAI.textMsg(prompt))
-                if (first_frame_raw) content.push(
-                    SeedanceAI.imgMsg(
-                        `data:${first_frame_raw.mime};base64,${first_frame_raw.rawBase64}`,
+                if (first_frame) content.push(
+                    await SeedanceAI.imgMsg(
+                        first_frame,
                         'first_frame'
                     )
                 )
-                if (last_frame_raw) content.push(
-                    SeedanceAI.imgMsg(
-                        `data:${last_frame_raw.mime};base64,${last_frame_raw.rawBase64}`,
+                if (last_frame) content.push(
+                    await SeedanceAI.imgMsg(
+                        last_frame,
                         "last_frame"
                     )
                 )
@@ -95,10 +94,9 @@ export const SeedanceNode = memo(
                 for (const reference of references) {
                     // Image Refs
                     if (reference instanceof LocalImage) {
-                        const base64 = await reference.getBase64();
                         content.push(
-                            SeedanceAI.imgMsg(
-                                `data:${base64.mime};base64,${base64.rawBase64}`,
+                            await SeedanceAI.imgMsg(
+                                reference,
                                 "reference_image"
                             )
                         )

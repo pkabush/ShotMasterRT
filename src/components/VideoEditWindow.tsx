@@ -305,11 +305,13 @@ const VideoEditWindow: React.FC<VideoEditWindowProps> = ({
                                                 if (prompt) content.push(SeedanceAI.textMsg(prompt))
 
                                                 // References
-                                                const references = await localVideo.references?.GetAI_Images() ?? []
+                                                const references = localVideo.references?.active_images ?? []
+
                                                 for (const reference of references) {
                                                     content.push(
-                                                        SeedanceAI.imgMsg(
-                                                            `data:${reference.mime};base64,${reference.rawBase64}`,
+                                                        await SeedanceAI.imgMsg(
+                                                            reference,
+                                                            //`data:${reference.mime};base64,${reference.rawBase64}`,
                                                             "reference_image"
                                                         )
                                                     )

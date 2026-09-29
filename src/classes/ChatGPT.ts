@@ -62,6 +62,28 @@ export class ChatGPT implements AIProvider {
       gpt_image_2: "gpt-image-2",
       gpt_image_2_2_sunburst: "gpt-image-2.5-sunburst",
       gpt_image_2_2_flare: "gpt-image-2.5-flare",
+    },
+    audio_generation: {
+      voices: ["alloy",
+        "ash",
+        "ballad",
+        "coral",
+        "echo",
+        "fable",
+        "nova",
+        "onyx",
+        "sage",
+        "shimmer",
+        "verse",
+        "marin",
+        "cedar",],
+      models: [
+        "tts-1",
+        "tts-1-hd",
+        "gpt-4o-mini-tts",
+        "gpt-4o-mini-tts-2025-12-15",
+      ],      
+      speed: ["0.5","0.75","1.0","1.25","1.5","1.75","2.0"],
     }
   }
 
@@ -314,6 +336,57 @@ export class ChatGPT implements AIProvider {
     }
   }
 
+  public static async generateAudio(
+    input: string,
+    voice: string = "coral",
+    model: string = "tts-1-hd",
+    instructions?: string,
+    response_format: string = "mp3",
+    speed?: number,
+  ): Promise<Blob | null> {
+    try {
+      const payload: any = {
+        input,
+        voice,
+        response_format,
+        model
+      };
+
+      if (instructions) {
+        payload.instructions = instructions;
+      }
+
+      if (speed !== undefined) {
+        payload.speed = speed;
+      }
+
+      console.log("GPT Audio Payload:", payload);
+
+      const audio = await postToWorker(
+        payload,
+        "gpt/generate-audio",
+        { model },
+        "blob"
+      );
+
+      return audio;
+
+    } catch (err: any) {
+      const message = err?.message || "";
+
+      if (
+        message.includes("API key") ||
+        message.includes("invalid_api_key") ||
+        err instanceof MissingApiKeyError
+      ) {
+        console.log("INPUT GPT KEY!");
+        return null;
+      }
+
+      console.error("generateAudio error", err);
+      throw err;
+    }
+  }
 
 }
 
