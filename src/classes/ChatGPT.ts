@@ -121,6 +121,7 @@ export class ChatGPT implements AIProvider {
         const form = new FormData();
         form.append("model", model);
         form.append("prompt", prompt ?? "");
+        //form.append("quality", "low");
 
         if (resolution) { form.append("size", resolution); }
 
@@ -403,7 +404,87 @@ export class ChatGPT implements AIProvider {
     }
   }
 
+
+  public static async generateAudioPack(
+    requests: AudioPackRequest[],
+    model: string = "tts-1-hd",
+  ): Promise<Blob[] | null> {
+    try {
+      if (!requests.length) {
+        return [];
+      }
+
+      const payload = requests.map((request) => ({
+        ...request,
+        model: model,
+      }));
+
+      console.log("GPT Audio Pack Payload:", payload);
+
+      const response = await postToWorker(
+        payload,
+        "gpt/generate-audio-pack",
+        { model },
+      );
+
+      if (!response?.results || !Array.isArray(response.results)) {
+        throw new Error("Invalid audio pack response");
+      }
+
+      // Server guarantees results are returned in input order.
+      return response.results.map((result: any) =>
+        base64ToBlob(
+          result.data,
+          result.mime_type || "audio/mpeg",
+        )
+      );
+
+    } catch (err: any) {
+      const message = err?.message || "";
+
+      if (
+        message.includes("API key") ||
+        message.includes("invalid_api_key") ||
+        err instanceof MissingApiKeyError
+      ) {
+        console.log("INPUT GPT KEY!");
+        return null;
+      }
+
+      console.error("generateAudioPack error", err);
+      throw err;
+    }
+  }
+
+
 }
+
+
+export type AudioPackRequest = {
+  input: string;
+  voice?: string;
+  instructions?: string;
+  response_format?: string;
+  speed?: number;
+};
+
+function base64ToBlob(
+  base64: string,
+  mimeType: string = "audio/mpeg",
+): Blob {
+  const byteChars = atob(base64);
+  const byteNumbers = new Uint8Array(byteChars.length);
+
+  for (let i = 0; i < byteChars.length; i++) {
+    byteNumbers[i] = byteChars.charCodeAt(i);
+  }
+
+  return new Blob([byteNumbers], {
+    type: mimeType,
+  });
+}
+
+
 
 // Resolutions Mapping
 const RESOLUTION_MAP: Record<string, number> = {
@@ -411,7 +492,7 @@ const RESOLUTION_MAP: Record<string, number> = {
   "0.5K": 512,
   "1K": 1024,
   "2K": 2048,
-  "4K": 4096,
+  "4K": 3840,
 };
 
 function roundTo16(value: number): number {

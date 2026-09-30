@@ -8,9 +8,9 @@ import LoadingSpinner from "../../../../Atomic/LoadingSpinner";
 import { LocalImage } from "../../../../../classes/fileSystem/LocalImage";
 import { GoogleAI } from "../../../../../classes/GoogleAI";
 import type { LocalFolder } from "../../../../../classes/fileSystem/LocalFolder";
-//import { Button } from "react-bootstrap";
-//import { downloadImageTiles, splitImageIntoTiles } from "./ImageSplitUtils";
-//import SimpleSelect from "../../../../Atomic/SimpleSelect";
+import { Button } from "react-bootstrap";
+import { downloadImageTiles, splitImageIntoTiles } from "./ImageSplitUtils";
+import SimpleSelect from "../../../../Atomic/SimpleSelect";
 import EditableJsonTextField, { EditableJsonToggleButton } from "../../../../EditableJsonTextField";
 
 interface Props {
@@ -51,8 +51,8 @@ const component: React.FC<Props> = observer(({ shot }) => {
     const loading = shot.shotJson?.getField(wf_loading) ?? false;
     const project = shot.scene.project;
 
-    //const rows = project.projinfo?.getField(`workflows/${wf_name}/x_rows`) ?? "4"
-    //const cols = project.projinfo?.getField(`workflows/${wf_name}/y_rows`) ?? "4"
+    const rows = project.projinfo?.getField(`workflows/${wf_name}/x_rows`) ?? "4"
+    const cols = project.projinfo?.getField(`workflows/${wf_name}/y_rows`) ?? "4"
 
     return <div>
         <SettingsButton
@@ -94,7 +94,7 @@ const component: React.FC<Props> = observer(({ shot }) => {
 
                     <LoadingSpinner isLoading={loading} asButton />
 
-                    {/**
+                    
                      <Button size="sm"
                         variant="outline-warning"
                         onClick={async () => {
@@ -118,7 +118,7 @@ const component: React.FC<Props> = observer(({ shot }) => {
                         onChange={(val) => {
                             project.projinfo?.updateField(`workflows/${wf_name}/y_rows`, val)
                         }} />
-                        */}
+                        
                 </>
             }
             content={
@@ -139,7 +139,7 @@ export async function Action_Previs_Generate_Storyboard(shot: Shot) {
         const messages = get_use_prev_shot(shot) ? [
             "Описание шотов прошлой сцены сцены:",
             shot.prevShot?.shotJson?.getField("previs_shots") as string,
-            `прикрепленне изображение - раскадровка прошлой сцены:
+            `@image1 - раскадровка прошлой сцены:           
 
             ----------------------------------------------------
             
@@ -153,10 +153,10 @@ export async function Action_Previs_Generate_Storyboard(shot: Shot) {
             
             Описания шотов для текущей сцены:`,
             shot.shotJson?.data.previs_shots as string,
-        ] : [
-            get_prompt(shot) ?? "",
+        ] : [                        
             "Описания шотов:",
             shot.shotJson?.data.previs_shots as string,
+            get_prompt(shot) ?? "",
             //"Сценарий:",
             //shot.shotJson?.data.previs_script as string,
         ]

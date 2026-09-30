@@ -94,9 +94,10 @@ const component: React.FC<Props> = observer(({ shot }) => {
     </div >
 })
 
+/*
 export async function Action_Previs_generate_AudioMultiline(shot: Shot) {
 
-    if (!shot.start_frame) {
+    if (!shot.first_frame) {
         console.log("No start Frame");
         return;
     }
@@ -114,7 +115,7 @@ export async function Action_Previs_generate_AudioMultiline(shot: Shot) {
         const lines = data.texts
         console.log(lines);
 
-        const tiles = await splitImageIntoTiles(shot.start_frame, 4, 4);
+        const tiles = await splitImageIntoTiles(shot.first_frame, 4, 4);
         const imageBlobs = tiles.map(tile => tile.blob);
 
         const video_blobs = (await Promise.all(
@@ -152,6 +153,87 @@ export async function Action_Previs_generate_AudioMultiline(shot: Shot) {
         shot.shotJson?.updateField(wf_loading_audio, false);
     }
 }
+*/
+
+export async function Action_Previs_generate_AudioMultiline(shot: Shot) {
+
+    if (!shot.first_frame) {
+        console.log("No start Frame");
+        return;
+    }
+
+    shot.shotJson?.updateField(wf_loading_audio, true);
+
+    try {
+        const workflow = shot.scene.project.workflows[wf_name_audio];
+
+        type AudioTextData = { texts: string[] };
+
+        const rawText: string = shot.shotJson?.data.previs_audiotext ?? "";
+        const data: AudioTextData = JSON.parse(rawText);
+
+        const lines = data.texts;
+
+        console.log("Audio lines:", lines);
+
+        // Split first frame into tiles.
+        const tiles = await splitImageIntoTiles(shot.first_frame, 4, 4);
+        const imageBlobs = tiles.map(tile => tile.blob);
+
+        // Generate ALL audio files in parallel through the audio-pack endpoint.
+        const audioBlobs = await ChatGPT.generateAudioPack(
+            lines.map((line) => ({
+                input: line + "\n",
+                voice: workflow.voice ?? "coral",
+                instructions: undefined,
+                response_format: "mp3",
+                speed: Number(workflow.speed ?? "1.25"),
+            })),
+            workflow.model ?? "tts-1-hd",
+        );
+
+        if (!audioBlobs) {
+            console.log("Audio generation failed");
+            return;
+        }
+
+        console.log("All audio generated:", audioBlobs.length);
+
+        // Create videos in parallel.
+        const video_blobs = (
+            await Promise.all(
+                audioBlobs.map(async (audio, index) => {
+                    console.log("Creating video:", index);
+
+                    const imageBlob =
+                        imageBlobs[index % imageBlobs.length];
+
+                    return await mb_createVideoFromImageAndAudio(
+                        imageBlob,
+                        audio
+                    );
+                })
+            )
+        ).filter(
+            (video): video is Blob => video != null
+        );
+
+        const blob_final = await combineVideosFromBlobs(video_blobs);
+
+        const url = URL.createObjectURL(blob_final);
+        const a = document.createElement("a");
+
+        a.href = url;
+        a.download = "test.mp4";
+        a.click();
+
+        URL.revokeObjectURL(url);
+
+    } finally {
+        shot.shotJson?.updateField(wf_loading_audio, false);
+    }
+}
+
 
 export async function Action_Previs_generate_Audio(shot: Shot) {
     shot.shotJson?.updateField(wf_loading_audio, true);

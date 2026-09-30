@@ -161,8 +161,8 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
 
 
           </>,
-          "PrevisUtil": <>          
-            <MediaFolderGallery mediaFolder={shot.MediaFolder_results} defaultCollapsed={true}/>
+          "PrevisUtil": <>
+            <MediaFolderGallery mediaFolder={shot.MediaFolder_results} defaultCollapsed={true} />
             <EditableJsonTextField localJson={shot.shotJson} field="previs_logline" fitHeight collapsed />
             <WF_Previs_GenerateScript.component shot={shot} />
             <EditableJsonTextField localJson={shot.shotJson} field="previs_script" fitHeight collapsed />
