@@ -1,4 +1,4 @@
-import type { AIGenerateParms, AIProvider, ImageResult } from "./AI_provider";
+import type { AIGenerateParms, AIProvider, AIResult, ImageResult } from "./AI_provider";
 import type { AIMessage } from "./GoogleAI";
 import { postToWorker } from "./CloudflareWorker/WorkerUtils";
 import { LocalImage } from "./fileSystem/LocalImage";
@@ -82,8 +82,8 @@ export class ChatGPT implements AIProvider {
         "tts-1-hd",
         "gpt-4o-mini-tts",
         "gpt-4o-mini-tts-2025-12-15",
-      ],      
-      speed: ["0.5","0.75","1.0","1.25","1.5","1.75","2.0"],
+      ],
+      speed: ["0.5", "0.75", "1.0", "1.25", "1.5", "1.75", "2.0"],
     }
   }
 
@@ -180,6 +180,21 @@ export class ChatGPT implements AIProvider {
     if (params.images?.length) { messages.push(...params.images); }
     const res = await ChatGPT.sendMessages(messages, params.model, params.aspect_ratio, params.resolution);
     return res;
+  }
+
+
+  async sendMessages(
+    messages: AIMessage[],
+    model: string,
+    aspect_ratio?: string,
+    resolution?: string,
+  ): Promise<AIResult | null> {
+    return ChatGPT.sendMessages(
+      messages,
+      model,
+      aspect_ratio,
+      resolution,
+    );
   }
 
   // New Message Type Function

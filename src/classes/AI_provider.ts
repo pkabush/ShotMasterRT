@@ -1,18 +1,18 @@
 import { ChatGPT } from "./ChatGPT";
 import type { LocalImage } from "./fileSystem/LocalImage";
-import { GoogleAI } from "./GoogleAI";
+import { GoogleAI, type AIMessage } from "./GoogleAI";
 
 export const ai_providers = {
-    KLING: "kling",
-    GPT: "gpt",
-    GOOGLE: "google",
-    BD:'bytedance',
+  KLING: "kling",
+  GPT: "gpt",
+  GOOGLE: "google",
+  BD: 'bytedance',
 };
 
 export type AIImageInput = {
-    rawBase64: string;
-    mime: string;
-    description: string;    
+  rawBase64: string;
+  mime: string;
+  description: string;
 };
 
 export type AIVideoInput = {
@@ -22,20 +22,20 @@ export type AIVideoInput = {
 };
 
 export type AIGenerateParms = {
-    prompt?: string;
-    system?: string;
-    images?: AIImageInput[] | LocalImage[];
-    model: string;
-    aspect_ratio?: string;
-    resolution? : string;
+  prompt?: string;
+  system?: string;
+  images?: AIImageInput[] | LocalImage[];
+  model: string;
+  aspect_ratio?: string;
+  resolution?: string;
 };
 
 export type ImageResult = {
-    base64Obj: {
-        rawBase64: string;
-        mime: string;
-    };
-    id?: string;
+  base64Obj: {
+    rawBase64: string;
+    mime: string;
+  };
+  id?: string;
 };
 
 const googleTextModels = new Set(Object.values(GoogleAI.options.text_models));
@@ -63,10 +63,16 @@ export type AIResult = string | ImageResult;
 export interface AIProvider {
   generateText(params: AIGenerateParms): Promise<string | null>;
   generateImage(params: AIGenerateParms): Promise<ImageResult | null>;
+  sendMessages(
+    messages: AIMessage[],
+    model: string,
+    aspect_ratio?: string,
+    resolution?: string,
+  ): Promise<AIResult | null>;
 }
 
 
-export class AI {   
+export class AI {
 
   public static async GenerateText(params: AIGenerateParms): Promise<string | null> {
     const provider: AIProvider | null = resolveModel(params.model);
@@ -83,6 +89,27 @@ export class AI {
       throw new Error(`No AI provider found for model: ${params.model}`);
     }
     return provider.generateImage(params);
+  }
+
+  public static async sendMessages(
+    messages: AIMessage[],
+    model: string,
+    aspect_ratio?: string,
+    resolution?: string,
+  ): Promise<AIResult | null> {
+
+    const provider = resolveModel(model);
+
+    if (!provider) {
+      throw new Error(`No AI provider found for model: ${model}`);
+    }
+
+    return provider.sendMessages(
+      messages,
+      model,
+      aspect_ratio,
+      resolution,
+    );
   }
 }
 

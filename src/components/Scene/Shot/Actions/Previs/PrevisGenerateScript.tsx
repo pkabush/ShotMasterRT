@@ -5,13 +5,13 @@ import SettingsButton from "../../../../Atomic/SettingsButton";
 import { WorkflowOptionSelect } from "../../../../WorkflowOptionSelect";
 import { AI, AllTextModels } from "../../../../../classes/AI_provider";
 import LoadingSpinner from "../../../../Atomic/LoadingSpinner";
-import EditableJsonTextField from "../../../../EditableJsonTextField";
+import EditableJsonTextField, { EditableJsonToggleButton } from "../../../../EditableJsonTextField";
 
 interface Props {
     shot: Shot;
 }
 
-const wf_name = "shot_previs_generate_shotlist"
+const wf_name = "shot_previs_generate_script"
 const wf_prompt_field = `workflows/${wf_name}/prompt`
 const wf_loading = `${wf_name}/loading`
 
@@ -24,6 +24,21 @@ const PromptField: React.FC<Props> = observer(({ shot }) => {
 const get_prompt = (shot: Shot): string => {
     return shot.scene.project.projinfo?.getField(wf_prompt_field);
 }
+
+
+const use_prev_shot_field = `workflows/${wf_name}/use_prev_shot_field`
+/*
+const get_use_prev_shot = (shot: Shot | null) => {
+    if (!shot) return false;
+    return shot.shotJson?.getField(use_prev_shot_field);
+}
+    */
+
+const UsePrevShotToggle: React.FC<Props> = observer(({ shot }) => {
+    return <>{shot.prevShot &&
+        <EditableJsonToggleButton localJson={shot.shotJson} field={use_prev_shot_field} label="Use Prev Shot" />
+    }</>;
+})
 
 
 const component: React.FC<Props> = observer(({ shot }) => {
@@ -39,7 +54,7 @@ const component: React.FC<Props> = observer(({ shot }) => {
                             console.log("Generate Staging Dscription");
                             Action_Previs_GenerateShotlist(shot);
                         }} >
-                        Generate Shotlist
+                        Generate Script
                     </button>
 
                     {/* Model Selector */}
@@ -48,6 +63,8 @@ const component: React.FC<Props> = observer(({ shot }) => {
                         optionName={"model"}
                         values={AllTextModels}
                     />
+
+                    {false && <UsePrevShotToggle shot={shot} />}
 
                     <LoadingSpinner isLoading={loading} asButton />
                 </>
@@ -82,7 +99,7 @@ export async function Action_Previs_GenerateShotlist(shot: Shot) {
             */
         const messages = [
             get_prompt(shot) ?? "",
-            shot.shotJson?.data.previs_script as string,
+            shot.shotJson?.data.previs_logline as string,
         ]
 
         const res = await AI.sendMessages(
@@ -91,21 +108,15 @@ export async function Action_Previs_GenerateShotlist(shot: Shot) {
         )
 
         if (typeof res === "string") {
-            await shot.shotJson!.updateField("previs_shots", res);
+            await shot.shotJson!.updateField("previs_script", res);
         }
     } finally {
         shot.shotJson?.updateField(wf_loading, false);
     }
 }
 
-export const WF_Previs_GenerateShotlist = {
+export const WF_Previs_GenerateScript = {
     wf_name,
     wf_loading,
     component,
 }
-
-
-
-
-
-

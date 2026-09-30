@@ -43,10 +43,6 @@ export async function mb_trimLocalVideo(localVideo: LocalVideo) {
     window.open(url, "_blank");
 }
 
-
-
-
-
 async function getAudioDuration(audioBlob: Blob): Promise<number> {
   const input = new Input({
     source: new BlobSource(audioBlob),
@@ -63,7 +59,6 @@ interface ImageToVideoOptions {
   width?: number;
   height?: number;
 }
-
 
 export async function mb_createVideoFromImageAndAudio(
   imageBlob: Blob,

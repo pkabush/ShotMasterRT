@@ -106,9 +106,7 @@ export async function Action_Previs_generate_AudioMultiline(shot: Shot) {
     try {
         const workflow = shot.scene.project.workflows[wf_name_audio];
 
-        type AudioTextData = {
-            texts: string[];
-        };
+        type AudioTextData = { texts: string[]; };
 
         const rawText: string = shot.shotJson?.data.previs_audiotext ?? "";
         const data: AudioTextData = JSON.parse(rawText);
@@ -118,64 +116,6 @@ export async function Action_Previs_generate_AudioMultiline(shot: Shot) {
 
         const tiles = await splitImageIntoTiles(shot.start_frame, 4, 4);
         const imageBlobs = tiles.map(tile => tile.blob);
-
-
-        /*
-        const audio = await ChatGPT.generateAudio(
-            lines[0] + "\n",
-            workflow.voice ?? "coral",
-            workflow.model ?? "tts-1-hd",
-            undefined,
-            undefined,
-            Number(workflow.speed ?? "1.25"),
-        );
-        if (!audio) return;
-
-        const blob = await mb_createVideoFromImageAndAudio(imageBlobs[0],audio)
-              
-        if(!blob) return;
-        // download
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "test.mp4";
-        a.click();
-        URL.revokeObjectURL(url);
-        */
-
-
-
-        // Generate all audio files concurrently
-        /*
-        const audio_blobs = await Promise.all(
-            lines.map(async (line, index) => {
-                const audio = await ChatGPT.generateAudio(
-                    line + "\n",
-                    workflow.voice ?? "coral",
-                    workflow.model ?? "tts-1-hd",
-                    undefined,
-                    undefined,
-                    Number(workflow.speed ?? "1.25"),
-                );
-
-                console.log("Audio Generated:", index);
-
-                return audio;
-            })
-        );
-
-        const video_blobs: Blob[] = [];
-        for (let i = 0; i < audio_blobs.length; i++) {
-            const audioBlob = audio_blobs[i];
-            const imageBlob = imageBlobs[i % imageBlobs.length];
-            console.log(`Generating video ${i + 1}/${audio_blobs.length}`);
-            if (!audioBlob) continue;
-            //const videoBlob = await imageBlobToVideo(imageBlob, audioBlob);
-            const videoBlob = await mb_createVideoFromImageAndAudio(imageBlob,audioBlob)
-            if(!videoBlob) continue;
-            video_blobs.push(videoBlob);
-            console.log("Video Generated:", i);
-        }*/
 
         const video_blobs = (await Promise.all(
             lines.map(async (line, index) => {
@@ -192,7 +132,7 @@ export async function Action_Previs_generate_AudioMultiline(shot: Shot) {
                 if (!audio) return;
 
                 const imageBlob = imageBlobs[index % imageBlobs.length];
-                const videoBlob = await mb_createVideoFromImageAndAudio(imageBlob,audio)
+                const videoBlob = await mb_createVideoFromImageAndAudio(imageBlob, audio)
 
                 return videoBlob;
             })
@@ -206,7 +146,6 @@ export async function Action_Previs_generate_AudioMultiline(shot: Shot) {
         a.download = "test.mp4";
         a.click();
         URL.revokeObjectURL(url);
-
 
 
     } finally {

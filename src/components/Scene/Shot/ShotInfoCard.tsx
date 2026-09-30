@@ -31,6 +31,7 @@ import { ShotAskGenerationDuration } from './Actions/ShotAskGenerationDuration';
 import { WF_Previs_GenerateShotlist } from './Actions/Previs/PrevisGenerateShotlist';
 import { WF_Previs_GenerateStoryboard } from './Actions/Previs/PrevisGenerateStoryboard';
 import { WF_Previs_GenerateAudio } from './Actions/Previs/PrevisGenerateAudio';
+import { WF_Previs_GenerateScript } from './Actions/Previs/PrevisGenerateScript';
 
 
 interface Props {
@@ -160,8 +161,10 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
 
 
           </>,
-          "PrevisUtil": <>
+          "PrevisUtil": <>          
             <MediaFolderGallery mediaFolder={shot.MediaFolder_results} defaultCollapsed={true}/>
+            <EditableJsonTextField localJson={shot.shotJson} field="previs_logline" fitHeight collapsed />
+            <WF_Previs_GenerateScript.component shot={shot} />
             <EditableJsonTextField localJson={shot.shotJson} field="previs_script" fitHeight collapsed />
             <WF_Previs_GenerateShotlist.component shot={shot} />
             <EditableJsonTextField localJson={shot.shotJson} field="previs_shots" fitHeight collapsed />

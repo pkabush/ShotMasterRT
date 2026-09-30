@@ -58,7 +58,7 @@ export class Shot extends LocalFolder {
       references: observable,
       tasksJson: observable,
       load: action,
-      first_frame:computed,
+      first_frame: computed,
     });
   }
 
@@ -123,11 +123,11 @@ export class Shot extends LocalFolder {
   }
   // SRC IMAGE WITH FALLBACK TO first image from results folder
   get first_frame(): LocalImage | null {
-    if( this.scene.project.projinfo?.getField("auto_load_first_frame") )
+    if (this.scene.project.projinfo?.getField("auto_load_first_frame"))
       return this.srcImage ?? this.MediaFolder_results?.media[0] as LocalImage;
-    else 
+    else
       return this.srcImage;
-  }  
+  }
   get start_frame(): LocalImage | null {
     return this.MediaFolder_results?.getFirstMediaWithTag("start_frame") as LocalImage;
   }
@@ -152,6 +152,13 @@ export class Shot extends LocalFolder {
   get kling_face_id_data(): any | null {
     if (!this.outVideo) return null;
     return this.shotJson?.getField("KlingFaceID/" + this.outVideo.name);
+  }
+  get prevShot(): Shot | null {    
+    const prev_shot = this.index == 0 ? null : this.scene.shots_ordered[this.index - 1]
+    return prev_shot;
+  }
+  get index(): number {
+    return this.scene.get_shot_list_index(this);
   }
 
   // --- GENERATIONS -----------
@@ -283,7 +290,7 @@ export class Shot extends LocalFolder {
             image_url: (await this.first_frame.getBase64()).rawBase64,
             type: KlingAI.options.omni_video.image.type.first_frame,
           });
-        } 
+        }
 
         if (this.end_frame) {
           image_list.push({

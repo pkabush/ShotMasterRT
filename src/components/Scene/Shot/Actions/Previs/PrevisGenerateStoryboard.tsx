@@ -2,15 +2,16 @@
 import type { Shot } from "../../../../../classes/Shot";
 import { observer } from "mobx-react-lite";
 import SettingsButton from "../../../../Atomic/SettingsButton";
-import { WorkflowOptionSelect, WorkflowTextField } from "../../../../WorkflowOptionSelect";
+import { WorkflowOptionSelect } from "../../../../WorkflowOptionSelect";
 import { AI, AllImageModels } from "../../../../../classes/AI_provider";
 import LoadingSpinner from "../../../../Atomic/LoadingSpinner";
 import { LocalImage } from "../../../../../classes/fileSystem/LocalImage";
 import { GoogleAI } from "../../../../../classes/GoogleAI";
 import type { LocalFolder } from "../../../../../classes/fileSystem/LocalFolder";
-import { Button } from "react-bootstrap";
-import { downloadImageTiles, splitImageIntoTiles } from "./ImageSplitUtils";
-import SimpleSelect from "../../../../Atomic/SimpleSelect";
+//import { Button } from "react-bootstrap";
+//import { downloadImageTiles, splitImageIntoTiles } from "./ImageSplitUtils";
+//import SimpleSelect from "../../../../Atomic/SimpleSelect";
+import EditableJsonTextField, { EditableJsonToggleButton } from "../../../../EditableJsonTextField";
 
 interface Props {
     shot: Shot;
@@ -20,12 +21,38 @@ const wf_name = "shot_previs_generate_storyboard"
 const wf_loading = `${wf_name}/loading`
 
 
+const use_prev_shot_field = `workflows/${wf_name}/use_prev_shot_field`
+const get_use_prev_shot = (shot: Shot | null) => {
+    if (!shot) return false;
+    return shot.shotJson?.getField(use_prev_shot_field);
+}
+const UsePrevShotToggle: React.FC<Props> = observer(({ shot }) => {
+    return <>{shot.prevShot &&
+        <EditableJsonToggleButton localJson={shot.shotJson} field={use_prev_shot_field} label="Use Prev Shot" />
+    }</>;
+})
+
+// Prompt
+const wf_prompt_field = `workflows/${wf_name}/prompt`
+const wf_prompt_field_prev = `workflows/${wf_name}/prompt_prev`
+const PromptField: React.FC<Props> = observer(({ shot }) => {
+    return <>
+        <EditableJsonTextField localJson={shot.scene.project.projinfo} field={get_use_prev_shot(shot) ? wf_prompt_field_prev : wf_prompt_field} />
+    </>;
+})
+const get_prompt = (shot: Shot): string => {
+    return shot.scene.project.projinfo?.getField(get_use_prev_shot(shot) ? wf_prompt_field_prev : wf_prompt_field);
+}
+
+
+
+
 const component: React.FC<Props> = observer(({ shot }) => {
     const loading = shot.shotJson?.getField(wf_loading) ?? false;
     const project = shot.scene.project;
 
-    const rows = project.projinfo?.getField(`workflows/${wf_name}/x_rows`) ?? "4"
-    const cols = project.projinfo?.getField(`workflows/${wf_name}/y_rows`) ?? "4"
+    //const rows = project.projinfo?.getField(`workflows/${wf_name}/x_rows`) ?? "4"
+    //const cols = project.projinfo?.getField(`workflows/${wf_name}/y_rows`) ?? "4"
 
     return <div>
         <SettingsButton
@@ -47,9 +74,28 @@ const component: React.FC<Props> = observer(({ shot }) => {
                         values={AllImageModels}
                     />
 
+                    <WorkflowOptionSelect
+                        project={project}
+                        workflowName={wf_name}
+                        optionName="aspect_ratio"
+                        values={Object.values(GoogleAI.options.aspect_ratios)}
+                        defaultValue={GoogleAI.options.aspect_ratios.r9x16}
+                    />
+
+                    <WorkflowOptionSelect
+                        project={project}
+                        workflowName={wf_name}
+                        optionName="resolution"
+                        values={Object.values(GoogleAI.options.resolution)}
+                        defaultValue={GoogleAI.options.resolution.none}
+                    />
+
+                    <UsePrevShotToggle shot={shot} />
+
                     <LoadingSpinner isLoading={loading} asButton />
 
-                    <Button size="sm"
+                    {/**
+                     <Button size="sm"
                         variant="outline-warning"
                         onClick={async () => {
                             if (!shot.first_frame || !(shot.first_frame instanceof LocalImage)) {
@@ -72,11 +118,12 @@ const component: React.FC<Props> = observer(({ shot }) => {
                         onChange={(val) => {
                             project.projinfo?.updateField(`workflows/${wf_name}/y_rows`, val)
                         }} />
+                        */}
                 </>
             }
             content={
                 <>
-                    <WorkflowTextField workflowName={wf_name} optionName={"prompt"} />
+                    <PromptField shot={shot} />
                 </>
             }
         />
@@ -89,18 +136,38 @@ export async function Action_Previs_Generate_Storyboard(shot: Shot) {
     try {
         const workflow = shot.scene.project.workflows[wf_name];
 
-        const prompt = `
-            ${shot.shotJson?.data.previs_shots}
+        const messages = get_use_prev_shot(shot) ? [
+            "Описание шотов прошлой сцены сцены:",
+            shot.prevShot?.shotJson?.getField("previs_shots") as string,
+            `прикрепленне изображение - раскадровка прошлой сцены:
 
-            ${workflow.prompt ?? ""}  
+            ----------------------------------------------------
             
-            ${shot.shotJson?.data.previs_script}
-            `;
+            Твоя текущая задача:
 
-        const res = await AI.GenerateImage({
-            prompt,
-            model: workflow.model ?? AllImageModels[0],
-        });
+            `,
+            shot.prevShot?.srcImage ?? "",
+            get_prompt(shot) ?? "",
+            `
+                      
+            
+            Описания шотов для текущей сцены:`,
+            shot.shotJson?.data.previs_shots as string,
+        ] : [
+            get_prompt(shot) ?? "",
+            "Описания шотов:",
+            shot.shotJson?.data.previs_shots as string,
+            //"Сценарий:",
+            //shot.shotJson?.data.previs_script as string,
+        ]
+        console.log("SPLIT MESSAGES:", messages);
+
+        const res = await AI.sendMessages(
+            messages,
+            workflow.model ?? AllImageModels[0],
+            workflow.aspect_ratio,            
+            workflow.resolution,
+        );
 
         const localImage: LocalImage | null =
             await GoogleAI.saveResultImage(
@@ -109,12 +176,9 @@ export async function Action_Previs_Generate_Storyboard(shot: Shot) {
             );
 
         return localImage;
-
     } finally {
         shot.shotJson?.updateField(wf_loading, false);
     }
-
-    //await ActionGenerateReferences(shot);
 }
 
 export const WF_Previs_GenerateStoryboard = {

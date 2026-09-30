@@ -1,7 +1,7 @@
 // classes/GoogleGenAI.ts
 import { LocalImage } from "./fileSystem/LocalImage";
 import type { LocalFolder } from "./fileSystem/LocalFolder";
-import type { AIGenerateParms, AIImageInput, AIProvider, ImageResult } from "./AI_provider";
+import type { AIGenerateParms, AIImageInput, AIProvider, AIResult, ImageResult } from "./AI_provider";
 import { postToWorker } from "./CloudflareWorker/WorkerUtils";
 import { LocalVideo } from "./fileSystem/LocalVideo";
 
@@ -191,6 +191,22 @@ export class GoogleAI implements AIProvider {
   }
 
   // ---------- img2img function ----------
+
+  async sendMessages(
+    messages: AIMessage[],
+    model: string,
+    aspect_ratio?: string,
+    resolution?: string,
+  ): Promise<AIResult | null> {
+    return GoogleAI.sendMessages(
+      messages,
+      model,
+      aspect_ratio,
+      resolution,
+    );
+  }
+
+
   public static async sendMessages(
     messages: AIMessage[],
     model: string = GoogleAI.options.img_models.flash_image,
@@ -230,7 +246,7 @@ export class GoogleAI implements AIProvider {
           contents.push(gfile_part);
           */
 
-          
+
           const image = await message.getAIImage()
           contents.push({
             inlineData: {
@@ -238,7 +254,7 @@ export class GoogleAI implements AIProvider {
               mimeType: image.mime,
             },
           });
-          
+
           continue;
         }
 

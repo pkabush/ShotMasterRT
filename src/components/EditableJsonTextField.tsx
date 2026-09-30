@@ -7,7 +7,7 @@ import { Project } from '../classes/Project';
 import { WorkflowOptionSelect } from './WorkflowOptionSelect';
 import { AI, AllTextModels } from '../classes/AI_provider';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBrain } from '@fortawesome/free-solid-svg-icons';
+import { faBrain, faCircleCheck, faCircleXmark } from '@fortawesome/free-solid-svg-icons';
 
 interface EditableJsonTextFieldProps {
   localJson: LocalJson | null;
@@ -128,7 +128,7 @@ export const AskAIView: React.FC<AskAIViewProps> = observer(({
           localJson.updateField(field, localJson.getField(res_field));
           localJson.updateField(res_field, old);
         }}
-        className="ms-auto"
+          className="ms-auto"
         >copy output</Button>
       </Stack>
 
@@ -138,14 +138,6 @@ export const AskAIView: React.FC<AskAIViewProps> = observer(({
     </div>
   </div>;
 });
-
-
-
-
-
-
-
-
 
 
 
@@ -175,3 +167,29 @@ export const EditableJsonToggleField: React.FC<EditableJsonToggleFieldProps> = o
   );
 });
 
+
+
+export const EditableJsonToggleButton: React.FC<EditableJsonToggleFieldProps> = observer(({
+  localJson,
+  field,
+  label,
+  default_val = true
+}) => {
+  if (!localJson) return;
+
+  const value = localJson.getField(field) ?? default_val;
+
+  return (
+    <Button
+      size="sm"
+      variant={value ? 'outline-primary' : 'outline-secondary'}
+      onClick={() => {
+        localJson.updateField(field, !value);
+      }}
+    >
+
+      {label ?? field}       
+      <FontAwesomeIcon icon={value ? faCircleCheck : faCircleXmark} style={{ marginLeft: "0.35rem" }} />
+    </Button>
+  );
+});
