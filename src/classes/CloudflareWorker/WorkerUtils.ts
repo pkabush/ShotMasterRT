@@ -1,5 +1,8 @@
-import { useGoogleStore, WORKER_URL } from "../../contexts/GoogleUserContext";
+import { useDebugStore } from "../../contexts/DebugStore";
+import { useUserStore, WORKER_URL } from "../../contexts/GoogleUserContext";
 import { Project } from "../Project";
+
+
 
 export async function postToWorker(
     payload: any,
@@ -8,29 +11,22 @@ export async function postToWorker(
     responseType: "json" | "blob" = "json",
 ) {
     try {
-        const idToken = useGoogleStore.getState().idToken;
-        //const email = useGoogleStore.getState().user?.email ?? "";
-        const username = useGoogleStore.getState().user?.name ?? "";
+        const debug_log = useDebugStore.getState().debug_log ? "true" : "false";
+        const username = useUserStore.getState().user?.name ?? "";
         const project = Project.getProject();
-        //const debug_log = project.projinfo?.getField("debug_log") ? "true" : "false";
-        const debug_log = useGoogleStore.getState().debug_log ? "true" : "false";
 
         const params = new URLSearchParams({
             project_name: project.name,
-            //email:email,
-            username: username,
-            debug_log: debug_log,
+            username,
+            debug_log,
             ...additional_url_params,
         });
 
-        const headers: Record<string, string> = {
-            Authorization: `Bearer ${idToken}`,
-        };
+        const headers: Record<string, string> = {};
 
         let body: BodyInit;
 
         if (payload instanceof FormData) {
-            // Let the browser set multipart/form-data + boundary
             body = payload;
         } else {
             headers["Content-Type"] = "application/json";
@@ -41,6 +37,7 @@ export async function postToWorker(
             method: "POST",
             headers,
             body,
+            credentials: "include",
         });
 
         if (!res.ok) {
@@ -70,15 +67,13 @@ export async function postToWorker(
     }
 }
 
+
 export async function getFromWorker(
     subpath: string,
     additional_url_params: Record<string, string> = {}
 ) {
     try {
-        const idToken = useGoogleStore.getState().idToken;
-
         const params = new URLSearchParams(additional_url_params);
-
         const query = params.toString();
 
         const url = query
@@ -87,9 +82,35 @@ export async function getFromWorker(
 
         const res = await fetch(url, {
             method: "GET",
+            credentials: "include",
+        });
+
+        if (!res.ok) { throw new Error(await res.text()); }
+        const contentType = res.headers.get("content-type") ?? "";
+
+        if (contentType.includes("application/json")) {
+            return await res.json();
+        }
+
+        return await res.text();
+
+    } catch (err) {
+        console.error(`Worker error (${subpath})`, err);
+        throw err;
+    }
+}
+
+
+export async function loginToWorker(
+    googleIdToken: string
+) {
+    try {
+        const res = await fetch(`${WORKER_URL}/auth/login`, {
+            method: "POST",
             headers: {
-                Authorization: `Bearer ${idToken}`,
+                Authorization: `Bearer ${googleIdToken}`,
             },
+            credentials: "include",
         });
 
         if (!res.ok) {
@@ -97,8 +118,19 @@ export async function getFromWorker(
         }
 
         return await res.json();
+
     } catch (err) {
-        console.error(`Worker error (${subpath})`, err);
+        console.error("Worker login error", err);
         throw err;
     }
+}
+
+export async function getWorkerUser() {
+    const response = await fetch(`${WORKER_URL}/auth/user`, {
+        method: "GET",
+        credentials: "include",
+    });
+    if (!response.ok) { return null; }
+    const data = await response.json();
+    return data.user;
 }

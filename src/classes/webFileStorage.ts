@@ -1,4 +1,4 @@
-import { useGoogleStore, WORKER_URL } from "../contexts/GoogleUserContext";
+import { postToWorker } from "./CloudflareWorker/WorkerUtils";
 import { Project } from "./Project";
 
 
@@ -7,22 +7,10 @@ export async function uploadVideoTemp(file: File): Promise<string> {
     const form = new FormData();
     form.append("file", file);
     form.append("project_name", Project.getProject().name);
-
-    const idToken = useGoogleStore.getState().idToken;
-
-    const response = await fetch(`${WORKER_URL}/uploadstore/upload`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${idToken}`,
-      },
-      body: form,
-    });
-
-    const data = await response.json();
+    const data = await postToWorker(form, "uploadstore/upload");
     return data.url;
-
   } catch (err) {
-    console.error("[tmpfiles] Upload failed:", err)
+    console.error("Upload failed:", err)
     throw err
   }
 }

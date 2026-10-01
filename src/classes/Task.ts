@@ -4,7 +4,7 @@ import { getCurrentTimestampUTC, Shot } from "./Shot";
 import { notificationManager } from "./NotificationManager";
 import type { LocalMedia } from "./fileSystem/LocalMedia";
 import type { LocalJson } from "./LocalJson";
-import { useGoogleStore, WORKER_URL } from "../contexts/GoogleUserContext";
+import { getFromWorker } from "./CloudflareWorker/WorkerUtils";
 
 
 
@@ -132,24 +132,9 @@ export class Task {
 
     async check_status() {
         console.log("CHECK STATUS", this);
-
-        const targetUrl = `${WORKER_URL}/seedance/status/${this.id}`;
-        const idToken = useGoogleStore.getState().idToken;
-        if (!idToken) { throw new Error("Not logged in"); }
-
-        const response = await fetch(targetUrl, {
-            method: "GET",
-            headers: {
-                Authorization: `Bearer ${idToken}`,
-            },
-        });
-
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Seedance status request failed: ${errorText}`);
-        }
-
-        console.log("Seedance check status:", await response.text());
+        const response = await getFromWorker(`seedance/status/${this.id}`);
+        console.log("Seedance check status:", response);
+        return response;
     }
 
     async downloadResults() {

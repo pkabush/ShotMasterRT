@@ -9,12 +9,16 @@ import { UserSettingsDB } from './classes/UserSettingsDB';
 import { ProjectContext } from './contexts/ProjectContext';
 import { Group, Panel, Separator } from 'react-resizable-panels';
 import { GoogleOAuthProvider } from '@react-oauth/google';
-import { LoginCircles } from './contexts/GoogleUserContext';
+import { LoginCircles, useUserStore } from './contexts/GoogleUserContext';
 
 
 const App: React.FC = observer(() => {
   const [project, setProject] = useState<Project | null>(null);
   const userSettingsDB = useRef<UserSettingsDB>(new UserSettingsDB())
+
+  // RESTORE Session - get User
+  const restoreSession = useUserStore((s) => s.restoreSession);
+  useEffect(() => { restoreSession(); }, [restoreSession]);
 
   const handleOpenFolder = async () => {
     try {

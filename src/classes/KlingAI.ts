@@ -1,3 +1,5 @@
+import { useUserStore } from "../contexts/GoogleUserContext";
+import { SEEDANCE_CALLBACK_URL } from "./AiProviders/Byteplus";
 import { postToWorker } from "./CloudflareWorker/WorkerUtils";
 
 export class KlingAI {
@@ -103,8 +105,14 @@ export class KlingAI {
   private static async postToKling(targetUrl: string, payload: any) {
     console.log("Kling request:", payload);
 
+    const callback = new URL(SEEDANCE_CALLBACK_URL + "kling/callback");
+    callback.searchParams.set("user", useUserStore.getState().user?.sub ?? "");
+    payload.options ??= {};
+    payload.options.callback_url = callback.toString();
+    payload.callback_url = callback.toString();
+
     return postToWorker(payload, "kling/generate", {
-      request_url: targetUrl,
+      request_url: targetUrl,      
     });
   }
 

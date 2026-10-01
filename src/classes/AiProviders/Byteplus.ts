@@ -1,5 +1,5 @@
 import { getSeedanceSendImages } from "../../components/BytePlus/SeedanceHelper";
-import { useGoogleStore } from "../../contexts/GoogleUserContext";
+import { useUserStore } from "../../contexts/GoogleUserContext";
 import { postToWorker } from "../CloudflareWorker/WorkerUtils";
 import { LocalImage } from "../fileSystem/LocalImage";
 
@@ -20,8 +20,8 @@ export type SeedanceContent =
 const test_web = false
 export const SEEDANCE_CALLBACK_URL =
     import.meta.env.DEV && !test_web
-        ? `https://subalate-evia-squelchingly.ngrok-free.dev/seedance/callback`
-        : `https://shotmasterworker.kabushpavel.workers.dev/seedance/callback`;
+        ? `https://subalate-evia-squelchingly.ngrok-free.dev/`
+        : `https://shotmasterworker.kabushpavel.workers.dev/`;
 
 
 export class SeedanceAI {
@@ -146,13 +146,11 @@ export class SeedanceAI {
     private static async postToSeedance(payload: any) {
         console.log("Seedance request:", payload);
         const hasVideo = payload.content.some((item: any) => item.type === "video_url");
-        // CALLBACK ONLY WORKS FOR SERVER        
-        //const callback = new URL(`https://shotmasterworker.kabushpavel.workers.dev/seedance/callback`);
-        //const callback = new URL(`https://subalate-evia-squelchingly.ngrok-free.dev/seedance/callback`);
-        const callback = new URL(SEEDANCE_CALLBACK_URL);
+        // CALLBACK ONLY WORKS FOR SERVER                
+        const callback = new URL(SEEDANCE_CALLBACK_URL + "seedance/callback");
 
         callback.searchParams.set("hasVideo", hasVideo);
-        callback.searchParams.set("user", useGoogleStore.getState().user?.email ?? "");
+        callback.searchParams.set("user", useUserStore.getState().user?.sub ?? "");
         payload.callback_url = callback.toString();
 
         const data = await postToWorker(payload, "seedance/generate", { model: payload.model, });

@@ -7,8 +7,7 @@ import EditableJsonTextField, { EditableJsonToggleField } from './EditableJsonTe
 import type { Provider } from "../classes/AiProviders/CostTracker.ts";
 import { Button, Stack } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCloudArrowUp, faCopy } from "@fortawesome/free-solid-svg-icons";
-import { useGoogleStore } from "../contexts/GoogleUserContext.tsx";
+import { faCopy } from "@fortawesome/free-solid-svg-icons";
 import { SeedanceSendImagesToggle } from "./BytePlus/SeedanceHelper.tsx";
 
 interface SettingsViewProps {
@@ -133,54 +132,6 @@ export const SettingsView: React.FC<SettingsViewProps> = observer(({ project }) 
         >
           <FontAwesomeIcon icon={faCopy} />
         </Button>
-
-        <Button
-          variant="outline-secondary"
-          size="sm"
-          className="mt-4 d-flex align-items-center justify-content-center"
-          onClick={async () => {
-
-            const gstore = useGoogleStore.getState();
-            console.log(gstore.user?.email);
-            const name = gstore.user?.email;
-
-            if (!name) {
-              alert("ERROR: USERNAME is required.");
-              return;
-            }
-
-            if (!project.userSettingsDB.data.api_keys.HOPSHOT_API_KEY) {
-              alert("ERROR: HOPSHOT_APIKEY is required.");
-              return;
-            }
-
-            const url = "https://script.google.com/macros/s/AKfycbxvqDnrjDmumcLF8M2s2n5Z0vZ4DklqgNGa3ZFXRyAYQhYbiWVSKX-aMEcFC7Wauxprrw/exec";
-            const encodedTarget = encodeURIComponent(url);
-            const locUrl = `http://localhost:4000/proxy/${encodedTarget}`;
-
-            const usage_json = await project.costTracker?.getUsageJson(name, project.name, project.userSettingsDB.data.api_keys.HOPSHOT_API_KEY);
-            const res = await fetch(locUrl, { method: "POST", body: JSON.stringify(usage_json), });
-
-            console.log(res);
-            const data = await res.json();
-            if (data.success) {
-              console.log("%cSUCCESS", "color: green; font-weight: bold;");
-            } else {
-              console.log("%cERROR: " + data.error, "color: red; font-weight: bold;");
-            }
-
-
-            const audio = new Audio("assets/sounds/cha-ching-money.mp3");
-            audio.volume = 0.25;
-            audio.currentTime = 0;
-            audio.play().catch((err) => { console.error("Failed to play sound:", err); });
-
-
-          }}
-        >
-          <FontAwesomeIcon icon={faCloudArrowUp} />
-        </Button>
-
       </Stack>
 
 
