@@ -233,3 +233,133 @@ function mimeToExtension(mime: string): string {
             return "png";
     }
 }
+
+
+export async function extractImageTile(
+    image: LocalImage,
+    rows: number,
+    columns: number,
+    index: number,
+    outputWidth: number = 720,
+    outputHeight: number = 1280
+): Promise<ImageTile> {
+    if (!Number.isInteger(rows) || rows <= 0) {
+        throw new Error("rows must be a positive integer");
+    }
+
+    if (!Number.isInteger(columns) || columns <= 0) {
+        throw new Error("columns must be a positive integer");
+    }
+
+    if (!Number.isInteger(index) || index < 0 || index >= rows * columns) {
+        throw new Error(
+            `index must be an integer between 0 and ${rows * columns - 1}`
+        );
+    }
+
+    if (!Number.isInteger(outputWidth) || outputWidth <= 0) {
+        throw new Error("outputWidth must be a positive integer");
+    }
+
+    if (!Number.isInteger(outputHeight) || outputHeight <= 0) {
+        throw new Error("outputHeight must be a positive integer");
+    }
+
+    await image.ensureImageMetaLoaded();
+
+    const sourceUrl = await image.getUrlObject();
+    const sourceImage = await loadHtmlImage(sourceUrl);
+
+    const imageWidth =
+        sourceImage.naturalWidth || sourceImage.width;
+
+    const imageHeight =
+        sourceImage.naturalHeight || sourceImage.height;
+
+    // Convert linear index to row/column.
+    const row = Math.floor(index / columns);
+    const column = index % columns;
+
+    // Calculate the exact same source rectangle as splitImageIntoTiles().
+    const x = Math.floor(
+        (column * imageWidth) / columns
+    );
+
+    const y = Math.floor(
+        (row * imageHeight) / rows
+    );
+
+    const right = Math.floor(
+        ((column + 1) * imageWidth) / columns
+    );
+
+    const bottom = Math.floor(
+        ((row + 1) * imageHeight) / rows
+    );
+
+    const width = right - x;
+    const height = bottom - y;
+
+    const canvas = document.createElement("canvas");
+
+    canvas.width = outputWidth;
+    canvas.height = outputHeight;
+
+    const ctx = canvas.getContext("2d");
+
+    if (!ctx) {
+        throw new Error(
+            "Could not create 2D canvas context"
+        );
+    }
+
+    const scale = Math.min(
+        outputWidth / width,
+        outputHeight / height
+    );
+
+    const drawWidth = Math.round(width * scale);
+    const drawHeight = Math.round(height * scale);
+
+    const offsetX = Math.round(
+        (outputWidth - drawWidth) / 2
+    );
+
+    const offsetY = Math.round(
+        (outputHeight - drawHeight) / 2
+    );
+
+    ctx.drawImage(
+        sourceImage,
+
+        // Source rectangle
+        x,
+        y,
+        width,
+        height,
+
+        // Destination rectangle
+        offsetX,
+        offsetY,
+        drawWidth,
+        drawHeight
+    );
+
+    const blob = await canvasToBlob(
+        canvas,
+        image.base64Data?.mime || "image/png"
+    );
+
+    const url = URL.createObjectURL(blob);
+
+    return {
+        row,
+        column,
+        x,
+        y,
+        width,
+        height,
+        blob,
+        url,
+    };
+}

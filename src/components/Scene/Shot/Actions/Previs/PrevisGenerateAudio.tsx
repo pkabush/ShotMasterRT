@@ -27,7 +27,6 @@ const component: React.FC<Props> = observer(({ shot }) => {
     const loading_audio = shot.shotJson?.getField(wf_loading_audio) ?? false;
 
 
-
     return <div>
         <SettingsButton
             className="mb-2"

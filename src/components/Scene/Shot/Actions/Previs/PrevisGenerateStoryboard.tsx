@@ -15,6 +15,7 @@ import EditableJsonTextField, { EditableJsonToggleButton } from "../../../../Edi
 
 interface Props {
     shot: Shot;
+    use_shots_json?: boolean;
 }
 
 const wf_name = "shot_previs_generate_storyboard"
@@ -47,7 +48,7 @@ const get_prompt = (shot: Shot): string => {
 
 
 
-const component: React.FC<Props> = observer(({ shot }) => {
+const component: React.FC<Props> = observer(({ shot,use_shots_json = false }) => {
     const loading = shot.shotJson?.getField(wf_loading) ?? false;
     const project = shot.scene.project;
 
@@ -62,7 +63,7 @@ const component: React.FC<Props> = observer(({ shot }) => {
                     <button className="btn btn-sm btn-outline-success"
                         onClick={async () => {
                             console.log("Generate Staging Dscription");
-                            Action_Previs_Generate_Storyboard(shot);
+                            Action_Previs_Generate_Storyboard(shot,use_shots_json);
                         }} >
                         Generate Storyboard
                     </button>
@@ -94,31 +95,33 @@ const component: React.FC<Props> = observer(({ shot }) => {
 
                     <LoadingSpinner isLoading={loading} asButton />
 
-                    
-                     <Button size="sm"
-                        variant="outline-warning"
-                        onClick={async () => {
-                            if (!shot.first_frame || !(shot.first_frame instanceof LocalImage)) {
-                                console.log("Please Select firts frame");
-                                return;
-                            }
-                            const tiles = await splitImageIntoTiles(shot.first_frame, Number(rows), Number(cols));
-                            await downloadImageTiles(tiles, `${shot.scene.project.name}_${shot.scene.name}_${shot.name}`);
 
-                        }}>Split Into Tiles</Button>
+                    {false && <>
+                        <Button size="sm"
+                            variant="outline-warning"
+                            onClick={async () => {
+                                if (!shot.first_frame || !(shot.first_frame instanceof LocalImage)) {
+                                    console.log("Please Select firts frame");
+                                    return;
+                                }
+                                const tiles = await splitImageIntoTiles(shot.first_frame, Number(rows), Number(cols));
+                                await downloadImageTiles(tiles, `${shot.scene.project.name}_${shot.scene.name}_${shot.name}`);
 
-                    <SimpleSelect options={["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]}
-                        value={rows}
-                        label="Rows/Columns:"
-                        onChange={(val) => {
-                            project.projinfo?.updateField(`workflows/${wf_name}/x_rows`, val)
-                        }} />
-                    <SimpleSelect options={["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]}
-                        value={cols}
-                        onChange={(val) => {
-                            project.projinfo?.updateField(`workflows/${wf_name}/y_rows`, val)
-                        }} />
-                        
+                            }}>Split Into Tiles</Button>
+
+                        <SimpleSelect options={["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]}
+                            value={rows}
+                            label="Rows/Columns:"
+                            onChange={(val) => {
+                                project.projinfo?.updateField(`workflows/${wf_name}/x_rows`, val)
+                            }} />
+                        <SimpleSelect options={["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]}
+                            value={cols}
+                            onChange={(val) => {
+                                project.projinfo?.updateField(`workflows/${wf_name}/y_rows`, val)
+                            }} />
+                    </>}
+
                 </>
             }
             content={
@@ -130,7 +133,7 @@ const component: React.FC<Props> = observer(({ shot }) => {
     </div >
 })
 
-export async function Action_Previs_Generate_Storyboard(shot: Shot) {
+export async function Action_Previs_Generate_Storyboard(shot: Shot, use_shotjson = false) {
     shot.shotJson?.updateField(wf_loading, true);
 
     try {
@@ -138,7 +141,10 @@ export async function Action_Previs_Generate_Storyboard(shot: Shot) {
 
         const messages = get_use_prev_shot(shot) ? [
             "Описание шотов прошлой сцены сцены:",
-            shot.prevShot?.shotJson?.getField("previs_shots") as string,
+            use_shotjson ?
+                shot.prevShot?.shotJson?.getField("previs_json") as string
+                :
+                shot.prevShot?.shotJson?.getField("previs_shots") as string,
             `@image1 - раскадровка прошлой сцены:           
 
             ----------------------------------------------------
@@ -152,10 +158,16 @@ export async function Action_Previs_Generate_Storyboard(shot: Shot) {
                       
             
             Описания шотов для текущей сцены:`,
-            shot.shotJson?.data.previs_shots as string,
-        ] : [                        
+            use_shotjson ?
+                shot.shotJson?.data.previs_json as string
+                :
+                shot.shotJson?.data.previs_shots as string,
+        ] : [
             "Описания шотов:",
-            shot.shotJson?.data.previs_shots as string,
+            use_shotjson ?
+                shot.shotJson?.data.previs_json as string
+                :
+                shot.shotJson?.data.previs_shots as string,
             get_prompt(shot) ?? "",
             //"Сценарий:",
             //shot.shotJson?.data.previs_script as string,
@@ -165,7 +177,7 @@ export async function Action_Previs_Generate_Storyboard(shot: Shot) {
         const res = await AI.sendMessages(
             messages,
             workflow.model ?? AllImageModels[0],
-            workflow.aspect_ratio,            
+            workflow.aspect_ratio,
             workflow.resolution,
         );
 

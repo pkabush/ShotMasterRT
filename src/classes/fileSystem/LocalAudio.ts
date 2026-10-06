@@ -104,6 +104,12 @@ export class LocalAudio extends LocalMedia {
       });
     });
   }
+  
+  async getBlob(): Promise<Blob> {
+    const file = await this.getFile();
+    return file;
+  }
+
 }
 
 // Utility

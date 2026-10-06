@@ -32,6 +32,8 @@ import { WF_Previs_GenerateShotlist } from './Actions/Previs/PrevisGenerateShotl
 import { WF_Previs_GenerateStoryboard } from './Actions/Previs/PrevisGenerateStoryboard';
 import { WF_Previs_GenerateAudio } from './Actions/Previs/PrevisGenerateAudio';
 import { WF_Previs_GenerateScript } from './Actions/Previs/PrevisGenerateScript';
+import { WF_Previs_GenerateShotsJSON } from './Actions/Previs/PrevisV2/PrevisGenerateShotlistJson';
+import { Previs_ShotJsonPreview } from './Actions/Previs/PrevisV2/PrevisShotsJsonPreview';
 
 
 interface Props {
@@ -171,6 +173,16 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
             <WF_Previs_GenerateStoryboard.component shot={shot} />
             <WF_Previs_GenerateAudio.component shot={shot} />
             <EditableJsonTextField localJson={shot.shotJson} field="previs_audiotext" fitHeight collapsed />
+          </>,
+          "PrevisUtil_V2": <>            
+            <EditableJsonTextField localJson={shot.shotJson} field="previs_logline" fitHeight collapsed />
+            <WF_Previs_GenerateScript.component shot={shot} />
+            <EditableJsonTextField localJson={shot.shotJson} field="previs_script" fitHeight collapsed />            
+            <WF_Previs_GenerateShotsJSON.component shot={shot} />            
+            <EditableJsonTextField localJson={shot.shotJson} field="previs_json" fitHeight collapsed />
+            <WF_Previs_GenerateStoryboard.component shot={shot} use_shots_json={true} />
+            <MediaFolderGallery mediaFolder={shot.MediaFolder_results} defaultCollapsed={true} />
+            <Previs_ShotJsonPreview shot={shot} />
           </>
         }}
       />

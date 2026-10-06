@@ -460,6 +460,9 @@ export class ChatGPT implements AIProvider {
 }
 
 
+
+
+
 export type AudioPackRequest = {
   input: string;
   voice?: string;
@@ -483,8 +486,6 @@ function base64ToBlob(
     type: mimeType,
   });
 }
-
-
 
 // Resolutions Mapping
 const RESOLUTION_MAP: Record<string, number> = {
