@@ -44,6 +44,13 @@ export async function postToWorker(
             throw new Error(await res.text());
         }
 
+        // TRY TO READ COST FROM HEADERS
+        const headerCost = res.headers.get("x-cost");
+        const headerProvider = res.headers.get("x-provider");
+        const headerTaskId = res.headers.get("x-task-id");
+        console.log("Headers", headerCost, headerProvider, headerTaskId);
+        
+
         // Return binary response when requested.
         if (responseType === "blob") {
             return await res.blob();
@@ -59,6 +66,7 @@ export async function postToWorker(
                 response.cost
             );
         }
+
 
         return response;
     } catch (err) {

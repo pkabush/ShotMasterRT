@@ -401,3 +401,98 @@ export async function imageBlobToVideo(
         await ffmpeg.deleteFile(outputName);
     }
 }
+
+
+export async function combineAudioFromBlobs(
+    audioBlobs: Blob[]
+): Promise<Blob> {
+    if (audioBlobs.length === 0) {
+        throw new Error("No audio blobs provided");
+    }
+
+    if (audioBlobs.length === 1) {
+        return audioBlobs[0];
+    }
+
+    const ffmpeg = FFmpegService.instance;
+
+    const inputNames: string[] = [];
+    const listName = `audio-list-${crypto.randomUUID()}.txt`;
+    const outputName = `audio-output-${crypto.randomUUID()}.wav`;
+
+    try {
+        // =========================
+        // 1. WRITE INPUT FILES
+        // =========================
+
+        for (let i = 0; i < audioBlobs.length; i++) {
+            const inputName = `audio-${i}-${crypto.randomUUID()}.wav`;
+
+            await ffmpeg.writeFile(
+                inputName,
+                new Uint8Array(await audioBlobs[i].arrayBuffer())
+            );
+
+            inputNames.push(inputName);
+        }
+
+        // =========================
+        // 2. CREATE CONCAT LIST
+        // =========================
+
+        const list = inputNames
+            .map(name => `file '${name}'`)
+            .join("\n");
+
+        await ffmpeg.writeFile(
+            listName,
+            new TextEncoder().encode(list)
+        );
+
+        // =========================
+        // 3. CONCAT WITHOUT RE-ENCODING
+        // =========================
+
+        await ffmpeg.exec([
+            "-f", "concat",
+            "-safe", "0",
+            "-i", listName,
+
+            "-c:a", "copy",
+
+            outputName,
+        ]);
+
+        // =========================
+        // 4. READ RESULT
+        // =========================
+
+        const data = await ffmpeg.readFile(outputName);
+
+        return new Blob(
+            [data.slice(0)],
+            {
+                type: "audio/wav",
+            }
+        );
+
+    } finally {
+        // =========================
+        // 5. CLEANUP
+        // =========================
+
+        for (const name of inputNames) {
+            try {
+                await ffmpeg.deleteFile(name);
+            } catch {}
+        }
+
+        try {
+            await ffmpeg.deleteFile(listName);
+        } catch {}
+
+        try {
+            await ffmpeg.deleteFile(outputName);
+        } catch {}
+    }
+}

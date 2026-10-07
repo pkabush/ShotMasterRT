@@ -5,7 +5,6 @@ import { Form, Row, Col, Button } from "react-bootstrap";
 import { CroppedMediaImage } from "./CroppedMediaImage";
 import { LocalImage } from "../../../../../../classes/fileSystem/LocalImage";
 import SettingsButton from "../../../../../Atomic/SettingsButton";
-import { WorkflowOptionSelect } from "../../../../../WorkflowOptionSelect";
 import { ChatGPT } from "../../../../../../classes/ChatGPT";
 import LoadingSpinner from "../../../../../Atomic/LoadingSpinner";
 import { LocalAudio } from "../../../../../../classes/fileSystem/LocalAudio";
@@ -14,6 +13,10 @@ import SimpleSelect from "../../../../../Atomic/SimpleSelect";
 import { extractImageTile } from "../ImageSplitUtils";
 import { mb_createVideoFromImageAndAudio } from "../../../../../../classes/Ffmpeg/mediabunnyService";
 import { combineVideosFromBlobs } from "../../../../../../classes/Ffmpeg/FFmpegService";
+import Previs_GenerateAudioGPT from "./Previs_GenerateAudioGPT";
+import Previs_GenerateAudioGoogle, { Action_generatePrevisAudioGoogleAll } from "./PrevisGenerateAudioGoogle";
+import { Previs_getAllDialogueSpeakers } from "./Previs_AudioTextUtils";
+import { GoogleAI } from "../../../../../../classes/GoogleAI";
 
 interface Props {
     shot: Shot;
@@ -146,68 +149,8 @@ export const Previs_ShotPreviewItem: React.FC<ShotPreviewItemProps> = ({ shotDat
                             />
                         </Form.Group>
 
-                        <SettingsButton
-                            className="mb-2 mt-2"
-                            buttons={
-                                <>
-                                    <Button size="sm" variant="outline-success" onClick={async () => {
-                                        console.log("GENERATE AUDIO", shotData.audio_text);
-
-                                        const workflow = shot.scene.project.workflows[wf_name_audio];
-
-                                        const audio = await ChatGPT.generateAudio(
-                                            shotData.audio_text,
-                                            shotData.audio_voice ?? "nova",
-                                            workflow.model ?? "tts-1-hd",
-                                            undefined,
-                                            undefined,
-                                            Number(workflow.speed ?? "1.25"),
-                                        );
-
-                                        console.log("Audio Generated");
-
-                                        if (audio) {
-                                            const local_audio = await LocalAudio.fromBlob(audio, shot.MediaFolder_results!, audio_name);
-                                            return local_audio;
-                                        }
-                                    }}>
-                                        Generate Audio GPT
-                                    </Button>
-
-
-                                    {false && <WorkflowOptionSelect
-                                        workflowName={wf_name_audio}
-                                        optionName={"voice"}
-                                        values={ChatGPT.options.audio_generation.voices}
-                                    />}
-
-                                    <SimpleSelect
-                                        options={ChatGPT.options.audio_generation.voices}
-                                        value={shotData.audio_voice ?? "nova"}
-                                        onChange={(val) => {
-                                            onUpdateField("audio_voice", val)
-                                        }}
-                                    />
-
-                                    <WorkflowOptionSelect
-                                        workflowName={wf_name_audio}
-                                        optionName={"model"}
-                                        values={ChatGPT.options.audio_generation.models}
-                                    />
-
-                                    <WorkflowOptionSelect
-                                        workflowName={wf_name_audio}
-                                        optionName={"speed"}
-                                        values={ChatGPT.options.audio_generation.speed}
-                                        defaultValue="1.25"
-                                    />
-
-                                    <LoadingSpinner isLoading={false} asButton />
-
-                                </>
-                            }
-                            content={<></>}
-                        />
+                        { false && <Previs_GenerateAudioGPT shot={shot} audioIndex={shotIndex} />}
+                        <Previs_GenerateAudioGoogle shot={shot} audioIndex={shotIndex} />
 
                         {audio_file ? <InlineAudio localAudio={audio_file} /> : <>No Audio</>}
 
@@ -221,21 +164,17 @@ export const Previs_ShotPreviewItem: React.FC<ShotPreviewItemProps> = ({ shotDat
 export const Previs_ShotJsonPreview: React.FC<Props> = observer(({ shot }) => {
     const [selectedIndex, setSelectedIndex] = useState(0);
 
-    const shotJsonData = shot.shotJson?.getField("previs_json") ?? null;
+    const previs_json = Previs_GetShotsJson(shot);
 
-    const shotsJson = shotJsonData
-        ? JSON.parse(shotJsonData)
-        : { shots: Array.from({ length: 16 }, () => ({})), };
-
-    const shots = shotsJson.shots ?? [];
+    const shots = previs_json.shots ?? [];
 
     const updateShot = (
         index: number,
         field: "image_prompt" | "audio_text" | "image_path" | "audio_voice",
         value: string
     ) => {
-        shotsJson.shots[index][field] = value;
-        const newJson = JSON.stringify(shotsJson, null, 2);
+        previs_json.shots[index][field] = value;
+        const newJson = JSON.stringify(previs_json, null, 2);
         shot.shotJson?.updateField("previs_json", newJson);
     };
 
@@ -249,21 +188,35 @@ export const Previs_ShotJsonPreview: React.FC<Props> = observer(({ shot }) => {
     const selectedShot = shots[selectedIndex];
     const loading_audio = shot.shotJson?.getField(wf_loading_audio) ?? false;
 
+    const speakers = Previs_getAllDialogueSpeakers(shot);
+
     return (
         <div>
             <br />
             <SettingsButton content={<></>} className="mb-2" buttons={
                 <>
+                    {false &&
+                        <Button
+                            size="sm"
+                            variant="outline-success"
+                            disabled={loading_audio}
+                            onClick={() => { Action_Previs_Generate_AllAudioFromJson(shot); }}
+                        >
+                            Generate All Audio GPT
+                        </Button>
+                    }
+
                     <Button
                         size="sm"
                         variant="outline-success"
                         disabled={loading_audio}
-                        onClick={() => { Action_Previs_Generate_AllAudioFromJson(shot); }}
+                        onClick={() => { Action_generatePrevisAudioGoogleAll(shot); }}
                     >
-                        Generate All Audio
+                        Generate All Audio GOOGLE
                     </Button>
 
-                    <LoadingSpinner isLoading={loading_audio} asButton />                    
+                    <LoadingSpinner isLoading={loading_audio} asButton />
+
 
                     <Button
                         size="sm"
@@ -348,6 +301,25 @@ export const Previs_ShotJsonPreview: React.FC<Props> = observer(({ shot }) => {
                 />
             )}
 
+            <Button size="sm" variant="secondary"> Voices </Button>
+            {speakers.map((speaker) => {
+                const voice_map = previs_json.voices ?? {};
+                return <div key={speaker}>
+                    <SimpleSelect
+                        label={speaker}
+                        options={GoogleAI.options.audio_generation.voices}
+                        value={voice_map[speaker] ?? "Kale"}
+                        onChange={(val) => {
+                            updatePrevisVoice(
+                                shot,
+                                speaker,
+                                val,
+                            );
+                        }}
+                    />
+                </div>
+            })}
+
             <br />
             <br />
             <br />
@@ -358,9 +330,10 @@ export const Previs_ShotJsonPreview: React.FC<Props> = observer(({ shot }) => {
             <br />
             <br />
             <br />
-            <br />
-            <br />
-        </div>
+
+
+
+        </div >
     );
 });
 
@@ -472,9 +445,6 @@ export async function Action_Previs_Generate_AllAudioFromJson(shot: Shot) {
         shot.shotJson?.updateField(wf_loading_audio, false);
     }
 }
-
-
-
 
 export async function Action_Previs_generate_AudioMultiline(
     shot: Shot
@@ -666,5 +636,104 @@ export async function Action_Previs_generate_AudioMultiline(
 
     } finally {
         console.log("Video_Generated");
+    }
+}
+
+export function getPrevisShotByIndex(
+    shot: Shot,
+    index: number,
+): any | undefined {
+    const previsJson = shot.shotJson?.getField("previs_json");
+    if (!previsJson) { return undefined; }
+    try {
+        const shotsJson = JSON.parse(previsJson);
+        return shotsJson?.shots?.[index];
+    } catch (error) {
+        console.error("Failed to parse previs_json:", error);
+        return undefined;
+    }
+}
+
+export function updatePrevisShot(
+    shot: Shot,
+    index: number,
+    field: string,
+    value: any,
+) {
+    const previsJson = shot.shotJson?.getField("previs_json");
+
+    if (!previsJson) {
+        return;
+    }
+
+    try {
+        const shotsJson = JSON.parse(previsJson);
+
+        if (!shotsJson?.shots?.[index]) {
+            return;
+        }
+
+        shotsJson.shots[index][field] = value;
+
+        shot.shotJson?.updateField(
+            "previs_json",
+            JSON.stringify(shotsJson, null, 2),
+        );
+    } catch (error) {
+        console.error("Failed to update previs_json:", error);
+    }
+}
+
+export function Previs_GetShotsJson(shot: Shot): any {
+    const defaultJson = {
+        shots: Array.from({ length: 16 }, () => ({})),
+    };
+
+    const previsJson = shot.shotJson?.getField("previs_json");
+
+    if (!previsJson) {
+        return defaultJson;
+    }
+
+    try {
+        const shotsJson = JSON.parse(previsJson);
+
+        if (!shotsJson || !Array.isArray(shotsJson.shots)) {
+            return defaultJson;
+        }
+
+        return shotsJson;
+    } catch (error) {
+        console.error("Failed to parse previs_json:", error);
+        return defaultJson;
+    }
+}
+
+export function updatePrevisVoice(
+    shot: Shot,
+    speaker: string,
+    voice: string,
+) {
+    const previsJson = shot.shotJson?.getField("previs_json");
+
+    if (!previsJson) {
+        return;
+    }
+
+    try {
+        const previsJsonData = JSON.parse(previsJson);
+
+        if (!previsJsonData.voices) {
+            previsJsonData.voices = {};
+        }
+
+        previsJsonData.voices[speaker] = voice;
+
+        shot.shotJson?.updateField(
+            "previs_json",
+            JSON.stringify(previsJsonData, null, 2),
+        );
+    } catch (error) {
+        console.error("Failed to update previs voice:", error);
     }
 }

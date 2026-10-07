@@ -4,6 +4,7 @@ import type { LocalFolder } from "./fileSystem/LocalFolder";
 import type { AIGenerateParms, AIImageInput, AIProvider, AIResult, ImageResult } from "./AI_provider";
 import { postToWorker } from "./CloudflareWorker/WorkerUtils";
 import { LocalVideo } from "./fileSystem/LocalVideo";
+import { base64ToBlob } from "./ChatGPT";
 
 // Custom error types for clarity
 export class MissingApiKeyError extends Error { }
@@ -41,6 +42,25 @@ export class GoogleAI implements AIProvider {
       gemini_3_1_flash_lite: "gemini-3.1-flash-lite",
       gemini_3_1_pro_preview: "gemini-3.1-pro-preview",
       gemini_3_flash_preview: "gemini-3-flash-preview",
+    },
+    audio_generation: {
+      voices: [
+        "Kore",
+        "Puck",
+        "Ludo",
+        "Brio",
+        "Jori",
+        "Enzo",
+        "Arlo",
+        "Flinn",
+        "Sulafat",
+        "Nika",
+        "Sami",
+        "Gacrux",
+      ],
+      models: [
+        "gemini-3.8-flash-tts",
+      ],
     }
   }
 
@@ -301,6 +321,136 @@ export class GoogleAI implements AIProvider {
       throw err;
     }
   }
+
+
+
+  public static async generateAudio(
+    lines: AudioLine[],
+    model: string = "gemini-3.8-flash-tts",
+  ): Promise<Blob | null> {
+    try {
+      if (!lines.length) {
+        throw new Error("No audio lines provided");
+      }
+
+      const speakers = Array.from(
+        new Set(lines.map((line) => line.speaker)),
+      );
+
+      const isMultiSpeaker = speakers.length > 1;
+
+      const parts = lines.map((line) => ({
+        text: line.text,
+        ...(isMultiSpeaker
+          ? {
+            speech_metadata: {
+              speaker: line.speaker,
+              ...(line.style ? { style: line.style } : {}),
+            },
+          }
+          : line.style
+            ? {
+              speech_metadata: {
+                style: line.style,
+              },
+            }
+            : {}),
+      }));
+
+      let speechConfig;
+
+      if (!isMultiSpeaker) {
+        // Preserve the previous single-speaker implementation.
+        speechConfig = {
+          voiceConfig: {
+            prebuiltVoiceConfig: {
+              voiceName: lines[0].voice,
+            },
+          },
+        };
+      } else {
+        // Multi-speaker configuration.
+        const speakerVoiceConfigs = Array.from(
+          new Map(
+            lines.map((line) => [
+              line.speaker,
+              {
+                speaker: line.speaker,
+                voiceConfig: {
+                  prebuiltVoiceConfig: {
+                    voiceName: line.voice,
+                  },
+                },
+              },
+            ]),
+          ).values(),
+        );
+
+        speechConfig = {
+          multiSpeakerVoiceConfig: {
+            speakerVoiceConfigs,
+          },
+        };
+      }
+
+      const payload = {
+        contents: [
+          {
+            role: "user",
+            parts,
+          },
+        ],
+
+        generationConfig: {
+          responseModalities: ["AUDIO"],
+          speechConfig,
+        },
+      };
+
+      console.log("Gemini Audio Payload:", payload,);
+
+      const response = await postToWorker(
+        payload,
+        "gemini/generate-audio",
+        { model },
+      );
+
+      console.log("Gemini Audio Response:", response);
+
+      const audioPart =
+        response?.candidates?.[0]?.content?.parts?.find(
+          (part: any) => part?.inlineData?.data,
+        );
+
+      if (!audioPart?.inlineData?.data) {
+        throw new Error("Gemini returned no audio data");
+      }
+
+      const base64 = audioPart.inlineData.data;
+      const mimeType =
+        audioPart.inlineData.mimeType || "audio/wav";
+
+      return base64ToBlob(base64, mimeType);
+    } catch (err: any) {
+      const message = err?.message || "";
+
+      if (
+        message.includes("API key") ||
+        message.includes("invalid_api_key") ||
+        err instanceof MissingApiKeyError
+      ) {
+        console.log("INPUT GEMINI KEY!");
+        return null;
+      }
+
+      console.error("Gemini generateAudio error", err);
+      throw err;
+    }
+  }
+
+
+
+
 }
 
 
@@ -309,3 +459,11 @@ export type AIMessage =
   | AIImageInput
   | LocalVideo
   | LocalImage;
+
+
+export type AudioLine = {
+  speaker: string;
+  text: string;
+  voice: string;
+  style?: string;
+};

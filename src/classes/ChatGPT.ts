@@ -471,7 +471,7 @@ export type AudioPackRequest = {
   speed?: number;
 };
 
-function base64ToBlob(
+export function base64ToBlob(
   base64: string,
   mimeType: string = "audio/mpeg",
 ): Blob {
