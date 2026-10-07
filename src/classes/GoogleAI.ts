@@ -44,18 +44,17 @@ export class GoogleAI implements AIProvider {
       gemini_3_flash_preview: "gemini-3-flash-preview",
     },
     audio_generation: {
-      voices: [
-        "Kore",
+      voices: [        
         "Puck",
         "Ludo",
-        "Brio",
-        "Jori",
+        "Brio",        
         "Enzo",
         "Arlo",
-        "Flinn",
         "Sulafat",
         "Nika",
         "Sami",
+        "Jori",
+        "Kore",
         "Gacrux",
       ],
       models: [

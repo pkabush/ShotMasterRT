@@ -12,7 +12,7 @@ import InlineAudio from "../../../../../MediaComponents/InlineAudio";
 import SimpleSelect from "../../../../../Atomic/SimpleSelect";
 import { extractImageTile } from "../ImageSplitUtils";
 import { mb_createVideoFromImageAndAudio } from "../../../../../../classes/Ffmpeg/mediabunnyService";
-import { combineVideosFromBlobs } from "../../../../../../classes/Ffmpeg/FFmpegService";
+import { audioRetime, combineVideosFromBlobs } from "../../../../../../classes/Ffmpeg/FFmpegService";
 import Previs_GenerateAudioGPT from "./Previs_GenerateAudioGPT";
 import Previs_GenerateAudioGoogle, { Action_generatePrevisAudioGoogleAll } from "./PrevisGenerateAudioGoogle";
 import { Previs_getAllDialogueSpeakers } from "./Previs_AudioTextUtils";
@@ -65,6 +65,8 @@ export const Previs_ShotPreviewItem: React.FC<ShotPreviewItemProps> = ({ shotDat
     const audio_path = `${shot.MediaFolder_results?.path}/${audio_name}`;
     const audio_file = shot.MediaFolder_results?.getByPath(audio_path, LocalAudio);
     //console.log(audio_name, audio_path, audio_file);
+
+    const playback_rate = shotData.playback_speed ?? "1.0";
 
     return (
         <>
@@ -149,10 +151,35 @@ export const Previs_ShotPreviewItem: React.FC<ShotPreviewItemProps> = ({ shotDat
                             />
                         </Form.Group>
 
-                        { false && <Previs_GenerateAudioGPT shot={shot} audioIndex={shotIndex} />}
+                        {false && <Previs_GenerateAudioGPT shot={shot} audioIndex={shotIndex} />}
                         <Previs_GenerateAudioGoogle shot={shot} audioIndex={shotIndex} />
 
-                        {audio_file ? <InlineAudio localAudio={audio_file} /> : <>No Audio</>}
+                        {audio_file ? (
+                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                                <InlineAudio
+                                    playbackRate={Number(playback_rate)}
+                                    localAudio={audio_file}
+                                />
+
+                                <div style={{ minWidth: 125 }}>
+                                    <SimpleSelect
+                                        value={playback_rate}
+                                        options={["1.0", "1.25", "1.5", "1.75", "2.0"]}
+                                        label="Speed"
+                                        onChange={(val) => {
+                                            updatePrevisShot(
+                                                shot,
+                                                shotIndex,
+                                                "playback_speed",
+                                                val
+                                            );
+                                        }}
+                                    />
+                                </div>
+                            </div>
+                        ) : (
+                            <>No Audio</>
+                        )}
 
                     </Col>
                 </Row>
@@ -165,7 +192,6 @@ export const Previs_ShotJsonPreview: React.FC<Props> = observer(({ shot }) => {
     const [selectedIndex, setSelectedIndex] = useState(0);
 
     const previs_json = Previs_GetShotsJson(shot);
-
     const shots = previs_json.shots ?? [];
 
     const updateShot = (
@@ -195,17 +221,6 @@ export const Previs_ShotJsonPreview: React.FC<Props> = observer(({ shot }) => {
             <br />
             <SettingsButton content={<></>} className="mb-2" buttons={
                 <>
-                    {false &&
-                        <Button
-                            size="sm"
-                            variant="outline-success"
-                            disabled={loading_audio}
-                            onClick={() => { Action_Previs_Generate_AllAudioFromJson(shot); }}
-                        >
-                            Generate All Audio GPT
-                        </Button>
-                    }
-
                     <Button
                         size="sm"
                         variant="outline-success"
@@ -217,13 +232,24 @@ export const Previs_ShotJsonPreview: React.FC<Props> = observer(({ shot }) => {
 
                     <LoadingSpinner isLoading={loading_audio} asButton />
 
+                    <SimpleSelect
+                        value={"Set speed on All"}
+                        options={["Set speed on All", "1.0", "1.25", "1.5", "1.75", "2.0"]}
+                        onChange={(val) => {
+                            const data = previs_json;
+                            data.shots?.forEach((s: any) => { s.playback_speed = val; });
+                            shot.shotJson?.updateField("previs_json", JSON.stringify(data, null, 2));
+                        }}
+                    />
 
                     <Button
                         size="sm"
                         variant="outline-success"
                         disabled={loading_audio}
                         onClick={() => { Action_Previs_generate_AudioMultiline(shot); }}
-                    >Generate Final Video</Button>
+                    >
+                        Generate Final Video
+                    </Button>
                 </>
             } />
 
@@ -310,6 +336,14 @@ export const Previs_ShotJsonPreview: React.FC<Props> = observer(({ shot }) => {
                         options={GoogleAI.options.audio_generation.voices}
                         value={voice_map[speaker] ?? "Kale"}
                         onChange={(val) => {
+
+                            const audio = new Audio(`assets/sounds/VoicesGoogle/${val}.mp3`);
+                            audio.volume = 0.25;
+                            audio.currentTime = 0; 
+                            audio.play().catch((err) => { console.error("Failed to play sound:", err); });
+
+
+
                             updatePrevisVoice(
                                 shot,
                                 speaker,
@@ -336,6 +370,9 @@ export const Previs_ShotJsonPreview: React.FC<Props> = observer(({ shot }) => {
         </div >
     );
 });
+
+
+
 
 
 
@@ -505,6 +542,7 @@ export async function Action_Previs_generate_AudioMultiline(
 
                         // Image
                         const image_path = shotData.image_path;
+                        const playback_speed = Number(shotData.playback_speed ?? "1.0");
                         const shot_image = image_path ? shot.getByPath(shotData.image_path) as LocalImage : shot.first_frame;
 
                         if (!shot_image) {
@@ -562,6 +600,12 @@ export async function Action_Previs_generate_AudioMultiline(
                         const audioBlob =
                             await audioFile.getBlob();
 
+                        const fasterAudioBlob =
+                            (playback_speed == 1.0) ?
+                                audioBlob
+                                :
+                                await audioRetime(audioBlob, 2.0);
+
                         // -------------------------------------------------
                         // Create video from image + existing audio.
                         // -------------------------------------------------
@@ -573,7 +617,7 @@ export async function Action_Previs_generate_AudioMultiline(
                         const video =
                             await mb_createVideoFromImageAndAudio(
                                 tile.blob,
-                                audioBlob
+                                fasterAudioBlob
                             );
 
                         return video;

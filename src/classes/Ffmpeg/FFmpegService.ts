@@ -496,3 +496,87 @@ export async function combineAudioFromBlobs(
         } catch {}
     }
 }
+
+
+export async function audioRetime(
+    audio: Blob,
+    speed: number
+): Promise<Blob> {
+    if (speed <= 0 || !Number.isFinite(speed)) {
+        throw new Error("Speed must be a positive number");
+    }
+
+    const ffmpeg = FFmpegService.instance;
+
+    const extension =
+        audio.type === "audio/wav"
+            ? "wav"
+            : audio.type === "audio/mpeg"
+                ? "mp3"
+                : audio.type === "audio/ogg"
+                    ? "ogg"
+                    : "input";
+
+    const inputName = `audio-input-${crypto.randomUUID()}.${extension}`;
+    const outputName = `audio-output-${crypto.randomUUID()}.wav`;
+
+    try {
+        // Write input audio
+        await ffmpeg.writeFile(
+            inputName,
+            new Uint8Array(await audio.arrayBuffer())
+        );
+
+        // Build atempo filter.
+        //
+        // atempo supports 0.5 <= tempo <= 2.0,
+        // so chain filters for values outside that range.
+        const filters: string[] = [];
+
+        let remaining = speed;
+
+        if (remaining > 1) {
+            while (remaining > 2) {
+                filters.push("atempo=2");
+                remaining /= 2;
+            }
+
+            filters.push(`atempo=${remaining}`);
+        } else {
+            while (remaining < 0.5) {
+                filters.push("atempo=0.5");
+                remaining /= 0.5;
+            }
+
+            filters.push(`atempo=${remaining}`);
+        }
+
+        await ffmpeg.exec([
+            "-i", inputName,
+
+            "-filter:a", filters.join(","),
+
+            // WAV output gives us a predictable output format.
+            "-c:a", "pcm_s16le",
+
+            outputName,
+        ]);
+
+        const data = await ffmpeg.readFile(outputName);
+
+        return new Blob(
+            [data.slice(0)],
+            { type: "audio/wav" }
+        );
+
+    } finally {
+        try {
+            await ffmpeg.deleteFile(inputName);
+        } catch {}
+
+        try {
+            await ffmpeg.deleteFile(outputName);
+        } catch {}
+    }
+}
+

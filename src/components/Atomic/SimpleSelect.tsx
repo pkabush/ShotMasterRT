@@ -45,7 +45,7 @@ const SimpleSelect: React.FC<SimpleSelectProps> = ({
             const index = e.target.selectedIndex;
             onChange?.(e.target.value, index);
           }}
-          style={
+          style={            
             selectedColor
               ? {
                 backgroundColor: selectedColor,

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { LocalAudio } from '../../classes/fileSystem/LocalAudio';
 
 interface Props {
@@ -9,6 +9,7 @@ interface Props {
   autoPlay?: boolean;
   loop?: boolean;
   muted?: boolean;
+  playbackRate?: number;
 }
 
 const InlineAudio: React.FC<Props> = ({
@@ -19,8 +20,10 @@ const InlineAudio: React.FC<Props> = ({
   autoPlay = false,
   loop = false,
   muted = false,
+  playbackRate = 1,
 }) => {
   const [url, setUrl] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   useEffect(() => {
     let mounted = true;
@@ -44,6 +47,21 @@ const InlineAudio: React.FC<Props> = ({
       localAudio.revokeUrl();
     };
   }, [localAudio]);
+
+  // Apply playback rate whenever the audio element OR rate changes.
+  useEffect(() => {
+    const audio = audioRef.current;
+
+    if (!audio) {
+      return;
+    }
+
+    const rate = Number(playbackRate);
+
+    if (Number.isFinite(rate) && rate > 0) {
+      audio.playbackRate = rate;
+    }
+  }, [playbackRate, url]);
 
   return (
     <div
@@ -70,6 +88,7 @@ const InlineAudio: React.FC<Props> = ({
 
       {url ? (
         <audio
+          ref={audioRef}
           src={url}
           controls
           autoPlay={autoPlay}
@@ -99,4 +118,3 @@ const InlineAudio: React.FC<Props> = ({
 };
 
 export default InlineAudio;
-
