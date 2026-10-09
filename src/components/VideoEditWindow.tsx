@@ -9,7 +9,7 @@ import TabsContainer from "./TabsContainer";
 import MediaGalleryPreview from "./MediaComponents/MediaGallerPreview";
 import BottomCenterLabel from "./Atomic/MediaElements/BottomCenterLabel";
 import type { MediaFolder } from "../classes/MediaFolder";
-import EditableJsonTextField, { EditableJsonToggleField } from "./EditableJsonTextField";
+import EditableJsonTextField, { EditableJsonBooleanSelect, EditableJsonToggleField } from "./EditableJsonTextField";
 import type { LocalImage } from "../classes/fileSystem/LocalImage";
 import RefImagesPreview from "./MediaComponents/RefImagesPreview";
 import { Button, Stack } from "react-bootstrap";
@@ -34,6 +34,8 @@ interface VideoEditWindowProps {
     onClose?: () => void;
     reference_images?: LocalImage[];
 }
+
+
 
 type OmniMode = typeof KlingAI.options.omni_video.mode[keyof typeof KlingAI.options.omni_video.mode];
 type OmniModel = typeof KlingAI.options.omni_video.model[keyof typeof KlingAI.options.omni_video.model];
@@ -274,16 +276,21 @@ const VideoEditWindow: React.FC<VideoEditWindowProps> = ({
                                                 values={Object.values(SeedanceAI.options.video.ration)}
                                                 defaultValue={SeedanceAI.options.video.ration.adaptive}
                                             />
-                                            <WorkflowOptionSelect
-                                                project={project}
-                                                workflowName={seedance_edit_wf}
-                                                optionName="model"
-                                                label="Model:"
-                                                values={Object.values(SeedanceAI.options.video.models)}
-                                                defaultValue={SeedanceAI.options.video.models["seed_2.0"]}
-                                            />
+
+
+                                            <EditableJsonBooleanSelect field={"seedance_edit/use_draft_mode"} localJson={localVideo.mediaJson} label="Draft" />
 
                                         </Stack>
+
+                                        <WorkflowOptionSelect
+                                            project={project}
+                                            workflowName={seedance_edit_wf}
+                                            optionName="model"
+                                            label="Model:"
+                                            values={Object.values(SeedanceAI.options.video.models)}
+                                            defaultValue={SeedanceAI.options.video.models["seed_2.0"]}
+                                        />
+
 
                                         <LoadingButton
                                             onClick={async () => {
@@ -296,9 +303,7 @@ const VideoEditWindow: React.FC<VideoEditWindowProps> = ({
 
                                                 // video
                                                 const webUrl = await localVideo.getWebUrl();
-                                                content.push(
-                                                    SeedanceAI.videoMsg(webUrl)
-                                                )
+                                                content.push(SeedanceAI.videoMsg(webUrl))
 
                                                 // prompt
                                                 const prompt = localVideo.mediaJson?.getField("video_edit_prompt")
@@ -308,13 +313,7 @@ const VideoEditWindow: React.FC<VideoEditWindowProps> = ({
                                                 const references = localVideo.references?.active_images ?? []
 
                                                 for (const reference of references) {
-                                                    content.push(
-                                                        await SeedanceAI.imgMsg(
-                                                            reference,
-                                                            //`data:${reference.mime};base64,${reference.rawBase64}`,
-                                                            "reference_image"
-                                                        )
-                                                    )
+                                                    content.push(await SeedanceAI.imgMsg(reference, "reference_image"))
                                                 }
 
                                                 // Audio Refs
@@ -337,23 +336,28 @@ const VideoEditWindow: React.FC<VideoEditWindowProps> = ({
                                                     )
                                                 }
 
-
-
-                                                //console.log(content);
-
                                                 const result = await SeedanceAI.generateVideo({
                                                     content,
-                                                    model:  project.workflows[seedance_edit_wf].model ?? SeedanceAI.options.video.models["seed_2.0"],
+                                                    model: project.workflows[seedance_edit_wf].model ?? SeedanceAI.options.video.models["seed_2.0"],
                                                     generate_audio: localVideo.mediaJson?.getField("seedance_edit/generate_audio") ?? false,
                                                     resolution: project.workflows[seedance_edit_wf]?.resolution,
                                                     duration: project.workflows[seedance_edit_wf]?.duration ? Number(project.workflows[seedance_edit_wf].duration) : undefined,
-                                                    ratio: project.workflows[seedance_edit_wf]?.aspect_ratio ?? SeedanceAI.options.video.ration.adaptive
+                                                    ratio: project.workflows[seedance_edit_wf]?.aspect_ratio ?? SeedanceAI.options.video.ration.adaptive,
+                                                    draft: localVideo.mediaJson?.getField("seedance_edit/use_draft_mode") ?? false,
                                                 });
 
                                                 if (!result) return;
-                                                //const task = 
+
                                                 shot.tasksJson!.addTask(result.id, {
                                                     provider: ai_providers.BD,
+                                                    geninfo: {
+                                                        model: project.workflows[seedance_edit_wf].model ?? SeedanceAI.options.video.models["seed_2.0"],
+                                                        generate_audio: localVideo.mediaJson?.getField("seedance_edit/generate_audio") ?? false,
+                                                        resolution: project.workflows[seedance_edit_wf]?.resolution,
+                                                        duration: project.workflows[seedance_edit_wf]?.duration ? Number(project.workflows[seedance_edit_wf].duration) : undefined,
+                                                        ratio: project.workflows[seedance_edit_wf]?.aspect_ratio ?? SeedanceAI.options.video.ration.adaptive,
+                                                        draft: localVideo.mediaJson?.getField("seedance_edit/use_draft_mode") ?? false,
+                                                    }
                                                 })
                                             }}
                                             label="Generate"

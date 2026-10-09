@@ -25,6 +25,7 @@ export type SeedanceNodeModelData = {
     ratio?: string;
     model?: string;
     sound?: boolean;
+    draft?: boolean;
 };
 
 export type SeedanceNodeType = Node<SeedanceNodeModelData, "seedanceNode">;
@@ -116,6 +117,7 @@ export const SeedanceNode = memo(
                     }
                 }
 
+
                 // Generate Video
                 const result = await SeedanceAI.generateVideo({
                     content,
@@ -124,8 +126,8 @@ export const SeedanceNode = memo(
                     duration: data.duration ? Number(data.duration) : undefined,
                     ratio: data.ratio ?? SeedanceAI.options.video.ration.adaptive,
                     model: data.model ? data.model : undefined,
+                    draft: data.draft ?? false,
                 });
-
 
                 if (!result) return;
                 //const task = 
@@ -136,6 +138,8 @@ export const SeedanceNode = memo(
                         resolution: data.resolution,
                         duration: data.duration ? Number(data.duration) : undefined,
                         ratio: data.ratio ?? SeedanceAI.options.video.ration.adaptive,
+                        model: data.model ? data.model : undefined,
+                        draft: data.draft ?? false,
                         has_video,
                     }
                 })
@@ -236,6 +240,13 @@ export const SeedanceNode = memo(
                                 });
                             }}
                         />
+
+                        <Button size="sm" variant={data.draft ? "warning" : "outline-secondary"}
+                            onClick={() => {
+                                nodegraph_api.setNodeData(id, (d) => ({ draft: !d.draft, }))
+                            }}>
+                            {(data.draft ?? false) ? "Draft:ON" : "Draft:OFF"}
+                        </Button>
 
 
 

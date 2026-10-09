@@ -181,6 +181,7 @@ export class SeedanceAI implements AIProvider {
         generate_audio?: boolean;
         watermark?: boolean;
         resolution?: string;
+        draft?: boolean;
     }) {
         const {
             content,
@@ -189,7 +190,8 @@ export class SeedanceAI implements AIProvider {
             duration,
             generate_audio = true,
             watermark = false,
-            resolution
+            resolution,
+            draft = false,
         } = options;
 
         if (!content || content.length === 0) {
@@ -206,6 +208,36 @@ export class SeedanceAI implements AIProvider {
 
         if (duration !== undefined) { payload.duration = duration; }
         if (resolution) { payload.resolution = resolution; }
+        if (draft) {
+            payload.draft = true;
+            payload.resolution = "480p";
+        }
+
+        const data = await this.postToSeedance(payload);
+        console.log("seed res", data);
+
+        return {
+            id: data?.id || data?.task_id || null,
+            raw: data,
+        };
+    }
+
+    public static async renderDraft(options: {
+        model: string;
+        draft_id: boolean;
+    }) {
+        const { model, draft_id } = options;
+        
+        const payload: any = {
+            model,
+            resolution: "1080p",
+            content:[{
+                type:"draft_task",
+                draft_task: {
+                    "id":draft_id,
+                }
+            }]
+        };
 
         const data = await this.postToSeedance(payload);
         console.log("seed res", data);
@@ -267,7 +299,7 @@ export class SeedanceAI implements AIProvider {
                 };
 
                 console.log("[Bytedance] Payload:", payload)
-                const response = await postToWorker(payload, "seedance/generate-image", {model,size});
+                const response = await postToWorker(payload, "seedance/generate-image", { model, size });
                 console.log("[Bytedance] Response:", response);
 
                 return {

@@ -3,7 +3,7 @@ import { observer } from "mobx-react-lite";
 import SettingsButton from "../Atomic/SettingsButton";
 import LoadingSpinner from "../Atomic/LoadingSpinner";
 import type { Shot } from "../../classes/Shot";
-import EditableJsonTextField, { EditableJsonToggleField } from "../EditableJsonTextField";
+import EditableJsonTextField, { EditableJsonBooleanSelect, EditableJsonToggleField } from "../EditableJsonTextField";
 import { SeedanceAI } from "../../classes/AiProviders/Byteplus";
 import { ai_providers } from "../../classes/AI_provider";
 import { MediaFolderGallery } from "../MediaFolderGallery";
@@ -34,6 +34,7 @@ export const BytePlus_GenerateVideo: React.FC<BytePlus_GenerateVideoProps> = obs
     const project = Project.getProject();
     const wf_name = "seedance_gen_video";
     const gen_audio_field = `workflows/${wf_name}/generate_audio`;
+    const draft_field = `workflows/${wf_name}/draft_mode`;
 
     return (
         <SettingsButton
@@ -59,14 +60,14 @@ export const BytePlus_GenerateVideo: React.FC<BytePlus_GenerateVideoProps> = obs
                                 if (shot.first_frame) {
                                     content.push(
                                         await SeedanceAI.imgMsg(
-                                            shot.first_frame,                                            
+                                            shot.first_frame,
                                             'first_frame'
                                         )
                                     )
                                 }
 
                                 // Add last Frame
-                                if (shot.end_frame) {                                    
+                                if (shot.end_frame) {
                                     content.push(
                                         await SeedanceAI.imgMsg(
                                             shot.end_frame,
@@ -111,11 +112,12 @@ export const BytePlus_GenerateVideo: React.FC<BytePlus_GenerateVideoProps> = obs
 
                                 const result = await SeedanceAI.generateVideo({
                                     content,
-                                    model:  project.workflows[wf_name].model ?? SeedanceAI.options.video.models["seed_2.0"],
+                                    model: project.workflows[wf_name].model ?? SeedanceAI.options.video.models["seed_2.0"],
                                     generate_audio: project.projinfo!.getField(gen_audio_field) ?? false,
                                     resolution: project.workflows[wf_name].resolution,
                                     duration: project.workflows[wf_name].duration ? Number(project.workflows[wf_name].duration) : undefined,
-                                    ratio: project.workflows[wf_name].aspect_ratio ?? SeedanceAI.options.video.ration.adaptive
+                                    ratio: project.workflows[wf_name].aspect_ratio ?? SeedanceAI.options.video.ration.adaptive,
+                                    draft: project.projinfo!.getField(draft_field) ?? false,
                                 });
 
                                 if (!result) return;
@@ -124,10 +126,11 @@ export const BytePlus_GenerateVideo: React.FC<BytePlus_GenerateVideoProps> = obs
                                     provider: ai_providers.BD,
                                     geninfo: {
                                         generate_audio: project.projinfo!.getField(gen_audio_field) ?? false,
-                                        model:  project.workflows[wf_name].model ?? SeedanceAI.options.video.models["seed_2.0"],
+                                        model: project.workflows[wf_name].model ?? SeedanceAI.options.video.models["seed_2.0"],
                                         resolution: project.workflows[wf_name].resolution,
                                         duration: project.workflows[wf_name].duration ? Number(project.workflows[wf_name].duration) : undefined,
                                         ratio: project.workflows[wf_name].aspect_ratio ?? SeedanceAI.options.video.ration.adaptive,
+                                        draft: project.projinfo!.getField(draft_field) ?? false,                                        
                                         has_video,
                                     }
                                 })
@@ -174,13 +177,15 @@ export const BytePlus_GenerateVideo: React.FC<BytePlus_GenerateVideoProps> = obs
                         defaultValue={SeedanceAI.options.video.models["seed_2.0"]}
                     />
 
+                    <EditableJsonBooleanSelect field={draft_field} localJson={project.projinfo} label="Draft" />
+
                     {/* Loading Spinner */}
                     <LoadingSpinner isLoading={shot.is_submitting_video} asButton />
                 </>
             }
             content={
                 <>
-                    <EditableJsonToggleField localJson={project.projinfo} field={gen_audio_field} default_val={false} label="Sound" />                   
+                    <EditableJsonToggleField localJson={project.projinfo} field={gen_audio_field} default_val={false} label="Sound" />
 
                     <EditableJsonTextField localJson={shot.shotJson} field="video_prompt" fitHeight />
                     <EditableJsonTextField localJson={shot.shotJson} field="generated_video_prompt" fitHeight />

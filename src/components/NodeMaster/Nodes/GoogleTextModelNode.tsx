@@ -9,6 +9,7 @@ import { useLocalFile } from "../Context/LocalFileContext";
 import { useNodeGraphApi } from "../nodeGraphApi";
 import type { NodeDefinition } from "../NodeDefinition/NodeDefinition";
 import { faBook } from "@fortawesome/free-solid-svg-icons";
+import { AI, AllImageModels, AllTextModels } from "../../../classes/AiProviders/AI_Generic";
 
 export type nb_GoogleTextModelData = {
     model?: string;
@@ -44,12 +45,11 @@ export const nb_GoogleAI = memo(
 
                 console.log("Messages", msg_packs);
 
-
-
                 // Send All messages in parralel                 
                 await Promise.all(
                     msg_packs.map(async (messages, index) => {
-                        const res = await GoogleAI.sendMessages(messages, model, aspect_ratio, resolution);
+                        const res = await AI.sendMessages(messages, model, aspect_ratio, resolution,data.gen_image);
+                        //const res = await GoogleAI.sendMessages(messages, model, aspect_ratio, resolution);
                         await nodegraph_api.saveAiTextImageResponse(id, res, local_file, index);
                         return res;
                     })
@@ -106,8 +106,10 @@ export const nb_GoogleAI = memo(
                             {(data.gen_image ?? false) ?
                                 <>
                                     <SimpleSelect
-                                        value={data.img_model ?? Object.values(GoogleAI.options.img_models)[0]}
-                                        options={[...Object.values(GoogleAI.options.img_models)]}
+                                        //value={data.img_model ?? Object.values(GoogleAI.options.img_models)[0]}
+                                        //options={[...Object.values(GoogleAI.options.img_models)]}
+                                        value={data.img_model ?? AllImageModels[0]}
+                                        options={[...AllImageModels]}
                                         onChange={(val: string) => {
                                             nodegraph_api.setNodeData(id, () => ({ img_model: val, }));
                                         }}
@@ -116,8 +118,10 @@ export const nb_GoogleAI = memo(
                                 :
                                 <>
                                     <SimpleSelect
-                                        value={data.model ?? Object.values(GoogleAI.options.text_models)[0]}
-                                        options={[...Object.values(GoogleAI.options.text_models)]}
+                                        //value={data.model ?? Object.values(GoogleAI.options.text_models)[0]}
+                                        //options={[...Object.values(GoogleAI.options.text_models)]}
+                                        value={data.model ?? AllTextModels[0]}
+                                        options={[...AllTextModels]}
                                         onChange={(val: string) => {
                                             nodegraph_api.setNodeData(id, () => ({
                                                 model: val,

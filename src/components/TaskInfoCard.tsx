@@ -7,9 +7,11 @@ import { MediaPreviewSmall } from "./MediaComponents/MediaPreviewSmall";
 import * as ContextMenu from "@radix-ui/react-context-menu";
 import { MenuItemIcon } from "./MediaFolderGallery";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faClipboard, faTrashCan } from "@fortawesome/free-solid-svg-icons";
+import { faClipboard, faTrashCan, faVideo } from "@fortawesome/free-solid-svg-icons";
 import { toJS } from "mobx";
 import { Badge } from "react-bootstrap";
+import { SeedanceAI } from "../classes/AiProviders/Byteplus";
+import { ai_providers } from "../classes/AI_provider";
 
 interface Props {
     task: Task;
@@ -98,6 +100,7 @@ const TaskInfoCard: React.FC<Props> = observer(({ task, show_path = false }) => 
                             <LoadingSpinner isLoading={loading} asButton />
 
 
+
                         </div>
 
                     </div>
@@ -123,6 +126,31 @@ const TaskInfoCard: React.FC<Props> = observer(({ task, show_path = false }) => 
                         <MenuItemIcon><FontAwesomeIcon icon={faTrashCan} /></MenuItemIcon>
                         Delete
                     </ContextMenu.Item>
+
+                    {(task?.data?.geninfo?.draft) &&
+
+                        <ContextMenu.Item className="ContextMenuItem warning" onClick={async () => {
+                            console.log(task.data.geninfo.model, task.data.id);
+
+                            // Generate Video
+                            const result = await SeedanceAI.renderDraft({
+                                draft_id: task.data.id,
+                                model: task.data.geninfo.model,
+                            });
+
+                            if (!result) return;
+                            task.tasksJson.addTask(result.id, {
+                                provider: ai_providers.BD,
+                                geninfo: {
+                                    draft_id: task.data.id,
+                                    model: task.data.geninfo.model,
+                                }
+                            })
+
+                        }}>
+                            <MenuItemIcon><FontAwesomeIcon icon={faVideo} /></MenuItemIcon>
+                            Draft To Final Version
+                        </ContextMenu.Item>}
 
                 </ContextMenu.Content>
             </ContextMenu.Portal>

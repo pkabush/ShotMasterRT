@@ -9,6 +9,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBrain, faCircleCheck, faCircleXmark } from '@fortawesome/free-solid-svg-icons';
 import { AI } from '../classes/AiProviders/AI_Generic';
 import { WorkflowTextModelSelect } from '../classes/AiProviders/AI_Generic_Components';
+import SimpleSelect from './Atomic/SimpleSelect';
 
 interface EditableJsonTextFieldProps {
   localJson: LocalJson | null;
@@ -166,6 +167,27 @@ export const EditableJsonToggleField: React.FC<EditableJsonToggleFieldProps> = o
   );
 });
 
+export const EditableJsonBooleanSelect: React.FC<EditableJsonToggleFieldProps> = observer(({
+  localJson,
+  field,
+  label
+}) => {
+  if (!localJson) return;
+
+  return (
+    <SimpleSelect
+      value={localJson.getField(field) ? "ON" : "Off"}
+      options={["ON", "Off"]}
+      label={label}
+      onChange={(val) => { localJson.updateField(field, val == "ON"); }}
+    />
+  );
+});
+
+
+
+
+
 
 
 export const EditableJsonToggleButton: React.FC<EditableJsonToggleFieldProps> = observer(({
@@ -187,8 +209,10 @@ export const EditableJsonToggleButton: React.FC<EditableJsonToggleFieldProps> = 
       }}
     >
 
-      {label ?? field}       
+      {label ?? field}
       <FontAwesomeIcon icon={value ? faCircleCheck : faCircleXmark} style={{ marginLeft: "0.35rem" }} />
     </Button>
   );
 });
+
+
