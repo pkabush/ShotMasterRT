@@ -9,6 +9,7 @@ import { useProject } from "../../contexts/ProjectContext";
 import type { Character } from "../../classes/Artbook/Character";
 import DropArea from "../Atomic/DropArea";
 import { TagsFolderContainer } from "../FolderTags/FolderTagsContainer";
+import { WorkflowImageModelSelect } from "../../classes/AiProviders/AI_Generic_Components";
 
 interface CharVariationViewProps {
     character: Character;
@@ -53,11 +54,7 @@ export const CharVariationView: React.FC<CharVariationViewProps> = observer(({
                             Generate Image
                         </button>
 
-                        <WorkflowOptionSelect
-                            workflowName={character.workflows.generate_variation_image}
-                            optionName="model"
-                            values={Object.values(GoogleAI.options.img_models)}
-                        />
+                        <WorkflowImageModelSelect workflowName={character.workflows.generate_variation_image} />
 
                         <WorkflowOptionSelect
                             workflowName={character.workflows.generate_variation_image}

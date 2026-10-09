@@ -1,11 +1,12 @@
 import { observer } from "mobx-react-lite";
 import type { Shot } from "../../../../classes/Shot";
 import SettingsButton from "../../../Atomic/SettingsButton";
-import { WorkflowOptionSelect, WorkflowTextField } from "../../../WorkflowOptionSelect";
-import { AI, AllTextModels } from "../../../../classes/AI_provider";
+import { WorkflowTextField } from "../../../WorkflowOptionSelect";
 import LoadingSpinner from "../../../Atomic/LoadingSpinner";
 import EditableJsonTextField from "../../../EditableJsonTextField";
 import { SeedanceAI } from "../../../../classes/AiProviders/Byteplus";
+import { AI } from "../../../../classes/AiProviders/AI_Generic";
+import { WorkflowTextModelSelect } from "../../../../classes/AiProviders/AI_Generic_Components";
 
 const wf_name = "shot_ask_generation_duration"
 const wf_output = `${wf_name}/output`
@@ -39,7 +40,7 @@ export const ShotAskGenerationDuration: React.FC<Props> = observer(({ shot }) =>
                     </button>
 
                     {/* Model Selector */}
-                    <WorkflowOptionSelect workflowName={wf_name} optionName={"model"} values={AllTextModels} />
+                    <WorkflowTextModelSelect workflowName={wf_name} />
                     <LoadingSpinner isLoading={loading} asButton />
                 </>
             }
@@ -71,9 +72,7 @@ export async function ActionAskGenerationDuration(shot: Shot) {
         ${shot.shotJson?.data.shot_generate_shotlist.output}
 `;
 
-        const model =
-            project.workflows[wf_name].model ??
-            AllTextModels[0];
+        const model = project.workflows[wf_name].model;
 
         const res = await AI.GenerateText({
             prompt,
@@ -87,8 +86,8 @@ export async function ActionAskGenerationDuration(shot: Shot) {
             if (
                 duration &&
                 Object.values(SeedanceAI.options.video.duration).includes(duration)
-            ) {                
-                project.projinfo?.updateField("workflows/seedance_gen_video/duration",duration);
+            ) {
+                project.projinfo?.updateField("workflows/seedance_gen_video/duration", duration);
             }
         } catch (e) {
             console.log("Could not Extract Duration from response", e)

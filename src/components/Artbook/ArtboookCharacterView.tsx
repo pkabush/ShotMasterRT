@@ -7,10 +7,10 @@ import { MediaFolderGallery } from "../MediaFolderGallery";
 import { AddVariationCard, CharVariationView } from "./CharVariationView";
 import { Project } from "../../classes/Project";
 import SettingsButton from "../Atomic/SettingsButton";
-import { WorkflowOptionSelect, WorkflowTextField } from "../WorkflowOptionSelect";
+import { WorkflowTextField } from "../WorkflowOptionSelect";
 import EditableJsonTextField, { EditableJsonToggleField } from "../EditableJsonTextField";
-import { AllTextModels } from "../../classes/AI_provider";
 import LoadingSpinner from "../Atomic/LoadingSpinner";
+import { WorkflowTextModelSelect } from "../../classes/AiProviders/AI_Generic_Components";
 
 
 interface ArtbookCharacterViewProps {
@@ -230,11 +230,7 @@ export const GenVariations: React.FC<GenVariationsProps> = observer(({ character
                     </button>
 
                     {/* Model Selector */}
-                    <WorkflowOptionSelect
-                        workflowName={wf_name}
-                        optionName={"model"}
-                        values={AllTextModels}
-                    />
+                    <WorkflowTextModelSelect workflowName={wf_name} />
 
                     {/* Loading Spinner */}
                     <LoadingSpinner isLoading={false} asButton />

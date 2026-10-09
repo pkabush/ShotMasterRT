@@ -1,5 +1,6 @@
 import type { AIGenerateParms, AIProvider, AIResult, ImageResult } from "./AI_provider";
-import type { AIMessage } from "./GoogleAI";
+import type { AIMessage } from "./AiProviders/AI_message_utils";
+import AI_Utils from "./AiProviders/AI_message_utils";
 import { postToWorker } from "./CloudflareWorker/WorkerUtils";
 import { LocalImage } from "./fileSystem/LocalImage";
 
@@ -29,16 +30,6 @@ function base64ToFile(base64: any, filename: any, mimeType: any) {
   return new File([blob], filename, { type: mimeType });
 }
 
-function generateImageName(
-  model: string,
-  action: "generate" | "edit"
-) {
-  const timestamp = new Date()
-    .toISOString()
-    .replace(/[:.]/g, "-");
-
-  return `${model}-${action}-${timestamp}`;
-}
 
 export class ChatGPT implements AIProvider {
   public static options = {
@@ -54,9 +45,9 @@ export class ChatGPT implements AIProvider {
       gpt_5_6_sol: "gpt-5.6-sol",
       gpt_5_6_terra: "gpt-5.6-terra",
       gpt_5_6_luna: "gpt-5.6-luna",
-      gpt_image_2: "gpt-image-2",
-      gpt_image_2_2_sunburst: "gpt-image-2.5-sunburst",
-      gpt_image_2_2_flare: "gpt-image-2.5-flare",
+      //gpt_image_2: "gpt-image-2",
+      //gpt_image_2_2_sunburst: "gpt-image-2.5-sunburst",
+      //gpt_image_2_2_flare: "gpt-image-2.5-flare",
     },
     image_models: {
       gpt_image_2: "gpt-image-2",
@@ -140,7 +131,7 @@ export class ChatGPT implements AIProvider {
 
       console.log("GPT Response:", response);
 
-      const name = generateImageName(model, isEdit ? "edit" : "generate");
+      const name = AI_Utils.generateImageName(model, isEdit ? "edit" : "generate");
 
       if (response?.data) {
         const image_base64 = response.data[0]?.b64_json;

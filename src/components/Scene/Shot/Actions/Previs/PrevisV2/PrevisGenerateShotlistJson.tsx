@@ -2,9 +2,9 @@ import { observer } from "mobx-react-lite";
 import type { Shot } from "../../../../../../classes/Shot";
 import EditableJsonTextField from "../../../../../EditableJsonTextField";
 import SettingsButton from "../../../../../Atomic/SettingsButton";
-import { WorkflowOptionSelect } from "../../../../../WorkflowOptionSelect";
-import { AI, AllTextModels } from "../../../../../../classes/AI_provider";
 import LoadingSpinner from "../../../../../Atomic/LoadingSpinner";
+import { AI } from "../../../../../../classes/AiProviders/AI_Generic";
+import { WorkflowTextModelSelect } from "../../../../../../classes/AiProviders/AI_Generic_Components";
 
 
 interface Props {
@@ -40,11 +40,7 @@ const component: React.FC<Props> = observer(({ shot }) => {
                     </button>
 
                     {/* Model Selector */}
-                    <WorkflowOptionSelect
-                        workflowName={wf_name}
-                        optionName={"model"}
-                        values={AllTextModels}
-                    />
+                    <WorkflowTextModelSelect workflowName={wf_name} />
 
                     <LoadingSpinner isLoading={loading} asButton />
                 </>
@@ -71,7 +67,7 @@ export async function Action_Previs_GenerateShotsJson(shot: Shot) {
 
         const res = await AI.sendMessages(
             messages,
-            workflow.model ?? AllTextModels[0],
+            workflow.model,
         )
 
         if (typeof res === "string") {

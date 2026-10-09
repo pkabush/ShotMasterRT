@@ -1,13 +1,14 @@
 import { observer } from "mobx-react-lite";
 import React from "react";
 import SettingsButton from "../../Atomic/SettingsButton";
-import { WorkflowOptionSelect, WorkflowTextField } from "../../WorkflowOptionSelect";
-import { AI, AllTextModels } from "../../../classes/AI_provider";
+import { WorkflowTextField } from "../../WorkflowOptionSelect";
 import LoadingSpinner from "../../Atomic/LoadingSpinner";
 import EditableJsonTextField from "../../EditableJsonTextField";
 import { Button } from "react-bootstrap";
 import type { Scene } from "../../../classes/Scene";
 import { runInAction } from "mobx";
+import { AI } from "../../../classes/AiProviders/AI_Generic";
+import { WorkflowTextModelSelect } from "../../../classes/AiProviders/AI_Generic_Components";
 
 interface Props {
   scene: Scene;
@@ -30,11 +31,7 @@ export const FindSceneReferencesButton: React.FC<Props> = observer(({ scene }) =
           </button>
 
           {/* Model Selector */}
-          <WorkflowOptionSelect
-            workflowName={wf_name}
-            optionName={"model"}
-            values={AllTextModels}
-          />
+          <WorkflowTextModelSelect workflowName={wf_name} />
           {/* Loading Spinner */}
           <LoadingSpinner isLoading={scene.is_generating_tags} asButton />
 

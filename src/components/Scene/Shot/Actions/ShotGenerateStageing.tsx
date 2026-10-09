@@ -1,14 +1,15 @@
 import { observer } from "mobx-react-lite";
 import type { Shot } from "../../../../classes/Shot";
 import SettingsButton from "../../../Atomic/SettingsButton";
-import { WorkflowOptionSelect, WorkflowTextField } from "../../../WorkflowOptionSelect";
-import { AI, AllImageModels, AllTextModels } from "../../../../classes/AI_provider";
+import { WorkflowTextField } from "../../../WorkflowOptionSelect";
 import LoadingSpinner from "../../../Atomic/LoadingSpinner";
 import { Button } from "react-bootstrap";
 import EditableJsonTextField, { EditableJsonToggleField } from "../../../EditableJsonTextField";
 import type { LocalImage } from "../../../../classes/fileSystem/LocalImage";
 import { GoogleAI } from "../../../../classes/GoogleAI";
 import type { LocalFolder } from "../../../../classes/fileSystem/LocalFolder";
+import { AI } from "../../../../classes/AiProviders/AI_Generic";
+import { WorkflowImageModelSelect, WorkflowTextModelSelect } from "../../../../classes/AiProviders/AI_Generic_Components";
 
 
 
@@ -43,12 +44,8 @@ const component: React.FC<Props> = observer(({ shot }) => {
                         Generate Staging Prompt
                     </button>
 
-                    {/* Model Selector */}
-                    <WorkflowOptionSelect
-                        workflowName={wf_name}
-                        optionName={"model"}
-                        values={AllTextModels}
-                    />
+                    {/* Model Selector */}                    
+                    <WorkflowTextModelSelect workflowName={wf_name} />
 
                     <LoadingSpinner isLoading={loading} asButton />
 
@@ -64,11 +61,7 @@ const component: React.FC<Props> = observer(({ shot }) => {
                         Generate Staging Image
                     </Button>
 
-                    <WorkflowOptionSelect
-                        workflowName={wf_name_image}
-                        optionName={"model"}
-                        values={AllImageModels}
-                    />
+                    <WorkflowImageModelSelect workflowName={wf_name_image} />
 
                     <LoadingSpinner isLoading={loading_images} asButton />
                 </>
@@ -104,7 +97,7 @@ export async function ActionGenerateStagingPrompt(shot: Shot) {
 
         const res = await AI.GenerateText({
             prompt,
-            model: workflow.model ?? AllTextModels[0],
+            model: workflow.model,
             images: refs,
         });
 
@@ -120,18 +113,16 @@ export async function ActionGenerateStagingPrompt(shot: Shot) {
 
 export async function ActionGenerateStagingReference(shot: Shot) {
     const project = shot.scene.project;
-    
+
 
     shot.shotJson?.updateField(wf_loading_image, true);
     const one_shot_mode = project.projinfo?.getField(wf_one_shot_mode);
 
     try {
         console.log("Generating Staging Image");
-            const workflow = shot.scene.project.workflows[wf_name];
+        const workflow = shot.scene.project.workflows[wf_name];
 
-        const model =
-            project.workflows[wf_name_image]?.model ??
-            AllImageModels[0];
+        const model = project.workflows[wf_name_image]?.model;
 
         const prompt = one_shot_mode ?
             `

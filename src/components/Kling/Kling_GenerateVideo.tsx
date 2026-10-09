@@ -12,13 +12,16 @@ import EditableJsonTextField from "../EditableJsonTextField";
 import { Google_GenerateKlingPrompt } from "../GoogleNodes/Google_GenerateKlingPrompt";
 import { CollapsibleContainerAccordion } from "../Atomic/CollapsibleContainer";
 import { Button, Stack } from "react-bootstrap";
-import { AI, AllTextModels } from "../../classes/AI_provider";
 import BottomCenterLabel from "../Atomic/MediaElements/BottomCenterLabel";
 import AddOutline from "../Atomic/MediaElements/AddOutline";
+import { AI } from "../../classes/AiProviders/AI_Generic";
+import { WorkflowTextModelSelect } from "../../classes/AiProviders/AI_Generic_Components";
 
 interface Kling_GenerateVideoProps {
   shot: Shot;
 }
+
+const wf_name = "Generate_KlingVideoPrompt";
 
 export const Kling_GenerateVideo: React.FC<Kling_GenerateVideoProps> = observer(({ shot }) => {
   const project = shot.scene.project;
@@ -82,11 +85,7 @@ export const Kling_GenerateVideo: React.FC<Kling_GenerateVideoProps> = observer(
 
           {/* Prompt Generation */}
           <Button size="sm" variant="outline-success" onClick={async () => { generate_shot_kling_video_prompt(shot) }}> Gen Prompt </Button>
-          <WorkflowOptionSelect
-            workflowName={"Generate_KlingVideoPrompt"}
-            optionName={"model"}
-            values={AllTextModels}
-          />
+          <WorkflowTextModelSelect workflowName={wf_name} />
 
         </>
       }

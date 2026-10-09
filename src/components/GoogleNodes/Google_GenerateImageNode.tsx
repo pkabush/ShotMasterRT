@@ -9,7 +9,8 @@ import EditableJsonTextField from "../EditableJsonTextField";
 import { Project } from "../../classes/Project";
 import { TagsFolderContainer } from "../FolderTags/FolderTagsContainer";
 import type { LocalFolder } from "../../classes/fileSystem/LocalFolder";
-import { ChatGPT } from "../../classes/ChatGPT";
+import { action_shotGenerateImage } from "../Scene/Shot/Actions/Basic/Action_ShotGenerateImage";
+import { WorkflowImageModelSelect } from "../../classes/AiProviders/AI_Generic_Components";
 
 interface Google_GenerateImageNodeProps {
     shot: Shot;
@@ -26,24 +27,12 @@ export const Google_GenerateImageNode: React.FC<Google_GenerateImageNodeProps> =
                     {/* Stylize Image Button */}
                     <button
                         className="btn btn-sm btn-outline-success"
-                        onClick={async () => {
-                            console.log("Generate Image")
-                            shot.GenerateImage();
-                        }}
+                        onClick={async () => { action_shotGenerateImage(shot); }}
                     >
                         Generate Image
                     </button>
 
-
-                    <WorkflowOptionSelect
-                        project={project}
-                        workflowName="generate_shot_image"
-                        optionName="model"
-                        values={[
-                            ...Object.values(ChatGPT.options.models),
-                            ...Object.values(GoogleAI.options.img_models)
-                        ]}
-                    />
+                    <WorkflowImageModelSelect workflowName="generate_shot_image"/>
 
                     <WorkflowOptionSelect
                         project={project}
@@ -51,7 +40,7 @@ export const Google_GenerateImageNode: React.FC<Google_GenerateImageNodeProps> =
                         optionName="aspect_ratio"
                         values={Object.values(GoogleAI.options.aspect_ratios)}
                         defaultValue={GoogleAI.options.aspect_ratios.r9x16}
-                    />
+                    />                    
 
                     <WorkflowOptionSelect
                         project={project}
@@ -67,16 +56,7 @@ export const Google_GenerateImageNode: React.FC<Google_GenerateImageNodeProps> =
             }
             content={
                 <>
-
-                    {/**
-                        <EditableJsonTextField localJson={project.projinfo} field="workflows/stylize_image_google/prompt" fitHeight />
-                    */}
-
                     <EditableJsonTextField localJson={shot.shotJson} field="prompt" fitHeight />
-
-
-                    {/* Media folder gallery for results */}
-
                     <TagsFolderContainer tags={shot.references} folders={[Project.getProject(), Project.getProject().artbook as LocalFolder]} />
 
                 </>
@@ -84,3 +64,5 @@ export const Google_GenerateImageNode: React.FC<Google_GenerateImageNodeProps> =
         />
     );
 });
+
+

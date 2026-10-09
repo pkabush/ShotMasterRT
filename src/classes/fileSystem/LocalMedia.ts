@@ -232,6 +232,54 @@ export class LocalMedia extends LocalFile {
     }
   }
 
+  async getByteplusAssetStatus(): Promise<boolean> {
+    const asset_id = this.mediaJson?.getField("byteplus_id");
+    if (!asset_id) {
+      console.log("Missing Asset ID")
+      return false;
+    }
+
+    console.log("Byteplus Asset ID", asset_id);
+
+    const response = await postToWorker(
+      { Id: asset_id, },
+      "seedance/asset",
+      { action: "GetAsset" }
+    );
+
+    console.log("Byteplus Asset Check RES", response);
+
+    if (response.Result.Status === "Active")
+      return true;
+    else
+      return false;
+  }
+
+  async uploadToByteplus(): Promise<string> {
+    const url = await this.uploadToR2()
+
+    const response = await postToWorker(
+      {
+        GroupId: "group-20261008200229-n6nmh",
+        URL: url,
+        AssetType: "Image",
+        Moderation: { Strategy: "Skip" },
+      },
+      "seedance/asset",
+      { action: "CreateAsset" }
+    );
+
+    console.log("Upload Asset RES", response);
+
+    if (response.Result.Id) {
+      this.mediaJson?.updateField("byteplus_id", response.Result.Id);
+      console.log("Byteplus Asset ID", response.Result.Id);
+    }
+
+    return response.Result.Id;
+  }
+
+
   async getUrlObject(): Promise<string> {
     if (this.urlObject) return this.urlObject; // already loaded
     if (this._urlPromise) return this._urlPromise; // already loading

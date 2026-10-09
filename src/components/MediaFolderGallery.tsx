@@ -347,6 +347,22 @@ const MediaItemCard: React.FC<Props> = observer(({
                         Upload To R2
                     </ContextMenu.Item>
 
+                    <ContextMenu.Item onClick={async () => {
+                        await mediaItem.uploadToByteplus();
+                    }} className="ContextMenuItem warning">
+                        <MenuItemIcon><FontAwesomeIcon icon={faClipboard} /></MenuItemIcon>
+                        Upload To Bytedance
+                    </ContextMenu.Item>
+
+
+                    <ContextMenu.Item onClick={async () => {
+                        console.log("status",await mediaItem.getByteplusAssetStatus());
+                    }} className="ContextMenuItem warning">
+                        <MenuItemIcon><FontAwesomeIcon icon={faClipboard} /></MenuItemIcon>
+                        Check BP Status
+                    </ContextMenu.Item>
+
+
 
                     {shot && (
                         <ContextMenu.Item

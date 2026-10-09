@@ -94,7 +94,8 @@ export const GptNode = memo(
                                 <SimpleSelect
                                     value={data.model ?? Object.values(ChatGPT.options.models)[0]}
                                     options={[
-                                        ...Object.values(ChatGPT.options.models)
+                                        ...Object.values(ChatGPT.options.models),
+                                        ...Object.values(ChatGPT.options.image_models)
                                     ]}
                                     onChange={(val: string) => {
                                         nodegraph_api.setNodeData(id,

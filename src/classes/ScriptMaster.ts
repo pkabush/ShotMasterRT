@@ -2,8 +2,9 @@ import { action, makeObservable, observable } from "mobx";
 import { LocalFolder } from "./fileSystem/LocalFolder";
 import { LocalJson } from "./LocalJson";
 import { Project } from "./Project";
-import { AI, AllTextModels } from "./AI_provider";
+
 import { Fountain } from "fountain-js";
+import { AI } from "./AiProviders/AI_Generic";
 
 
 export class ScriptMaster extends LocalFolder {
@@ -222,7 +223,7 @@ export class ModularScript extends LocalJson {
         const gen_prompt_field = `episode_lists/${episodeList}/episodes/${episode}/scenes/${sceneName}/gen_script_prompt`
         const use_logline_field = `episode_lists/${episodeList}/episodes/${episode}/scenes/${sceneName}/gen_script_use_logline`
         const use_episode_desc_field = `episode_lists/${episodeList}/episodes/${episode}/scenes/${sceneName}/gen_script_use_desc`
-        const model = project.workflows[project.scriptmaster.workflows.gen_logline].model ?? AllTextModels[0]
+        const model = project.workflows[project.scriptmaster.workflows.gen_logline].model
         const gen_id = `${script.path}#${gen_res_field}`
 
         script.generating.add(gen_id)
@@ -277,7 +278,7 @@ export class ModularScript extends LocalJson {
         const gen_prompt_field = `episode_lists/${episodeList}/episodes/${episode}/gen_script_prompt`
         const use_logline_field = `episode_lists/${episodeList}/episodes/${episode}/gen_script_use_logline`
         const use_episode_desc_field = `episode_lists/${episodeList}/episodes/${episode}/gen_script_use_desc`
-        const model = project.workflows[project.scriptmaster.workflows.gen_logline].model ?? AllTextModels[0]
+        const model = project.workflows[project.scriptmaster.workflows.gen_logline].model
         const gen_id = `${script.path}#${gen_res_field}`
 
         const scenes_field = `episode_lists/${episodeList}/episodes/${episode}/gen_scenes_output`
@@ -335,7 +336,7 @@ export class ModularScript extends LocalJson {
         const project = Project.getProject()
         const wf_name = project.scriptmaster.workflows.gen_scenes;
         const gen_res_field = `episode_lists/${episodeList}/episodes/${episode}/gen_scenes_output`
-        const model = project.workflows[project.scriptmaster.workflows.gen_logline].model ?? AllTextModels[0]
+        const model = project.workflows[project.scriptmaster.workflows.gen_logline].model
         const gen_id = `${script.path}#${gen_res_field}`
 
         script.generating.add(gen_id)

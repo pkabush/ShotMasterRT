@@ -8,11 +8,12 @@ import { ArtbookCharacterView } from "./ArtboookCharacterView";
 import { LocalFolder } from "../../classes/fileSystem/LocalFolder";
 import { Character } from "../../classes/Artbook/Character";
 import SettingsButton from "../Atomic/SettingsButton";
-import { WorkflowOptionSelect, WorkflowTextField } from "../WorkflowOptionSelect";
+import {  WorkflowTextField } from "../WorkflowOptionSelect";
 import { Project } from "../../classes/Project";
 import LoadingSpinner from "../Atomic/LoadingSpinner";
-import { AI, AllTextModels } from "../../classes/AI_provider";
 import EditableJsonTextField from "../EditableJsonTextField";
+import { AI } from "../../classes/AiProviders/AI_Generic";
+import { WorkflowTextModelSelect } from "../../classes/AiProviders/AI_Generic_Components";
 
 
 
@@ -116,11 +117,7 @@ export const ArtbookGenView: React.FC<ArtbookViewProps> = observer(({ artbook })
           </button>
 
           {/* Model Selector */}
-          <WorkflowOptionSelect
-            workflowName={artbook.workflows.gen_char_names}
-            optionName={"model"}
-            values={AllTextModels}
-          />
+          <WorkflowTextModelSelect workflowName={artbook.workflows.gen_char_names} />
 
           {/* Loading Spinner */}
           <LoadingSpinner isLoading={false} asButton />
@@ -167,11 +164,7 @@ export const ArtbookGenView: React.FC<ArtbookViewProps> = observer(({ artbook })
           </button>
 
           {/* Model Selector */}
-          <WorkflowOptionSelect
-            workflowName={artbook.workflows.gen_location_names}
-            optionName={"model"}
-            values={AllTextModels}
-          />
+          <WorkflowTextModelSelect workflowName={artbook.workflows.gen_location_names} />
 
           {/* Loading Spinner */}
           <LoadingSpinner isLoading={false} asButton />

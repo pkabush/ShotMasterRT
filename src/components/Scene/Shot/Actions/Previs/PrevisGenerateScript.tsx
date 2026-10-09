@@ -2,10 +2,10 @@
 import type { Shot } from "../../../../../classes/Shot";
 import { observer } from "mobx-react-lite";
 import SettingsButton from "../../../../Atomic/SettingsButton";
-import { WorkflowOptionSelect } from "../../../../WorkflowOptionSelect";
-import { AI, AllTextModels } from "../../../../../classes/AI_provider";
 import LoadingSpinner from "../../../../Atomic/LoadingSpinner";
 import EditableJsonTextField, { EditableJsonToggleButton } from "../../../../EditableJsonTextField";
+import { AI } from "../../../../../classes/AiProviders/AI_Generic";
+import { WorkflowTextModelSelect } from "../../../../../classes/AiProviders/AI_Generic_Components";
 
 interface Props {
     shot: Shot;
@@ -58,11 +58,7 @@ const component: React.FC<Props> = observer(({ shot }) => {
                     </button>
 
                     {/* Model Selector */}
-                    <WorkflowOptionSelect
-                        workflowName={wf_name}
-                        optionName={"model"}
-                        values={AllTextModels}
-                    />
+                    <WorkflowTextModelSelect workflowName={wf_name} />
 
                     {false && <UsePrevShotToggle shot={shot} />}
 
@@ -104,7 +100,7 @@ export async function Action_Previs_GenerateShotlist(shot: Shot) {
 
         const res = await AI.sendMessages(
             messages,
-            workflow.model ?? AllTextModels[0],
+            workflow.model,
         )
 
         if (typeof res === "string") {

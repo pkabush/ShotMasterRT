@@ -1,10 +1,11 @@
 // classes/GoogleGenAI.ts
 import { LocalImage } from "./fileSystem/LocalImage";
 import type { LocalFolder } from "./fileSystem/LocalFolder";
-import type { AIGenerateParms, AIImageInput, AIProvider, AIResult, ImageResult } from "./AI_provider";
+import type { AIGenerateParms, AIProvider, AIResult, ImageResult } from "./AI_provider";
 import { postToWorker } from "./CloudflareWorker/WorkerUtils";
 import { LocalVideo } from "./fileSystem/LocalVideo";
 import { base64ToBlob } from "./ChatGPT";
+import type { AIImageInput, AIMessage } from "./AiProviders/AI_message_utils";
 
 // Custom error types for clarity
 export class MissingApiKeyError extends Error { }
@@ -44,10 +45,10 @@ export class GoogleAI implements AIProvider {
       gemini_3_flash_preview: "gemini-3-flash-preview",
     },
     audio_generation: {
-      voices: [        
+      voices: [
         "Puck",
         "Ludo",
-        "Brio",        
+        "Brio",
         "Enzo",
         "Arlo",
         "Sulafat",
@@ -180,12 +181,6 @@ export class GoogleAI implements AIProvider {
 
     console.log("Gathered Messages", messages);
     const res = await GoogleAI.sendMessages(messages, params.model);
-
-    /*const res = await GoogleAI.img2img(
-      params.prompt,
-      params.model,
-      params.images,
-    );*/
     if (!res) return null;
     return res as string;
   }
@@ -195,16 +190,6 @@ export class GoogleAI implements AIProvider {
     if (params.prompt) { messages.push(params.prompt); }
     if (params.images?.length) { messages.push(...params.images); }
     const res = await GoogleAI.sendMessages(messages, params.model, params.aspect_ratio, params.resolution);
-
-    /*
-    const res = await GoogleAI.img2img(
-      params.prompt,
-      params.model,
-      params.images,
-      params.aspect_ratio,
-      params.resolution,
-    );
-    */
     if (!res) return null;
     return res as ImageResult;
   }
@@ -320,8 +305,6 @@ export class GoogleAI implements AIProvider {
       throw err;
     }
   }
-
-
 
   public static async generateAudio(
     lines: AudioLine[],
@@ -447,17 +430,10 @@ export class GoogleAI implements AIProvider {
     }
   }
 
-
-
-
 }
 
 
-export type AIMessage =
-  | string
-  | AIImageInput
-  | LocalVideo
-  | LocalImage;
+
 
 
 export type AudioLine = {

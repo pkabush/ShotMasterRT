@@ -1,13 +1,13 @@
 import { observer } from "mobx-react-lite";
 import type { Scene } from "../../../classes/Scene";
 import SettingsButton from "../../Atomic/SettingsButton";
-import { WorkflowOptionSelect } from "../../WorkflowOptionSelect";
-import { AI, AllTextModels } from "../../../classes/AI_provider";
 import LoadingSpinner from "../../Atomic/LoadingSpinner";
 import { Button } from "react-bootstrap";
 import { CollapsibleContainerAccordion } from "../../Atomic/CollapsibleContainer";
 import EditableJsonTextField from "../../EditableJsonTextField";
 import { runInAction } from "mobx";
+import { AI } from "../../../classes/AiProviders/AI_Generic";
+import { WorkflowTextModelSelect } from "../../../classes/AiProviders/AI_Generic_Components";
 
 
 interface Props {
@@ -34,11 +34,7 @@ export const SplitSceneIntoShotsButton: React.FC<Props> = observer(({ scene }) =
                 }}> Generate Shot Descriptions</button>
 
                 {/* Model Selector */}
-                <WorkflowOptionSelect
-                    workflowName={wf_name}
-                    optionName={"model"}
-                    values={AllTextModels}
-                />
+                <WorkflowTextModelSelect workflowName={wf_name} />
 
                 {/**Loading Spinner */}
                 <LoadingSpinner isLoading={loading} asButton />
@@ -95,7 +91,7 @@ ${scriptText}
         const res = await AI.GenerateText({
             system: system_msg,
             prompt: prompt,
-            model: workflow.model ?? AllTextModels[0],
+            model: workflow.model,
         })
 
         await scene.sceneJson?.updateField("shotsjson", res);

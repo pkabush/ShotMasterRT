@@ -112,7 +112,6 @@ export class LocalImage extends LocalMedia {
     return this._imageMetaPromise;
   }
 
-
   async getUrlObject(): Promise<string> {
     const url = await super.getUrlObject();
     this.ensureImageMetaLoaded(); // fire and forget (like video)

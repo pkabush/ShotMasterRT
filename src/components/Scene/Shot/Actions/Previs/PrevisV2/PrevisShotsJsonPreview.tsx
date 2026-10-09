@@ -336,19 +336,12 @@ export const Previs_ShotJsonPreview: React.FC<Props> = observer(({ shot }) => {
                         options={GoogleAI.options.audio_generation.voices}
                         value={voice_map[speaker] ?? "Kale"}
                         onChange={(val) => {
-
                             const audio = new Audio(`assets/sounds/VoicesGoogle/${val}.mp3`);
                             audio.volume = 0.25;
-                            audio.currentTime = 0; 
+                            audio.currentTime = 0;
                             audio.play().catch((err) => { console.error("Failed to play sound:", err); });
 
-
-
-                            updatePrevisVoice(
-                                shot,
-                                speaker,
-                                val,
-                            );
+                            updatePrevisVoice(shot, speaker, val,);
                         }}
                     />
                 </div>

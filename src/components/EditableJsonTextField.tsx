@@ -4,10 +4,11 @@ import GenericTextEditor from './GenericTextEditor';
 import { LocalJson } from '../classes/LocalJson';
 import { Button, Form, Stack } from 'react-bootstrap';
 import { Project } from '../classes/Project';
-import { WorkflowOptionSelect } from './WorkflowOptionSelect';
-import { AI, AllTextModels } from '../classes/AI_provider';
+
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBrain, faCircleCheck, faCircleXmark } from '@fortawesome/free-solid-svg-icons';
+import { AI } from '../classes/AiProviders/AI_Generic';
+import { WorkflowTextModelSelect } from '../classes/AiProviders/AI_Generic_Components';
 
 interface EditableJsonTextFieldProps {
   localJson: LocalJson | null;
@@ -95,7 +96,7 @@ export const AskAIView: React.FC<AskAIViewProps> = observer(({
   field,
 }) => {
   const project = Project.getProject()
-  const workflowName = "AskAI_TextEdit";
+  const wf_name = "AskAI_TextEdit";
 
   const prompt_filed = field + "_AskAI/Prompt"
   const res_field = field + "_AskAI/response"
@@ -105,7 +106,7 @@ export const AskAIView: React.FC<AskAIViewProps> = observer(({
 
       <Stack direction="horizontal" gap={3}>
         <Button size='sm' variant='success' onClick={async () => {
-          const workflow = project.workflows[workflowName] ?? ""
+          const workflow = project.workflows[wf_name] ?? ""
           const prompt = `                        
                         ${localJson?.getField(field)}
             
@@ -113,15 +114,13 @@ export const AskAIView: React.FC<AskAIViewProps> = observer(({
                         `
           const res = await AI.GenerateText({
             prompt: prompt,
-            model: workflow.model ?? AllTextModels[0],
+            model: workflow.model,
           })
           localJson?.updateField(res_field, res)
         }} > Ask AI</Button>
-        <WorkflowOptionSelect
-          workflowName={workflowName}
-          optionName={"model"}
-          values={AllTextModels}
-        />
+
+        <WorkflowTextModelSelect workflowName={wf_name} />
+
         <Button size='sm' variant='outline-warning' onClick={() => {
           if (!localJson) return;
           const old = localJson.getField(field);

@@ -3,7 +3,6 @@ import type { Shot } from "../../../../../classes/Shot";
 import { observer } from "mobx-react-lite";
 import SettingsButton from "../../../../Atomic/SettingsButton";
 import { WorkflowOptionSelect } from "../../../../WorkflowOptionSelect";
-import { AI, AllImageModels } from "../../../../../classes/AI_provider";
 import LoadingSpinner from "../../../../Atomic/LoadingSpinner";
 import { LocalImage } from "../../../../../classes/fileSystem/LocalImage";
 import { GoogleAI } from "../../../../../classes/GoogleAI";
@@ -12,6 +11,8 @@ import { Button } from "react-bootstrap";
 import { downloadImageTiles, splitImageIntoTiles } from "./ImageSplitUtils";
 import SimpleSelect from "../../../../Atomic/SimpleSelect";
 import EditableJsonTextField, { EditableJsonToggleButton } from "../../../../EditableJsonTextField";
+import { AI } from "../../../../../classes/AiProviders/AI_Generic";
+import { WorkflowImageModelSelect } from "../../../../../classes/AiProviders/AI_Generic_Components";
 
 interface Props {
     shot: Shot;
@@ -68,12 +69,7 @@ const component: React.FC<Props> = observer(({ shot,use_shots_json = false }) =>
                         Generate Storyboard
                     </button>
 
-                    {/* Model Selector */}
-                    <WorkflowOptionSelect
-                        workflowName={wf_name}
-                        optionName={"model"}
-                        values={AllImageModels}
-                    />
+                    <WorkflowImageModelSelect workflowName={wf_name}/>
 
                     <WorkflowOptionSelect
                         project={project}
@@ -176,9 +172,9 @@ export async function Action_Previs_Generate_Storyboard(shot: Shot, use_shotjson
 
         const res = await AI.sendMessages(
             messages,
-            workflow.model ?? AllImageModels[0],
+            workflow.model,
             workflow.aspect_ratio,
-            workflow.resolution,
+            workflow.resolution,            
         );
 
         const localImage: LocalImage | null =

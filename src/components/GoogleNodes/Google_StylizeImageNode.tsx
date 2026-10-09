@@ -13,6 +13,7 @@ import BottomCenterLabel from "../Atomic/MediaElements/BottomCenterLabel";
 import { TagsFolderContainer } from "../FolderTags/FolderTagsContainer";
 import { Project } from "../../classes/Project";
 import type { LocalFolder } from "../../classes/fileSystem/LocalFolder";
+import { WorkflowImageModelSelect } from "../../classes/AiProviders/AI_Generic_Components";
 
 
 interface Google_StylizeImageNodeProps {
@@ -36,12 +37,7 @@ export const Google_StylizeImageNode: React.FC<Google_StylizeImageNodeProps> = o
                     </button>
 
                     {/* Model Selector */}
-                    <WorkflowOptionSelect
-                        project={project}
-                        workflowName="stylize_image_google"
-                        optionName="model"
-                        values={Object.values(GoogleAI.options.img_models)}
-                    />
+                    <WorkflowImageModelSelect workflowName="stylize_image_google"/>
 
                     <WorkflowOptionSelect
                         project={project}

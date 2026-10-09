@@ -8,12 +8,13 @@ import type { MediaFolder } from "../../../../classes/MediaFolder";
 import { LocalImage } from "../../../../classes/fileSystem/LocalImage";
 import { useEffect, useRef, useState } from "react";
 import type { LocalFolder } from "../../../../classes/fileSystem/LocalFolder";
-import { AI, AllImageModels } from "../../../../classes/AI_provider";
 import { GoogleAI } from "../../../../classes/GoogleAI";
 import SettingsButton from "../../../Atomic/SettingsButton";
-import { WorkflowOptionSelect, WorkflowTextField } from "../../../WorkflowOptionSelect";
+import { WorkflowTextField } from "../../../WorkflowOptionSelect";
 import LoadingSpinner from "../../../Atomic/LoadingSpinner";
 import { Project } from "../../../../classes/Project";
+import { AI } from "../../../../classes/AiProviders/AI_Generic";
+import { WorkflowImageModelSelect } from "../../../../classes/AiProviders/AI_Generic_Components";
 
 
 interface Props {
@@ -139,11 +140,7 @@ export const ShotAddFramesFromPrevious: React.FC<Props> = observer(({ shot }) =>
 
                     > Extract Framelist And Censor </Button>
 
-                    <WorkflowOptionSelect
-                        workflowName={wf_name}
-                        optionName={"model"}
-                        values={AllImageModels}
-                    />
+                    <WorkflowImageModelSelect workflowName={wf_name}/>
 
                     <LoadingSpinner isLoading={loading} asButton />
                 </>
@@ -493,7 +490,7 @@ export async function censorImage(image: LocalImage) {
 
     const res = await AI.GenerateImage({
         prompt: workflow.prompt,
-        model: workflow.model ?? AllImageModels[0],
+        model: workflow.model,
         images: [await image.getAIImage()],
     });
 

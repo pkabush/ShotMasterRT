@@ -9,6 +9,7 @@ import { LocalFolder } from './fileSystem/LocalFolder';
 import { Tags } from './Tags';
 import { Storyboard } from './Storyboard';
 import { MediaFolder } from './MediaFolder';
+import { action_shotGenerateImage } from '../components/Scene/Shot/Actions/Basic/Action_ShotGenerateImage';
 
 const default_sceneInfoJson = {
   tags: [],
@@ -185,7 +186,7 @@ export class Scene extends MediaFolder {
 
     const tasks = this.shots
       .filter(shot => !shot.srcImage)
-      .map(shot => shot.GenerateImage());
+      .map(shot => action_shotGenerateImage(shot));
 
     await Promise.all(tasks);
 

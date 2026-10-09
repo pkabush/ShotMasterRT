@@ -1,6 +1,6 @@
 import { memo, useState } from "react";
 import { type Node, type NodeProps } from "@xyflow/react";
-import {  Button, Stack } from "react-bootstrap";
+import { Button, Stack } from "react-bootstrap";
 import SimpleSelect from "../../Atomic/SimpleSelect";
 import { GoogleAI } from "../../../classes/GoogleAI";
 import LoadingSpinner from "../../Atomic/LoadingSpinner";
@@ -22,7 +22,7 @@ export type nb_GoogleTextModelType = Node<nb_GoogleTextModelData, "googleAiNode"
 
 export const nb_GoogleAI = memo(
     ({ id, data, selected }: NodeProps<nb_GoogleTextModelType>) => {
-        const nodegraph_api = useNodeGraphApi();        
+        const nodegraph_api = useNodeGraphApi();
         const { local_file } = useLocalFile();
         const [loading, setLoading] = useState(false);
 
@@ -42,19 +42,19 @@ export const nb_GoogleAI = memo(
                 const multi_in_data = nodegraph_api.multiIn2Data(id).flat(1);
                 const msg_packs = nodegraph_api.iterateMessagePacks(multi_in_data);
 
-                console.log("Messages",msg_packs);
+                console.log("Messages", msg_packs);
 
 
-                
+
                 // Send All messages in parralel                 
                 await Promise.all(
-                    msg_packs.map(async (messages,index) => {
+                    msg_packs.map(async (messages, index) => {
                         const res = await GoogleAI.sendMessages(messages, model, aspect_ratio, resolution);
-                        await nodegraph_api.saveAiTextImageResponse(id, res, local_file,index);
+                        await nodegraph_api.saveAiTextImageResponse(id, res, local_file, index);
                         return res;
                     })
-                );                           
-                
+                );
+
 
             } finally {
                 setLoading(false);
@@ -96,7 +96,7 @@ export const nb_GoogleAI = memo(
                         <Stack direction="horizontal" gap={1}>
                             <Button size="sm" variant="warning"
                                 onClick={() => {
-                                    nodegraph_api.setNodeData(id,(d) => ({
+                                    nodegraph_api.setNodeData(id, (d) => ({
                                         gen_image: !d.gen_image,
                                     }));
                                 }}>
@@ -107,11 +107,9 @@ export const nb_GoogleAI = memo(
                                 <>
                                     <SimpleSelect
                                         value={data.img_model ?? Object.values(GoogleAI.options.img_models)[0]}
-                                        options={[
-                                            ...Object.values(GoogleAI.options.img_models)
-                                        ]}
+                                        options={[...Object.values(GoogleAI.options.img_models)]}
                                         onChange={(val: string) => {
-                                            nodegraph_api.setNodeData(id,() => ({ img_model: val, }));
+                                            nodegraph_api.setNodeData(id, () => ({ img_model: val, }));
                                         }}
                                     />
                                 </>
@@ -119,11 +117,9 @@ export const nb_GoogleAI = memo(
                                 <>
                                     <SimpleSelect
                                         value={data.model ?? Object.values(GoogleAI.options.text_models)[0]}
-                                        options={[
-                                            ...Object.values(GoogleAI.options.text_models)
-                                        ]}
+                                        options={[...Object.values(GoogleAI.options.text_models)]}
                                         onChange={(val: string) => {
-                                            nodegraph_api.setNodeData(id,() => ({
+                                            nodegraph_api.setNodeData(id, () => ({
                                                 model: val,
                                             }));
                                         }}
@@ -143,7 +139,7 @@ export const nb_GoogleAI = memo(
                                         ...Object.values(GoogleAI.options.aspect_ratios)
                                     ]}
                                     onChange={(val: string) => {
-                                        nodegraph_api.setNodeData(id,() => ({ aspect_ratio: val, }));
+                                        nodegraph_api.setNodeData(id, () => ({ aspect_ratio: val, }));
                                     }}
                                 />
 
@@ -154,7 +150,7 @@ export const nb_GoogleAI = memo(
                                         ...Object.values(GoogleAI.options.resolution)
                                     ]}
                                     onChange={(val: string) => {
-                                        nodegraph_api.setNodeData(id,() => ({ resolution: val, }));
+                                        nodegraph_api.setNodeData(id, () => ({ resolution: val, }));
                                     }}
                                 />
                             </>
@@ -176,7 +172,7 @@ export const nb_GoogleAI = memo(
                 <NamedOutputHandle id="out_image" index={1} />
                 {/* Multi INPUT HANDLE */}
                 {Array.from({ length: incomingCount + 1 }).map((_, index) => (
-                    <NamedInputHandle id={`input_${index}`} index={index} key={index}/>
+                    <NamedInputHandle id={`input_${index}`} index={index} key={index} />
                 ))}
 
             </div >
@@ -200,7 +196,7 @@ export const GoogleNodeDefinition: NodeDefinition<nb_GoogleTextModelData, "googl
     },
 
     getNodeOutputData: ({ node, outputId }) => {
-        console.log("GET",node,outputId);
+        console.log("GET", node, outputId);
         return null
     },
 };

@@ -1,10 +1,11 @@
 import { observer } from "mobx-react-lite";
 import type { Shot } from "../../../../classes/Shot";
 import SettingsButton from "../../../Atomic/SettingsButton";
-import { WorkflowOptionSelect, WorkflowTextField } from "../../../WorkflowOptionSelect";
-import { AI, AllTextModels } from "../../../../classes/AI_provider";
+import { WorkflowTextField } from "../../../WorkflowOptionSelect";
 import LoadingSpinner from "../../../Atomic/LoadingSpinner";
 import EditableJsonTextField from "../../../EditableJsonTextField";
+import { AI } from "../../../../classes/AiProviders/AI_Generic";
+import { WorkflowTextModelSelect } from "../../../../classes/AiProviders/AI_Generic_Components";
 
 const wf_name = "shot_generate_shotlist"
 const wf_output = `${wf_name}/output`
@@ -18,7 +19,7 @@ export const WF_ShotGenerateShotlist = {
     wf_name,
     wf_output,
     wf_loading,
-    run:ActionGenerateShotlist
+    run: ActionGenerateShotlist
 }
 
 
@@ -42,7 +43,7 @@ export const ShotGenerateShotlist: React.FC<Props> = observer(({ shot }) => {
                     </button>
 
                     {/* Model Selector */}
-                    <WorkflowOptionSelect workflowName={wf_name} optionName={"model"} values={AllTextModels} />
+                    <WorkflowTextModelSelect workflowName={wf_name} />
 
                     <LoadingSpinner isLoading={loading} asButton />
 
@@ -50,7 +51,7 @@ export const ShotGenerateShotlist: React.FC<Props> = observer(({ shot }) => {
             }
             content={
                 <>
-                    <WorkflowTextField workflowName={first_shot ? wf_name : wf_name + "_next" } optionName={"prompt"} />
+                    <WorkflowTextField workflowName={first_shot ? wf_name : wf_name + "_next"} optionName={"prompt"} />
                     <EditableJsonTextField localJson={shot.shotJson} field={wf_output} />
                 </>
             }
@@ -69,7 +70,7 @@ export async function ActionGenerateShotlist(shot: Shot) {
     try {
 
 
-        const workflow = shot.scene.project.workflows[ first_shot ? wf_name : wf_name + "_next" ];
+        const workflow = shot.scene.project.workflows[first_shot ? wf_name : wf_name + "_next"];
 
         const prompt = `
         ${workflow.prompt ?? ""}
@@ -77,13 +78,11 @@ export async function ActionGenerateShotlist(shot: Shot) {
         Generation Description:
         ${shot.shotJson?.data.description}
 
-        ${first_shot ? "" : 'Previous Shotlist:\n' + shot.scene.shots_ordered[shot_index-1].shotJson?.getField( wf_output ) }
+        ${first_shot ? "" : 'Previous Shotlist:\n' + shot.scene.shots_ordered[shot_index - 1].shotJson?.getField(wf_output)}
 `;
 
 
-        const model =
-            project.workflows[wf_name].model ??
-            AllTextModels[0];
+        const model = project.workflows[wf_name].model;
 
         const res = await AI.GenerateText({
             prompt,

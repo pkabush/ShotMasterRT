@@ -11,7 +11,6 @@ import type { LocalFolder } from "../classes/fileSystem/LocalFolder";
 import MediaGalleryPreview from "./MediaComponents/MediaGallerPreview";
 import BottomCenterLabel from "./Atomic/MediaElements/BottomCenterLabel";
 import RefImagesPreview from "./MediaComponents/RefImagesPreview";
-import { ChatGPT } from "../classes/ChatGPT";
 import { WorkflowOptionSelect, WorkflowTextField } from "./WorkflowOptionSelect";
 import { useProject } from "../contexts/ProjectContext";
 import { TagsFolderContainer } from "./FolderTags/FolderTagsContainer";
@@ -23,7 +22,8 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBrush } from "@fortawesome/free-solid-svg-icons";
 import SettingsButton from "./Atomic/SettingsButton";
 import { WF_Image_censor } from "./Scene/Shot/Actions/ShotAddFramesFromPrevious";
-import { AI, AllImageModels } from "../classes/AI_provider";
+import { AI } from "../classes/AiProviders/AI_Generic";
+import { WorkflowImageModelSelect } from "../classes/AiProviders/AI_Generic_Components";
 
 interface ImageEditWindowProps {
   localImage: LocalImage;
@@ -63,31 +63,15 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
     setPendingGenerations(prev => prev + 1);
 
     try {
-      const base64Obj = await localImage.getBase64(); // uses cached Base64 if available
-      const refs = await Promise.all(reference_images.map(img => img.getBase64()));
       const prompt = localImage.mediaJson?.getField("image_edit_prompt");
-
-
-      const ref_images = await localImage.references?.GetAI_Images() ?? [];
+      const ref_images = localImage.references?.active_images ?? [];
       let genImage: LocalImage | null = null;
 
-      const images = [
-        {
-          rawBase64: base64Obj.rawBase64,
-          mime: base64Obj.mime,
-          description: "source_image",
-        },
-        ...refs.map((r, index) => ({
-          rawBase64: r.rawBase64,
-          mime: r.mime,
-          description: `ref${index + 1}`,
-        })),
-        ...ref_images,
-      ]
+      const images = [ localImage, ...ref_images ]
 
-      const model = project?.workflows?.edit_image?.model ?? GoogleAI.options.img_models.flash_image
-      const aspect_ratio = project?.workflows?.edit_image?.aspect_ratio ?? GoogleAI.options.aspect_ratios.r9x16
-      const resolution = project?.workflows?.edit_image?.resolution ?? GoogleAI.options.resolution.none
+      const model = project?.workflows?.edit_image?.model;
+      const aspect_ratio = project?.workflows?.edit_image?.aspect_ratio ?? GoogleAI.options.aspect_ratios.r9x16;
+      const resolution = project?.workflows?.edit_image?.resolution ?? GoogleAI.options.resolution.none;
 
       // Add Images and resolution
       const res = await AI.GenerateImage({
@@ -236,20 +220,10 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
                       />
 
                       {/** Select Model */}
-                      <WorkflowOptionSelect
-                        project={project!}
-                        workflowName="edit_image"
-                        optionName="model"
-                        values={[
-                          ...Object.values(ChatGPT.options.models),
-                          ...Object.values(GoogleAI.options.img_models)
-                        ]}
-                        defaultValue={GoogleAI.options.img_models.flash_image}
-                        label="Model:"
-                      />
+                      <WorkflowImageModelSelect workflowName="edit_image" />
+
+
                     </div>
-
-
                   </div>,
                 GenerateInfo: <>
                   {/* Source preview */}
@@ -305,11 +279,7 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
                         }}
                       > Censor Image </Button>
 
-                      <WorkflowOptionSelect
-                        workflowName={WF_Image_censor.name}
-                        optionName={"model"}
-                        values={AllImageModels}
-                      />
+                      <WorkflowImageModelSelect workflowName={WF_Image_censor.name} />
                     </>
                   }
                     content={

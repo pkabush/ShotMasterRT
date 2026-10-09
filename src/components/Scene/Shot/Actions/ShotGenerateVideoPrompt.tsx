@@ -1,12 +1,13 @@
 import { observer } from "mobx-react-lite";
 import type { Shot } from "../../../../classes/Shot";
 import SettingsButton from "../../../Atomic/SettingsButton";
-import { WorkflowOptionSelect, WorkflowTextField } from "../../../WorkflowOptionSelect";
-import { AI, AllTextModels } from "../../../../classes/AI_provider";
+import { WorkflowTextField } from "../../../WorkflowOptionSelect";
 import LoadingSpinner from "../../../Atomic/LoadingSpinner";
 import EditableJsonTextField from "../../../EditableJsonTextField";
 import { WF_ShotGenerateShotlist } from "./ShotGenerateShotList";
 import SimpleSelect from "../../../Atomic/SimpleSelect";
+import { AI } from "../../../../classes/AiProviders/AI_Generic";
+import { WorkflowTextModelSelect } from "../../../../classes/AiProviders/AI_Generic_Components";
 
 const wf_name = "shot_generate_video_prompt"
 const wf_output = `${wf_name}/output`
@@ -43,7 +44,7 @@ export const ShotGenerateVideoPrompt: React.FC<Props> = observer(({ shot }) => {
                     </button>
 
                     {/* Model Selector */}
-                    <WorkflowOptionSelect workflowName={wf_name} optionName={"model"} values={AllTextModels} />
+                    <WorkflowTextModelSelect workflowName={wf_name} />
 
                     <SimpleSelect
                         value={chartype}
@@ -101,9 +102,7 @@ export async function ActionGenerateVideoPrompt(shot: Shot) {
         //const images = await shot.references?.GetAI_Images();
         const images = shot.references?.active_images;
 
-        const model =
-            project.workflows[wf_name].model ??
-            AllTextModels[0];
+        const model = project.workflows[wf_name].model;
 
         const res = await AI.GenerateText({
             prompt,

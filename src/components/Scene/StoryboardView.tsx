@@ -14,9 +14,10 @@ import type { LocalMedia } from "../../classes/fileSystem/LocalMedia";
 import { CollapsibleContainerAccordion } from "../Atomic/CollapsibleContainer";
 import SettingsButton from "../Atomic/SettingsButton";
 import { WorkflowOptionSelect, WorkflowTextField } from "../WorkflowOptionSelect";
-import { AI, AllImageModels, AllTextModels } from "../../classes/AI_provider";
 import LoadingSpinner from "../Atomic/LoadingSpinner";
 import { GoogleAI } from "../../classes/GoogleAI";
+import { AI } from "../../classes/AiProviders/AI_Generic";
+import { WorkflowImageModelSelect, WorkflowTextModelSelect } from "../../classes/AiProviders/AI_Generic_Components";
 
 
 interface StoryboardViewProps {
@@ -210,11 +211,7 @@ export const StoryBoardGenView: React.FC<StoryBoardGenViewProps> = observer(({ s
                     </button>
 
                     {/* Model Selector */}
-                    <WorkflowOptionSelect
-                        workflowName={storyboard.workflows.gen_shot_prompts}
-                        optionName={"model"}
-                        values={AllTextModels}
-                    />
+                    <WorkflowTextModelSelect workflowName={storyboard.workflows.gen_shot_prompts} />
 
                     {/* Loading Spinner */}
                     <LoadingSpinner isLoading={false} asButton />
@@ -245,11 +242,7 @@ export const StoryBoardGenView: React.FC<StoryBoardGenViewProps> = observer(({ s
                     </button>
 
                     {/* Model Selector */}
-                    <WorkflowOptionSelect
-                        workflowName={storyboard.workflows.gen_images}
-                        optionName={"model"}
-                        values={AllImageModels}
-                    />
+                    <WorkflowImageModelSelect workflowName={storyboard.workflows.gen_images}/>
 
                     <WorkflowOptionSelect
                         project={project}

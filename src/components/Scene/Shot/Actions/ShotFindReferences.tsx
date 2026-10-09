@@ -1,10 +1,11 @@
 import { observer } from "mobx-react-lite";
 import type { Shot } from "../../../../classes/Shot";
 import SettingsButton from "../../../Atomic/SettingsButton";
-import { AI, AllTextModels } from "../../../../classes/AI_provider";
-import { WorkflowOptionSelect, WorkflowTextField } from "../../../WorkflowOptionSelect";
+import { WorkflowTextField } from "../../../WorkflowOptionSelect";
 import { Button } from "react-bootstrap";
 import EditableJsonTextField from "../../../EditableJsonTextField";
+import { AI } from "../../../../classes/AiProviders/AI_Generic";
+import { WorkflowTextModelSelect } from "../../../../classes/AiProviders/AI_Generic_Components";
 
 
 interface Props {
@@ -39,7 +40,7 @@ ${shot.scene.project.artbook?.tags_list.join("\n")}
 `;
             const res = await AI.GenerateText({
               prompt: prompt,
-              model: workflow.model ?? AllTextModels[0],
+              model: workflow.model,
             })
             shot.shotJson!.updateField(output, res);
             shot.references?.addTagsListFromText(shot.shotJson?.getField(output));
@@ -48,11 +49,8 @@ ${shot.scene.project.artbook?.tags_list.join("\n")}
           </button>
 
           {/* Model Selector */}
-          <WorkflowOptionSelect
-            workflowName={wf_name}
-            optionName={"model"}
-            values={AllTextModels}
-          />
+          <WorkflowTextModelSelect workflowName={wf_name} />
+          
           {/* Loading Spinner */}
           {/*<LoadingSpinner isLoading={shot.is_generating_tags} asButton /> */}
 

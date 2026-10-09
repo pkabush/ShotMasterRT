@@ -6,9 +6,9 @@ import { LocalJson } from "./LocalJson";
 import { Tags } from "./Tags";
 import type { Scene } from "./Scene";
 import { Project } from "./Project";
-import { AI } from "./AI_provider";
 import { GoogleAI } from "./GoogleAI";
 import type { LocalImage } from "./fileSystem/LocalImage";
+import { AI } from "./AiProviders/AI_Generic";
 
 export class Storyboard extends MediaFolder {
     data: LocalJson | null = null;

@@ -1,8 +1,7 @@
 import { observer } from "mobx-react-lite";
 import type { Scene } from "../../../classes/Scene";
 import SettingsButton from "../../Atomic/SettingsButton";
-import { WorkflowOptionSelect, WorkflowTextField } from "../../WorkflowOptionSelect";
-import { AI, AllImageModels, AllTextModels } from "../../../classes/AI_provider";
+import { WorkflowTextField } from "../../WorkflowOptionSelect";
 import LoadingSpinner from "../../Atomic/LoadingSpinner";
 import { Button, ListGroup } from "react-bootstrap";
 import EditableJsonTextField from "../../EditableJsonTextField";
@@ -10,7 +9,8 @@ import { parseMissingRefsJson } from "../Shot/Actions/ShotGenerateMissingReferen
 import { LocalImage } from "../../../classes/fileSystem/LocalImage";
 import { GoogleAI } from "../../../classes/GoogleAI";
 import type { LocalFolder } from "../../../classes/fileSystem/LocalFolder";
-
+import { AI } from "../../../classes/AiProviders/AI_Generic";
+import { WorkflowImageModelSelect, WorkflowTextModelSelect } from "../../../classes/AiProviders/AI_Generic_Components";
 
 
 
@@ -45,11 +45,7 @@ export const SceneGenerateItemReferencesComponent: React.FC<Props> = observer(({
                     </button>
 
                     {/* Model Selector */}
-                    <WorkflowOptionSelect
-                        workflowName={wf_name}
-                        optionName={"model"}
-                        values={AllTextModels}
-                    />
+                    <WorkflowTextModelSelect workflowName={wf_name} />
 
                     <LoadingSpinner isLoading={loading} asButton />
 
@@ -69,11 +65,7 @@ export const SceneGenerateItemReferencesComponent: React.FC<Props> = observer(({
                         Images: {missingRefs?.length ?? 0}
                     </Button>
 
-                    <WorkflowOptionSelect
-                        workflowName={wf_name_genImages}
-                        optionName={"model"}
-                        values={AllImageModels}
-                    />
+                    <WorkflowImageModelSelect workflowName={wf_name_genImages} />
 
                     <LoadingSpinner isLoading={loading_images} asButton />
 
@@ -128,7 +120,7 @@ ${scene.sceneJson?.data.script}
 `;
         const res = await AI.GenerateText({
             prompt,
-            model: workflow.model ?? AllTextModels[0],
+            model: workflow.model
         });
 
         await scene.sceneJson!.updateField(wf_output, res);
@@ -164,9 +156,7 @@ export async function ActionSceneGenerateMissingItemImages(scene: Scene) {
                 const name = reference.name;
                 const prompt = reference.prompt;
 
-                const model =
-                    project.workflows[wf_name_genImages]?.model ??
-                    AllImageModels[0];
+                const model = project.workflows[wf_name_genImages]?.model;
 
                 console.log("Generating Missing reference:", {
                     reference,

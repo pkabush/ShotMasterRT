@@ -7,7 +7,7 @@ import { Project } from "../Project";
 import { GoogleAI } from "../GoogleAI";
 import { Tags } from "../Tags";
 import type { Artbook } from "../Artbook";
-import { AI } from "../AI_provider";
+import { AI } from "../AiProviders/AI_Generic";
 
 
 
@@ -164,7 +164,7 @@ ${var_prompt}
 
             const result = await GoogleAI.img2img(
                 prompt,
-                workflow.model ?? GoogleAI.options.img_models.flash_3_1,
+                workflow.model,
                 reference_images,
                 workflow.aspect_ratio
             );

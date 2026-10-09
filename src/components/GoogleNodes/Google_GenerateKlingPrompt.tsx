@@ -1,11 +1,13 @@
 import React from "react";
 import { observer } from "mobx-react-lite";
 import SettingsButton from "../Atomic/SettingsButton";
-import { WorkflowOptionSelect, WorkflowTextField } from "../WorkflowOptionSelect";
+import { WorkflowTextField } from "../WorkflowOptionSelect";
 import type { Shot } from "../../classes/Shot";
 import EditableJsonTextField from "../EditableJsonTextField";
-import { AI, AllTextModels } from "../../classes/AI_provider";
+
 import { Project } from "../../classes/Project";
+import { AI } from "../../classes/AiProviders/AI_Generic";
+import { WorkflowTextModelSelect } from "../../classes/AiProviders/AI_Generic_Components";
 
 interface Google_GenerateKlingPromptProps {
     shot: Shot;
@@ -85,12 +87,7 @@ export const Google_GenerateKlingPrompt: React.FC<Google_GenerateKlingPromptProp
                     </button>
 
                     {/* Model Selector */}
-                    {/* Model Selector */}
-                    <WorkflowOptionSelect
-                        workflowName={wf_name}
-                        optionName={"model"}
-                        values={AllTextModels}
-                    />
+                    <WorkflowTextModelSelect workflowName={wf_name} />
 
                 </>
             }

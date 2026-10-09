@@ -3,7 +3,6 @@ import type { Shot } from "../../../../../classes/Shot";
 import { observer } from "mobx-react-lite";
 import SettingsButton from "../../../../Atomic/SettingsButton";
 import { WorkflowOptionSelect, WorkflowTextField } from "../../../../WorkflowOptionSelect";
-import { AI, AllTextModels } from "../../../../../classes/AI_provider";
 import LoadingSpinner from "../../../../Atomic/LoadingSpinner";
 import { Button } from "react-bootstrap";
 import { ChatGPT } from "../../../../../classes/ChatGPT";
@@ -11,6 +10,8 @@ import { LocalAudio } from "../../../../../classes/fileSystem/LocalAudio";
 import { splitImageIntoTiles } from "./ImageSplitUtils";
 import { combineVideosFromBlobs } from "../../../../../classes/Ffmpeg/FFmpegService";
 import { mb_createVideoFromImageAndAudio } from "../../../../../classes/Ffmpeg/mediabunnyService";
+import { AI } from "../../../../../classes/AiProviders/AI_Generic";
+import { WorkflowTextModelSelect } from "../../../../../classes/AiProviders/AI_Generic_Components";
 
 interface Props {
     shot: Shot;
@@ -41,11 +42,7 @@ const component: React.FC<Props> = observer(({ shot }) => {
                     </button>
 
                     {/* Model Selector */}
-                    <WorkflowOptionSelect
-                        workflowName={wf_name}
-                        optionName={"model"}
-                        values={AllTextModels}
-                    />
+                    <WorkflowTextModelSelect workflowName={wf_name} />
 
                     <LoadingSpinner isLoading={loading} asButton />
 
@@ -280,7 +277,7 @@ export async function Action_Previs_Generate_Shotlist(shot: Shot) {
 
         const res = await AI.GenerateText({
             prompt,
-            model: workflow.model ?? AllTextModels[0],
+            model: workflow.model,
         });
 
         await shot.shotJson!.updateField("previs_audiotext", res);

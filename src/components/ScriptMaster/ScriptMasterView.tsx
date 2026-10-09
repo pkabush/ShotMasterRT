@@ -7,9 +7,11 @@ import EditableJsonTextField, { EditableJsonToggleField } from "../EditableJsonT
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faFileCirclePlus, faTrashCan } from "@fortawesome/free-solid-svg-icons";
 import SettingsButton from "../Atomic/SettingsButton";
-import { WorkflowOptionSelect, WorkflowTextField } from "../WorkflowOptionSelect";
-import { AI, AllTextModels } from "../../classes/AI_provider";
+import { WorkflowTextField } from "../WorkflowOptionSelect";
+
 import LoadingSpinner from "../Atomic/LoadingSpinner";
+import { AI } from "../../classes/AiProviders/AI_Generic";
+import { WorkflowTextModelSelect } from "../../classes/AiProviders/AI_Generic_Components";
 
 
 
@@ -229,7 +231,7 @@ export const EpisodeListView: React.FC<EpisodeListViewProps> = observer(({
                         //const fullScript = await script.getFullScript(episodeListName);                        
                         //await navigator.clipboard.writeText(await script.fountanise(fullScript));
                         //alert("Copied!");
-                        script.fountanizeScript( episodeListName );
+                        script.fountanizeScript(episodeListName);
                     }}
                 >
                     copy Full Script Fountain
@@ -474,7 +476,7 @@ export const GenerateLoglineView: React.FC<GenerateLoglineViewProps> = observer(
 
                             const res = await AI.GenerateText({
                                 prompt: prompt,
-                                model: workflow.model ?? AllTextModels[0],
+                                model: workflow.model,
                             })
 
                             script.updateField(scriptmaster.fields.gen_logline_output, res)
@@ -490,11 +492,7 @@ export const GenerateLoglineView: React.FC<GenerateLoglineViewProps> = observer(
                     </button>
 
                     {/* Model Selector */}
-                    <WorkflowOptionSelect
-                        workflowName={wf_name}
-                        optionName={"model"}
-                        values={AllTextModels}
-                    />
+                    <WorkflowTextModelSelect workflowName={wf_name} />
 
                     {/* Loading Spinner */}
                     <LoadingSpinner isLoading={script.generating.isGenerating(gen_id)} asButton />
@@ -517,7 +515,7 @@ export const GenerateEpisodesTextView: React.FC<GenerateLoglineViewProps> = obse
     const wf_name = project.scriptmaster.workflows.gen_episodes_text;
     const scriptmaster = project.scriptmaster
 
-    const model = project.workflows[project.scriptmaster.workflows.gen_logline].model ?? AllTextModels[0]
+    const model = project.workflows[project.scriptmaster.workflows.gen_logline].model
     const gen_id = `${script.path}#gen_episodes_text`
 
     return <div>
@@ -564,11 +562,7 @@ export const GenerateEpisodesTextView: React.FC<GenerateLoglineViewProps> = obse
                     </button>
 
                     {/* Model Selector */}
-                    <WorkflowOptionSelect
-                        workflowName={project.scriptmaster.workflows.gen_logline}
-                        optionName={"model"}
-                        values={AllTextModels}
-                    />
+                    <WorkflowTextModelSelect workflowName={project.scriptmaster.workflows.gen_logline} />
 
                     {/* Loading Spinner */}
                     <LoadingSpinner isLoading={script.generating.isGenerating(gen_id)} asButton />
@@ -620,11 +614,8 @@ export const GenerateScenesView: React.FC<GenerateScenesViewProps> = observer(({
                     </button>
 
                     {/* Model Selector */}
-                    <WorkflowOptionSelect
-                        workflowName={project.scriptmaster.workflows.gen_logline}
-                        optionName={"model"}
-                        values={AllTextModels}
-                    />
+                    <WorkflowTextModelSelect workflowName={project.scriptmaster.workflows.gen_logline} />
+
 
                     {/* Loading Spinner */}
                     <LoadingSpinner isLoading={script.generating.isGenerating(gen_id)} asButton />
@@ -689,11 +680,9 @@ export const GenerateSceneScriptView: React.FC<GenerateSceneScriptViewProps> = o
                     </button>
 
                     {/* Model Selector */}
-                    <WorkflowOptionSelect
-                        workflowName={project.scriptmaster.workflows.gen_logline}
-                        optionName={"model"}
-                        values={AllTextModels}
-                    />
+                    <WorkflowTextModelSelect workflowName={project.scriptmaster.workflows.gen_logline} />
+
+                    
 
                     {/* Loading Spinner */}
                     <LoadingSpinner isLoading={script.generating.isGenerating(gen_id)} asButton />
@@ -750,11 +739,8 @@ export const GenerateEpisodeScript: React.FC<GenerateEpisodeScriptViewProps> = o
                     </button>
 
                     {/* Model Selector */}
-                    <WorkflowOptionSelect
-                        workflowName={project.scriptmaster.workflows.gen_logline}
-                        optionName={"model"}
-                        values={AllTextModels}
-                    />
+                    <WorkflowTextModelSelect workflowName={project.scriptmaster.workflows.gen_logline} />
+
 
                     {/* Loading Spinner */}
                     <LoadingSpinner isLoading={script.generating.isGenerating(gen_id)} asButton />
