@@ -1,22 +1,24 @@
 import React, { useState, useEffect } from "react";
 import { observer } from "mobx-react-lite";
 import type { Shot } from "../../../../../../classes/Shot";
-import { Form, Row, Col, Button } from "react-bootstrap";
+import { Form, Row, Col, Button, Stack } from "react-bootstrap";
 import { CroppedMediaImage } from "./CroppedMediaImage";
 import { LocalImage } from "../../../../../../classes/fileSystem/LocalImage";
 import SettingsButton from "../../../../../Atomic/SettingsButton";
-import { ChatGPT } from "../../../../../../classes/ChatGPT";
 import LoadingSpinner from "../../../../../Atomic/LoadingSpinner";
 import { LocalAudio } from "../../../../../../classes/fileSystem/LocalAudio";
 import InlineAudio from "../../../../../MediaComponents/InlineAudio";
 import SimpleSelect from "../../../../../Atomic/SimpleSelect";
-import { extractImageTile } from "../ImageSplitUtils";
+import { bakeTextOntoImage, extractImageTile } from "../ImageSplitUtils";
 import { mb_createVideoFromImageAndAudio } from "../../../../../../classes/Ffmpeg/mediabunnyService";
 import { audioRetime, combineVideosFromBlobs } from "../../../../../../classes/Ffmpeg/FFmpegService";
 import Previs_GenerateAudioGPT from "./Previs_GenerateAudioGPT";
 import Previs_GenerateAudioGoogle, { Action_generatePrevisAudioGoogleAll } from "./PrevisGenerateAudioGoogle";
 import { Previs_getAllDialogueSpeakers } from "./Previs_AudioTextUtils";
 import { GoogleAI } from "../../../../../../classes/GoogleAI";
+import { EditableJsonToggleButton } from "../../../../../EditableJsonTextField";
+
+const subtitles_path = "workflows/previs/add_subs"
 
 interface Props {
     shot: Shot;
@@ -36,7 +38,7 @@ interface ShotPreviewItemProps {
 
 const wf_name = "shot_previs_generate_audio"
 const wf_loading_audio = `${wf_name}/loading_audio`
-const wf_name_audio = `${wf_name}_audio`
+//const wf_name_audio = `${wf_name}_audio`
 
 const EditableTextArea: React.FC<EditableTextAreaProps> = ({ value, onSave }) => {
     const [localValue, setLocalValue] = useState(value);
@@ -55,31 +57,79 @@ const EditableTextArea: React.FC<EditableTextAreaProps> = ({ value, onSave }) =>
     );
 };
 
-export const Previs_ShotPreviewItem: React.FC<ShotPreviewItemProps> = ({ shotData, shot, onUpdateField, shotIndex }) => {
+export const Previs_ShotPreviewItem: React.FC<ShotPreviewItemProps> = observer(({
+    shotData,
+    shot,
+    onUpdateField,
+    shotIndex,
+}) => {
     // Image
     const image_path = shotData.image_path;
     const shot_image = image_path ? shot.getByPath(shotData.image_path) as LocalImage : shot.first_frame;
     const var_images = shot.MediaFolder_results?.getType(LocalImage);
     // Audio
     const audio_name = `audio_shot_${shotIndex}.mp3`;
-    const audio_path = `${shot.MediaFolder_results?.path}/${audio_name}`;
-    const audio_file = shot.MediaFolder_results?.getByPath(audio_path, LocalAudio);
+    const audio_path = `${shot.previs_audio_folder?.path}/${audio_name}`;
+    const audio_file = shot.previs_audio_folder?.getByPath(audio_path, LocalAudio);
     //console.log(audio_name, audio_path, audio_file);
 
     const playback_rate = shotData.playback_speed ?? "1.0";
+
+    const use_subs = shot.scene.project.projinfo!.getField(subtitles_path);
 
     return (
         <>
             <div className="border rounded p-3 mb-3">
                 <Row className="align-items-start">
                     {/* Left Column: Image Preview */}
+
+                    {/* Left Column: Image Preview */}
                     <Col md={3} className="mb-3 mb-md-0">
                         {shot_image ? (
-                            <CroppedMediaImage
-                                localImage={shot_image}
-                                shotIndex={shotIndex}
-                                className="rounded border"
-                            />
+                            <div
+                                className="position-relative rounded border overflow-hidden"
+                                style={{ width: "100%", containerType: "inline-size", }}
+                            >
+                                <CroppedMediaImage
+                                    localImage={shot_image}
+                                    shotIndex={shotIndex}
+                                    className="rounded"
+                                    style={{
+                                        display: "block",
+                                        width: "100%",
+                                    }}
+                                />
+
+                                {/* Audio text overlay */}
+                                {use_subs && shotData.audio_text?.trim() && (
+                                    <div
+                                        className="position-absolute start-0 w-100"
+                                        style={{
+                                            bottom: "20%",
+                                            color: "#ffffffed",
+                                            padding: "2%",
+                                            fontSize: "5cqw",
+                                            fontWeight: 600,
+                                            lineHeight: 1.4,
+                                            maxHeight: "45%",
+                                            overflowY: "auto",
+                                            overflowWrap: "anywhere",
+                                            whiteSpace: "pre-wrap",
+                                            boxSizing: "border-box",
+                                            textAlign: "center",
+                                            textShadow: `
+                                                -1px -1px 2px rgba(0, 0, 0, 0.95),
+                                                1px -1px 2px rgba(0, 0, 0, 0.95),
+                                                -1px 1px 2px rgba(0, 0, 0, 0.95),
+                                                1px 1px 2px rgba(0, 0, 0, 0.95),
+                                                0px 2px 4px rgba(0, 0, 0, 1)
+                                            `,
+                                        }}
+                                    >
+                                        {shotData.audio_text}
+                                    </div>
+                                )}
+                            </div>
                         ) : (
                             <div
                                 className="d-flex align-items-center justify-content-center bg-secondary text-white rounded"
@@ -103,13 +153,16 @@ export const Previs_ShotPreviewItem: React.FC<ShotPreviewItemProps> = ({ shotDat
                             >
                                 {var_images.map((image: LocalImage, imageIndex: number) => {
                                     const isSelected = shot_image?.path === image.path;
+                                    const storyboard_index = image.mediaJson?.getField("storyboard_index");
+                                    const isStoryboardImage = storyboard_index != null;
+
+                                    if (isStoryboardImage && (shotIndex != storyboard_index))
+                                        return null;
 
                                     return (
                                         <div
                                             key={imageIndex}
-                                            onClick={() => {
-                                                onUpdateField("image_path", image.path);
-                                            }}
+                                            onClick={() => onUpdateField("image_path", image.path)}
                                             style={{
                                                 cursor: "pointer",
                                                 borderRadius: "6px",
@@ -117,8 +170,7 @@ export const Previs_ShotPreviewItem: React.FC<ShotPreviewItemProps> = ({ shotDat
                                                 boxShadow: isSelected
                                                     ? "0 0 6px 2px rgba(0, 180, 255, 0.9), 0 0 14px 4px rgba(0, 180, 255, 0.45)"
                                                     : "none",
-                                                transition:
-                                                    "border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease",
+                                                transition: "border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease",
                                                 transform: isSelected ? "scale(1.03)" : "scale(1)",
                                             }}
                                         >
@@ -129,6 +181,9 @@ export const Previs_ShotPreviewItem: React.FC<ShotPreviewItemProps> = ({ shotDat
                                                 style={{
                                                     width: "90px",
                                                     height: "160px",
+                                                    ...(isStoryboardImage
+                                                        ? { objectFit: "contain" }
+                                                        : {}),
                                                 }}
                                             />
                                         </div>
@@ -152,7 +207,51 @@ export const Previs_ShotPreviewItem: React.FC<ShotPreviewItemProps> = ({ shotDat
                         </Form.Group>
 
                         {false && <Previs_GenerateAudioGPT shot={shot} audioIndex={shotIndex} />}
-                        <Previs_GenerateAudioGoogle shot={shot} audioIndex={shotIndex} />
+
+                        <Stack direction="horizontal" gap={3} className="text-nowrap">
+                            <Previs_GenerateAudioGoogle shot={shot} audioIndex={shotIndex} />
+                            <Button
+                                size="sm"
+                                variant="outline-warning"
+                                onClick={async () => {
+                                    console.log("Extract");
+                                    if (!shot_image) {
+                                        console.log("No Shot Image");
+                                        return;
+                                    }
+
+                                    const tile = await extractImageTile(shot_image, 4, 4, shotIndex);
+                                    const extracted_image = await LocalImage.fromBlob(tile.blob, shot.MediaFolder_results!, `${shot_image.name_no_extension}.preview_tile_${shotIndex}.png`);
+                                    extracted_image.mediaJson!.updateField("storyboard_index", shotIndex);
+                                }}
+                            >Extract Image</Button>
+
+                            {/**
+                            <Button
+                                size="sm"
+                                variant="outline-warning"
+                                onClick={async () => {
+                                    console.log("Extract");
+                                    if (!shot_image) {
+                                        console.log("No Shot Image");
+                                        return;
+                                    }
+
+                                    const blob = await bakeTextOntoImage(await shot_image.toBlob(), shotData.audio_text?.trim());
+                                    const url = URL.createObjectURL(blob);
+                                    const a = document.createElement("a");
+                                    a.href = url;
+                                    a.download = "previs_audio_multiline.png";
+                                    a.click();
+                                    URL.revokeObjectURL(url);
+
+                                }}
+                            >Bake text</Button>
+                             */}
+
+                            <EditableJsonToggleButton field={subtitles_path} localJson={shot.scene.project.projinfo!} default_val={use_subs} label="Add Subtitles" />
+
+                        </Stack>
 
                         {audio_file ? (
                             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -181,12 +280,14 @@ export const Previs_ShotPreviewItem: React.FC<ShotPreviewItemProps> = ({ shotDat
                             <>No Audio</>
                         )}
 
+
+
                     </Col>
                 </Row>
             </div>
         </>
     );
-};
+});
 
 export const Previs_ShotJsonPreview: React.FC<Props> = observer(({ shot }) => {
     const [selectedIndex, setSelectedIndex] = useState(0);
@@ -246,7 +347,7 @@ export const Previs_ShotJsonPreview: React.FC<Props> = observer(({ shot }) => {
                         size="sm"
                         variant="outline-success"
                         disabled={loading_audio}
-                        onClick={() => { Action_Previs_generate_AudioMultiline(shot); }}
+                        onClick={() => { Action_Previs_combineAudioWithImages(shot); }}
                     >
                         Generate Final Video
                     </Button>
@@ -340,7 +441,6 @@ export const Previs_ShotJsonPreview: React.FC<Props> = observer(({ shot }) => {
                             audio.volume = 0.25;
                             audio.currentTime = 0;
                             audio.play().catch((err) => { console.error("Failed to play sound:", err); });
-
                             updatePrevisVoice(shot, speaker, val,);
                         }}
                     />
@@ -365,10 +465,7 @@ export const Previs_ShotJsonPreview: React.FC<Props> = observer(({ shot }) => {
 });
 
 
-
-
-
-
+/*
 export async function Action_Previs_Generate_AllAudioFromJson(shot: Shot) {
     shot.shotJson?.updateField(wf_loading_audio, true);
 
@@ -475,8 +572,9 @@ export async function Action_Previs_Generate_AllAudioFromJson(shot: Shot) {
         shot.shotJson?.updateField(wf_loading_audio, false);
     }
 }
+*/
 
-export async function Action_Previs_generate_AudioMultiline(
+export async function Action_Previs_combineAudioWithImages(
     shot: Shot
 ) {
     try {
@@ -545,12 +643,22 @@ export async function Action_Previs_generate_AudioMultiline(
                             return;
                         }
 
-                        const tile = await extractImageTile(
-                            shot_image,
-                            rows,
-                            columns,
-                            index
-                        );
+                        const storyboardIndex = shot_image.mediaJson?.getField("storyboard_index");
+                        const is_extracted_tile = storyboardIndex !== null && storyboardIndex !== undefined;
+
+                        const tile = is_extracted_tile ?
+                            await extractImageTile(shot_image, 1, 1, 0)
+                            :
+                            await extractImageTile(shot_image, rows, columns, index)
+                            ;
+
+                        const use_subs = shot.scene.project.projinfo!.getField(subtitles_path);
+
+                        const baked_text_blob = use_subs ?
+                            await bakeTextOntoImage(tile.blob, shotData.audio_text?.trim())
+                            :
+                            tile.blob;
+
 
                         console.log(
                             `Extracted tile ${index}:`,
@@ -572,10 +680,10 @@ export async function Action_Previs_generate_AudioMultiline(
                             `audio_shot_${index}.mp3`;
 
                         const audioPath =
-                            `${shot.MediaFolder_results!.path}/${audioName}`;
+                            `${shot.previs_audio_folder!.path}/${audioName}`;
 
                         const audioFile =
-                            shot.MediaFolder_results!.getByPath(
+                            shot.previs_audio_folder!.getByPath(
                                 audioPath,
                                 LocalAudio
                             );
@@ -609,7 +717,8 @@ export async function Action_Previs_generate_AudioMultiline(
 
                         const video =
                             await mb_createVideoFromImageAndAudio(
-                                tile.blob,
+                                //tile.blob,
+                                baked_text_blob,
                                 fasterAudioBlob
                             );
 

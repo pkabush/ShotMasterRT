@@ -43,6 +43,10 @@ export class Shot extends LocalFolder {
   MediaFolder_Audio: MediaFolder | null = null;
 
 
+  previs_folder: MediaFolder | null = null;
+  previs_audio_folder: MediaFolder | null = null;
+
+
   constructor(parent: LocalFolder | null, handle: FileSystemDirectoryHandle) {
     super(parent, handle);
 
@@ -56,6 +60,8 @@ export class Shot extends LocalFolder {
       MediaFolder_genVideo: observable,
       MediaFolder_refVideo: observable,
       MediaFolder_Audio: observable,
+      previs_folder: observable,
+      previs_audio_folder: observable,
       references: observable,
       tasksJson: observable,
       load: action,
@@ -72,6 +78,9 @@ export class Shot extends LocalFolder {
 
       const results = await MediaFolder.create(this, "results");
       results.tags = ["start_frame", "end_frame", "ref_frame", "unreal_frame"];
+
+      const previs_folder = await MediaFolder.create(results, "previs");
+      const previs_audion_folder = await MediaFolder.create(previs_folder, "previs_audio");
 
       const genVideo = await MediaFolder.create(this, "genVideo");
       genVideo.tags = ["picked", "lipsync", "picked_extra"];
@@ -91,6 +100,8 @@ export class Shot extends LocalFolder {
         this.MediaFolder_refVideo = refVideo;
         this.MediaFolder_Audio = audio;
         this.nodeGraphJson = nodeGraphJson;
+        this.previs_folder = previs_folder;
+        this.previs_audio_folder = previs_audion_folder;
       });
 
     } catch (err) {

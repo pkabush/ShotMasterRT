@@ -28,9 +28,7 @@ import { ShotGenerateShotlist } from './Actions/ShotGenerateShotList';
 import { ShotAddFramesFromPrevious } from './Actions/ShotAddFramesFromPrevious';
 import { WF_ShotGenerateStagingImage } from './Actions/ShotGenerateStageing';
 import { ShotAskGenerationDuration } from './Actions/ShotAskGenerationDuration';
-import { WF_Previs_GenerateShotlist } from './Actions/Previs/PrevisGenerateShotlist';
 import { WF_Previs_GenerateStoryboard } from './Actions/Previs/PrevisGenerateStoryboard';
-import { WF_Previs_GenerateAudio } from './Actions/Previs/PrevisGenerateAudio';
 import { WF_Previs_GenerateScript } from './Actions/Previs/PrevisGenerateScript';
 import { WF_Previs_GenerateShotsJSON } from './Actions/Previs/PrevisV2/PrevisGenerateShotlistJson';
 import { Previs_ShotJsonPreview } from './Actions/Previs/PrevisV2/PrevisShotsJsonPreview';
@@ -94,10 +92,8 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
             <div className="card mb-2">
               <div className="card-body">
 
-
                 <Google_StylizeImageNode shot={shot} />
                 <Google_GenerateImageNode shot={shot} />
-
 
                 {/** 
                 <EditableJsonTextField localJson={shot.shotJson} field="video_prompt" fitHeight />
@@ -110,9 +106,6 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
 
               </div>
             </div>
-
-
-
           ,
           Generate_VIDEO: <>
             <EditableJsonToggleField localJson={shot.scene.project.projinfo} field={"auto_load_first_frame"} default_val={false} label="Auto Load First Frame" />
@@ -163,6 +156,7 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
 
 
           </>,
+          /*
           "PrevisUtil": <>
             <MediaFolderGallery mediaFolder={shot.MediaFolder_results} defaultCollapsed={true} />
             <EditableJsonTextField localJson={shot.shotJson} field="previs_logline" fitHeight collapsed />
@@ -174,6 +168,7 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
             <WF_Previs_GenerateAudio.component shot={shot} />
             <EditableJsonTextField localJson={shot.shotJson} field="previs_audiotext" fitHeight collapsed />
           </>,
+          */
           "PrevisUtil_V2": <>            
             <EditableJsonTextField localJson={shot.shotJson} field="previs_logline" fitHeight collapsed />
             <WF_Previs_GenerateScript.component shot={shot} />

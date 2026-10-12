@@ -117,8 +117,10 @@ export class SeedanceAI implements AIProvider {
             //else if (getSeedanceSendImages())
             //    parsed_url = await url.uploadToR2();
             else {
-                const base64 = await url.getBase64();
-                parsed_url = `data:${base64.mime};base64,${base64.rawBase64}`;
+                // Upload To Storage ALWAYS
+                parsed_url = await url.uploadToR2();
+                //const base64 = await url.getBase64();
+                //parsed_url = `data:${base64.mime};base64,${base64.rawBase64}`;
             }
         }
         else {
@@ -288,8 +290,10 @@ export class SeedanceAI implements AIProvider {
                     prompt,
                     image: await Promise.all(
                         images.map(async (img) => {
-                            const ai_image = await img.getAIImage();
-                            return `data:${ai_image.mime};base64,${ai_image.rawBase64}`;
+                            const parsed_url = await img.uploadToR2();
+                            return parsed_url;
+                            //const ai_image = await img.getAIImage();
+                            //return `data:${ai_image.mime};base64,${ai_image.rawBase64}`;
                         })
                     ),
                     size,

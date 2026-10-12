@@ -1,12 +1,13 @@
+
 import React, { useState } from "react";
 import MediaImage from "../../../../../MediaComponents/MediaImage";
 import type { LocalImage } from "../../../../../../classes/fileSystem/LocalImage";
 
 interface CroppedMediaImageProps {
     localImage: LocalImage;
-    shotIndex: number; // 0 to 15 for a 4x4 grid
-    gridCols?: number; // Defaults to 4
-    gridRows?: number; // Defaults to 4
+    shotIndex: number;
+    gridCols?: number;
+    gridRows?: number;
     className?: string;
     style?: React.CSSProperties;
 }
@@ -21,11 +22,14 @@ export const CroppedMediaImage: React.FC<CroppedMediaImageProps> = ({
 }) => {
     const [aspectRatio, setAspectRatio] = useState<number | undefined>();
 
+    const isStoryboardImage =
+        localImage.mediaJson?.getField("storyboard_index") != null;
+
     const col = shotIndex % gridCols;
     const row = Math.floor(shotIndex / gridRows);
 
-    const xOffset = col * (100 / gridCols); // 25% per column
-    const yOffset = row * (100 / gridRows); // 25% per row
+    const xOffset = col * (100 / gridCols);
+    const yOffset = row * (100 / gridRows);
 
     return (
         <div
@@ -34,7 +38,9 @@ export const CroppedMediaImage: React.FC<CroppedMediaImageProps> = ({
                 overflow: "hidden",
                 position: "relative",
                 width: "100%",
-                aspectRatio: aspectRatio ? `${aspectRatio}` : "16 / 9",
+                aspectRatio: aspectRatio
+                    ? `${aspectRatio}`
+                    : "16 / 9",
                 ...style,
             }}
         >
@@ -43,17 +49,31 @@ export const CroppedMediaImage: React.FC<CroppedMediaImageProps> = ({
                 onLoad={(e) => {
                     const img = e.currentTarget;
                     if (img.naturalWidth && img.naturalHeight) {
-                        setAspectRatio(img.naturalWidth / img.naturalHeight);
+                        setAspectRatio(
+                            img.naturalWidth / img.naturalHeight
+                        );
                     }
                 }}
-                style={{
-                    width: `${gridCols * 100}%`,
-                    height: "auto", 
-                    maxWidth: "none",
-                    maxHeight: "none",
-                    display: "block",
-                    transform: `translate(-${xOffset}%, -${yOffset}%)`,
-                }}
+                style={
+                    isStoryboardImage
+                        ? {
+                              width: "100%",
+                              height: "100%",
+                              maxWidth: "100%",
+                              maxHeight: "100%",
+                              objectFit: "contain",
+                              display: "block",
+                              transform: "none",
+                          }
+                        : {
+                              width: `${gridCols * 100}%`,
+                              height: "auto",
+                              maxWidth: "none",
+                              maxHeight: "none",
+                              display: "block",
+                              transform: `translate(-${xOffset}%, -${yOffset}%)`,
+                          }
+                }
             />
         </div>
     );

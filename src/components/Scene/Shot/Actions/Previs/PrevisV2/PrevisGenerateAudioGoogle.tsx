@@ -23,7 +23,7 @@ const Previs_GenerateAudioGoogle: React.FC<Props> = ({
     if (!shotData) { return null; }
     return (
         <SettingsButton
-            className="mb-2 "
+            className="mb-2"
             buttons={
                 <>
                     <Button
@@ -109,7 +109,7 @@ export const Action_generatePrevisAudioGoogle = async (
 
         await LocalAudio.fromBlob(
             combinedAudio,
-            shot.MediaFolder_results!,
+            shot.previs_audio_folder!,
             audioName,
         );
 
@@ -125,7 +125,8 @@ export const Action_generatePrevisAudioGoogle = async (
     if (audio) {
         await LocalAudio.fromBlob(
             audio,
-            shot.MediaFolder_results!,
+            //shot.MediaFolder_results!,
+            shot.previs_audio_folder!,
             audioName,
         );
     }

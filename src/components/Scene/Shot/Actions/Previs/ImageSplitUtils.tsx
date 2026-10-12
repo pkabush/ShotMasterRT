@@ -363,3 +363,206 @@ export async function extractImageTile(
         url,
     };
 }
+
+
+
+
+
+
+export async function bakeTextOntoImage(
+    imageBlob: Blob,
+    text: string,
+    options?: {
+        cqw?: number;
+        bottom?: number;
+        maxTextHeight?: number;
+        padding?: number;
+        fontFamily?: string;
+    }
+): Promise<Blob> {
+    const {
+        cqw = 5,
+        bottom = 0.20,
+        maxTextHeight = 0.45,
+        padding = 0.02,
+        fontFamily = "Arial, sans-serif",
+    } = options ?? {};
+
+    if (!text.trim()) return imageBlob;
+
+    const imageUrl = URL.createObjectURL(imageBlob);
+
+    try {
+        const img = new Image();
+        await new Promise<void>((resolve, reject) => {
+            img.onload = () => resolve();
+            img.onerror = () => reject(new Error("Failed to load image blob"));
+            img.src = imageUrl;
+        });
+
+        const canvas = document.createElement("canvas");
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;        
+
+        const ctx = canvas.getContext("2d");
+        if (!ctx) throw new Error("Could not create canvas context");
+
+        const width = canvas.width;
+        const height = canvas.height;
+        ctx.drawImage(img, 0, 0, width, height);
+
+        let scale = 1;
+        const baseFontSize = width * (cqw / 100);
+        const fontSize = baseFontSize * scale; 
+
+        const lineHeight = fontSize * 1.4;
+        ctx.font = `600 ${fontSize}px ${fontFamily}`;
+
+        const horizontalPadding = width * padding;
+        const maxWidth = width - horizontalPadding * 2;
+
+        const verticalPadding = horizontalPadding;
+        const maxBoxHeight = height * maxTextHeight;
+        const maxContentHeight = Math.max(
+            0,
+            maxBoxHeight - verticalPadding * 2
+        );
+
+        console.log( {
+            width,
+            height,
+            baseFontSize,
+            fontSize,
+        })        
+
+        // Wrap text, preserving explicit newlines.
+        const lines: string[] = [];
+
+        for (const paragraph of text.split("\n")) {
+            if (!paragraph) {
+                lines.push("");
+                continue;
+            }
+
+            let line = "";
+
+            for (const word of paragraph.split(/\s+/)) {
+                const candidate = line
+                    ? `${line} ${word}`
+                    : word;
+
+                if (ctx.measureText(candidate).width <= maxWidth) {
+                    line = candidate;
+                    continue;
+                }
+
+                if (line) lines.push(line);
+
+                line = "";
+
+                // Break long words when they exceed the available width.
+                for (const char of word) {
+                    const next = line + char;
+
+                    if (
+                        ctx.measureText(next).width > maxWidth &&
+                        line
+                    ) {
+                        lines.push(line);
+                        line = char;
+                    } else {
+                        line = next;
+                    }
+                }
+            }
+
+            if (line) lines.push(line);
+        }
+
+        const maxLines = Math.max(
+            1,
+            Math.floor(maxContentHeight / lineHeight)
+        );
+
+        if (lines.length > maxLines) {
+            lines.length = maxLines;
+
+            let last = lines[maxLines - 1];
+
+            while (
+                last.length > 0 &&
+                ctx.measureText(last + "…").width > maxWidth
+            ) {
+                last = last.slice(0, -1);
+            }
+
+            lines[maxLines - 1] = last + "…";
+        }
+
+        ctx.textAlign = "center";
+        ctx.textBaseline = "top";
+        ctx.fillStyle = "#ffffffed";
+
+        const textHeight = lines.length * lineHeight;
+
+        const startY =
+            height * (1 - bottom) -
+            verticalPadding -
+            textHeight;
+
+        // Scale shadow offsets and blur by the scale factor so shadows don't look invisible on high-res images
+        const shadowPasses = [
+            { x: -1 * scale, y: -1 * scale, blur: 2 * scale },
+            { x: 1 * scale, y: -1 * scale, blur: 2 * scale },
+            { x: -1 * scale, y: 1 * scale, blur: 2 * scale },
+            { x: 1 * scale, y: 1 * scale, blur: 2 * scale },
+            { x: 0, y: 2 * scale, blur: 4 * scale },
+        ];
+
+        for (const pass of shadowPasses) {
+            ctx.shadowColor = "rgba(0, 0, 0, 0.95)";
+            ctx.shadowOffsetX = pass.x;
+            ctx.shadowOffsetY = pass.y;
+            ctx.shadowBlur = pass.blur;
+
+            lines.forEach((line, i) => {
+                ctx.fillText(
+                    line,
+                    width / 2,
+                    startY + i * lineHeight,
+                    maxWidth
+                );
+            });
+        }
+
+        // Draw text without shadow
+        ctx.shadowColor = "transparent";
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+
+        lines.forEach((line, i) => {
+            ctx.fillText(
+                line,
+                width / 2,
+                startY + i * lineHeight,
+                maxWidth
+            );
+        });
+
+        return await new Promise<Blob>((resolve, reject) => {
+            canvas.toBlob(
+                (blob) => {
+                    if (blob) resolve(blob);
+                    else reject(new Error("Failed to export image"));
+                },
+                imageBlob.type === "image/jpeg"
+                    ? "image/jpeg"
+                    : "image/png",
+                0.95
+            );
+        });
+    } finally {
+        URL.revokeObjectURL(imageUrl);
+    }
+}

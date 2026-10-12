@@ -4,7 +4,7 @@ import { LocalImage } from "../classes/fileSystem/LocalImage";
 import LoadingButton from "./Atomic/LoadingButton";
 import { GoogleAI } from "../classes/GoogleAI";
 import { observer } from "mobx-react-lite";
-import EditableJsonTextField from "./EditableJsonTextField";
+import EditableJsonTextField, { EditableJsonToggleField } from "./EditableJsonTextField";
 import TabsContainer from "./TabsContainer";
 import type { MediaFolder } from "../classes/MediaFolder";
 import type { LocalFolder } from "../classes/fileSystem/LocalFolder";
@@ -55,6 +55,8 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
     };
   }, [localImage]);
 
+  const do_stylize = localImage.mediaJson?.getField("use_stylize_prompt") ?? false;
+
   const handleGenerate = async () => {
     if (pendingGenerations >= MAX_PENDING_GENERATIONS) {
       console.log("MAX GENERATIONS REACHED! wait for others to finish, or reopen edit window");
@@ -63,11 +65,19 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
     setPendingGenerations(prev => prev + 1);
 
     try {
-      const prompt = localImage.mediaJson?.getField("image_edit_prompt");
+
+      const prompt = do_stylize ?
+        `
+        ${project?.projinfo?.getField("workflows/stylize_image_google/prompt") ?? ""}
+
+        ${localImage.mediaJson?.getField("image_edit_prompt")}
+        `
+        :
+        localImage.mediaJson?.getField("image_edit_prompt");
       const ref_images = localImage.references?.active_images ?? [];
       let genImage: LocalImage | null = null;
 
-      const images = [ localImage, ...ref_images ]
+      const images = [localImage, ...ref_images]
 
       const model = project?.workflows?.edit_image?.model;
       const aspect_ratio = project?.workflows?.edit_image?.aspect_ratio ?? GoogleAI.options.aspect_ratios.r9x16;
@@ -93,6 +103,11 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
           art_refs: localImage.references?.get_active_tags ?? [],
           source: localImage.path,
         })
+
+        const storyboard_index = localImage.mediaJson?.getField("storyboard_index");
+        if (! (storyboard_index === null )) {
+          genImage?.mediaJson?.updateField("storyboard_index", storyboard_index);
+        }
       }
 
     } catch (err) {
@@ -101,6 +116,8 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
       setPendingGenerations(prev => Math.max(0, prev - 1));
     }
   };
+
+
 
   return (<>
     <div className="border d-flex flex-column position-relative"
@@ -181,9 +198,15 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
                       localImage.parentFolder! as LocalFolder,
                     ]} />
 
-                    <>
-                      <EditableJsonTextField localJson={localImage.mediaJson} field={"image_edit_prompt"} fitHeight />
-                    </>
+
+                    {/**  Stylize */}
+                    <EditableJsonToggleField localJson={localImage.mediaJson} field="use_stylize_prompt" default_val={do_stylize} />
+                    {do_stylize && <WorkflowTextField workflowName={"stylize_image_google"} optionName={"prompt"} />}
+
+
+
+                    <EditableJsonTextField localJson={localImage.mediaJson} field={"image_edit_prompt"} fitHeight />
+
 
 
                     {/** Generate Settings */}

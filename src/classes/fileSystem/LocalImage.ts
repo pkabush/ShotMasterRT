@@ -118,6 +118,31 @@ export class LocalImage extends LocalMedia {
     return url;
   }
 
+  static async fromBlob(
+    blob: Blob,
+    folder: LocalFolder,
+    filename: string
+  ): Promise<LocalImage> {
+    try {      
+      const fileHandle = await folder.handle.getFileHandle(filename, { create: true });
+      const writable = await fileHandle.createWritable();
+
+      await writable.write(blob);
+      await writable.close();
+
+      const image = new LocalImage(folder, fileHandle);
+      await image.load();
+      // Don't need to convert the entire audio file to Base64 here.
+      // It can be loaded lazily by getBase64() if needed.
+      image.base64Data = null;
+
+      return image;
+    } catch (err) {
+      console.error("Failed to create LocalImage from Blob:", err);
+      throw err;
+    }
+  }
+
 }
 
 // Utility
