@@ -3,7 +3,7 @@ import { postToWorker } from "../CloudflareWorker/WorkerUtils";
 import { LocalImage } from "../fileSystem/LocalImage";
 
 //import { getSeedanceSendImages } from "../../components/BytePlus/SeedanceHelper";
-import { useUserStore } from "../../contexts/GoogleUserContext";
+import { useUserStore, WORKER_URL } from "../../contexts/GoogleUserContext";
 import AI_Utils, { type AIMessage } from "./AI_message_utils";
 
 
@@ -229,14 +229,14 @@ export class SeedanceAI implements AIProvider {
         draft_id: boolean;
     }) {
         const { model, draft_id } = options;
-        
+
         const payload: any = {
             model,
             resolution: "1080p",
-            content:[{
-                type:"draft_task",
+            content: [{
+                type: "draft_task",
                 draft_task: {
-                    "id":draft_id,
+                    "id": draft_id,
                 }
             }]
         };
@@ -290,21 +290,46 @@ export class SeedanceAI implements AIProvider {
                     prompt,
                     image: await Promise.all(
                         images.map(async (img) => {
+                            // Uploaded To R2
                             const parsed_url = await img.uploadToR2();
                             return parsed_url;
+
+                            // Base 64 Json
                             //const ai_image = await img.getAIImage();
                             //return `data:${ai_image.mime};base64,${ai_image.rawBase64}`;
+
+                            // User Asset If Present
+                            // CANT USE Assets here ??
+                            /*
+                            if (await img.getByteplusAssetStatus()) {
+                                console.log("[Byteplus] Image is uploaded as asset ");
+                                return "asset://" + img.mediaJson?.getField("byteplus_id");
+                            }
+                            else {
+                                // Upload To Storage ALWAYS
+                                console.log("[Byteplus] Uploading Image to R2 ");
+                                return await img.uploadToR2();
+                            }
+                                */
                         })
                     ),
                     size,
                     watermark: false,
-                    response_format: "b64_json",
+                    //response_format: "b64_json",
                     output_format: "png",
                 };
 
                 console.log("[Bytedance] Payload:", payload)
                 const response = await postToWorker(payload, "seedance/generate-image", { model, size });
                 console.log("[Bytedance] Response:", response);
+
+
+                const imageUrl = response.data[0].url;
+                const base64Obj = await imageUrlToBase64(imageUrl);
+
+                return { base64Obj, id: AI_Utils.generateImageName(model, "generate"), };
+
+
 
                 return {
                     base64Obj: {
@@ -313,6 +338,8 @@ export class SeedanceAI implements AIProvider {
                     },
                     id: AI_Utils.generateImageName(model, "generate"),
                 };
+
+
 
             }
         } catch (error) {
@@ -411,4 +438,39 @@ function getResolution(
 
     return resolutions[selectedResolution][validAspect]
         ?? resolutions["1K"]["1:1"]!;
+}
+
+
+export async function imageUrlToBase64(url: string): Promise<{
+    rawBase64: string;
+    mime: string;
+}> {
+    //const response = await fetch(url);
+    const encodedTarget = encodeURIComponent(url);
+    const response = await fetch(
+        `${WORKER_URL}/download-file?url=${encodedTarget}`,
+        { credentials: "include", }
+    );
+
+
+    if (!response.ok) {
+        throw new Error(`Failed to download image: ${response.status}`);
+    }
+
+    const blob = await response.blob();
+
+    const buffer = await blob.arrayBuffer();
+
+    // Convert binary image data to Base64
+    const bytes = new Uint8Array(buffer);
+    let binary = "";
+
+    for (let i = 0; i < bytes.length; i++) {
+        binary += String.fromCharCode(bytes[i]);
+    }
+
+    return {
+        rawBase64: btoa(binary),
+        mime: blob.type || "image/png",
+    };
 }
