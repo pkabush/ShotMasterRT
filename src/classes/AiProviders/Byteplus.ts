@@ -89,9 +89,11 @@ export class SeedanceAI implements AIProvider {
 
         },
         image_models: [
-            "dola-seedream-5-0-pro-260628",
-            "dola-seedream-5-0-flash-260915",
-            "seedream-5-0-lite-260128",
+            //"dola-seedream-5-0-pro-260628",
+            //"dola-seedream-5-0-flash-260915",
+            //"seedream-5-0-lite-260128",
+            "bytedance/seedream-5-pro",
+            //'bytedance/seedream-5-lite',
         ],
     }
 
@@ -324,12 +326,12 @@ export class SeedanceAI implements AIProvider {
                 console.log("[Bytedance] Response:", response);
 
 
-                const imageUrl = response.data[0].url;
+                //const imageUrl = response.data[0].url;
+                const imageUrl = response.result.images[0];
                 const base64Obj = await imageUrlToBase64(imageUrl);
 
-                return { base64Obj, id: AI_Utils.generateImageName(model, "generate"), };
-
-
+                //return { base64Obj, id: AI_Utils.generateImageName(model, "generate"), };
+                return { base64Obj, id: AI_Utils.generateImageName("seedream_5_0_pro", "generate"), };
 
                 return {
                     base64Obj: {
