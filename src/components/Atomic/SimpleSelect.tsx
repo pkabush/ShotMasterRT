@@ -6,6 +6,7 @@ type SimpleSelectProps = {
   onChange?: (value: string, index: number) => void;
   label?: string;
   className?: string;
+  labelClassName?: string;
   colorMap?: Record<string, string>; // optional
 };
 
@@ -15,6 +16,7 @@ const SimpleSelect: React.FC<SimpleSelectProps> = ({
   onChange,
   label,
   className = "",
+  labelClassName = "btn-outline-secondary",
   colorMap,
 }) => {
   const selectedColor = colorMap?.[value];
@@ -22,7 +24,7 @@ const SimpleSelect: React.FC<SimpleSelectProps> = ({
   return (
     <div className="btn-group" role="group">
       {label && (
-        <span className="btn btn-sm btn-outline-secondary disabled">
+        <span className={`btn btn-sm disabled ${labelClassName}`}>
           {label}
         </span>
       )}
@@ -45,7 +47,7 @@ const SimpleSelect: React.FC<SimpleSelectProps> = ({
             const index = e.target.selectedIndex;
             onChange?.(e.target.value, index);
           }}
-          style={            
+          style={
             selectedColor
               ? {
                 backgroundColor: selectedColor,

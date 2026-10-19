@@ -4,10 +4,11 @@ import type { Shot } from "../../../../../../classes/Shot";
 import { LocalAudio } from "../../../../../../classes/fileSystem/LocalAudio";
 import SettingsButton from "../../../../../Atomic/SettingsButton";
 import LoadingSpinner from "../../../../../Atomic/LoadingSpinner";
-import { getPrevisShotByIndex, Previs_GetShotsJson } from "./PrevisShotsJsonPreview";
 import { GoogleAI } from "../../../../../../classes/GoogleAI";
 import { Previs_applyVoiceMap, Previs_parseDialogue } from "./Previs_AudioTextUtils";
 import { combineAudioFromBlobs } from "../../../../../../classes/Ffmpeg/FFmpegService";
+import { getPrevisShotByIndex, Previs_GetShotsJson } from "./Previs_Actions";
+import { getSceneVoiceMap } from "./Previs_SceneSpeakersMap";
 
 
 interface Props {
@@ -68,8 +69,10 @@ export const Action_generatePrevisAudioGoogle = async (
     const dialogue = Previs_parseDialogue(audioText);
     console.log("Dialogue:", dialogue);
 
-    const previsJson = Previs_GetShotsJson(shot);
-    const voiceMap = previsJson.voices ?? {};
+    //const previsJson = Previs_GetShotsJson(shot);
+    //const voiceMap = previsJson.voices ?? {};
+    const voiceMap = getSceneVoiceMap(shot.scene);
+    console.log(voiceMap);
 
     const dialogueWithVoices = Previs_applyVoiceMap(
         dialogue,

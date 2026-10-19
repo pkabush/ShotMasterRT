@@ -7,7 +7,7 @@ import SettingsButton from "../../../../../Atomic/SettingsButton";
 import LoadingSpinner from "../../../../../Atomic/LoadingSpinner";
 import SimpleSelect from "../../../../../Atomic/SimpleSelect";
 import { WorkflowOptionSelect } from "../../../../../WorkflowOptionSelect";
-import { getPrevisShotByIndex, updatePrevisShot } from "./PrevisShotsJsonPreview";
+import { getPrevisShotByIndex, updatePrevisShot } from "./Previs_Actions";
 
 const wf_name = "shot_previs_generate_audio";
 const wf_name_audio = `${wf_name}_audio`;

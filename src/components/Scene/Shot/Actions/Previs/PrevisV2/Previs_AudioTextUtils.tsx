@@ -1,5 +1,5 @@
 import type { Shot } from "../../../../../../classes/Shot";
-import { Previs_GetShotsJson } from "./PrevisShotsJsonPreview";
+import { Previs_GetShotsJson } from "./Previs_Actions";
 
 type DialogueLine = {
     speaker: string;

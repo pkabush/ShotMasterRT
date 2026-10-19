@@ -401,6 +401,30 @@ export class LocalVideo extends LocalMedia {
       (frame) => frame !== preview
     );
   }
+
+
+  static async fromBlob(
+    blob: Blob,
+    folder: LocalFolder,
+    filename: string
+  ): Promise<LocalVideo> {
+    try {
+      const fileHandle = await folder.handle.getFileHandle(filename, { create: true });
+      const writable = await fileHandle.createWritable();
+
+      await writable.write(blob);
+      await writable.close();
+
+      const video = new LocalVideo(folder, fileHandle);
+      await video.load();
+      video.base64Data = null;
+
+      return video;
+    } catch (err) {
+      console.error("Failed to create LocalImage from Blob:", err);
+      throw err;
+    }
+  }
 }
 
 

@@ -21,7 +21,7 @@ import { Form, Stack } from "react-bootstrap";
 import * as ContextMenu from "@radix-ui/react-context-menu";
 import "../css/ContextMenu.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faChevronRight, faClipboard, faPhotoFilm, faTags, faTrashCan } from "@fortawesome/free-solid-svg-icons";
+import { faChevronRight, faClipboard, faDownload, faPhotoFilm, faTags, faTrashCan } from "@fortawesome/free-solid-svg-icons";
 import type { LocalFolder } from "../classes/fileSystem/LocalFolder";
 
 interface MediaFolderGalleryProps {
@@ -319,6 +319,11 @@ const MediaItemCard: React.FC<Props> = observer(({
                         Copy
                     </ContextMenu.Item>
 
+                    <ContextMenu.Item onClick={() => mediaItem.download()} className="ContextMenuItem warning">
+                        <MenuItemIcon><FontAwesomeIcon icon={faDownload} /></MenuItemIcon>
+                        Download
+                    </ContextMenu.Item>
+
                     <ContextMenu.Item onClick={() => mediaItem.openInNewTab()} className="ContextMenuItem">
                         <MenuItemIcon><FontAwesomeIcon icon={faClipboard} /></MenuItemIcon>
                         Open in new Tab
@@ -356,7 +361,7 @@ const MediaItemCard: React.FC<Props> = observer(({
 
 
                     <ContextMenu.Item onClick={async () => {
-                        console.log("status",await mediaItem.getByteplusAssetStatus());
+                        console.log("status", await mediaItem.getByteplusAssetStatus());
                     }} className="ContextMenuItem warning">
                         <MenuItemIcon><FontAwesomeIcon icon={faClipboard} /></MenuItemIcon>
                         Check BP Status

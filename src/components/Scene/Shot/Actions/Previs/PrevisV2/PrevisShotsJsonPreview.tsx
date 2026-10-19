@@ -1,299 +1,64 @@
 import React, { useState, useEffect } from "react";
 import { observer } from "mobx-react-lite";
 import type { Shot } from "../../../../../../classes/Shot";
-import { Form, Row, Col, Button, Stack } from "react-bootstrap";
+import { Button } from "react-bootstrap";
 import { CroppedMediaImage } from "./CroppedMediaImage";
 import { LocalImage } from "../../../../../../classes/fileSystem/LocalImage";
 import SettingsButton from "../../../../../Atomic/SettingsButton";
 import LoadingSpinner from "../../../../../Atomic/LoadingSpinner";
-import { LocalAudio } from "../../../../../../classes/fileSystem/LocalAudio";
-import InlineAudio from "../../../../../MediaComponents/InlineAudio";
 import SimpleSelect from "../../../../../Atomic/SimpleSelect";
-import { bakeTextOntoImage, extractImageTile } from "../ImageSplitUtils";
-import { mb_createVideoFromImageAndAudio } from "../../../../../../classes/Ffmpeg/mediabunnyService";
-import { audioRetime, combineVideosFromBlobs } from "../../../../../../classes/Ffmpeg/FFmpegService";
-import Previs_GenerateAudioGPT from "./Previs_GenerateAudioGPT";
-import Previs_GenerateAudioGoogle, { Action_generatePrevisAudioGoogleAll } from "./PrevisGenerateAudioGoogle";
+import { Action_generatePrevisAudioGoogleAll } from "./PrevisGenerateAudioGoogle";
 import { Previs_getAllDialogueSpeakers } from "./Previs_AudioTextUtils";
 import { GoogleAI } from "../../../../../../classes/GoogleAI";
-import { EditableJsonToggleButton } from "../../../../../EditableJsonTextField";
+import { Action_Previs_combineAudioWithImages, Previs_GetShotsJson, Previs_GetShotsOrder, updatePrevisVoice } from "./Previs_Actions";
+import { Previs_ShotPreviewItem } from "./Previs_TilePreview";
 
-const subtitles_path = "workflows/previs/add_subs"
+// Autoplay Store
+import { create } from "zustand";
+import EditableJsonTextField from "../../../../../EditableJsonTextField";
+
+interface PrevisStore {
+    autoplay: boolean;
+    setAutoplay: (value: boolean) => void;
+    toggleAutoplay: () => void;
+}
+
+export const usePrevisStore = create<PrevisStore>((set) => ({
+    autoplay: false,
+
+    setAutoplay: (value) => set({ autoplay: value }),
+
+    toggleAutoplay: () =>
+        set((state) => ({ autoplay: !state.autoplay })),
+}));
+//Store
+
+
 
 interface Props {
     shot: Shot;
 }
 
-interface EditableTextAreaProps {
-    value: string;
-    onSave: (value: string) => void;
-}
 
-interface ShotPreviewItemProps {
-    shotData: any;
-    shot: Shot;
-    shotIndex: number;
-    onUpdateField: (field: "image_prompt" | "audio_text" | "image_path" | "audio_voice", value: string) => void;
-}
 
 const wf_name = "shot_previs_generate_audio"
 const wf_loading_audio = `${wf_name}/loading_audio`
 //const wf_name_audio = `${wf_name}_audio`
 
-const EditableTextArea: React.FC<EditableTextAreaProps> = ({ value, onSave }) => {
-    const [localValue, setLocalValue] = useState(value);
-
-    useEffect(() => { setLocalValue(value); }, [value]);
-
-    return (
-        <Form.Control
-            as="textarea"
-            rows={4}
-            value={localValue}
-
-            onChange={(e) => setLocalValue(e.target.value)}
-            onBlur={() => { if (localValue !== value) { onSave(localValue); } }}
-        />
-    );
-};
-
-export const Previs_ShotPreviewItem: React.FC<ShotPreviewItemProps> = observer(({
-    shotData,
-    shot,
-    onUpdateField,
-    shotIndex,
-}) => {
-    // Image
-    const image_path = shotData.image_path;
-    const shot_image = image_path ? shot.getByPath(shotData.image_path) as LocalImage : shot.first_frame;
-    const var_images = shot.MediaFolder_results?.getType(LocalImage);
-    // Audio
-    const audio_name = `audio_shot_${shotIndex}.mp3`;
-    const audio_path = `${shot.previs_audio_folder?.path}/${audio_name}`;
-    const audio_file = shot.previs_audio_folder?.getByPath(audio_path, LocalAudio);
-    //console.log(audio_name, audio_path, audio_file);
-
-    const playback_rate = shotData.playback_speed ?? "1.0";
-
-    const use_subs = shot.scene.project.projinfo!.getField(subtitles_path);
-
-    return (
-        <>
-            <div className="border rounded p-3 mb-3">
-                <Row className="align-items-start">
-                    {/* Left Column: Image Preview */}
-
-                    {/* Left Column: Image Preview */}
-                    <Col md={3} className="mb-3 mb-md-0">
-                        {shot_image ? (
-                            <div
-                                className="position-relative rounded border overflow-hidden"
-                                style={{ width: "100%", containerType: "inline-size", }}
-                            >
-                                <CroppedMediaImage
-                                    localImage={shot_image}
-                                    shotIndex={shotIndex}
-                                    className="rounded"
-                                    style={{
-                                        display: "block",
-                                        width: "100%",
-                                    }}
-                                />
-
-                                {/* Audio text overlay */}
-                                {use_subs && shotData.audio_text?.trim() && (
-                                    <div
-                                        className="position-absolute start-0 w-100"
-                                        style={{
-                                            bottom: "20%",
-                                            color: "#ffffffed",
-                                            padding: "2%",
-                                            fontSize: "5cqw",
-                                            fontWeight: 600,
-                                            lineHeight: 1.4,
-                                            maxHeight: "45%",
-                                            overflowY: "auto",
-                                            overflowWrap: "anywhere",
-                                            whiteSpace: "pre-wrap",
-                                            boxSizing: "border-box",
-                                            textAlign: "center",
-                                            textShadow: `
-                                                -1px -1px 2px rgba(0, 0, 0, 0.95),
-                                                1px -1px 2px rgba(0, 0, 0, 0.95),
-                                                -1px 1px 2px rgba(0, 0, 0, 0.95),
-                                                1px 1px 2px rgba(0, 0, 0, 0.95),
-                                                0px 2px 4px rgba(0, 0, 0, 1)
-                                            `,
-                                        }}
-                                    >
-                                        {shotData.audio_text}
-                                    </div>
-                                )}
-                            </div>
-                        ) : (
-                            <div
-                                className="d-flex align-items-center justify-content-center bg-secondary text-white rounded"
-                                style={{ height: "180px", fontSize: "0.875rem" }}
-                            >
-                                No Image Available
-                            </div>
-                        )}
-                    </Col>
-
-                    {/* Right Column: Text Fields */}
-                    <Col md={9}>
-                        {/* Small image previews */}
-                        {var_images && var_images.length > 0 && (
-                            <div
-                                className="d-flex gap-2 p-2"
-                                style={{
-                                    overflowX: "auto",
-                                    paddingBottom: "8px",
-                                }}
-                            >
-                                {var_images.map((image: LocalImage, imageIndex: number) => {
-                                    const isSelected = shot_image?.path === image.path;
-                                    const storyboard_index = image.mediaJson?.getField("storyboard_index");
-                                    const isStoryboardImage = storyboard_index != null;
-
-                                    if (isStoryboardImage && (shotIndex != storyboard_index))
-                                        return null;
-
-                                    return (
-                                        <div
-                                            key={imageIndex}
-                                            onClick={() => onUpdateField("image_path", image.path)}
-                                            style={{
-                                                cursor: "pointer",
-                                                borderRadius: "6px",
-                                                padding: "2px",
-                                                boxShadow: isSelected
-                                                    ? "0 0 6px 2px rgba(0, 180, 255, 0.9), 0 0 14px 4px rgba(0, 180, 255, 0.45)"
-                                                    : "none",
-                                                transition: "border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease",
-                                                transform: isSelected ? "scale(1.03)" : "scale(1)",
-                                            }}
-                                        >
-                                            <CroppedMediaImage
-                                                localImage={image}
-                                                shotIndex={shotIndex}
-                                                className="rounded border-0 flex-shrink-0"
-                                                style={{
-                                                    width: "90px",
-                                                    height: "160px",
-                                                    ...(isStoryboardImage
-                                                        ? { objectFit: "contain" }
-                                                        : {}),
-                                                }}
-                                            />
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        )}
-
-                        <Form.Group className="mb-3">
-                            <EditableTextArea
-                                value={shotData.image_prompt ?? ""}
-                                onSave={(val) => onUpdateField("image_prompt", val)}
-                            />
-                        </Form.Group>
-
-                        <Form.Group className="mb-0">
-                            <EditableTextArea
-                                value={shotData.audio_text ?? ""}
-                                onSave={(val) => onUpdateField("audio_text", val)}
-                            />
-                        </Form.Group>
-
-                        {false && <Previs_GenerateAudioGPT shot={shot} audioIndex={shotIndex} />}
-
-                        <Stack direction="horizontal" gap={3} className="text-nowrap">
-                            <Previs_GenerateAudioGoogle shot={shot} audioIndex={shotIndex} />
-                            <Button
-                                size="sm"
-                                variant="outline-warning"
-                                onClick={async () => {
-                                    console.log("Extract");
-                                    if (!shot_image) {
-                                        console.log("No Shot Image");
-                                        return;
-                                    }
-
-                                    const tile = await extractImageTile(shot_image, 4, 4, shotIndex);
-                                    const extracted_image = await LocalImage.fromBlob(tile.blob, shot.MediaFolder_results!, `${shot_image.name_no_extension}.preview_tile_${shotIndex}.png`);
-                                    extracted_image.mediaJson!.updateField("storyboard_index", shotIndex);
-                                }}
-                            >Extract Image</Button>
-
-                            {/**
-                            <Button
-                                size="sm"
-                                variant="outline-warning"
-                                onClick={async () => {
-                                    console.log("Extract");
-                                    if (!shot_image) {
-                                        console.log("No Shot Image");
-                                        return;
-                                    }
-
-                                    const blob = await bakeTextOntoImage(await shot_image.toBlob(), shotData.audio_text?.trim());
-                                    const url = URL.createObjectURL(blob);
-                                    const a = document.createElement("a");
-                                    a.href = url;
-                                    a.download = "previs_audio_multiline.png";
-                                    a.click();
-                                    URL.revokeObjectURL(url);
-
-                                }}
-                            >Bake text</Button>
-                             */}
-
-                            <EditableJsonToggleButton field={subtitles_path} localJson={shot.scene.project.projinfo!} default_val={use_subs} label="Add Subtitles" />
-
-                        </Stack>
-
-                        {audio_file ? (
-                            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                                <InlineAudio
-                                    playbackRate={Number(playback_rate)}
-                                    localAudio={audio_file}
-                                />
-
-                                <div style={{ minWidth: 125 }}>
-                                    <SimpleSelect
-                                        value={playback_rate}
-                                        options={["1.0", "1.25", "1.5", "1.75", "2.0"]}
-                                        label="Speed"
-                                        onChange={(val) => {
-                                            updatePrevisShot(
-                                                shot,
-                                                shotIndex,
-                                                "playback_speed",
-                                                val
-                                            );
-                                        }}
-                                    />
-                                </div>
-                            </div>
-                        ) : (
-                            <>No Audio</>
-                        )}
 
 
 
-                    </Col>
-                </Row>
-            </div>
-        </>
-    );
-});
+
+
+
 
 export const Previs_ShotJsonPreview: React.FC<Props> = observer(({ shot }) => {
     const [selectedIndex, setSelectedIndex] = useState(0);
-
+    // autoplay
     const previs_json = Previs_GetShotsJson(shot);
     const shots = previs_json.shots ?? [];
+    //const shots = Previs_GetShotsOrdered(shot);
+    const shots_order_indexes = Previs_GetShotsOrder(shot);
 
     const updateShot = (
         index: number,
@@ -314,13 +79,14 @@ export const Previs_ShotJsonPreview: React.FC<Props> = observer(({ shot }) => {
 
     const selectedShot = shots[selectedIndex];
     const loading_audio = shot.shotJson?.getField(wf_loading_audio) ?? false;
-
     const speakers = Previs_getAllDialogueSpeakers(shot);
+
 
     return (
         <div>
-            <br />
-            <SettingsButton content={<></>} className="mb-2" buttons={
+            <SettingsButton content={<>
+                <EditableJsonTextField localJson={shot.shotJson} field="previs_json" fitHeight collapsed />
+            </>} className="mb-2" buttons={
                 <>
                     <Button
                         size="sm"
@@ -351,16 +117,19 @@ export const Previs_ShotJsonPreview: React.FC<Props> = observer(({ shot }) => {
                     >
                         Generate Final Video
                     </Button>
+
                 </>
             } />
-
 
             {/* Preview images strip */}
             <div
                 className="d-flex mb-3 p-1 border rounded"
                 style={{ width: "100%", gap: "3px", overflow: "hidden", }}
             >
-                {shots.map((shotData: any, index: number) => {
+                {shots_order_indexes.map((index: number) => {
+                    const shotData = shots[index];
+                    if (!shotData) return null;
+
                     const image_path = shotData.image_path;
                     const shot_image = image_path
                         ? (shot.getByPath(image_path) as LocalImage)
@@ -422,13 +191,14 @@ export const Previs_ShotJsonPreview: React.FC<Props> = observer(({ shot }) => {
                     shotIndex={selectedIndex}
                     shot={shot}
                     shotData={selectedShot}
-                    onUpdateField={(field, val) =>
-                        updateShot(selectedIndex, field, val)
-                    }
+                    onUpdateField={(field, val) => updateShot(selectedIndex, field, val)}
+                    setSelectedIndex={setSelectedIndex}
                 />
             )}
 
-            <Button size="sm" variant="secondary"> Voices </Button>
+
+            <h4>Voice Map</h4>
+            { false && <>
             {speakers.map((speaker) => {
                 const voice_map = previs_json.voices ?? {};
                 return <div key={speaker}>
@@ -447,17 +217,9 @@ export const Previs_ShotJsonPreview: React.FC<Props> = observer(({ shot }) => {
                 </div>
             })}
 
-            <br />
-            <br />
-            <br />
-            <br />
-            <br />
-            <br />
-            <br />
-            <br />
-            <br />
-            <br />
+            </>}
 
+            
 
 
         </div >
@@ -465,421 +227,4 @@ export const Previs_ShotJsonPreview: React.FC<Props> = observer(({ shot }) => {
 });
 
 
-/*
-export async function Action_Previs_Generate_AllAudioFromJson(shot: Shot) {
-    shot.shotJson?.updateField(wf_loading_audio, true);
 
-    try {
-        const workflow = shot.scene.project.workflows[wf_name_audio];
-
-        if (!workflow) {
-            console.error(`Workflow not found: ${wf_name_audio}`);
-            return;
-        }
-
-        const previsJson = shot.shotJson?.getField("previs_json");
-
-        if (!previsJson) {
-            console.warn("No previs_json found.");
-            return;
-        }
-
-        let shotsJson: any;
-
-        try {
-            shotsJson = JSON.parse(previsJson);
-        } catch (error) {
-            console.error("Failed to parse previs_json:", error);
-            return;
-        }
-
-        const shots = shotsJson?.shots;
-
-        if (!Array.isArray(shots)) {
-            console.warn("previs_json does not contain a shots array.");
-            return;
-        }
-
-        if (!shot.MediaFolder_results) {
-            console.error("MediaFolder_results is not available.");
-            return;
-        }
-
-        const model = workflow.model ?? "tts-1-hd";
-        const speed = Number(workflow.speed ?? "1.0");
-
-        // Only generate audio for shots that actually contain text.
-        const jobs = shots
-            .map((shotData: any, index: number) => ({
-                shotData,
-                index,
-            }))
-            .filter(({ shotData }: { shotData: any }) =>
-                shotData?.audio_text?.trim()
-            );
-
-        console.log(`Generating ${jobs.length} audio files in parallel...`);
-
-        await Promise.all(
-            jobs.map(async ({ shotData, index }) => {
-                const audio_name = `audio_shot_${index}.mp3`;
-
-                console.log(
-                    `Generating audio for shot ${index}:`,
-                    audio_name
-                );
-
-                try {
-                    const audio = await ChatGPT.generateAudio(
-                        shotData.audio_text,
-                        shotData.audio_voice ?? "nova",
-                        model,
-                        undefined,
-                        undefined,
-                        speed,
-                    );
-
-                    if (!audio) {
-                        console.warn(
-                            `No audio returned for shot ${index}`
-                        );
-                        return;
-                    }
-
-                    await LocalAudio.fromBlob(
-                        audio,
-                        shot.MediaFolder_results!,
-                        audio_name
-                    );
-
-                    console.log(
-                        `Audio generated for shot ${index}:`,
-                        audio_name
-                    );
-                } catch (error) {
-                    // Don't let one failed request cancel all the others.
-                    console.error(
-                        `Failed to generate audio for shot ${index}:`,
-                        error
-                    );
-                }
-            })
-        );
-
-        console.log("Finished generating all previs audio.");
-
-    } finally {
-        shot.shotJson?.updateField(wf_loading_audio, false);
-    }
-}
-*/
-
-export async function Action_Previs_combineAudioWithImages(
-    shot: Shot
-) {
-    try {
-        const previsJson =
-            shot.shotJson?.getField("previs_json");
-
-        if (!previsJson) {
-            console.warn("No previs_json found.");
-            return;
-        }
-
-        let shotsJson: any;
-
-        try {
-            shotsJson = JSON.parse(previsJson);
-        } catch (error) {
-            console.error(
-                "Failed to parse previs_json:",
-                error
-            );
-            return;
-        }
-
-        const shots = shotsJson?.shots;
-
-        if (!Array.isArray(shots)) {
-            console.warn(
-                "previs_json does not contain a shots array."
-            );
-            return;
-        }
-
-        if (!shot.MediaFolder_results) {
-            console.error(
-                "MediaFolder_results is not available."
-            );
-            return;
-        }
-
-        const rows = 4;
-        const columns = 4;
-
-        // ---------------------------------------------------------
-        // Create one video for every previs shot.
-        // ---------------------------------------------------------
-
-        const video_blobs = (
-            await Promise.all(
-                shots.map(async (shotData: any, index: number) => {
-                    console.log(`Processing previs shot ${index}...`);
-
-                    try {
-                        // -------------------------------------------------
-                        // Extract the corresponding image tile.
-                        // -------------------------------------------------
-
-                        // Image
-                        const image_path = shotData.image_path;
-                        const playback_speed = Number(shotData.playback_speed ?? "1.0");
-                        const shot_image = image_path ? shot.getByPath(shotData.image_path) as LocalImage : shot.first_frame;
-
-                        if (!shot_image) {
-                            console.error(
-                                "No Image selected for shot."
-                            );
-                            return;
-                        }
-
-                        const storyboardIndex = shot_image.mediaJson?.getField("storyboard_index");
-                        const is_extracted_tile = storyboardIndex !== null && storyboardIndex !== undefined;
-
-                        const tile = is_extracted_tile ?
-                            await extractImageTile(shot_image, 1, 1, 0)
-                            :
-                            await extractImageTile(shot_image, rows, columns, index)
-                            ;
-
-                        const use_subs = shot.scene.project.projinfo!.getField(subtitles_path);
-
-                        const baked_text_blob = use_subs ?
-                            await bakeTextOntoImage(tile.blob, shotData.audio_text?.trim())
-                            :
-                            tile.blob;
-
-
-                        console.log(
-                            `Extracted tile ${index}:`,
-                            {
-                                row: tile.row,
-                                column: tile.column,
-                                x: tile.x,
-                                y: tile.y,
-                                width: tile.width,
-                                height: tile.height,
-                            }
-                        );
-
-                        // -------------------------------------------------
-                        // Load existing audio.
-                        // -------------------------------------------------
-
-                        const audioName =
-                            `audio_shot_${index}.mp3`;
-
-                        const audioPath =
-                            `${shot.previs_audio_folder!.path}/${audioName}`;
-
-                        const audioFile =
-                            shot.previs_audio_folder!.getByPath(
-                                audioPath,
-                                LocalAudio
-                            );
-
-                        if (!audioFile) {
-                            console.warn(
-                                `No audio found for shot ${index}:`,
-                                audioPath
-                            );
-
-                            return null;
-                        }
-
-                        // Get the audio as a Blob.
-                        const audioBlob =
-                            await audioFile.getBlob();
-
-                        const fasterAudioBlob =
-                            (playback_speed == 1.0) ?
-                                audioBlob
-                                :
-                                await audioRetime(audioBlob, 2.0);
-
-                        // -------------------------------------------------
-                        // Create video from image + existing audio.
-                        // -------------------------------------------------
-
-                        console.log(
-                            `Creating video for shot ${index}...`
-                        );
-
-                        const video =
-                            await mb_createVideoFromImageAndAudio(
-                                //tile.blob,
-                                baked_text_blob,
-                                fasterAudioBlob
-                            );
-
-                        return video;
-
-                    } catch (error) {
-                        console.error(
-                            `Failed to process shot ${index}:`,
-                            error
-                        );
-
-                        return null;
-                    }
-                })
-            )
-        ).filter(
-            (video): video is Blob => video != null
-        );
-
-        console.log(
-            `Created ${video_blobs.length} shot videos.`
-        );
-
-        if (video_blobs.length === 0) {
-            console.warn(
-                "No videos were created."
-            );
-            return;
-        }
-
-        // ---------------------------------------------------------
-        // Combine all shot videos.
-        // ---------------------------------------------------------
-
-        console.log("Combining shot videos...");
-
-        const blob_final =
-            await combineVideosFromBlobs(video_blobs);
-
-        // ---------------------------------------------------------
-        // Download final video.
-        // ---------------------------------------------------------
-
-        const url =
-            URL.createObjectURL(blob_final);
-
-        const a =
-            document.createElement("a");
-
-        a.href = url;
-        a.download =
-            "previs_audio_multiline.mp4";
-
-        a.click();
-
-        URL.revokeObjectURL(url);
-
-        console.log(
-            "Previs video generated successfully."
-        );
-
-    } finally {
-        console.log("Video_Generated");
-    }
-}
-
-export function getPrevisShotByIndex(
-    shot: Shot,
-    index: number,
-): any | undefined {
-    const previsJson = shot.shotJson?.getField("previs_json");
-    if (!previsJson) { return undefined; }
-    try {
-        const shotsJson = JSON.parse(previsJson);
-        return shotsJson?.shots?.[index];
-    } catch (error) {
-        console.error("Failed to parse previs_json:", error);
-        return undefined;
-    }
-}
-
-export function updatePrevisShot(
-    shot: Shot,
-    index: number,
-    field: string,
-    value: any,
-) {
-    const previsJson = shot.shotJson?.getField("previs_json");
-
-    if (!previsJson) {
-        return;
-    }
-
-    try {
-        const shotsJson = JSON.parse(previsJson);
-
-        if (!shotsJson?.shots?.[index]) {
-            return;
-        }
-
-        shotsJson.shots[index][field] = value;
-
-        shot.shotJson?.updateField(
-            "previs_json",
-            JSON.stringify(shotsJson, null, 2),
-        );
-    } catch (error) {
-        console.error("Failed to update previs_json:", error);
-    }
-}
-
-export function Previs_GetShotsJson(shot: Shot): any {
-    const defaultJson = {
-        shots: Array.from({ length: 16 }, () => ({})),
-    };
-
-    const previsJson = shot.shotJson?.getField("previs_json");
-
-    if (!previsJson) {
-        return defaultJson;
-    }
-
-    try {
-        const shotsJson = JSON.parse(previsJson);
-
-        if (!shotsJson || !Array.isArray(shotsJson.shots)) {
-            return defaultJson;
-        }
-
-        return shotsJson;
-    } catch (error) {
-        console.error("Failed to parse previs_json:", error);
-        return defaultJson;
-    }
-}
-
-export function updatePrevisVoice(
-    shot: Shot,
-    speaker: string,
-    voice: string,
-) {
-    const previsJson = shot.shotJson?.getField("previs_json");
-
-    if (!previsJson) {
-        return;
-    }
-
-    try {
-        const previsJsonData = JSON.parse(previsJson);
-
-        if (!previsJsonData.voices) {
-            previsJsonData.voices = {};
-        }
-
-        previsJsonData.voices[speaker] = voice;
-
-        shot.shotJson?.updateField(
-            "previs_json",
-            JSON.stringify(previsJsonData, null, 2),
-        );
-    } catch (error) {
-        console.error("Failed to update previs voice:", error);
-    }
-}

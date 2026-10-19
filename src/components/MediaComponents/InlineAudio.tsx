@@ -1,4 +1,10 @@
-import React, { useEffect, useRef, useState } from 'react';
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  useState,
+} from 'react';
 import { LocalAudio } from '../../classes/fileSystem/LocalAudio';
 
 interface Props {
@@ -6,24 +12,44 @@ interface Props {
   height?: number;
   width?: number | string;
   onClick?: () => void;
+  onFinished?: () => void;
+  onPause?: () => void; // Add this
   autoPlay?: boolean;
   loop?: boolean;
   muted?: boolean;
   playbackRate?: number;
+  showLabel?: boolean;
 }
 
-const InlineAudio: React.FC<Props> = ({
+export interface InlineAudioHandle {
+  play: () => Promise<void>;
+  pause: () => void;
+}
+
+const InlineAudio = forwardRef<InlineAudioHandle, Props>(({
   localAudio,
   height = 40,
   width = '100%',
   onClick,
+  onFinished,
+  onPause, // Add this
   autoPlay = false,
   loop = false,
   muted = false,
   playbackRate = 1,
-}) => {
+  showLabel = false,
+}, ref) => {
   const [url, setUrl] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+
+  useImperativeHandle(ref, () => ({
+    play: async () => {
+      await audioRef.current?.play();
+    },
+    pause: () => {
+      audioRef.current?.pause();
+    },
+  }));
 
   useEffect(() => {
     let mounted = true;
@@ -74,7 +100,7 @@ const InlineAudio: React.FC<Props> = ({
       }}
       onClick={onClick}
     >
-      <div
+      {showLabel && <div
         className="text-truncate"
         style={{
           flex: '0 0 180px',
@@ -84,7 +110,7 @@ const InlineAudio: React.FC<Props> = ({
         title={localAudio.name}
       >
         {localAudio.name}
-      </div>
+      </div>}
 
       {url ? (
         <audio
@@ -94,6 +120,8 @@ const InlineAudio: React.FC<Props> = ({
           autoPlay={autoPlay}
           loop={loop}
           muted={muted}
+          onEnded={onFinished}
+          onPause={onPause}
           style={{
             flex: '1 1 auto',
             minWidth: 0,
@@ -115,6 +143,6 @@ const InlineAudio: React.FC<Props> = ({
       )}
     </div>
   );
-};
+});
 
 export default InlineAudio;

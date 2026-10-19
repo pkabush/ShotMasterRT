@@ -32,6 +32,7 @@ import { WF_Previs_GenerateStoryboard } from './Actions/Previs/PrevisGenerateSto
 import { WF_Previs_GenerateScript } from './Actions/Previs/PrevisGenerateScript';
 import { WF_Previs_GenerateShotsJSON } from './Actions/Previs/PrevisV2/PrevisGenerateShotlistJson';
 import { Previs_ShotJsonPreview } from './Actions/Previs/PrevisV2/PrevisShotsJsonPreview';
+import { Previs_SceneSpeakersMap } from './Actions/Previs/PrevisV2/Previs_SceneSpeakersMap';
 
 
 interface Props {
@@ -169,15 +170,39 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
             <EditableJsonTextField localJson={shot.shotJson} field="previs_audiotext" fitHeight collapsed />
           </>,
           */
-          "PrevisUtil_V2": <>            
+          "PrevisUtil_V2": <>
+            <h4>Logline</h4>
             <EditableJsonTextField localJson={shot.shotJson} field="previs_logline" fitHeight collapsed />
             <WF_Previs_GenerateScript.component shot={shot} />
-            <EditableJsonTextField localJson={shot.shotJson} field="previs_script" fitHeight collapsed />            
-            <WF_Previs_GenerateShotsJSON.component shot={shot} />            
-            <EditableJsonTextField localJson={shot.shotJson} field="previs_json" fitHeight collapsed />
+            <h4>Script</h4>
+            <EditableJsonTextField localJson={shot.shotJson} field="previs_script" fitHeight collapsed />
+            <WF_Previs_GenerateShotsJSON.component shot={shot} />
+            <h4>Storyboard</h4>
             <WF_Previs_GenerateStoryboard.component shot={shot} use_shots_json={true} />
             <MediaFolderGallery mediaFolder={shot.MediaFolder_results} defaultCollapsed={true} />
+            <h4>Previs</h4>
+            {false && <EditableJsonTextField localJson={shot.shotJson} field="previs_json" fitHeight collapsed />}
             <Previs_ShotJsonPreview shot={shot} />
+
+            <Previs_SceneSpeakersMap scene={shot.scene} />
+
+            <br />
+            <br />
+            <br />
+
+            <h4>Combined Video</h4>
+            <MediaFolderGallery mediaFolder={shot.MediaFolder_genVideo} defaultCollapsed={true} />
+
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
+            <br />
           </>
         }}
       />

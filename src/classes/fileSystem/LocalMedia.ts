@@ -424,4 +424,23 @@ export class LocalMedia extends LocalFile {
     return (this._width ?? 100) / (this._height ?? 100);
   }
 
+  async toBlob(): Promise<Blob> {
+    const file = await this.getFile();
+    return new Blob([await file.arrayBuffer()], { type: file.type });
+  }
+
+  async download() {
+    const blob = await this.toBlob()
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = this.name;
+    a.click();
+    URL.revokeObjectURL(url);
+    console.log(`Downloaded ${this.name}`);
+  }
+
+
+
+
 }
