@@ -8,9 +8,7 @@ import SettingsButton from "../../../../../Atomic/SettingsButton";
 import LoadingSpinner from "../../../../../Atomic/LoadingSpinner";
 import SimpleSelect from "../../../../../Atomic/SimpleSelect";
 import { Action_generatePrevisAudioGoogleAll } from "./PrevisGenerateAudioGoogle";
-import { Previs_getAllDialogueSpeakers } from "./Previs_AudioTextUtils";
-import { GoogleAI } from "../../../../../../classes/GoogleAI";
-import { Action_Previs_combineAudioWithImages, Previs_GetShotsJson, Previs_GetShotsOrder, updatePrevisVoice } from "./Previs_Actions";
+import { Action_Previs_ApplyOrder, Action_Previs_ClearImagePaths, Action_Previs_combineAudioWithImages, Action_Previs_CombineStoryboard, Action_Previs_ExtractAndFinalizeStoryboard, Previs_GetShotsJson, Previs_GetShotsOrder } from "./Previs_Actions";
 import { Previs_ShotPreviewItem } from "./Previs_TilePreview";
 
 // Autoplay Store
@@ -40,14 +38,9 @@ interface Props {
 }
 
 
-
 const wf_name = "shot_previs_generate_audio"
 const wf_loading_audio = `${wf_name}/loading_audio`
 //const wf_name_audio = `${wf_name}_audio`
-
-
-
-
 
 
 
@@ -79,47 +72,84 @@ export const Previs_ShotJsonPreview: React.FC<Props> = observer(({ shot }) => {
 
     const selectedShot = shots[selectedIndex];
     const loading_audio = shot.shotJson?.getField(wf_loading_audio) ?? false;
-    const speakers = Previs_getAllDialogueSpeakers(shot);
-
 
     return (
         <div>
-            <SettingsButton content={<>
-                <EditableJsonTextField localJson={shot.shotJson} field="previs_json" fitHeight collapsed />
-            </>} className="mb-2" buttons={
-                <>
-                    <Button
-                        size="sm"
-                        variant="outline-success"
-                        disabled={loading_audio}
-                        onClick={() => { Action_generatePrevisAudioGoogleAll(shot); }}
-                    >
-                        Generate All Audio GOOGLE
-                    </Button>
+            <SettingsButton
+                content={<>
+                    <div className="mb-2">
+                        <Button
+                            size="sm"
+                            variant="outline-warning"
+                            onClick={() => { Action_Previs_CombineStoryboard(shot); }}
+                        >
+                            Combine Storyboard
+                        </Button>
 
-                    <LoadingSpinner isLoading={loading_audio} asButton />
+                        <Button
+                            size="sm"
+                            variant="outline-warning"
+                            onClick={() => { Action_Previs_ApplyOrder(shot); }}
+                        >
+                            Apply Order
+                        </Button>
 
-                    <SimpleSelect
-                        value={"Set speed on All"}
-                        options={["Set speed on All", "1.0", "1.25", "1.5", "1.75", "2.0"]}
-                        onChange={(val) => {
-                            const data = previs_json;
-                            data.shots?.forEach((s: any) => { s.playback_speed = val; });
-                            shot.shotJson?.updateField("previs_json", JSON.stringify(data, null, 2));
-                        }}
-                    />
+                        <Button
+                            size="sm"
+                            variant="outline-warning"
+                            onClick={() => { Action_Previs_ClearImagePaths(shot); }}
+                        >
+                            Clear Picked Images
+                        </Button>
+                    </div>
 
-                    <Button
-                        size="sm"
-                        variant="outline-success"
-                        disabled={loading_audio}
-                        onClick={() => { Action_Previs_combineAudioWithImages(shot); }}
-                    >
-                        Generate Final Video
-                    </Button>
 
-                </>
-            } />
+
+                    <EditableJsonTextField localJson={shot.shotJson} field="previs_json" fitHeight collapsed />
+                    <EditableJsonTextField localJson={shot.shotJson} field="previs/previs_shot_order" fitHeight collapsed />
+
+                </>} className="mb-2"
+                buttons={
+                    <>
+                        <Button
+                            size="sm"
+                            variant="outline-success"
+                            disabled={loading_audio}
+                            onClick={() => { Action_generatePrevisAudioGoogleAll(shot); }}
+                        >
+                            Generate All Audio GOOGLE
+                        </Button>
+
+                        <LoadingSpinner isLoading={loading_audio} asButton />
+
+                        <SimpleSelect
+                            value={"Set speed on All"}
+                            options={["Set speed on All", "1.0", "1.25", "1.5", "1.75", "2.0"]}
+                            onChange={(val) => {
+                                const data = previs_json;
+                                data.shots?.forEach((s: any) => { s.playback_speed = val; });
+                                shot.shotJson?.updateField("previs_json", JSON.stringify(data, null, 2));
+                            }}
+                        />
+
+                        <Button
+                            size="sm"
+                            variant="outline-success"
+                            onClick={() => { Action_Previs_combineAudioWithImages(shot); }}
+                        >
+                            Generate Final Video
+                        </Button>
+
+                        <Button
+                            size="sm"
+                            variant="outline-warning"
+                            onClick={() => { Action_Previs_ExtractAndFinalizeStoryboard(shot); }}
+                        >
+                            Extract And Finalize Storyboard
+                        </Button>
+
+                    </>
+                } />
 
             {/* Preview images strip */}
             <div
@@ -195,32 +225,6 @@ export const Previs_ShotJsonPreview: React.FC<Props> = observer(({ shot }) => {
                     setSelectedIndex={setSelectedIndex}
                 />
             )}
-
-
-            <h4>Voice Map</h4>
-            { false && <>
-            {speakers.map((speaker) => {
-                const voice_map = previs_json.voices ?? {};
-                return <div key={speaker}>
-                    <SimpleSelect
-                        label={speaker}
-                        options={GoogleAI.options.audio_generation.voices}
-                        value={voice_map[speaker] ?? "Kale"}
-                        onChange={(val) => {
-                            const audio = new Audio(`assets/sounds/VoicesGoogle/${val}.mp3`);
-                            audio.volume = 0.25;
-                            audio.currentTime = 0;
-                            audio.play().catch((err) => { console.error("Failed to play sound:", err); });
-                            updatePrevisVoice(shot, speaker, val,);
-                        }}
-                    />
-                </div>
-            })}
-
-            </>}
-
-            
-
 
         </div >
     );

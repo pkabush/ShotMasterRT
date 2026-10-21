@@ -151,7 +151,6 @@ export async function splitImageIntoTiles(
     return tiles;
 }
 
-
 function loadHtmlImage(
     url: string
 ): Promise<HTMLImageElement> {
@@ -166,7 +165,6 @@ function loadHtmlImage(
         img.src = url;
     });
 }
-
 
 function canvasToBlob(
     canvas: HTMLCanvasElement,
@@ -187,7 +185,6 @@ function canvasToBlob(
         );
     });
 }
-
 
 export async function downloadImageTiles(
     tiles: ImageTile[],
@@ -216,7 +213,6 @@ export async function downloadImageTiles(
     }
 }
 
-
 function mimeToExtension(mime: string): string {
     switch (mime) {
         case "image/jpeg":
@@ -233,7 +229,6 @@ function mimeToExtension(mime: string): string {
             return "png";
     }
 }
-
 
 export async function extractImageTile(
     image: LocalImage,
@@ -363,11 +358,6 @@ export async function extractImageTile(
         url,
     };
 }
-
-
-
-
-
 
 export async function bakeTextOntoImage(
     imageBlob: Blob,
@@ -564,5 +554,220 @@ export async function bakeTextOntoImage(
         });
     } finally {
         URL.revokeObjectURL(imageUrl);
+    }
+}
+
+export async function combineImageBlobs(
+    imageBlobs: Blob[],
+    rows: number = 4,
+    columns: number = 4,
+    outputMime: string = "image/png"
+): Promise<{ blob: Blob; url: string }> {
+    if (imageBlobs.length !== rows * columns) {
+        throw new Error(
+            `Expected ${rows * columns} images, received ${imageBlobs.length}`
+        );
+    }
+
+    if (
+        !Number.isInteger(rows) || rows <= 0 ||
+        !Number.isInteger(columns) || columns <= 0
+    ) {
+        throw new Error("rows and columns must be positive integers");
+    }
+
+    const images: HTMLImageElement[] = [];
+    const urls: string[] = [];
+
+    try {
+        // Load all images from their blobs.
+        for (const blob of imageBlobs) {
+            const url = URL.createObjectURL(blob);
+            urls.push(url);
+
+            const image = new Image();
+
+            await new Promise<void>((resolve, reject) => {
+                image.onload = () => resolve();
+                image.onerror = () =>
+                    reject(new Error("Failed to load image blob"));
+
+                image.src = url;
+            });
+
+            images.push(image);
+        }
+
+        const tileWidth = images[0].naturalWidth;
+        const tileHeight = images[0].naturalHeight;
+
+        // Ensure all images have identical dimensions.
+        for (const image of images) {
+            if (
+                image.naturalWidth !== tileWidth ||
+                image.naturalHeight !== tileHeight
+            ) {
+                throw new Error(
+                    "All images must have the same dimensions"
+                );
+            }
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = tileWidth * columns;
+        canvas.height = tileHeight * rows;
+
+        const ctx = canvas.getContext("2d");
+
+        if (!ctx) {
+            throw new Error("Could not create 2D canvas context");
+        }
+
+        // Images are placed left-to-right, then top-to-bottom.
+        for (let i = 0; i < images.length; i++) {
+            const row = Math.floor(i / columns);
+            const column = i % columns;
+
+            ctx.drawImage(
+                images[i],
+                column * tileWidth,
+                row * tileHeight,
+                tileWidth,
+                tileHeight
+            );
+        }
+
+        const blob = await new Promise<Blob>((resolve, reject) => {
+            canvas.toBlob(
+                (result) => {
+                    if (result) {
+                        resolve(result);
+                    } else {
+                        reject(new Error("Failed to create combined image"));
+                    }
+                },
+                outputMime,
+                1.0
+            );
+        });
+
+        return {
+            blob,
+            url: URL.createObjectURL(blob),
+        };
+    } finally {
+        // Release temporary URLs used to load the source images.
+        for (const url of urls) {
+            URL.revokeObjectURL(url);
+        }
+    }
+}
+
+export function downloadImageFomUrl(
+    url: string,
+    filename: string = "combined-image.png"
+): void {
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+}
+
+export async function resizeImageBlob(
+    imageBlob: Blob,
+    targetWidth?: number,
+    targetHeight?: number,
+    outputMime: string = "image/png"
+): Promise<{ blob: Blob; url: string }> {
+    if (
+        targetWidth !== undefined &&
+        (!Number.isInteger(targetWidth) || targetWidth <= 0)
+    ) {
+        throw new Error("targetWidth must be a positive integer");
+    }
+
+    if (
+        targetHeight !== undefined &&
+        (!Number.isInteger(targetHeight) || targetHeight <= 0)
+    ) {
+        throw new Error("targetHeight must be a positive integer");
+    }
+
+    if (targetWidth === undefined && targetHeight === undefined) {
+        throw new Error("At least one target dimension must be provided");
+    }
+
+    const sourceUrl = URL.createObjectURL(imageBlob);
+
+    try {
+        const image = new Image();
+
+        await new Promise<void>((resolve, reject) => {
+            image.onload = () => resolve();
+            image.onerror = () =>
+                reject(new Error("Failed to load image blob"));
+
+            image.src = sourceUrl;
+        });
+
+        const sourceWidth = image.naturalWidth;
+        const sourceHeight = image.naturalHeight;
+
+        let width: number;
+        let height: number;
+
+        if (targetWidth !== undefined && targetHeight === undefined) {
+            // Preserve aspect ratio using the target width.
+            width = targetWidth;
+            height = Math.round(
+                (sourceHeight / sourceWidth) * targetWidth
+            );
+        } else if (targetHeight !== undefined && targetWidth === undefined) {
+            // Preserve aspect ratio using the target height.
+            height = targetHeight;
+            width = Math.round(
+                (sourceWidth / sourceHeight) * targetHeight
+            );
+        } else {
+            // Both dimensions provided: use exact dimensions.
+            width = targetWidth!;
+            height = targetHeight!;
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext("2d");
+
+        if (!ctx) {
+            throw new Error("Could not create 2D canvas context");
+        }
+
+        ctx.drawImage(image, 0, 0, width, height);
+
+        const blob = await new Promise<Blob>((resolve, reject) => {
+            canvas.toBlob(
+                (result) => {
+                    if (result) {
+                        resolve(result);
+                    } else {
+                        reject(new Error("Failed to resize image"));
+                    }
+                },
+                outputMime,
+                1.0
+            );
+        });
+
+        return {
+            blob,
+            url: URL.createObjectURL(blob),
+        };
+    } finally {
+        URL.revokeObjectURL(sourceUrl);
     }
 }
