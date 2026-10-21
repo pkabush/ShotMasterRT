@@ -73,6 +73,81 @@ export const Previs_ShotJsonPreview: React.FC<Props> = observer(({ shot }) => {
 
     return (
         <div>
+            {/* Preview images strip */}
+            <div
+                className="d-flex mb-3 p-1 border rounded"
+                style={{ width: "100%", gap: "3px", overflow: "hidden", }}
+            >
+                {shots_order_indexes.map((index: number) => {
+                    const shotData = shots[index];
+                    if (!shotData) return null;
+
+                    const image_path = shotData.image_path;
+                    const shot_image = image_path
+                        ? (shot.getByPath(image_path) as LocalImage)
+                        : shot.first_frame;
+
+                    const isSelected = selectedIndex === index;
+
+                    return (
+                        <div
+                            key={index}
+                            onClick={() => setSelectedIndex(index)}
+                            style={{
+                                flex: "1 1 0",
+                                minWidth: 0,
+                                aspectRatio: "9 / 16",
+                                cursor: "pointer",
+                                padding: "2px",
+                                borderRadius: "6px",
+                                boxShadow: isSelected
+                                    ? "0 0 6px 2px rgba(0, 180, 255, 0.9), 0 0 14px 4px rgba(0, 180, 255, 0.45)"
+                                    : "none",
+                                transform: isSelected
+                                    ? "scale(1.03)"
+                                    : "scale(1)",
+                                transition:
+                                    "box-shadow 0.15s ease, transform 0.15s ease",
+                            }}
+                        >
+                            {shot_image ? (
+                                <CroppedMediaImage
+                                    localImage={shot_image}
+                                    shotIndex={index}
+                                    className="rounded"
+                                    style={{
+                                        width: "100%",
+                                        height: "100%",
+                                    }}
+                                />
+                            ) : (
+                                <div
+                                    className="d-flex align-items-center justify-content-center bg-secondary text-white rounded"
+                                    style={{
+                                        width: "100%",
+                                        height: "100%",
+                                        fontSize: "0.65rem",
+                                    }}
+                                >
+                                    No Image
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* Only show the selected shot */}
+            {selectedShot && (
+                <Previs_ShotPreviewItem
+                    shotIndex={selectedIndex}
+                    shot={shot}
+                    shotData={selectedShot}
+                    onUpdateField={(field, val) => updateShot(selectedIndex, field, val)}
+                    setSelectedIndex={setSelectedIndex}
+                />
+            )}
+
             <SettingsButton
                 content={<>
                     <div className="mb-2">
@@ -156,81 +231,6 @@ export const Previs_ShotJsonPreview: React.FC<Props> = observer(({ shot }) => {
 
                     </>
                 } />
-
-            {/* Preview images strip */}
-            <div
-                className="d-flex mb-3 p-1 border rounded"
-                style={{ width: "100%", gap: "3px", overflow: "hidden", }}
-            >
-                {shots_order_indexes.map((index: number) => {
-                    const shotData = shots[index];
-                    if (!shotData) return null;
-
-                    const image_path = shotData.image_path;
-                    const shot_image = image_path
-                        ? (shot.getByPath(image_path) as LocalImage)
-                        : shot.first_frame;
-
-                    const isSelected = selectedIndex === index;
-
-                    return (
-                        <div
-                            key={index}
-                            onClick={() => setSelectedIndex(index)}
-                            style={{
-                                flex: "1 1 0",
-                                minWidth: 0,
-                                aspectRatio: "9 / 16",
-                                cursor: "pointer",
-                                padding: "2px",
-                                borderRadius: "6px",
-                                boxShadow: isSelected
-                                    ? "0 0 6px 2px rgba(0, 180, 255, 0.9), 0 0 14px 4px rgba(0, 180, 255, 0.45)"
-                                    : "none",
-                                transform: isSelected
-                                    ? "scale(1.03)"
-                                    : "scale(1)",
-                                transition:
-                                    "box-shadow 0.15s ease, transform 0.15s ease",
-                            }}
-                        >
-                            {shot_image ? (
-                                <CroppedMediaImage
-                                    localImage={shot_image}
-                                    shotIndex={index}
-                                    className="rounded"
-                                    style={{
-                                        width: "100%",
-                                        height: "100%",
-                                    }}
-                                />
-                            ) : (
-                                <div
-                                    className="d-flex align-items-center justify-content-center bg-secondary text-white rounded"
-                                    style={{
-                                        width: "100%",
-                                        height: "100%",
-                                        fontSize: "0.65rem",
-                                    }}
-                                >
-                                    No Image
-                                </div>
-                            )}
-                        </div>
-                    );
-                })}
-            </div>
-
-            {/* Only show the selected shot */}
-            {selectedShot && (
-                <Previs_ShotPreviewItem
-                    shotIndex={selectedIndex}
-                    shot={shot}
-                    shotData={selectedShot}
-                    onUpdateField={(field, val) => updateShot(selectedIndex, field, val)}
-                    setSelectedIndex={setSelectedIndex}
-                />
-            )}
 
         </div >
     );

@@ -7,6 +7,9 @@ import { WF_Previs_GenerateStoryboard } from "../PrevisGenerateStoryboard";
 import { MediaFolderGallery } from "../../../../../MediaFolderGallery";
 import { Previs_ShotJsonPreview } from "./PrevisShotsJsonPreview";
 import { Previs_SceneSpeakersMap } from "./Previs_SceneSpeakersMap";
+import { TagsFolderContainer } from "../../../../../FolderTags/FolderTagsContainer";
+import { Project } from "../../../../../../classes/Project";
+import type { LocalFolder } from "../../../../../../classes/fileSystem/LocalFolder";
 
 
 interface Props {
@@ -22,6 +25,10 @@ const PrevisV2: React.FC<Props> = observer(({ shot }) => {
 
     return (
         <>
+            <h4>References</h4>
+            <TagsFolderContainer tags={shot.references} folders={[Project.getProject(), Project.getProject().artbook as LocalFolder, shot as LocalFolder]} />
+
+
             {show_logline && <>
                 <h4>Logline</h4>
                 <EditableJsonTextField localJson={shot.shotJson} field="previs_logline" fitHeight collapsed />
@@ -31,6 +38,7 @@ const PrevisV2: React.FC<Props> = observer(({ shot }) => {
             <h4>Script</h4>
             <EditableJsonTextField localJson={shot.shotJson} field="previs_script" fitHeight collapsed />
             <WF_Previs_GenerateShotsJSON.component shot={shot} />
+
 
             <h4>Storyboard</h4>
             <WF_Previs_GenerateStoryboard.component shot={shot} use_shots_json={true} />

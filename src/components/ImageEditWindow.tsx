@@ -105,7 +105,7 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
         })
 
         const storyboard_index = localImage.mediaJson?.getField("storyboard_index");
-        if (! (storyboard_index === null )) {
+        if (!(storyboard_index === null)) {
           genImage?.mediaJson?.updateField("storyboard_index", storyboard_index);
         }
       }
@@ -286,7 +286,7 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
 
                   <div>
                     <pre style={{ whiteSpace: "pre-wrap", wordWrap: "break-word" }}>
-                      {JSON.stringify(localImage.mediaJson?.data.geninfo, null, 2)}
+                      {JSON.stringify(localImage.mediaJson?.data, null, 2)}
                     </pre>
                   </div>
 
@@ -311,6 +311,13 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
                       </>
                     }
                   />
+                </>,
+                Image_Description: <>
+                  <Button size="sm" variant="outline-warning">Rename</Button>
+                  {localImage.name}
+                  
+                  <EditableJsonTextField localJson={localImage.mediaJson} field="description" />
+
                 </>
               }}
             />

@@ -108,8 +108,27 @@ export async function Action_Previs_Generate_Storyboard(shot: Shot, use_shotjson
 
     try {
         const workflow = shot.scene.project.workflows[wf_name];
+        const refs = shot.references?.active_images ?? [];
+
+        const descriptions = refs
+            .map((ref, index) => {
+                const description = ref.mediaJson?.getField("description")
+                if (!description) return null;
+
+                return `@Image${index + 1 + get_use_prev_shot(shot) ? 1 : 0} : 
+${description}
+
+            `
+            }).filter(Boolean)
+            .join("\n\n");
+
+        //console.log(refs, descriptions);
+        //console.log(descriptions.replace(/\\n/g, "\n"));
+
 
         const messages = get_use_prev_shot(shot) ? [
+            ...refs,
+            descriptions,
             "Описание шотов прошлой сцены сцены:",
             use_shotjson ?
                 shot.prevShot?.shotJson?.getField("previs_json") as string
@@ -133,6 +152,7 @@ export async function Action_Previs_Generate_Storyboard(shot: Shot, use_shotjson
                 :
                 shot.shotJson?.data.previs_shots as string,
         ] : [
+            ...refs,
             "Описания шотов:",
             use_shotjson ?
                 shot.shotJson?.data.previs_json as string

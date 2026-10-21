@@ -14,6 +14,8 @@ import InlineAudio, { type InlineAudioHandle } from "../../../../../MediaCompone
 import SimpleSelect from "../../../../../Atomic/SimpleSelect";
 import { usePrevisStore } from "./PrevisShotsJsonPreview";
 import { useEffect, useRef } from "react";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTrashCan } from "@fortawesome/free-solid-svg-icons";
 
 
 
@@ -263,7 +265,7 @@ export const Previs_ShotPreviewItem: React.FC<ShotPreviewItemProps> = observer((
                                     onFinished={() => {
                                         if (!autoplay) return;
                                         const shots_order = Previs_GetShotsOrder(shot);
-                                        const next_index = shots_order[(shots_order.indexOf(shotIndex) + 1)%16];                                        
+                                        const next_index = shots_order[(shots_order.indexOf(shotIndex) + 1) % 16];
                                         setSelectedIndex(next_index);
                                     }}
                                     onPause={() => {
@@ -287,6 +289,11 @@ export const Previs_ShotPreviewItem: React.FC<ShotPreviewItemProps> = observer((
                                         }}
                                     />
                                 </div>
+
+                                <Button size="sm" variant="outline-danger" onClick={() => {
+                                    if (window.confirm("Are you sure you want to delete this item?")) { audio_file.delete(); }
+                                }}> <FontAwesomeIcon icon={faTrashCan} /> </Button>
+
                             </div>
                         ) : (
                             <>No Audio</>
