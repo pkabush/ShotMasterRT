@@ -16,16 +16,8 @@ export interface ImageTile {
 
 /**
  * Splits a LocalImage into a rows × columns grid.
- *
- * Nothing is written to the filesystem.
- *
- * The returned `url` values can be used directly:
- *
- *   <img src={tile.url} />
- *
- * Remember to call `URL.revokeObjectURL(tile.url)` when you're
- * finished with the tiles.
  */
+/*
 export async function splitImageIntoTiles(
     image: LocalImage,
     rows: number,
@@ -150,6 +142,7 @@ export async function splitImageIntoTiles(
 
     return tiles;
 }
+*/
 
 function loadHtmlImage(
     url: string
@@ -392,7 +385,7 @@ export async function bakeTextOntoImage(
 
         const canvas = document.createElement("canvas");
         canvas.width = img.naturalWidth;
-        canvas.height = img.naturalHeight;        
+        canvas.height = img.naturalHeight;
 
         const ctx = canvas.getContext("2d");
         if (!ctx) throw new Error("Could not create canvas context");
@@ -403,7 +396,7 @@ export async function bakeTextOntoImage(
 
         let scale = 1;
         const baseFontSize = width * (cqw / 100);
-        const fontSize = baseFontSize * scale; 
+        const fontSize = baseFontSize * scale;
 
         const lineHeight = fontSize * 1.4;
         ctx.font = `600 ${fontSize}px ${fontFamily}`;
@@ -418,12 +411,12 @@ export async function bakeTextOntoImage(
             maxBoxHeight - verticalPadding * 2
         );
 
-        console.log( {
+        console.log({
             width,
             height,
             baseFontSize,
             fontSize,
-        })        
+        })
 
         // Wrap text, preserving explicit newlines.
         const lines: string[] = [];

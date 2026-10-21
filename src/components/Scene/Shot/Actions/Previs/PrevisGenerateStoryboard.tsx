@@ -7,12 +7,10 @@ import LoadingSpinner from "../../../../Atomic/LoadingSpinner";
 import { LocalImage } from "../../../../../classes/fileSystem/LocalImage";
 import { GoogleAI } from "../../../../../classes/GoogleAI";
 import type { LocalFolder } from "../../../../../classes/fileSystem/LocalFolder";
-import { Button } from "react-bootstrap";
-import { downloadImageTiles, splitImageIntoTiles } from "./ImageSplitUtils";
-import SimpleSelect from "../../../../Atomic/SimpleSelect";
 import EditableJsonTextField, { EditableJsonToggleButton } from "../../../../EditableJsonTextField";
 import { AI } from "../../../../../classes/AiProviders/AI_Generic";
 import { WorkflowImageModelSelect } from "../../../../../classes/AiProviders/AI_Generic_Components";
+import { Button } from "react-bootstrap";
 
 interface Props {
     shot: Shot;
@@ -30,7 +28,7 @@ const get_use_prev_shot = (shot: Shot | null) => {
 }
 const UsePrevShotToggle: React.FC<Props> = observer(({ shot }) => {
     return <>{shot.prevShot &&
-        <EditableJsonToggleButton localJson={shot.shotJson} field={use_prev_shot_field} label="Use Prev Shot" />
+        <EditableJsonToggleButton localJson={shot.shotJson} field={use_prev_shot_field} label="Use Prev Shot" default_val={false} />
     }</>;
 })
 
@@ -48,13 +46,9 @@ const get_prompt = (shot: Shot): string => {
 
 
 
-
-const component: React.FC<Props> = observer(({ shot,use_shots_json = false }) => {
+const component: React.FC<Props> = observer(({ shot, use_shots_json = false }) => {
     const loading = shot.shotJson?.getField(wf_loading) ?? false;
     const project = shot.scene.project;
-
-    const rows = project.projinfo?.getField(`workflows/${wf_name}/x_rows`) ?? "4"
-    const cols = project.projinfo?.getField(`workflows/${wf_name}/y_rows`) ?? "4"
 
     return <div>
         <SettingsButton
@@ -64,12 +58,12 @@ const component: React.FC<Props> = observer(({ shot,use_shots_json = false }) =>
                     <button className="btn btn-sm btn-outline-success"
                         onClick={async () => {
                             console.log("Generate Staging Dscription");
-                            Action_Previs_Generate_Storyboard(shot,use_shots_json);
+                            Action_Previs_Generate_Storyboard(shot, use_shots_json);
                         }} >
                         Generate Storyboard
                     </button>
 
-                    <WorkflowImageModelSelect workflowName={wf_name}/>
+                    <WorkflowImageModelSelect workflowName={wf_name} />
 
                     <WorkflowOptionSelect
                         project={project}
@@ -89,34 +83,14 @@ const component: React.FC<Props> = observer(({ shot,use_shots_json = false }) =>
 
                     <UsePrevShotToggle shot={shot} />
 
+                    {get_use_prev_shot(shot) && (!shot.prevShot?.first_frame) &&
+                        <Button size="sm" variant="danger"      >
+                            No Image Found
+                        </Button>
+                    }
+
+
                     <LoadingSpinner isLoading={loading} asButton />
-
-
-                    {false && <>
-                        <Button size="sm"
-                            variant="outline-warning"
-                            onClick={async () => {
-                                if (!shot.first_frame || !(shot.first_frame instanceof LocalImage)) {
-                                    console.log("Please Select firts frame");
-                                    return;
-                                }
-                                const tiles = await splitImageIntoTiles(shot.first_frame, Number(rows), Number(cols));
-                                await downloadImageTiles(tiles, `${shot.scene.project.name}_${shot.scene.name}_${shot.name}`);
-
-                            }}>Split Into Tiles</Button>
-
-                        <SimpleSelect options={["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]}
-                            value={rows}
-                            label="Rows/Columns:"
-                            onChange={(val) => {
-                                project.projinfo?.updateField(`workflows/${wf_name}/x_rows`, val)
-                            }} />
-                        <SimpleSelect options={["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]}
-                            value={cols}
-                            onChange={(val) => {
-                                project.projinfo?.updateField(`workflows/${wf_name}/y_rows`, val)
-                            }} />
-                    </>}
 
                 </>
             }
@@ -148,7 +122,7 @@ export async function Action_Previs_Generate_Storyboard(shot: Shot, use_shotjson
             Твоя текущая задача:
 
             `,
-            shot.prevShot?.srcImage ?? "",
+            shot.prevShot?.first_frame ?? "",
             get_prompt(shot) ?? "",
             `
                       
@@ -174,7 +148,7 @@ export async function Action_Previs_Generate_Storyboard(shot: Shot, use_shotjson
             messages,
             workflow.model,
             workflow.aspect_ratio,
-            workflow.resolution,            
+            workflow.resolution,
         );
 
         const localImage: LocalImage | null =

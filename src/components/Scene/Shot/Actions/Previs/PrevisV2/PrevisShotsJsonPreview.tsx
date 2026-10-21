@@ -13,7 +13,7 @@ import { Previs_ShotPreviewItem } from "./Previs_TilePreview";
 
 // Autoplay Store
 import { create } from "zustand";
-import EditableJsonTextField from "../../../../../EditableJsonTextField";
+import EditableJsonTextField, { EditableJsonToggleButton } from "../../../../../EditableJsonTextField";
 
 interface PrevisStore {
     autoplay: boolean;
@@ -41,8 +41,6 @@ interface Props {
 const wf_name = "shot_previs_generate_audio"
 const wf_loading_audio = `${wf_name}/loading_audio`
 //const wf_name_audio = `${wf_name}_audio`
-
-
 
 
 export const Previs_ShotJsonPreview: React.FC<Props> = observer(({ shot }) => {
@@ -78,6 +76,13 @@ export const Previs_ShotJsonPreview: React.FC<Props> = observer(({ shot }) => {
             <SettingsButton
                 content={<>
                     <div className="mb-2">
+                        <EditableJsonToggleButton
+                            localJson={shot.scene.project.projinfo}
+                            field={"workflows/previs_settings/show_logline"}
+                            label="Show Logline"
+                            default_val={false}
+                        />
+
                         <Button
                             size="sm"
                             variant="outline-warning"
@@ -103,10 +108,10 @@ export const Previs_ShotJsonPreview: React.FC<Props> = observer(({ shot }) => {
                         </Button>
                     </div>
 
-
-
                     <EditableJsonTextField localJson={shot.shotJson} field="previs_json" fitHeight collapsed />
                     <EditableJsonTextField localJson={shot.shotJson} field="previs/previs_shot_order" fitHeight collapsed />
+
+                    <Button size="sm"> {`Shots Found: ${shots.length ?? "None"}`}</Button>
 
                 </>} className="mb-2"
                 buttons={
