@@ -74,12 +74,18 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
           <SimpleButton onClick={() => { shot.log() }} label="Log Shot" />
 
           <SimpleButton onClick={() => {
-            console.log("tasks",
-              toJS(shot.tasksJson?.tasks)
-            );
-
+            console.log("tasks", toJS(shot.tasksJson?.tasks));
           }} label="New Tasks" />
+
+          <SimpleButton onClick={() => {
+            console.log("tasks", toJS(shot.tasksJson?.tasks));
+          }} label="Zip Shot" />
+
+
           <SimpleButton onClick={handleDelete} label="Delete Shot" className="btn-outline-danger" />
+
+
+
         </div>
       </div>
 

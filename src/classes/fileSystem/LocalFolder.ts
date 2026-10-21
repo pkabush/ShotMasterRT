@@ -7,6 +7,7 @@ import { LocalItem } from "./LocalItem";
 import { LocalMedia } from "./LocalMedia";
 import { LocalVideo } from "./LocalVideo";
 import { WORKER_URL } from "../../contexts/GoogleUserContext";
+import { zipSync } from "fflate";
 
 export class LocalFolder extends LocalItem {
     handle: FileSystemDirectoryHandle;
@@ -310,6 +311,65 @@ export class LocalFolder extends LocalItem {
         );
     }
 
+
+
+
+    async downloadAsZip(filename?: string): Promise<void> {
+        const zipFiles: Record<string, Uint8Array> = {};
+
+        // Recursively read a directory and collect its files.
+        const addFolder = async (
+            directory: FileSystemDirectoryHandle,
+            relativePath: string
+        ): Promise<void> => {
+            for await (const [name, entry] of directory.entries()) {
+                const entryPath = relativePath
+                    ? `${relativePath}/${name}`
+                    : name;
+
+                if (entry.kind === "file") {
+                    const fileHandle = entry as FileSystemFileHandle;
+                    const file = await fileHandle.getFile();
+
+                    zipFiles[entryPath] = new Uint8Array(
+                        await file.arrayBuffer()
+                    );
+                } else {
+                    const subdirectory =
+                        entry as FileSystemDirectoryHandle;
+
+                    // Preserve empty directories, too.
+                    zipFiles[`${entryPath}/`] = new Uint8Array();
+
+                    await addFolder(subdirectory, entryPath);
+                }
+            }
+        };
+
+        // Include the selected folder itself as the ZIP root.
+        await addFolder(this.handle, this.handle.name);
+
+        // Generate the ZIP archive.
+        const zipData = zipSync(zipFiles, { level: 6 });
+
+        const blob = new Blob([zipData], {
+            type: "application/zip",
+        });
+
+        // Trigger the browser download.
+        const url = URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+
+        anchor.href = url;
+        anchor.download = filename ?? `${this.handle.name}.zip`;
+
+        document.body.appendChild(anchor);
+        anchor.click();
+        anchor.remove();
+
+        // Release the temporary object URL.
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
 
 }
 

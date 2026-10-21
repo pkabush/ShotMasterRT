@@ -106,6 +106,15 @@ export const Previs_ShotJsonPreview: React.FC<Props> = observer(({ shot }) => {
                         >
                             Clear Picked Images
                         </Button>
+
+                        <Button
+                            size="sm"
+                            variant="outline-warning"
+                            onClick={() => { Action_Previs_ExtractAndFinalizeStoryboard(shot); }}
+                        >
+                            Extract And Finalize Storyboard
+                        </Button>
+
                     </div>
 
                     <EditableJsonTextField localJson={shot.shotJson} field="previs_json" fitHeight collapsed />
@@ -143,14 +152,6 @@ export const Previs_ShotJsonPreview: React.FC<Props> = observer(({ shot }) => {
                             onClick={() => { Action_Previs_combineAudioWithImages(shot); }}
                         >
                             Generate Final Video
-                        </Button>
-
-                        <Button
-                            size="sm"
-                            variant="outline-warning"
-                            onClick={() => { Action_Previs_ExtractAndFinalizeStoryboard(shot); }}
-                        >
-                            Extract And Finalize Storyboard
                         </Button>
 
                     </>
