@@ -97,7 +97,7 @@ export class ChatGPT implements AIProvider {
        * Send normal JSON to /v1/images/generations
        */
       if (validImages.length === 0) {
-        const payload: any = { model, prompt: prompt ?? "", };
+        const payload: any = { model, prompt: prompt ?? "", moderation: "low" };
         if (resolution) { payload.size = resolution; }
         console.log("GPT image request:", payload);
         response = await postToWorker(payload, "gpt/generate-image", { model });
@@ -112,6 +112,7 @@ export class ChatGPT implements AIProvider {
         const form = new FormData();
         form.append("model", model);
         form.append("prompt", prompt ?? "");
+        form.append("moderation", "low");
         //form.append("quality", "low");
 
         if (resolution) { form.append("size", resolution); }
@@ -230,7 +231,8 @@ export class ChatGPT implements AIProvider {
         }
 
         console.log("GPT ASPECT", aspect_ratio, resolution);
-        const res = aspectToPixels(aspect_ratio, resolution);
+        //const res = aspectToPixels(aspect_ratio, resolution);
+        const res = getResolution(aspect_ratio, resolution);
 
         return await this.img2img(
           prompts.join(),
@@ -479,6 +481,7 @@ export function base64ToBlob(
 }
 
 // Resolutions Mapping
+/*
 const RESOLUTION_MAP: Record<string, number> = {
   "none": 1024,
   "0.5K": 512,
@@ -529,6 +532,105 @@ export function aspectToPixels(
 
   return `${width}x${height}`;
 }
+*/
 
 
 
+type Resolution = "1K" | "0.5K" | "2K" | "4K";
+
+type Aspect =
+  | "1:1"
+  | "3:2"
+  | "2:3"
+  | "4:3"
+  | "3:4"
+  | "4:5"
+  | "5:4"
+  | "16:9"
+  | "9:16"
+  | "21:9";
+
+
+const resolutions: Record<Resolution, Partial<Record<Aspect, string>>> = {
+  "0.5K": {
+    "1:1": "816x816",
+    "2:3": "672x1008",
+    "3:2": "1008x672",
+    "3:4": "720x960",
+    "4:3": "960x720",
+    "4:5": "768x960",
+    "5:4": "960x768",
+    "9:16": "720x1280",
+    "16:9": "1280x720",
+    "21:9": "1344x576",
+  },
+  "1K": {
+    "1:1": "1024x1024",
+    "2:3": "1024x1536",
+    "3:2": "1536x1024",
+    "3:4": "1296x1728",
+    "4:3": "1728x1296",
+    "4:5": "1152x1440",
+    "5:4": "1440x1152",
+    "9:16": "1152x2048",
+    "16:9": "2048x1152",
+    "21:9": "2016x864",
+  },
+  "2K": {
+    "1:1": "2048x2048",
+    "2:3": "1536x2304",
+    "3:2": "2304x1536",
+    "3:4": "1920x2560",
+    "4:3": "2560x1920",
+    "4:5": "1920x2400",
+    "5:4": "2400x1920",
+    "9:16": "1440x2560",
+    "16:9": "2560x1440",
+    "21:9": "2688x1152",
+  },
+  "4K": {
+    "1:1": "2864x2864",
+    "2:3": "2336x3504",
+    "3:2": "3504x2336",
+    "3:4": "2448x3264",
+    "4:3": "3264x2448",
+    "4:5": "2560x3200",
+    "5:4": "3200x2560",
+    "9:16": "2016x3584",
+    "16:9": "3584x2016",
+    "21:9": "3696x1584",
+  },
+};
+
+function getResolution(
+  aspect?: string,
+  resolution?: string,
+): string {
+  const selectedAspect = aspect ?? "1:1";
+
+  const validAspect = Object.keys(resolutions["1K"]).includes(
+    selectedAspect,
+  )
+    ? selectedAspect as Aspect
+    : "1:1";
+
+  const selectedResolution =
+    resolution && resolution in resolutions
+      ? resolution as Resolution
+      : "1K";
+
+  if (resolution && !(resolution in resolutions)) {
+    console.error(
+      `Unsupported resolution: ${resolution}. Defaulting to 1K.`,
+    );
+  }
+
+  if (aspect && !Object.keys(resolutions["1K"]).includes(aspect)) {
+    console.error(
+      `Unsupported aspect: ${aspect}. Defaulting to 1:1.`,
+    );
+  }
+
+  return resolutions[selectedResolution][validAspect]
+    ?? resolutions["1K"]["1:1"]!;
+}

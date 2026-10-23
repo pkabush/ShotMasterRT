@@ -11,7 +11,7 @@ import { bakeTextOntoImage, combineImageBlobs, extractImageTile, resizeImageBlob
 // Shots Order
 export function Previs_GetShotsOrder(shot: Shot): any {
     const defaultOrder = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
-    const previsOrder = shot.shotJson?.getField("previs/previs_shot_order") ?? defaultOrder;
+    const previsOrder = shot.shotJson?.getField("previs/previs_shot_order") || defaultOrder;
     return previsOrder;
 }
 /*
@@ -366,7 +366,7 @@ export function updatePrevisVoice(
     }
 }
 
-export async function Action_Previs_CombineStoryboard(shot: Shot) {
+export async function Action_Previs_CombineStoryboard(shot: Shot, use_index_order: boolean = true) {
     try {
         const previsJson =
             shot.shotJson?.getField("previs_json");
@@ -389,7 +389,9 @@ export async function Action_Previs_CombineStoryboard(shot: Shot) {
         }
 
         const shots = shotsJson?.shots;
-        const shots_order_indexes = Previs_GetShotsOrder(shot);
+        const shots_order_indexes = use_index_order
+            ? Previs_GetShotsOrder(shot)
+            : Array.from({ length: shots?.length ?? 0 }, (_, i) => i);
 
         if (!Array.isArray(shots)) {
             console.warn(
@@ -578,7 +580,7 @@ export function Action_Previs_ClearImagePaths(shot: Shot) {
 
 export async function Action_Previs_ExtractAndFinalizeStoryboard(shot: Shot) {
     const image = await Action_Previs_CombineStoryboard(shot);
-    if(image) image.setTags(["start_frame"]);
+    if (image) image.setTags(["start_frame"]);
     Action_Previs_ApplyOrder(shot);
     Action_Previs_ClearImagePaths(shot);
 }

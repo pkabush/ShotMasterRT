@@ -11,6 +11,7 @@ import { useState } from "react";
 import ResizableContainer from "../ResizableContainer";
 import ShotStripPreview from "../ShotStripPreview";
 import { SceneTimelineView } from "./TimelineView";
+import { SceneContextMenuWrapper } from "./SceneContextMenu";
 
 
 export interface SceneViewProps {
@@ -21,12 +22,11 @@ export interface SceneViewProps {
 export const SceneView: React.FC<SceneViewProps> = observer(({ scene }) => {
     return <div>
         <Stack direction="horizontal">
-            <h2><Badge bg="secondary">{scene.name}</Badge></h2>
-            {false && <>
-                <SimpleButton onClick={() => { scene.delete() }} label="Delete Scene" className="btn-outline-danger ms-auto" />
-                <SimpleButton onClick={() => scene.log()} label="LOG" />
-            </>
-            }
+            <SceneContextMenuWrapper scene={scene}>
+                <h2 style={{ userSelect: "none", cursor: "pointer" }}>
+                    <Badge bg="secondary">{scene.name}</Badge>
+                </h2>
+            </SceneContextMenuWrapper>
         </Stack>
 
         <TabsContainer

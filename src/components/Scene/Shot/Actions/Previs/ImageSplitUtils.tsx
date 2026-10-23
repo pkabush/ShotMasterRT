@@ -764,3 +764,54 @@ export async function resizeImageBlob(
         URL.revokeObjectURL(sourceUrl);
     }
 }
+
+export async function flipImageBlobHorizontally(
+    imageBlob: Blob
+): Promise<Blob> {
+    const sourceUrl = URL.createObjectURL(imageBlob);
+
+    try {
+        const image = new Image();
+
+        await new Promise<void>((resolve, reject) => {
+            image.onload = () => resolve();
+            image.onerror = () =>
+                reject(new Error("Failed to load image blob"));
+
+            image.src = sourceUrl;
+        });
+
+        const canvas = document.createElement("canvas");
+        canvas.width = image.naturalWidth;
+        canvas.height = image.naturalHeight;
+
+        const ctx = canvas.getContext("2d");
+
+        if (!ctx) {
+            throw new Error("Could not create 2D canvas context");
+        }
+
+        // Flip horizontally around the vertical center axis.
+        ctx.translate(canvas.width, 0);
+        ctx.scale(-1, 1);
+
+        // Draw the entire image at its original dimensions.
+        ctx.drawImage(image, 0, 0);
+
+        return await new Promise<Blob>((resolve, reject) => {
+            canvas.toBlob(
+                (blob) => {
+                    if (blob) {
+                        resolve(blob);
+                    } else {
+                        reject(new Error("Failed to export flipped image"));
+                    }
+                },
+                imageBlob.type || "image/png",
+                1.0
+            );
+        });
+    } finally {
+        URL.revokeObjectURL(sourceUrl);
+    }
+}

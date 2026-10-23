@@ -6,7 +6,7 @@ import { GoogleAI } from "../classes/GoogleAI";
 import { observer } from "mobx-react-lite";
 import EditableJsonTextField, { EditableJsonToggleField } from "./EditableJsonTextField";
 import TabsContainer from "./TabsContainer";
-import type { MediaFolder } from "../classes/MediaFolder";
+import { MediaFolder } from "../classes/MediaFolder";
 import type { LocalFolder } from "../classes/fileSystem/LocalFolder";
 import MediaGalleryPreview from "./MediaComponents/MediaGallerPreview";
 import BottomCenterLabel from "./Atomic/MediaElements/BottomCenterLabel";
@@ -20,10 +20,9 @@ import FullPageOverlay from "./Containers/FullPageOverlay";
 import DrawingCanvas from "./DrawingCanvas/DrawingCanvas";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBrush } from "@fortawesome/free-solid-svg-icons";
-import SettingsButton from "./Atomic/SettingsButton";
-import { WF_Image_censor } from "./Scene/Shot/Actions/ShotAddFramesFromPrevious";
 import { AI } from "../classes/AiProviders/AI_Generic";
 import { WorkflowImageModelSelect } from "../classes/AiProviders/AI_Generic_Components";
+import { flipImageBlobHorizontally } from "./Scene/Shot/Actions/Previs/ImageSplitUtils";
 
 interface ImageEditWindowProps {
   localImage: LocalImage;
@@ -292,33 +291,35 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
 
                 </>,
 
-                CensorImage: <>
-                  <SettingsButton buttons={
-                    <>
-                      <Button size="sm" variant="outline-success"
-                        onClick={async () => {
-                          const res_image = await WF_Image_censor.run(localImage);
-                          console.log("Censored Image", res_image);
-                        }}
-                      > Censor Image </Button>
+                /*
+              CensorImage: <>
+                <SettingsButton buttons={
+                  <>
+                    <Button size="sm" variant="outline-success"
+                      onClick={async () => {
+                        const res_image = await WF_Image_censor.run(localImage);
+                        console.log("Censored Image", res_image);
+                      }}
+                    > Censor Image </Button>
 
-                      <WorkflowImageModelSelect workflowName={WF_Image_censor.name} />
+                    <WorkflowImageModelSelect workflowName={WF_Image_censor.name} />
+                  </>
+                }
+                  content={
+                    <>
+                      <WorkflowTextField workflowName={WF_Image_censor.name} optionName={"prompt"} />
                     </>
                   }
-                    content={
-                      <>
-                        <WorkflowTextField workflowName={WF_Image_censor.name} optionName={"prompt"} />
-                      </>
-                    }
-                  />
-                </>,
+                />
+              </>,
+              */
                 Image_Description: <>
                   <Button size="sm" variant="outline-warning">Rename</Button>
                   {localImage.name}
-                  
-                  <EditableJsonTextField localJson={localImage.mediaJson} field="description" />
 
-                </>
+                  <EditableJsonTextField localJson={localImage.mediaJson} field="description" />
+                </>,
+                Utils: <ImageUtils localImage={localImage} />
               }}
             />
           </div>
@@ -333,5 +334,32 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
   </>);
 
 });
+
+
+interface ImageUtilsProps {
+  localImage: LocalImage;
+}
+
+const ImageUtils: React.FC<ImageUtilsProps> = observer(({ localImage }) => {
+
+
+  return <>
+    <Button
+      size="sm"
+      variant="outline-warning"
+      onClick={async () => {
+        const blob = await localImage.toBlob()
+        const flipped_blob = await flipImageBlobHorizontally(blob);
+        const image = await LocalImage.fromBlob(flipped_blob,localImage.parentFolder!, localImage.name);
+        if (image.parentFolder instanceof MediaFolder) image.parentFolder.setSelectedMedia(image);
+      }}
+    >
+      Flip Horisontal
+    </Button>
+
+
+  </>
+});
+
 
 export default ImageEditWindow;

@@ -7,7 +7,7 @@ import { LocalItem } from "./LocalItem";
 import { LocalMedia } from "./LocalMedia";
 import { LocalVideo } from "./LocalVideo";
 import { WORKER_URL } from "../../contexts/GoogleUserContext";
-import { zipSync } from "fflate";
+import { unzipSync, zipSync } from "fflate";
 
 export class LocalFolder extends LocalItem {
     handle: FileSystemDirectoryHandle;
@@ -305,15 +305,14 @@ export class LocalFolder extends LocalItem {
     get media(): LocalMedia[] {
         return this.getType(LocalMedia)
     }
+
     get mediaOrdered(): LocalMedia[] {
         return [...this.media].sort(
             (a, b) => a.lastModified - b.lastModified
         );
     }
 
-
-
-
+    // ZIP Utils
     async downloadAsZip(filename?: string): Promise<void> {
         const zipFiles: Record<string, Uint8Array> = {};
 
@@ -370,6 +369,66 @@ export class LocalFolder extends LocalItem {
         // Release the temporary object URL.
         setTimeout(() => URL.revokeObjectURL(url), 1000);
     }
+    async extractZip(zipFile: File): Promise<void> {
+        if (!this.handle) {
+            throw new Error("Folder not loaded");
+        }
+
+        if (!zipFile.name.toLowerCase().endsWith(".zip")) {
+            throw new Error("File must be a ZIP archive");
+        }
+
+        // Read and decompress the ZIP archive.
+        const zipData = new Uint8Array(await zipFile.arrayBuffer());
+        const extractedFiles = unzipSync(zipData);
+
+        // Write each extracted file into the current folder.
+        for (const [path, data] of Object.entries(extractedFiles)) {
+            // Skip directory entries; directories are created as needed.
+            if (path.endsWith("/")) {
+                continue;
+            }
+
+            // Normalize and validate the path to prevent ZIP path traversal.
+            const parts = path.replace(/\\/g, "/").split("/");
+
+            if (
+                parts.some(part => part === ".." || part === "") ||
+                path.startsWith("/") ||
+                /^[a-zA-Z]:/.test(path)
+            ) {
+                throw new Error(`Invalid path in ZIP archive: ${path}`);
+            }
+
+            // Create nested directories if necessary.
+            let currentDir = this.handle;
+
+            for (const dirName of parts.slice(0, -1)) {
+                currentDir = await currentDir.getDirectoryHandle(
+                    dirName,
+                    { create: true }
+                );
+            }
+
+            // Create or overwrite the extracted file.
+            const filename = parts[parts.length - 1];
+            const fileHandle = await currentDir.getFileHandle(
+                filename,
+                { create: true }
+            );
+
+            const writable = await fileHandle.createWritable();
+            try {
+                await writable.write(data);
+            } finally {
+                await writable.close();
+            }
+        }
+
+        // Refresh the LocalFolder's in-memory representation.
+        await this.load();
+    }
+
 
 }
 

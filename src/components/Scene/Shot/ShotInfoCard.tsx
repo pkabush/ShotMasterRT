@@ -2,13 +2,9 @@
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { Badge } from 'react-bootstrap';
-import { toJS } from 'mobx';
 import { Shot } from '../../../classes/Shot';
 import SimpleSelect from '../../Atomic/SimpleSelect';
-import MultiStateToggle from '../../Atomic/MultiStateToggle';
-import SimpleButton from '../../Atomic/SimpleButton';
 import TabsContainer from '../../TabsContainer';
-import { Google_StylizeImageNode } from '../../GoogleNodes/Google_StylizeImageNode';
 import { Google_GenerateImageNode } from '../../GoogleNodes/Google_GenerateImageNode';
 import { MediaFolderGallery } from '../../MediaFolderGallery';
 import EditableJsonTextField, { EditableJsonToggleField } from '../../EditableJsonTextField';
@@ -29,7 +25,7 @@ import { ShotAddFramesFromPrevious } from './Actions/ShotAddFramesFromPrevious';
 import { WF_ShotGenerateStagingImage } from './Actions/ShotGenerateStageing';
 import { ShotAskGenerationDuration } from './Actions/ShotAskGenerationDuration';
 import PrevisV2 from './Actions/Previs/PrevisV2/PrevisV2_Component';
-
+import { ShotContextMenuWrapper } from './ShotContextMenu';
 
 interface Props {
   shot: Shot;
@@ -38,24 +34,32 @@ interface Props {
 const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
   if (!shot.shotJson) return <div>Loading shot info...</div>;
 
-  const handleDelete = async () => {
-    if (window.confirm(`Are you sure you want to delete shot "${shot.name}"?`)) {
-      await shot.delete();
-    }
-  };
-
   return (
     <>
       <div className="d-flex align-items-center justify-content-between mb-0">
-        <h3><Badge bg="secondary">{shot.name}</Badge></h3>
+
+        <ShotContextMenuWrapper shot={shot} >
+
+          <h3><Badge
+            bg="secondary"
+            onClick={() => { shot.log() }}
+            style={{ userSelect: "none", cursor: "pointer" }}
+          >
+            {shot.name}
+          </Badge></h3>
+
+        </ShotContextMenuWrapper>
+
         <div className="d-flex gap-2">
 
           {/* Pick shot type - crude implementation, fix later */}
+          {/* 
           <SimpleSelect
             value={shot.shotJson.getField("shot_type") || "shot_type"}
             options={["simple shot", "actor shot"]}
             onChange={(val) => { shot.shotJson?.updateField("shot_type", val) }}
           />
+          */}
 
           {/* Pick shot type - crude implementation, fix later */}
           <SimpleSelect
@@ -65,24 +69,21 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
             colorMap={Shot.shot_states}
           />
 
+          {/**
           <MultiStateToggle
             states={Shot.shot_states}
             value={shot.shotJson.data?.shot_state || Object.keys(Shot.shot_states)[0]}
             onChange={(newState) => { if (shot.shotJson) { shot.shotJson.updateField("shot_state", newState); } }}
-          />
-
-          <SimpleButton onClick={() => { shot.log() }} label="Log Shot" />
+          />           
 
           <SimpleButton onClick={() => {
-            console.log("tasks", toJS(shot.tasksJson?.tasks));
-          }} label="New Tasks" />
-
-          <SimpleButton onClick={() => {
-            console.log("tasks", toJS(shot.tasksJson?.tasks));
+            const zip_name =  `${shot.scene.project.name}_${shot.path.replaceAll("/","_")}.zip` ;
+            console.log("Downloading ZIP", `${shot.scene.project.name}_${shot.path.replaceAll("/","_")}.zip` );
+            shot.downloadAsZip(zip_name);
           }} label="Zip Shot" />
 
-
           <SimpleButton onClick={handleDelete} label="Delete Shot" className="btn-outline-danger" />
+          */}
 
 
 
@@ -95,7 +96,7 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
             <div className="card mb-2">
               <div className="card-body">
 
-                <Google_StylizeImageNode shot={shot} />
+                {/**<Google_StylizeImageNode shot={shot} />*/}
                 <Google_GenerateImageNode shot={shot} />
 
                 {/** 

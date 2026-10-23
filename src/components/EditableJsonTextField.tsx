@@ -11,6 +11,7 @@ import { AI } from '../classes/AiProviders/AI_Generic';
 import { WorkflowTextModelSelect } from '../classes/AiProviders/AI_Generic_Components';
 import SimpleSelect from './Atomic/SimpleSelect';
 
+
 interface EditableJsonTextFieldProps {
   localJson: LocalJson | null;
   field: string;
@@ -50,7 +51,7 @@ const EditableJsonTextField: React.FC<EditableJsonTextFieldProps> = observer(({
     if (onSave) await (onSave(newValue));
   };
 
-  return (
+  return (<>  
     <GenericTextEditor
       label={label ?? field}
       initialText={localJson.getField(field) ?? default_value} // <-- use getField instead of direct access
@@ -80,6 +81,7 @@ const EditableJsonTextField: React.FC<EditableJsonTextFieldProps> = observer(({
       }
 
     </GenericTextEditor>
+  </>
   );
 });
 

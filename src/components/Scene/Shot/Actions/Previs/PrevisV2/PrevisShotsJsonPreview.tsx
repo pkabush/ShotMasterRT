@@ -161,9 +161,18 @@ export const Previs_ShotJsonPreview: React.FC<Props> = observer(({ shot }) => {
                         <Button
                             size="sm"
                             variant="outline-warning"
-                            onClick={() => { Action_Previs_CombineStoryboard(shot); }}
+                            onClick={() => { Action_Previs_CombineStoryboard(shot, false); }}
                         >
                             Combine Storyboard
+                        </Button>
+
+
+                        <Button
+                            size="sm"
+                            variant="outline-warning"
+                            onClick={() => { Action_Previs_CombineStoryboard(shot); }}
+                        >
+                            Combine Storyboard Ordered
                         </Button>
 
                         <Button

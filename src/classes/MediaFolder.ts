@@ -66,4 +66,10 @@ export class MediaFolder extends LocalFolder {
         return this.media.find(m => m.name === filename) ?? null;
     }
 
+    /*
+    async load( ): Promise<void> {
+        await this.load_files();
+    }
+    */
+
 }

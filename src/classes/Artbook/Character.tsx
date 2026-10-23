@@ -48,6 +48,11 @@ export class Character extends MediaFolder {
 
     async load(): Promise<void> {
         try {
+            // Load All Subfolders
+            await this.load_subfolders(MediaFolder);
+            await Promise.all(this.subfolders.map((sub) => sub.load_files()));           
+
+
             this.charJson = await LocalJson.create(this, 'charinfo.json');
             this.MediaFolder_results = await MediaFolder.create(this, "results");
             this.MediaFolder_results.tags = ["ref_frame"];
@@ -65,7 +70,7 @@ export class Character extends MediaFolder {
             const artbook = this.parentFolder?.parentFolder as Artbook;
             if (this.parentFolder == artbook.characters_folder) {
                 const char_ref_image = await artbook.getBaseCharRef() as LocalImage;
-                this.references.addTag(char_ref_image);                
+                this.references.addTag(char_ref_image);
             }
         } catch (err) {
             console.error('Error loading shot:', this.name, err);
@@ -114,15 +119,15 @@ export class Character extends MediaFolder {
     async setVariationImage(variationName: string, image?: LocalImage) {
         // Delete First
         const prev_image = this.getVariationImage(variationName);
-        if(prev_image) prev_image.delete();
+        if (prev_image) prev_image.delete();
 
         const selectedImage = image ?? this.MediaFolder_results?.selectedMedia;
-        console.log("Selected Image",selectedImage);
+        console.log("Selected Image", selectedImage);
         if (!selectedImage) return;
 
-        await selectedImage.copyToFolder(this, variationName,true);
+        await selectedImage.copyToFolder(this, variationName, true);
         console.log(variationName);
-        
+
     }
 
     async generateLook(variationName: string) {
@@ -193,7 +198,7 @@ ${var_prompt}
         }
     }
 
-    async generateVariationDescriptions(add_variations = false,generate_variations = false) {
+    async generateVariationDescriptions(add_variations = false, generate_variations = false) {
         const project = Project.getProject()
         const charlist_field = "looklist"
         const is_env = this.parentFolder?.name == "ЛОКАЦИИ"
@@ -247,9 +252,9 @@ ${var_prompt}
 
     generateVariationsIfMissing() {
         console.log(this.name);
-        if (Object.keys(this.variations).length == 0){
+        if (Object.keys(this.variations).length == 0) {
             console.log("No variations, generating ", this.name);
-            this.generateVariationDescriptions(true,true);
+            this.generateVariationDescriptions(true, true);
         }
     }
 

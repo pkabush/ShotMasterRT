@@ -14,6 +14,7 @@ interface CollapsibleContainerProps {
   closedColor?: string;
   header?: React.ReactNode;
   onToggle?: (isOpen: boolean) => void;
+  context_items?: React.ReactNode;
 }
 
 const CollapsibleContainer: React.FC<CollapsibleContainerProps> = ({
@@ -50,8 +51,7 @@ const CollapsibleContainer: React.FC<CollapsibleContainerProps> = ({
 
 export default CollapsibleContainer;
 
-
-
+/*
 export const CollapsibleContainerAccordion: React.FC<CollapsibleContainerProps> = ({
   label = 'Section',
   children,
@@ -67,10 +67,10 @@ export const CollapsibleContainerAccordion: React.FC<CollapsibleContainerProps> 
     <Accordion defaultActiveKey={defaultCollapsed ? "" : label} className='mb-2'>
       <AccordionCard eventKey={label}>
         <AccordionCard.Header closedColor={closedColor} openColor={openColor} onToggle={onToggle}>
-          {header ?? label}
-          <AccordionCard.Controls>
-            {headerExtra}
-          </AccordionCard.Controls>
+              {header ?? label}
+              <AccordionCard.Controls>
+                {headerExtra}
+              </AccordionCard.Controls>
         </AccordionCard.Header>
         <AccordionCard.Body>
           {children}
@@ -79,34 +79,70 @@ export const CollapsibleContainerAccordion: React.FC<CollapsibleContainerProps> 
     </Accordion>
   );
 };
+*/
 
-/*
-export const CollapsibleAccordionCard: React.FC<CollapsibleContainerProps> = ({
-  label = 'Section',  
+export const CollapsibleContainerAccordion: React.FC<
+  CollapsibleContainerProps
+> = ({
+  label = 'Section',
   children,
   headerExtra,
+  defaultCollapsed = false,
   openColor,
   closedColor,
   header,
-  onToggle
+  onToggle,
+  context_items,
 }) => {
+    const headerContent = (
+      <div className="accordion-header-content">
+        <span>{header ?? label}</span>
+      </div>
+    );
 
-  return (
-      <AccordionCard eventKey={label}>
-        <AccordionCard.Header closedColor={closedColor} openColor={openColor} onToggle={onToggle}>
-          {header ?? label}
-          <AccordionCard.Controls>
-            {headerExtra}
-          </AccordionCard.Controls>
-        </AccordionCard.Header>
-        <AccordionCard.Body>
-          {children}
-        </AccordionCard.Body>
-      </AccordionCard>
-  );
-};
-*/
+    return (
+      <Accordion
+        defaultActiveKey={defaultCollapsed ? '' : label}
+        className="mb-2"
+      >
+        <AccordionCard eventKey={label}>
+          <AccordionCard.Header
+            closedColor={closedColor}
+            openColor={openColor}
+            onToggle={onToggle}
+          >
+            {context_items ? (
+              <ContextMenu.Root>
+                <ContextMenu.Trigger asChild>
+                  {headerContent}
+                </ContextMenu.Trigger>
 
+                <ContextMenu.Portal>
+                  <ContextMenu.Content
+                    className="ContextMenuContent"
+                    onClick={(e) => e.stopPropagation()}
+                    onPointerDown={(e) => e.stopPropagation()}
+                  >
+                    {context_items}
+                  </ContextMenu.Content>
+                </ContextMenu.Portal>
+              </ContextMenu.Root>
+            ) : (
+              headerContent
+            )}
+
+            <AccordionCard.Controls>
+              {headerExtra}
+            </AccordionCard.Controls>
+          </AccordionCard.Header>
+
+          <AccordionCard.Body>
+            {children}
+          </AccordionCard.Body>
+        </AccordionCard>
+      </Accordion>
+    );
+  };
 
 
 
