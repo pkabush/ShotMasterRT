@@ -11,6 +11,7 @@ import EditableJsonTextField, { EditableJsonToggleButton } from "../../../../Edi
 import { AI } from "../../../../../classes/AiProviders/AI_Generic";
 import { WorkflowImageModelSelect } from "../../../../../classes/AiProviders/AI_Generic_Components";
 import { Button } from "react-bootstrap";
+import { getPrevisJsonForStoryboard } from "./PrevisV2/Previs_Actions";
 
 interface Props {
     shot: Shot;
@@ -46,7 +47,7 @@ const get_prompt = (shot: Shot): string => {
 
 
 
-const component: React.FC<Props> = observer(({ shot, use_shots_json = false }) => {
+const component: React.FC<Props> = observer(({ shot }) => {
     const loading = shot.shotJson?.getField(wf_loading) ?? false;
     const project = shot.scene.project;
 
@@ -58,7 +59,7 @@ const component: React.FC<Props> = observer(({ shot, use_shots_json = false }) =
                     <button className="btn btn-sm btn-outline-success"
                         onClick={async () => {
                             console.log("Generate Staging Dscription");
-                            Action_Previs_Generate_Storyboard(shot, use_shots_json);
+                            Action_Previs_Generate_Storyboard(shot);
                         }} >
                         Generate Storyboard
                     </button>
@@ -103,7 +104,7 @@ const component: React.FC<Props> = observer(({ shot, use_shots_json = false }) =
     </div >
 })
 
-export async function Action_Previs_Generate_Storyboard(shot: Shot, use_shotjson = false) {
+export async function Action_Previs_Generate_Storyboard(shot: Shot) {
     shot.shotJson?.updateField(wf_loading, true);
 
     try {
@@ -126,14 +127,15 @@ ${description}
         //console.log(descriptions.replace(/\\n/g, "\n"));
 
 
+        // CREATE Messages
         const messages = get_use_prev_shot(shot) ? [
             ...refs,
             descriptions,
             "Описание шотов прошлой сцены сцены:",
-            use_shotjson ?
-                shot.prevShot?.shotJson?.getField("previs_json") as string
-                :
-                shot.prevShot?.shotJson?.getField("previs_shots") as string,
+            //shot.prevShot?.shotJson?.getField("previs_json") as string,
+            //previsJsonCopy,
+            getPrevisJsonForStoryboard( shot.prevShot! )  ?? "",
+
             `@image1 - раскадровка прошлой сцены:           
 
             ----------------------------------------------------
@@ -147,17 +149,14 @@ ${description}
                       
             
             Описания шотов для текущей сцены:`,
-            use_shotjson ?
-                shot.shotJson?.data.previs_json as string
-                :
-                shot.shotJson?.data.previs_shots as string,
+            //shot.shotJson?.data.previs_json as string
+            getPrevisJsonForStoryboard( shot )  ?? "",
+
         ] : [
             ...refs,
             "Описания шотов:",
-            use_shotjson ?
-                shot.shotJson?.data.previs_json as string
-                :
-                shot.shotJson?.data.previs_shots as string,
+            //shot.shotJson?.data.previs_json as string,
+            getPrevisJsonForStoryboard( shot )  ?? "",
             get_prompt(shot) ?? "",
             //"Сценарий:",
             //shot.shotJson?.data.previs_script as string,

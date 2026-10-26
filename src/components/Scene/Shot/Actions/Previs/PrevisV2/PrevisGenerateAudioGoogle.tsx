@@ -20,8 +20,6 @@ const Previs_GenerateAudioGoogle: React.FC<Props> = ({
     shot,
     audioIndex,
 }) => {
-    const shotData = getPrevisShotByIndex(shot, audioIndex);
-    if (!shotData) { return null; }
     return (
         <SettingsButton
             className="mb-2"

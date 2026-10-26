@@ -9,22 +9,20 @@ import { bakeTextOntoImage, combineImageBlobs, extractImageTile, resizeImageBlob
 
 
 // Shots Order
-export function Previs_GetShotsOrder(shot: Shot): any {
-    const defaultOrder = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
-    const previsOrder = shot.shotJson?.getField("previs/previs_shot_order") || defaultOrder;
+export function Previs_GetShotsOrder(shot: Shot): number[] {
+    const shots = Previs_GetShotsJson(shot).shots ?? [];
+    const defaultOrder = Array.from({ length: shots.length }, (_, i) => i);
+
+    const previsOrder = shot.shotJson?.getField("previs/previs_shot_order");
+
+    if (!Array.isArray(previsOrder) || previsOrder.length === 0) {
+        shot.shotJson?.updateField("previs/previs_shot_order", defaultOrder);
+        return defaultOrder;
+    }
+
     return previsOrder;
 }
-/*
-export function Previs_GetShotsOrdered(shot: Shot): any[] {
-    const previsJson = Previs_GetShotsJson(shot);
-    const shots = previsJson.shots ?? [];
-    const order = Previs_GetShotsOrder(shot);
 
-    return order
-        .map((index: number) => shots[index])
-        .filter((shot: any) => shot !== undefined);
-}
-*/
 export function getShotDisplayIndex(
     shot: Shot,
     original_shot_index: number,
@@ -122,6 +120,8 @@ export async function Action_Previs_combineAudioWithImages(
                     const shotData = shots[index];
                     if (!shotData) return null;
 
+                    const image_tile_index = shotData.tile_index ?? index;
+
                     console.log(`Processing previs shot ${index}...`);
 
                     try {
@@ -147,7 +147,7 @@ export async function Action_Previs_combineAudioWithImages(
                         const tile = is_extracted_tile ?
                             await extractImageTile(shot_image, 1, 1, 0)
                             :
-                            await extractImageTile(shot_image, rows, columns, index)
+                            await extractImageTile(shot_image, rows, columns, image_tile_index)
                             ;
 
                         const use_subs = shot.scene.project.projinfo!.getField(subtitles_path);
@@ -583,4 +583,159 @@ export async function Action_Previs_ExtractAndFinalizeStoryboard(shot: Shot) {
     if (image) image.setTags(["start_frame"]);
     Action_Previs_ApplyOrder(shot);
     Action_Previs_ClearImagePaths(shot);
+}
+
+export function Action_PrevisJsonAddShot(
+    shot: Shot,
+    index?: number,
+    after_shot?: number,
+) {
+    const previsJson = shot.shotJson?.getField("previs_json");
+    if (!previsJson) return;
+
+    const shotsJson = JSON.parse(previsJson);
+    const shots = shotsJson.shots;
+
+    if (!Array.isArray(shots)) return;
+
+    const newIndex = index ?? shots.length;
+
+    const order = shot.shotJson?.getField("previs/previs_shot_order");
+
+    if (Array.isArray(order)) {
+        const updatedOrder = [...order];
+
+        if (after_shot !== undefined) {
+            const afterIndex = updatedOrder.indexOf(after_shot);
+
+            if (afterIndex !== -1) {
+                updatedOrder.splice(afterIndex + 1, 0, newIndex);
+            } else {
+                updatedOrder.push(newIndex);
+            }
+        } else {
+            updatedOrder.push(newIndex);
+        }
+
+        shot.shotJson?.updateField(
+            "previs/previs_shot_order",
+            updatedOrder
+        );
+    }
+
+    // Initialize the new shot when after_shot is provided without an index.
+    if (index === undefined && after_shot !== undefined) {
+        shots[newIndex] = { tile_index: shots[after_shot].tile_index ?? after_shot };
+
+        shot.shotJson?.updateField(
+            "previs_json",
+            JSON.stringify(shotsJson, null, 2)
+        );
+    }
+
+
+}
+
+
+
+/*
+export function Action_PrevisJsonRemoveShotIndex(shot: Shot, index: number) {
+    const order = shot.shotJson?.getField("previs/previs_shot_order");
+    if (!Array.isArray(order)) return;
+    shot.shotJson?.updateField(
+        "previs/previs_shot_order",
+        order.filter((shotIndex: number) => shotIndex !== index)
+    );
+}*/
+
+export function Action_PrevisJsonRemoveShotIndex(shot: Shot, index: number) {
+    // Remove from the custom shot order.
+    const order = shot.shotJson?.getField("previs/previs_shot_order");
+
+    if (Array.isArray(order)) {
+        shot.shotJson?.updateField(
+            "previs/previs_shot_order",
+            order.filter((shotIndex: number) => shotIndex !== index)
+        );
+    }
+
+    // Only remove the shot from previs_json when its index is > 15.
+    if (index > 15) {
+        const previsJson = shot.shotJson?.getField("previs_json");
+        if (!previsJson) return;
+
+        try {
+            const shotsJson = JSON.parse(previsJson);
+            const shots = shotsJson.shots;
+
+            if (!Array.isArray(shots) || index >= shots.length) return;
+
+            // Remove the shot and shift subsequent indexes.
+            shots.splice(index, 1);
+
+            shot.shotJson?.updateField(
+                "previs_json",
+                JSON.stringify(shotsJson, null, 2)
+            );
+
+            // Rebuild the order to keep indexes valid.
+            const updatedOrder = Array.isArray(order)
+                ? order
+                    .filter((shotIndex: number) => shotIndex !== index)
+                    .map((shotIndex: number) =>
+                        shotIndex > index ? shotIndex - 1 : shotIndex
+                    )
+                : undefined;
+
+            if (updatedOrder) {
+                shot.shotJson?.updateField(
+                    "previs/previs_shot_order",
+                    updatedOrder
+                );
+            }
+        } catch (error) {
+            console.error("Failed to remove previs shot:", error);
+        }
+    }
+}
+
+
+export function getSkippedShotsIndexes(shot: Shot): number[] {
+    const shots = Previs_GetShotsJson(shot).shots ?? [];
+    const order = Previs_GetShotsOrder(shot);
+
+    const usedIndexes = new Set<number>(order);
+
+    return Array.from(
+        { length: shots.length },
+        (_, index) => index
+    ).filter(index => !usedIndexes.has(index));
+}
+
+
+export function getPrevisJsonForStoryboard(shot: Shot): string | undefined {
+    const previsJson = shot.shotJson?.getField("previs_json");
+    
+    if (!previsJson) {
+        return undefined;
+    }
+
+    try {
+        const previsCopy = JSON.parse(previsJson);
+
+        if (!Array.isArray(previsCopy.shots)) {
+            return undefined;
+        }
+
+        previsCopy.shots = previsCopy.shots
+            .slice(0, 16)
+            .map((shotData: any) => ({
+                image_prompt: shotData.image_prompt,
+            }));
+
+        return JSON.stringify(previsCopy, null, '\t');
+    } catch (error) {
+        console.error("Failed to parse previs_json for storyboard:", error);
+        return undefined;
+    }
 }

@@ -10,8 +10,6 @@ import LoadingButton from '../../Atomic/LoadingButton';
 import { Button } from 'react-bootstrap';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons';
-import * as ContextMenu from "@radix-ui/react-context-menu";
-import ShotContextMenu from './ShotContextMenu';
 import { SceneContextMenuWrapper } from '../SceneContextMenu';
 
 interface Props {
@@ -41,8 +39,8 @@ const ShotsInfoStrip: React.FC<Props> = observer(({ scene }) => {
         <SceneContextMenuWrapper scene={scene}>
           <div className="d-flex overflow-auto gap-2 h-100">
             {scene.shots_ordered.map((shot) => (
+              /*
               <div key={shot.name}>
-
                 <ContextMenu.Root>
                   <ContextMenu.Trigger>
                     <ShotStripPreview
@@ -53,11 +51,16 @@ const ShotsInfoStrip: React.FC<Props> = observer(({ scene }) => {
                       autoplay={autoplay}
                     />
                   </ContextMenu.Trigger>
-
                   <ShotContextMenu shot={shot} />
-
                 </ContextMenu.Root>
-              </div>
+              </div>*/
+              <ShotStripPreview
+                key={shot.name}
+                shot={shot}
+                isSelected={scene.selectedShot === shot}
+                onClick={() => { scene.selectShot(shot) }}
+                autoplay={autoplay}
+              />
             ))}
 
             {false &&

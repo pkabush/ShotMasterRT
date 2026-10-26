@@ -11,7 +11,6 @@ import { TagsFolderContainer } from "../../../../../FolderTags/FolderTagsContain
 import { Project } from "../../../../../../classes/Project";
 import type { LocalFolder } from "../../../../../../classes/fileSystem/LocalFolder";
 
-
 interface Props {
     shot: Shot;
 }
@@ -44,7 +43,7 @@ const PrevisV2: React.FC<Props> = observer(({ shot }) => {
             <WF_Previs_GenerateStoryboard.component shot={shot} use_shots_json={true} />
             <MediaFolderGallery mediaFolder={shot.MediaFolder_results} defaultCollapsed={true} />
 
-            <h4>Previs</h4>
+
             <Previs_ShotJsonPreview shot={shot} />
             <Previs_SceneSpeakersMap scene={shot.scene} />
 

@@ -23,6 +23,7 @@ import { faBrush } from "@fortawesome/free-solid-svg-icons";
 import { AI } from "../classes/AiProviders/AI_Generic";
 import { WorkflowImageModelSelect } from "../classes/AiProviders/AI_Generic_Components";
 import { flipImageBlobHorizontally } from "./Scene/Shot/Actions/Previs/ImageSplitUtils";
+import SimpleSelect from "./Atomic/SimpleSelect";
 
 interface ImageEditWindowProps {
   localImage: LocalImage;
@@ -203,7 +204,6 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
                     {do_stylize && <WorkflowTextField workflowName={"stylize_image_google"} optionName={"prompt"} />}
 
 
-
                     <EditableJsonTextField localJson={localImage.mediaJson} field={"image_edit_prompt"} fitHeight />
 
 
@@ -317,6 +317,20 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
                   <Button size="sm" variant="outline-warning">Rename</Button>
                   {localImage.name}
 
+                  <SimpleSelect
+                    value= {localImage.mediaJson?.getField("storyboard_index") ?? "none" }
+                    options={["none", "0", "1", "2", "3","4","5","6","7","8","9","10","11","12","13","14","15"]}
+                    label="Storyboard_Index"
+                    onChange={(val) => { 
+                      if( val === "none" ){
+                        localImage.mediaJson?.updateField("storyboard_index",undefined);
+                      }
+                      else {
+                        localImage.mediaJson?.updateField("storyboard_index",Number(val));
+                      }
+                    }}
+                  />
+
                   <EditableJsonTextField localJson={localImage.mediaJson} field="description" />
                 </>,
                 Utils: <ImageUtils localImage={localImage} />
@@ -350,7 +364,7 @@ const ImageUtils: React.FC<ImageUtilsProps> = observer(({ localImage }) => {
       onClick={async () => {
         const blob = await localImage.toBlob()
         const flipped_blob = await flipImageBlobHorizontally(blob);
-        const image = await LocalImage.fromBlob(flipped_blob,localImage.parentFolder!, localImage.name);
+        const image = await LocalImage.fromBlob(flipped_blob, localImage.parentFolder!, localImage.name);
         if (image.parentFolder instanceof MediaFolder) image.parentFolder.setSelectedMedia(image);
       }}
     >

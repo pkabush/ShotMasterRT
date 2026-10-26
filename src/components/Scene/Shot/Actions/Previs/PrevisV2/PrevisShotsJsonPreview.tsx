@@ -1,19 +1,21 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { observer } from "mobx-react-lite";
 import type { Shot } from "../../../../../../classes/Shot";
-import { Button } from "react-bootstrap";
+import { Button, Stack } from "react-bootstrap";
 import { CroppedMediaImage } from "./CroppedMediaImage";
 import { LocalImage } from "../../../../../../classes/fileSystem/LocalImage";
 import SettingsButton from "../../../../../Atomic/SettingsButton";
 import LoadingSpinner from "../../../../../Atomic/LoadingSpinner";
 import SimpleSelect from "../../../../../Atomic/SimpleSelect";
 import { Action_generatePrevisAudioGoogleAll } from "./PrevisGenerateAudioGoogle";
-import { Action_Previs_ApplyOrder, Action_Previs_ClearImagePaths, Action_Previs_combineAudioWithImages, Action_Previs_CombineStoryboard, Action_Previs_ExtractAndFinalizeStoryboard, Previs_GetShotsJson, Previs_GetShotsOrder } from "./Previs_Actions";
+import { Action_Previs_ApplyOrder, Action_Previs_ClearImagePaths, Action_Previs_combineAudioWithImages, Action_Previs_CombineStoryboard, Action_Previs_ExtractAndFinalizeStoryboard, Action_PrevisJsonAddShot, Action_PrevisJsonRemoveShotIndex, getSkippedShotsIndexes, Previs_GetShotsJson, Previs_GetShotsOrder } from "./Previs_Actions";
 import { Previs_ShotPreviewItem } from "./Previs_TilePreview";
 
 // Autoplay Store
 import { create } from "zustand";
 import EditableJsonTextField, { EditableJsonToggleButton } from "../../../../../EditableJsonTextField";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faTrashCan } from "@fortawesome/free-solid-svg-icons";
 
 interface PrevisStore {
     autoplay: boolean;
@@ -48,31 +50,64 @@ export const Previs_ShotJsonPreview: React.FC<Props> = observer(({ shot }) => {
     // autoplay
     const previs_json = Previs_GetShotsJson(shot);
     const shots = previs_json.shots ?? [];
-    //const shots = Previs_GetShotsOrdered(shot);
     const shots_order_indexes = Previs_GetShotsOrder(shot);
 
     const updateShot = (
         index: number,
-        field: "image_prompt" | "audio_text" | "image_path" | "audio_voice",
+        field: "image_prompt" | "audio_text" | "image_path" | "tile_index",
         value: string
     ) => {
+        while (previs_json.shots.length <= index) { previs_json.shots.push({}); }
         previs_json.shots[index][field] = value;
         const newJson = JSON.stringify(previs_json, null, 2);
         shot.shotJson?.updateField("previs_json", newJson);
     };
 
-    // Keep selected index valid if shots change
-    useEffect(() => {
-        if (selectedIndex >= shots.length) {
-            setSelectedIndex(Math.max(0, shots.length - 1));
-        }
-    }, [shots.length, selectedIndex]);
 
-    const selectedShot = shots[selectedIndex];
+    const selectedShot = shots[selectedIndex] ?? {};
     const loading_audio = shot.shotJson?.getField(wf_loading_audio) ?? false;
 
     return (
         <div>
+            <Stack direction="horizontal">
+                <h4>Previs</h4>
+
+                <Button
+                    size="sm"
+                    variant="outline-warning"
+                    className="ms-auto"
+                    onClick={() => { Action_PrevisJsonAddShot(shot,undefined,selectedIndex) }}
+                >
+                    +Add Shot
+                </Button>
+
+                <SimpleSelect
+                    value={`Skipped (${getSkippedShotsIndexes(shot).length})`}
+                    options={[`Skipped (${getSkippedShotsIndexes(shot).length})`, ...getSkippedShotsIndexes(shot).map(String)]}
+                    onChange={(val) => { Action_PrevisJsonAddShot(shot, Number(val),selectedIndex); }}
+                />
+
+                <Button
+                    size="sm"
+                    variant="outline-secondary"
+                >
+                    {`Shots Found: ${shots.length ?? "None"}`}
+                </Button>
+
+                <Button
+                    size="sm"
+                    variant="outline-danger"
+                    onClick={() => {
+                        Action_PrevisJsonRemoveShotIndex(shot, selectedIndex);
+                        console.log("Delete Shot", selectedIndex);
+                    }}
+                >
+                    <FontAwesomeIcon icon={faTrashCan} /> Delete Shot
+                </Button>
+
+
+            </Stack>
+
             {/* Preview images strip */}
             <div
                 className="d-flex mb-3 p-1 border rounded"
@@ -80,9 +115,9 @@ export const Previs_ShotJsonPreview: React.FC<Props> = observer(({ shot }) => {
             >
                 {shots_order_indexes.map((index: number) => {
                     const shotData = shots[index];
-                    if (!shotData) return null;
+                    //if (!shotData) return null;
 
-                    const image_path = shotData.image_path;
+                    const image_path = shotData?.image_path;
                     const shot_image = image_path
                         ? (shot.getByPath(image_path) as LocalImage)
                         : shot.first_frame;
@@ -113,7 +148,7 @@ export const Previs_ShotJsonPreview: React.FC<Props> = observer(({ shot }) => {
                             {shot_image ? (
                                 <CroppedMediaImage
                                     localImage={shot_image}
-                                    shotIndex={index}
+                                    shotIndex={shotData?.tile_index ?? index}
                                     className="rounded"
                                     style={{
                                         width: "100%",
@@ -129,6 +164,7 @@ export const Previs_ShotJsonPreview: React.FC<Props> = observer(({ shot }) => {
                                         fontSize: "0.65rem",
                                     }}
                                 >
+                                    Shot {index}<br />
                                     No Image
                                 </div>
                             )}

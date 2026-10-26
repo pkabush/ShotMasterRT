@@ -5,8 +5,7 @@ import { LocalAudio } from "../../../../../../classes/fileSystem/LocalAudio";
 import { Previs_GetShotsOrder, subtitles_path, updatePrevisShot, updatePrevisShotOrder } from "./Previs_Actions";
 import { Button, Col, Form, Row, Stack } from "react-bootstrap";
 import { CroppedMediaImage } from "./CroppedMediaImage";
-import { EditableTextArea } from "./EditableTextArea";
-import Previs_GenerateAudioGPT from "./Previs_GenerateAudioGPT";
+import { EditableDropdown, EditableTextArea } from "./EditableTextArea";
 import Previs_GenerateAudioGoogle from "./PrevisGenerateAudioGoogle";
 import { extractImageTile } from "../ImageSplitUtils";
 import { EditableJsonToggleButton } from "../../../../../EditableJsonTextField";
@@ -23,7 +22,7 @@ interface ShotPreviewItemProps {
     shotData: any;
     shot: Shot;
     shotIndex: number;
-    onUpdateField: (field: "image_prompt" | "audio_text" | "image_path" | "audio_voice", value: string) => void;
+    onUpdateField: (field: "image_prompt" | "audio_text" | "image_path" | "tile_index", value: string) => void;
     setSelectedIndex: (index: number) => void;
 }
 
@@ -59,6 +58,8 @@ export const Previs_ShotPreviewItem: React.FC<ShotPreviewItemProps> = observer((
     const playback_rate = shotData.playback_speed ?? "1.0";
     const use_subs = shot.scene.project.projinfo!.getField(subtitles_path);
 
+    const image_tile_index = shotData.tile_index ?? shotIndex;
+
     return (
         <>
             <div className="border rounded p-3 mb-3">
@@ -67,14 +68,14 @@ export const Previs_ShotPreviewItem: React.FC<ShotPreviewItemProps> = observer((
 
                     {/* Left Column: Image Preview */}
                     <Col md={3} className="mb-3 mb-md-0">
-                        {shot_image ? (
+                        {shot_image && image_tile_index<16 ? (
                             <div
                                 className="position-relative rounded border overflow-hidden"
                                 style={{ width: "100%", containerType: "inline-size", }}
                             >
                                 <CroppedMediaImage
                                     localImage={shot_image}
-                                    shotIndex={shotIndex}
+                                    shotIndex={image_tile_index}
                                     className="rounded"
                                     style={{
                                         display: "block",
@@ -124,8 +125,9 @@ export const Previs_ShotPreviewItem: React.FC<ShotPreviewItemProps> = observer((
 
                     {/* Right Column: Text Fields */}
                     <Col md={9}>
+                        <h4>Shot {shotIndex}</h4>
                         {/* Small image previews */}
-                        {var_images && var_images.length > 0 && (
+                        {var_images && var_images.length > 0 && image_tile_index<16 &&(
                             <div
                                 className="d-flex gap-2 p-2"
                                 style={{
@@ -158,7 +160,7 @@ export const Previs_ShotPreviewItem: React.FC<ShotPreviewItemProps> = observer((
                                         >
                                             <CroppedMediaImage
                                                 localImage={image}
-                                                shotIndex={shotIndex}
+                                                shotIndex={image_tile_index}
                                                 className="rounded border-0 flex-shrink-0"
                                                 style={{
                                                     width: "90px",
@@ -188,9 +190,7 @@ export const Previs_ShotPreviewItem: React.FC<ShotPreviewItemProps> = observer((
                             />
                         </Form.Group>
 
-                        {false && <Previs_GenerateAudioGPT shot={shot} audioIndex={shotIndex} />}
-
-                        <Stack direction="horizontal" gap={3} className="text-nowrap">
+                        <Stack direction="horizontal" gap={1} className="text-nowrap">
                             <Previs_GenerateAudioGoogle shot={shot} audioIndex={shotIndex} />
 
                             <Button
@@ -246,6 +246,14 @@ export const Previs_ShotPreviewItem: React.FC<ShotPreviewItemProps> = observer((
 
                             <EditableJsonToggleButton field={subtitles_path} localJson={shot.scene.project.projinfo!} default_val={use_subs} label="Add Subtitles" />
 
+                            {shotIndex > 15 &&
+                                <EditableDropdown
+                                    value={image_tile_index}
+                                    onSave={(val) => onUpdateField("tile_index", val)}
+                                />
+                            }
+
+
                         </Stack>
 
                         {audio_file ? (
@@ -290,9 +298,9 @@ export const Previs_ShotPreviewItem: React.FC<ShotPreviewItemProps> = observer((
                                     />
                                 </div>
 
-                                <Button size="sm" variant="outline-danger" onClick={() => {
+                                <Button size="sm" variant="outline-danger" style={{ minWidth: 75 }} onClick={() => {
                                     if (window.confirm("Are you sure you want to delete this item?")) { audio_file.delete(); }
-                                }}> <FontAwesomeIcon icon={faTrashCan} /> </Button>
+                                }}> <FontAwesomeIcon icon={faTrashCan} />Audio </Button>
 
                             </div>
                         ) : (

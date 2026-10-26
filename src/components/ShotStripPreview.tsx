@@ -8,6 +8,7 @@ import MediaPreview from './MediaComponents/MediaPreview';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFaceSurprise, faFilm, faImage } from '@fortawesome/free-solid-svg-icons';
+import { ShotContextMenuWrapper } from './Scene/Shot/ShotContextMenu';
 
 interface Props {
   shot: Shot;
@@ -18,7 +19,7 @@ interface Props {
 
 
 
-const ShotStripPreview: React.FC<Props> = observer(({ shot, isSelected,autoplay, onClick }) => {
+const ShotStripPreview: React.FC<Props> = observer(({ shot, isSelected, autoplay, onClick }) => {
 
   const [dragSide, setDragSide] = React.useState<"left" | "right" | null>(null);
 
@@ -70,39 +71,43 @@ const ShotStripPreview: React.FC<Props> = observer(({ shot, isSelected,autoplay,
         }
       }}
     >
-      {shot.previewMedia ? (
-        <MediaPreview
-          media={shot.previewMedia as LocalImage}
-          className="img-fluid"
-          style={{
-            height: '100%',
-            width: 'auto',
-            objectFit: 'contain',
-            display: 'block',
-          }}
-          autoPlay={autoplay}
-          loop={true}
-          muted={true}
-          
-        />
+      <ShotContextMenuWrapper shot={shot}>
+        {shot.previewMedia ? (
 
-      ) : (
-        <div
-          style={{
-            height: '100%',
-            aspectRatio: '9 / 16',
-            backgroundColor: 'black',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'grey',
-            fontSize: '1rem',
-            fontWeight: 500,
-          }}
-        >
-          {shot.name}
-        </div>
-      )}
+          <MediaPreview
+            media={shot.previewMedia as LocalImage}
+            className="img-fluid"
+            style={{
+              height: '100%',
+              width: 'auto',
+              objectFit: 'contain',
+              display: 'block',
+            }}
+            autoPlay={autoplay}
+            loop={true}
+            muted={true}
+
+          />
+
+
+        ) : (
+          <div
+            style={{
+              height: '100%',
+              aspectRatio: '9 / 16',
+              backgroundColor: 'black',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'grey',
+              fontSize: '1rem',
+              fontWeight: 500,
+            }}
+          >
+            {shot.name}
+          </div>
+        )}
+      </ShotContextMenuWrapper>
 
 
       {/* Shot name overlay */}
@@ -170,6 +175,7 @@ const ShotStripPreview: React.FC<Props> = observer(({ shot, isSelected,autoplay,
 
 
 
+
       {/* Finished toggle overlay */}
       <div
         className="position-absolute"
@@ -204,6 +210,7 @@ const ShotStripPreview: React.FC<Props> = observer(({ shot, isSelected,autoplay,
           }}
         />
       )}
+
 
     </div>
   );
