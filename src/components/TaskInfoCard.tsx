@@ -7,9 +7,9 @@ import { MediaPreviewSmall } from "./MediaComponents/MediaPreviewSmall";
 import * as ContextMenu from "@radix-ui/react-context-menu";
 import { MenuItemIcon } from "./MediaFolderGallery";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faClipboard, faTrashCan, faVideo } from "@fortawesome/free-solid-svg-icons";
+import { faClipboard, faDownload, faTrashCan, faVideo } from "@fortawesome/free-solid-svg-icons";
 import { toJS } from "mobx";
-import { Badge } from "react-bootstrap";
+import { Badge, Button } from "react-bootstrap";
 import { SeedanceAI } from "../classes/AiProviders/Byteplus";
 import { ai_providers } from "../classes/AI_provider";
 
@@ -32,6 +32,8 @@ const TaskInfoCard: React.FC<Props> = observer(({ task, show_path = false }) => 
     const color = statusColors[status] ?? "gray";
 
     const loading = ["running", "processing"].includes(status);
+    const url = task.data?.url;
+
 
     const onDelete = useCallback(() => {
         if (window.confirm(`Delete task ${task.id}?`)) {
@@ -51,6 +53,8 @@ const TaskInfoCard: React.FC<Props> = observer(({ task, show_path = false }) => 
                                 style={{
                                     width: 12,
                                     height: 12,
+                                    minWidth: 12,
+                                    flexShrink: 0,
                                     borderRadius: "50%",
                                     backgroundColor: color,
                                 }}
@@ -66,9 +70,10 @@ const TaskInfoCard: React.FC<Props> = observer(({ task, show_path = false }) => 
                                 </span>
                             )}
 
-                            <span className="fw-bold">{task.id}</span>
+                            <span className="fw-bold text-nowrap">{task.id}</span>
                             <span className="text-muted me-2">{task.data.provider}</span>
                             <span className="text-muted">{status}</span>
+
 
 
                             {/**RESULTS PREVIEW */}
@@ -89,6 +94,12 @@ const TaskInfoCard: React.FC<Props> = observer(({ task, show_path = false }) => 
                                     {task.data.cost.toFixed(2)}$
                                 </Badge>
                             </>}
+
+
+                            {url && <Button size="sm" variant="outline-success" onClick={async () => {
+                                window.open(url, "_blank", "noopener,noreferrer")
+                            }}><FontAwesomeIcon icon={faDownload} /></Button>}
+
 
                             <SimpleButton
                                 label="Check Status"
@@ -121,6 +132,23 @@ const TaskInfoCard: React.FC<Props> = observer(({ task, show_path = false }) => 
                         <MenuItemIcon><FontAwesomeIcon icon={faClipboard} /></MenuItemIcon>
                         Log
                     </ContextMenu.Item>
+
+                    {url && <ContextMenu.Item className="ContextMenuItem success" onClick={() => {
+                        window.open(url, "_blank", "noopener,noreferrer")
+                    }}>
+                        <MenuItemIcon><FontAwesomeIcon icon={faDownload} /></MenuItemIcon>
+                        Download 
+                    </ContextMenu.Item>}
+
+                    {url && <ContextMenu.Item className="ContextMenuItem success" onClick={() => {
+                        task.downloadResults();
+                    }}>
+                        <MenuItemIcon><FontAwesomeIcon icon={faDownload} /></MenuItemIcon>
+                        Download to SM
+                    </ContextMenu.Item>}
+
+
+
 
                     <ContextMenu.Item className="ContextMenuItem danger" onClick={onDelete}>
                         <MenuItemIcon><FontAwesomeIcon icon={faTrashCan} /></MenuItemIcon>

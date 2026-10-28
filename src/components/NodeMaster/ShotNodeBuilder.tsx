@@ -109,7 +109,7 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
     const exportFlow = useCallback(async () => {
         await nodegraphJson.updateField("nodegraphs/nodegraph_001", { nodes, edges, });
         setIsDirty(false);
-        console.log("\x1b[94mGRAPH SAVED\x1b[0m");
+        console.log("\x1b[94m[Nodegraph]GRAPH SAVED\x1b[0m");
     }, [nodegraphJson, nodes, edges]);
 
 
@@ -157,7 +157,7 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
     useEffect(() => {
         return () => {
             if (latestGraph.current.nodes.length == 0) return;
-            console.log("Graph Closed, saving...", latestGraph.current);
+            console.log("[Nodegraph] Graph Closed, saving...", latestGraph.current);
             nodegraphJson.updateField(
                 "nodegraphs/nodegraph_001",
                 latestGraph.current
@@ -266,7 +266,7 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
                     const local_file_path = e.dataTransfer.getData("LocalFilePath");
                     if (local_file_path) {
                         //console.log(local_file_path, e);
-                        console.log("Drop From Local File");
+                        console.log("[Nodegraph] Drop From Local File");
                         nodegraph_api.addNode("localImageNode",
                             nodegraph_api.screenToFlowPosition({ x: e.clientX, y: e.clientY })
                             , { path: local_file_path }, [300, 400]);
@@ -275,7 +275,7 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
 
                     const addNode = e.dataTransfer.getData("addNode");
                     if (addNode) {
-                        console.log("Drop Node");
+                        console.log("[Nodegraph] Drop Node");
                         nodegraph_api.addNode(addNode as NodeType,
                             nodegraph_api.screenToFlowPosition({ x: e.clientX, y: e.clientY }));
                         return;
@@ -283,7 +283,7 @@ export const SceneNodeBuilder: React.FC<SceneNodeBuilderProps> = ({ nodegraphJso
 
                     const files = Array.from(e.dataTransfer.files);
                     if (files.length > 0) {
-                        console.log("DROP FILE", files);
+                        console.log("[Nodegraph] DROP FILE", files);
                         const parentFolder = nodegraphJson.parentFolder;
                         const save_files = await parentFolder!.saveFiles(files);
                         let offset = 0;

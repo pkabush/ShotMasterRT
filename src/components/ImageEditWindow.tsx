@@ -316,7 +316,7 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
                 Image_Description: <>
                   <Button size="sm" variant="outline-warning">Rename</Button>
                   {localImage.name}
-
+                  <br/>
                   <SimpleSelect
                     value= {localImage.mediaJson?.getField("storyboard_index") ?? "none" }
                     options={["none", "0", "1", "2", "3","4","5","6","7","8","9","10","11","12","13","14","15"]}

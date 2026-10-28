@@ -161,7 +161,7 @@ export class SeedanceAI implements AIProvider {
     }
 
     private static async postToSeedance(payload: any) {
-        console.log("Seedance request:", payload);
+        console.log("[SEEDANCE] Seedance request:", payload);
         const hasVideo = payload.content.some((item: any) => item.type === "video_url");
         // CALLBACK ONLY WORKS FOR SERVER                
         const callback = new URL(SEEDANCE_CALLBACK_URL + "seedance/callback");
@@ -172,7 +172,7 @@ export class SeedanceAI implements AIProvider {
         payload.callback_url = callback.toString();
 
         const data = await postToWorker(payload, "seedance/generate", { model: payload.model, });
-        console.log("Seedance response:", data);
+        console.log("[SEEDANCE] Seedance response:", data);
         return data;
     }
 
@@ -218,7 +218,7 @@ export class SeedanceAI implements AIProvider {
         }
 
         const data = await this.postToSeedance(payload);
-        console.log("seed res", data);
+        console.log("[SEEDANCE] seed res", data);
 
         return {
             id: data?.id || data?.task_id || null,
@@ -244,7 +244,7 @@ export class SeedanceAI implements AIProvider {
         };
 
         const data = await this.postToSeedance(payload);
-        console.log("seed res", data);
+        console.log("[SEEDANCE] seed res", data);
 
         return {
             id: data?.id || data?.task_id || null,
@@ -253,7 +253,7 @@ export class SeedanceAI implements AIProvider {
     }
 
     async generateText(params: AIGenerateParms): Promise<string | null> {
-        console.log("Byteplus Generate Text Not Implemented", params);
+        console.log("[SEEDANCE] Byteplus Generate Text Not Implemented", params);
         return null
     }
 
@@ -274,14 +274,14 @@ export class SeedanceAI implements AIProvider {
         resolution?: string,
     ): Promise<AIResult | null> {
         try {
-            console.log("Bytedance Send Messages", { messages, model, aspect_ratio, resolution });
+            console.log("[SEEDANCE] Bytedance Send Messages", { messages, model, aspect_ratio, resolution });
 
             const image_models = new Set(SeedanceAI.options.image_models);
             // Gather Image response
             if (image_models.has(model)) {
                 const prompt = AI_Utils.messagesToJoinedPrompt(messages);
                 const images = AI_Utils.messagesToLocalImages(messages)
-                console.log("[Byteplus] Generating Image", { model, prompt, images });
+                console.log("[SEEDANCE] Generating Image", { model, prompt, images });
 
 
                 const size = getResolution(resolution, aspect_ratio);
@@ -433,13 +433,13 @@ function getResolution(
 
     if (resolution && !(resolution in resolutions)) {
         console.error(
-            `Unsupported resolution: ${resolution}. Defaulting to 1K.`,
+            `[SEEDANCE] Unsupported resolution: ${resolution}. Defaulting to 1K.`,
         );
     }
 
     if (aspect && !Object.keys(resolutions["1K"]).includes(aspect)) {
         console.error(
-            `Unsupported aspect: ${aspect}. Defaulting to 1:1.`,
+            `[SEEDANCE] Unsupported aspect: ${aspect}. Defaulting to 1:1.`,
         );
     }
 

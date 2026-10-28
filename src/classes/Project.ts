@@ -175,7 +175,7 @@ export class Project extends LocalFolder {
   nodeTreeLocalFolder: LocalFolder | null = null;
 
   constructor(parentFolder: FileSystemDirectoryHandle, userSettingsDB: UserSettingsDB) {
-    console.log("OPENING PROJECT", parentFolder);
+    console.log("[Project] OPENING PROJECT", parentFolder);
     super(null, parentFolder);
     if (Project._instance) this.id = Project._instance.id + 1;
     Project._instance = this;

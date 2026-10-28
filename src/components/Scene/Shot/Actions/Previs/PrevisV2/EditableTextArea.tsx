@@ -43,6 +43,7 @@ export const EditableDropdown: React.FC<EditableDropdownProps> = ({
         <Form.Select
             value={localValue}
             style={{ width: "70px" }}
+            size="sm"
             onChange={(e) => {
                 const newValue = e.target.value;
                 setLocalValue(newValue);

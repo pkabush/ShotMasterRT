@@ -119,6 +119,7 @@ export const SeedanceNode = memo(
 
 
                 // Generate Video
+                console.log(`[Sedance NODE] generate Video`);
                 const result = await SeedanceAI.generateVideo({
                     content,
                     generate_audio: data.sound ?? false,
@@ -130,6 +131,7 @@ export const SeedanceNode = memo(
                 });
 
                 if (!result) return;
+                console.log(`[Sedance NODE] response recieved, add Task`);
                 //const task = 
                 tasksJson!.addTask(result.id, {
                     provider: ai_providers.BD,

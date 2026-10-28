@@ -151,20 +151,21 @@ export class LocalFolder extends LocalItem {
     }
 
     async downloadFromUrl(url: string, filename?: string): Promise<LocalFile | null> {
+        console.log("[LocalFolder] Download From URL");
         if (!this.handle) { throw new Error("Folder not loaded"); }
 
         try {
             const encodedTarget = encodeURIComponent(url);
             //const locUrl = `http://localhost:4000/proxy/${encodedTarget}`;
-
             let response: Response | null = null;
 
+            /*
             try {
                 // First attempt: direct fetch
                 response = await fetch(url);
                 //if (!response.ok) { throw new Error(`Direct fetch failed: ${response.statusText}`); }
             } catch (err) {
-                console.warn("Direct fetch failed, trying local proxy:", err);
+                console.log("[LocalFolder] Direct fetch failed, trying server download");
                 try {
                     // Fallback to local proxy
                     //response = await fetch(locUrl);
@@ -176,16 +177,22 @@ export class LocalFolder extends LocalItem {
                         { credentials: "include", }
                     );
 
-
                 } catch (proxyErr: any) {
-                    console.error("Proxy fetch failed:", proxyErr);
-                    // Check if it's likely a connection refused error
-                    if (proxyErr instanceof TypeError && proxyErr.message.includes("Failed to fetch")) {
-                        alert("START THE SERVER!");
-                    }
-                    throw proxyErr;
+                    console.error("[LocalFolder]Proxy fetch failed:", proxyErr);
+                    return null;
                 }
+            }*/
+
+            //Since we only use Seedance download form server form the start
+            response = await fetch(
+                `${WORKER_URL}/download-file?url=${encodedTarget}`,
+                { credentials: "include", }
+            );
+
+            if (!response.ok) {
+                throw new Error(`Download failed: ${response.status} ${response.statusText}`);
             }
+
 
             const blob = await response.blob();
             const urlObj = new URL(url);

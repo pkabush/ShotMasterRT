@@ -23,7 +23,7 @@ export class TasksJson {
 
         // Replace existing instance for this path
         TasksJson.registry.set(dataJson.path, this);
-        console.log("Registered TASKS Json", dataJson.path);
+        console.log("[TASK Json] Registered TASKS Json", dataJson.path);
     }
 
     static getAllTasksJsons(): TasksJson[] {
@@ -59,6 +59,7 @@ export class TasksJson {
 
 
     addTask(id: string, data?: any | null): Task {
+        console.log(`[TASK] add Task`);
         const task = new Task(this, id);
         data.task_name = `${task.tasksJson.dataJson?.parentFolder!.path!.replaceAll("/", "_")}_${getCurrentTimestampUTC()}${data.geninfo?.workflow ? `_${data.geninfo.workflow}` : ''}`;
         runInAction(() => { this.tasks.push(task); });
@@ -131,13 +132,14 @@ export class Task {
     }
 
     async check_status() {
-        console.log("CHECK STATUS", this);
+        console.log("[TASK] CHECK STATUS", this);
         const response = await getFromWorker(`seedance/status/${this.id}`);
         console.log("Seedance check status:", response);
         return response;
     }
 
     async downloadResults() {
+        console.log("[TASK] download result url");
         const url = this.data?.url;
         const res_media = await this.tasksJson.outFolder!.downloadFromUrl(url, this.data?.task_name) as LocalMedia;
 

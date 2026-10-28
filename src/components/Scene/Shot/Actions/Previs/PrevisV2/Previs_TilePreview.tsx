@@ -14,7 +14,7 @@ import SimpleSelect from "../../../../../Atomic/SimpleSelect";
 import { usePrevisStore } from "./PrevisShotsJsonPreview";
 import { useEffect, useRef } from "react";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faTrashCan } from "@fortawesome/free-solid-svg-icons";
+import { faRandom, faRedo, faTrashCan } from "@fortawesome/free-solid-svg-icons";
 
 
 
@@ -47,7 +47,7 @@ export const Previs_ShotPreviewItem: React.FC<ShotPreviewItemProps> = observer((
 
     // Image
     const image_path = shotData.image_path;
-    const shot_image = image_path ? shot.getByPath(shotData.image_path) as LocalImage : shot.first_frame;
+    const shot_image = image_path ? shot.getByAbsPath(shotData.image_path) as LocalImage : shot.first_frame;
     const var_images = shot.MediaFolder_results?.getType(LocalImage);
     // Audio
     const audio_name = `audio_shot_${shotIndex}.mp3`;
@@ -68,7 +68,7 @@ export const Previs_ShotPreviewItem: React.FC<ShotPreviewItemProps> = observer((
 
                     {/* Left Column: Image Preview */}
                     <Col md={3} className="mb-3 mb-md-0">
-                        {shot_image && image_tile_index<16 ? (
+                        {shot_image && image_tile_index < 16 ? (
                             <div
                                 className="position-relative rounded border overflow-hidden"
                                 style={{ width: "100%", containerType: "inline-size", }}
@@ -127,7 +127,7 @@ export const Previs_ShotPreviewItem: React.FC<ShotPreviewItemProps> = observer((
                     <Col md={9}>
                         <h4>Shot {shotIndex}</h4>
                         {/* Small image previews */}
-                        {var_images && var_images.length > 0 && image_tile_index<16 &&(
+                        {var_images && var_images.length > 0 && image_tile_index < 16 && (
                             <div
                                 className="d-flex gap-2 p-2"
                                 style={{
@@ -140,7 +140,7 @@ export const Previs_ShotPreviewItem: React.FC<ShotPreviewItemProps> = observer((
                                     const storyboard_index = image.mediaJson?.getField("storyboard_index");
                                     const isStoryboardImage = storyboard_index != null;
 
-                                    if (isStoryboardImage && (shotIndex != storyboard_index))
+                                    if (isStoryboardImage && (image_tile_index != storyboard_index))
                                         return null;
 
                                     return (
@@ -246,11 +246,22 @@ export const Previs_ShotPreviewItem: React.FC<ShotPreviewItemProps> = observer((
 
                             <EditableJsonToggleButton field={subtitles_path} localJson={shot.scene.project.projinfo!} default_val={use_subs} label="Add Subtitles" />
 
-                            {shotIndex > 15 &&
-                                <EditableDropdown
-                                    value={image_tile_index}
-                                    onSave={(val) => onUpdateField("tile_index", val)}
-                                />
+                            <EditableDropdown
+                                value={image_tile_index}
+                                onSave={(val) => onUpdateField("tile_index", val)}
+                            />
+
+                            <Button size="sm" variant="outline-warning" onClick={() => {
+                                onUpdateField("tile_index", ((Number(image_tile_index) + 1) % 16).toString());
+                            }}
+                            > <FontAwesomeIcon icon={faRandom} /></Button>
+
+                            {shotIndex < 15 &&
+                                <Button size="sm" variant="outline-warning" onClick={() => {
+                                    onUpdateField("tile_index", shotIndex.toString());
+                                }}>
+                                    <FontAwesomeIcon icon={faRedo} />
+                                </Button>
                             }
 
 
