@@ -8,7 +8,6 @@ import type { Provider } from "../classes/AiProviders/CostTracker.ts";
 import { Button, Stack } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCopy } from "@fortawesome/free-solid-svg-icons";
-import { SeedanceSendImagesToggle } from "./BytePlus/SeedanceHelper.tsx";
 
 interface SettingsViewProps {
   project: Project;
@@ -169,7 +168,6 @@ export const SettingsView: React.FC<SettingsViewProps> = observer(({ project }) 
         }}
       />
 
-      <SeedanceSendImagesToggle />
     </div>
   );
 });

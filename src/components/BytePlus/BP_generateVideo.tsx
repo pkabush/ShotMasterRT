@@ -130,7 +130,8 @@ export const BytePlus_GenerateVideo: React.FC<BytePlus_GenerateVideoProps> = obs
                                         resolution: project.workflows[wf_name].resolution,
                                         duration: project.workflows[wf_name].duration ? Number(project.workflows[wf_name].duration) : undefined,
                                         ratio: project.workflows[wf_name].aspect_ratio ?? SeedanceAI.options.video.ration.adaptive,
-                                        draft: project.projinfo!.getField(draft_field) ?? false,                                        
+                                        draft: project.projinfo!.getField(draft_field) ?? false,  
+                                        prompt: prompt,
                                         has_video,
                                     }
                                 })

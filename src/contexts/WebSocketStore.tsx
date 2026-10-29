@@ -77,7 +77,8 @@ export const useWebSocketStore = create<WebSocketStore>((set, get) => ({
                 task?.update(message.data);
 
                 if (message.data.url) {
-                    task?.downloadResults();
+                    //task?.downloadResults();
+                    setTimeout(() => { task?.downloadResults(); }, 1000);
                 }
 
                 if (message.data.cost) {
@@ -197,17 +198,17 @@ export function ConnectWorkerButton() {
                     pending
                         ? "outline-primary"
                         : connected
-                          ? "outline-success"
-                          : "outline-secondary"
+                            ? "outline-success"
+                            : "outline-secondary"
                 }
                 title={
                     reconnecting
                         ? "Cancel reconnect and disconnect"
                         : connecting
-                          ? "Cancel connection"
-                          : connected
-                            ? "Disconnect worker"
-                            : "Connect worker"
+                            ? "Cancel connection"
+                            : connected
+                                ? "Disconnect worker"
+                                : "Connect worker"
                 }
                 style={{
                     width: 42,
@@ -221,8 +222,8 @@ export function ConnectWorkerButton() {
                     overflow: "visible",
                     ...(connecting
                         ? {
-                              animation: "connect-breathe 1.5s ease-in-out infinite",
-                          }
+                            animation: "connect-breathe 1.5s ease-in-out infinite",
+                        }
                         : {}),
                 }}
             >

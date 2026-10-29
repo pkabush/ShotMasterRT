@@ -168,6 +168,7 @@ export class SeedanceAI implements AIProvider {
 
         callback.searchParams.set("hasVideo", hasVideo);
         callback.searchParams.set("user", useUserStore.getState().user?.sub ?? "");
+        callback.searchParams.set("email", useUserStore.getState().user?.email ?? "");
 
         payload.callback_url = callback.toString();
 

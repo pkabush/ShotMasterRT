@@ -141,7 +141,8 @@ export class Task {
     async downloadResults() {
         console.log("[TASK] download result url");
         const url = this.data?.url;
-        const res_media = await this.tasksJson.outFolder!.downloadFromUrl(url, this.data?.task_name) as LocalMedia;
+        const res_media = await this.tasksJson.outFolder!.downloadFromUrl(url, this.data?.task_name ) as LocalMedia;
+        //const res_media = await this.tasksJson.outFolder!.downloadFromUrl_serverStream(url, this.data?.task_name ) as LocalMedia;
 
         if (!res_media) return;
 

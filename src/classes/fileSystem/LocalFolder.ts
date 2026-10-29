@@ -150,49 +150,95 @@ export class LocalFolder extends LocalItem {
         return results;
     }
 
+    /*
     async downloadFromUrl(url: string, filename?: string): Promise<LocalFile | null> {
         console.log("[LocalFolder] Download From URL");
         if (!this.handle) { throw new Error("Folder not loaded"); }
 
         try {
             const encodedTarget = encodeURIComponent(url);
-            //const locUrl = `http://localhost:4000/proxy/${encodedTarget}`;
             let response: Response | null = null;
-
-            /*
-            try {
-                // First attempt: direct fetch
-                response = await fetch(url);
-                //if (!response.ok) { throw new Error(`Direct fetch failed: ${response.statusText}`); }
-            } catch (err) {
-                console.log("[LocalFolder] Direct fetch failed, trying server download");
-                try {
-                    // Fallback to local proxy
-                    //response = await fetch(locUrl);
-                    //if (!response.ok) { throw new Error(`Proxy fetch failed: ${response.statusText}`); }
-
-                    // Fallback to Cloudflare Worker 
-                    response = await fetch(
-                        `${WORKER_URL}/download-file?url=${encodedTarget}`,
-                        { credentials: "include", }
-                    );
-
-                } catch (proxyErr: any) {
-                    console.error("[LocalFolder]Proxy fetch failed:", proxyErr);
-                    return null;
-                }
-            }*/
 
             //Since we only use Seedance download form server form the start
             response = await fetch(
                 `${WORKER_URL}/download-file?url=${encodedTarget}`,
                 { credentials: "include", }
             );
+            console.log("[LocalFolder] Download From URL RESPONSE recieved");
+
+            if (!response.ok) {
+                console.log("[LocalFolder] Response on OK");
+                throw new Error(`Download failed: ${response.status} ${response.statusText}`);
+            }
+
+            console.log("[LocalFolder] Status:", response.status);
+            console.log("[LocalFolder] Content-Type:", response.headers.get("content-type"));
+            console.log("[LocalFolder] Content-Length:", response.headers.get("content-length"));
+            console.log("[LocalFolder] Starting blob conversion...");
+
+
+            console.log("[LocalFolder] Creating Blob");
+            const blob = await response.blob();
+            console.log("[LocalFolder] Creating URL");
+            const urlObj = new URL(url);
+            console.log("[LocalFolder] Created Blob And URL Object");
+
+
+            // Determine extension
+            const urlName = urlObj.pathname.split("/").pop() || "";
+            const urlExt = urlName.includes(".") ? urlName.split(".").pop() : "";
+            const mimeExt = blob.type?.split("/")[1];
+            const ext = urlExt || mimeExt || "bin";
+            console.log("[LocalFolder] Deterened Extansion");
+
+            // Determine final filename
+            let finalName: string;
+            if (filename) {
+                finalName = `${filename}.${ext}`;
+            } else {
+                const base = urlName || "download";
+                finalName = base.includes(".") ? base : `${base}.${ext}`;
+            }
+
+            console.log("[LocalFolder] Constructed Filename");
+            // Return CHILD if exists
+            //for (const file of this.children) { if (file.name === finalName) return file as LocalFile; }
+
+            // Save the file using the existing save_file logic
+            const fileHandle = await this.handle.getFileHandle(finalName, { create: true });
+            const writable = await fileHandle.createWritable();
+            await writable.write(blob);
+            await writable.close();
+            console.log("[LocalFolder] Wrote File To Disk");
+
+            const newMedia = await this.load_file(fileHandle);
+            console.log("[LocalFolder] Loaded Downloaded file as Media");
+            return newMedia;
+
+        } catch (err) {
+            console.error("Failed to download media from URL:", err);
+            throw err;
+        }
+    }*/
+
+
+    async downloadFromUrl(url: string, filename?: string): Promise<LocalFile | null> {
+        console.log("[LocalFolder] Download From URL");
+        if (!this.handle) { throw new Error("Folder not loaded"); }
+
+        try {
+            let response: Response | null = null;
+
+            try {
+                response = await fetch(url);
+            } catch (err) {
+                console.error("[LocalFolder]Proxy fetch failed:", err);
+                return null;
+            }
 
             if (!response.ok) {
                 throw new Error(`Download failed: ${response.status} ${response.statusText}`);
             }
-
 
             const blob = await response.blob();
             const urlObj = new URL(url);
@@ -212,9 +258,6 @@ export class LocalFolder extends LocalItem {
                 finalName = base.includes(".") ? base : `${base}.${ext}`;
             }
 
-            // Return CHILD if exists
-            //for (const file of this.children) { if (file.name === finalName) return file as LocalFile; }
-
             // Save the file using the existing save_file logic
             const fileHandle = await this.handle.getFileHandle(finalName, { create: true });
             const writable = await fileHandle.createWritable();
@@ -229,6 +272,161 @@ export class LocalFolder extends LocalItem {
             throw err;
         }
     }
+
+
+    async downloadFromUrl_serverStream(url: string, filename?: string): Promise<LocalFile | null> {
+        console.log("[LocalFolder] Download From URL");
+
+        if (!this.handle) {
+            throw new Error("Folder not loaded");
+        }
+
+        let writable: FileSystemWritableFileStream | null = null;
+
+        try {
+            const encodedTarget = encodeURIComponent(url);
+
+            // Download through the Cloudflare Worker
+            const response = await fetch(
+                `${WORKER_URL}/download-file?url=${encodedTarget}`,
+                { credentials: "include" }
+            );
+
+            console.log("[LocalFolder] Download response received");
+
+            if (!response.ok) {
+                throw new Error(
+                    `Download failed: ${response.status} ${response.statusText}`
+                );
+            }
+
+            console.log("[LocalFolder] Status:", response.status);
+            console.log("[LocalFolder] Content-Type:", response.headers.get("content-type"));
+            console.log("[LocalFolder] Content-Length:", response.headers.get("content-length"));
+
+            if (!response.body) {
+                throw new Error("Download response has no readable body");
+            }
+
+            // Determine filename and extension
+            const urlObj = new URL(url);
+            const urlName = urlObj.pathname.split("/").pop() || "download";
+            const urlExt = urlName.includes(".") ? urlName.split(".").pop() : "";
+            const contentType = response.headers.get("content-type") || "";
+            const mimeExt = contentType.split("/")[1]?.split(";")[0];
+
+            console.log("[LocalFolder] Deterened Extansion");
+
+            const ext = urlExt || mimeExt || "bin";
+            console.log("EXT", ext)
+            let finalName: string;
+
+            if (filename) {
+                finalName = `${filename}.${ext}`;
+            } else {
+                finalName = urlName.includes(".") ? urlName : `${urlName}.${ext}`;
+            }
+
+            console.log("[LocalFolder] Final filename:", finalName);
+
+            // Create the destination file
+            const fileHandle = await this.handle.getFileHandle(finalName, { create: true });
+            writable = await fileHandle.createWritable();
+            console.log("[LocalFolder] Starting streamed download");
+
+            // Read the response stream and write each chunk directly to disk.
+            const logIntervalMB = 0.1;
+            const logIntervalBytes = logIntervalMB * 1024 * 1024;
+
+            let bytesReceived = 0;
+            let nextLogBytes = logIntervalBytes;
+
+            let lastLogTime = performance.now();
+            let lastLoggedBytes = 0;
+
+            const reader = response.body.getReader();
+
+            try {
+                while (true) {
+                    const { done, value } = await reader.read();
+
+                    if (done) {
+                        break;
+                    }
+
+                    if (value) {
+                        await writable.write(value);
+                        bytesReceived += value.byteLength;
+
+                        if (bytesReceived >= nextLogBytes) {
+                            const now = performance.now();
+                            const elapsedSeconds = (now - lastLogTime) / 1000;
+                            const intervalBytes = bytesReceived - lastLoggedBytes;
+
+                            // Speed in MiB/s (1024 * 1024 bytes per MiB)
+                            const speedMBps =
+                                elapsedSeconds > 0
+                                    ? intervalBytes / (1024 * 1024) / elapsedSeconds
+                                    : 0;
+
+                            const receivedMB = bytesReceived / (1024 * 1024);
+
+                            console.log(
+                                `[LocalFolder] Downloaded ${receivedMB.toFixed(2)} MB | ` +
+                                `Speed: ${speedMBps.toFixed(2)} MB/s`
+                            );
+
+                            lastLogTime = now;
+                            lastLoggedBytes = bytesReceived;
+
+                            // Advance to the next logging threshold.
+                            nextLogBytes =
+                                (Math.floor(bytesReceived / logIntervalBytes) + 1) *
+                                logIntervalBytes;
+                        }
+                    }
+                }
+            } catch (streamError) {
+                await reader.cancel().catch(() => { });
+                throw streamError;
+            }
+
+            console.log("[LocalFolder] Stream finished. Total bytes:", bytesReceived);
+
+            // Commit the file to disk.
+            await writable.close();
+            writable = null;
+            console.log("[LocalFolder] Wrote File To Disk");
+            // Load the downloaded file as media.
+            const newMedia = await this.load_file(fileHandle);
+            console.log("[LocalFolder] Loaded Downloaded file as Media");
+            return newMedia;
+        } catch (err) {
+            // Abort the writable stream if an error occurs.
+            if (writable) {
+                try {
+                    await writable.abort();
+                } catch (abortError) {
+                    console.warn(
+                        "[LocalFolder] Failed to abort file write:",
+                        abortError
+                    );
+                }
+            }
+
+            console.error(
+                "[LocalFolder] Failed to download media from URL:",
+                err
+            );
+
+            throw err;
+        }
+    }
+
+
+
+
+
 
     async copyFromClipboard() {
         if (!this.handle) { throw new Error("MediaFolder not loaded"); }
