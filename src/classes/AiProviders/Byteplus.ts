@@ -3,7 +3,7 @@ import { postToWorker } from "../CloudflareWorker/WorkerUtils";
 import { LocalImage } from "../fileSystem/LocalImage";
 
 //import { getSeedanceSendImages } from "../../components/BytePlus/SeedanceHelper";
-import { useUserStore, WORKER_URL } from "../../contexts/GoogleUserContext";
+import { useUserStore } from "../../contexts/GoogleUserContext";
 import AI_Utils, { type AIMessage } from "./AI_message_utils";
 
 
@@ -454,12 +454,14 @@ export async function imageUrlToBase64(url: string): Promise<{
     mime: string;
 }> {
     //const response = await fetch(url);
+    /*
     const encodedTarget = encodeURIComponent(url);
     const response = await fetch(
         `${WORKER_URL}/download-file?url=${encodedTarget}`,
         { credentials: "include", }
-    );
+    );*/
 
+    const response = await fetch(url);
 
     if (!response.ok) {
         throw new Error(`Failed to download image: ${response.status}`);
