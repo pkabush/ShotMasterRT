@@ -3,16 +3,17 @@ import { observer } from 'mobx-react-lite';
 import * as ContextMenu from '@radix-ui/react-context-menu';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
+    faClapperboard,
     faClipboard,
     faCopy,
     faEraser,
+    faIndent,
     faPaste,
     faTrashCan,
 } from '@fortawesome/free-solid-svg-icons';
 import type { Shot } from '../../../../../../classes/Shot';
 import { MenuItemIcon } from '../../../../../MediaFolderGallery';
-import { Action_PrevisJsonAddShot, Action_PrevisJsonRemoveShotIndex, getPrevisShotByIndex, updatePrevisShot } from './Previs_Actions';
-
+import { Action_PrevisJsonAddShot, Action_PrevisJsonRemoveShotIndex, getPrevisShotByIndex, getPrevisShotTileImageByIndex, updatePrevisShot, updatePrevisShotData } from './Previs_Actions';
 
 interface PrevisFrameContextMenuProps {
     shot: Shot;
@@ -63,13 +64,18 @@ const PrevisFrameContextMenu: React.FC<PrevisFrameContextMenuProps> = observer((
 
                             const local_path = data?.local_path;
 
-                            if (!local_path) {
-                                console.warn("local_path missing in clipboard data");
-                                return;
+                            if (local_path) {
+                                console.log("[ShotData] Clipboard Image Path", local_path);
+                                updatePrevisShot(shot, index, "image_path", local_path);
                             }
 
-                            console.log("Image Path", local_path);
-                            updatePrevisShot(shot, index, "image_path", local_path);
+                            const shot_data = data?.previs_shot_data;
+                            if (shot_data) {
+                                console.log("[ShotData] Clipboard Shot Data", shot_data);
+                                updatePrevisShotData(shot, index, shot_data);
+                            }
+
+
                         } catch (err) {
                             console.error("Failed to read from clipboard", err);
                         }
@@ -78,7 +84,7 @@ const PrevisFrameContextMenu: React.FC<PrevisFrameContextMenuProps> = observer((
                     <MenuItemIcon>
                         <FontAwesomeIcon icon={faPaste} />
                     </MenuItemIcon>
-                    Paste Image
+                    Paste Image/Shot
                 </ContextMenu.Item>
 
                 <ContextMenu.Item
@@ -90,6 +96,40 @@ const PrevisFrameContextMenu: React.FC<PrevisFrameContextMenuProps> = observer((
                     </MenuItemIcon>
                     Clear Image
                 </ContextMenu.Item>
+
+                <ContextMenu.Item
+                    className="ContextMenuItem warning"
+                    onSelect={() => {
+                        const shotData = getPrevisShotByIndex(shot, index);
+                        const shot_image = getPrevisShotTileImageByIndex(shot, index);
+                        if (shot_image) shot_image.mediaJson?.updateField("storyboard_index", shotData.tile_index ?? index);
+                    }}
+                >
+                    <MenuItemIcon>
+                        <FontAwesomeIcon icon={faIndent} />
+                    </MenuItemIcon>
+                    Set Index on current Image
+                </ContextMenu.Item>
+
+                <ContextMenu.Item
+                    className="ContextMenuItem warning"
+                    onSelect={async () => {
+                        const shotData = getPrevisShotByIndex(shot, index);
+
+                        console.log(shotData);
+                        shotData.tile_index ??= index;
+
+                        await navigator.clipboard.writeText(
+                            JSON.stringify({ previs_shot_data: shotData, })
+                        );
+                    }}
+                >
+                    <MenuItemIcon>
+                        <FontAwesomeIcon icon={faClapperboard} />
+                    </MenuItemIcon>
+                    Copy Shot
+                </ContextMenu.Item>
+
 
                 <ContextMenu.Item
                     className="ContextMenuItem danger"

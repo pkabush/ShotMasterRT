@@ -282,6 +282,19 @@ export function getPrevisShotByIndex(
     }
 }
 
+export function getPrevisShotTileImageByIndex(
+    shot: Shot,
+    index: number,
+): any | undefined {
+    const shotData = getPrevisShotByIndex(shot, index);
+    const image_path = shotData?.image_path;
+    const shot_image = image_path
+        ? (shot.getByAbsPath(image_path) as LocalImage)
+        : shot.first_frame;
+    return shot_image;
+}
+
+
 export function updatePrevisShot(
     shot: Shot,
     index: number,
@@ -302,6 +315,36 @@ export function updatePrevisShot(
         }
 
         shotsJson.shots[index][field] = value;
+
+        shot.shotJson?.updateField(
+            "previs_json",
+            JSON.stringify(shotsJson, null, 2),
+        );
+    } catch (error) {
+        console.error("Failed to update previs_json:", error);
+    }
+}
+
+export function updatePrevisShotData(
+    shot: Shot,
+    index: number,
+    shotData: any,
+) {
+    const previsJson = shot.shotJson?.getField("previs_json");
+
+    if (!previsJson) {
+        return;
+    }
+
+    try {
+        const shotsJson = JSON.parse(previsJson);
+
+        if (!shotsJson?.shots?.[index]) {
+            return;
+        }
+
+        // Replace the entire shot object
+        shotsJson.shots[index] = shotData;
 
         shot.shotJson?.updateField(
             "previs_json",
@@ -625,7 +668,9 @@ export function Action_PrevisJsonAddShot(
 
     // Initialize the new shot when after_shot is provided without an index.
     if (index === undefined && after_shot !== undefined) {
-        shots[newIndex] = { tile_index: shots[after_shot].tile_index ?? after_shot };
+        //shots[newIndex] = { tile_index: shots[after_shot].tile_index ?? after_shot };
+        shots[newIndex] = shots[after_shot];
+        shots[newIndex].tile_index = shots[after_shot].tile_index ?? after_shot;
 
         shot.shotJson?.updateField(
             "previs_json",
@@ -715,7 +760,7 @@ export function getSkippedShotsIndexes(shot: Shot): number[] {
 
 export function getPrevisJsonForStoryboard(shot: Shot): string | undefined {
     const previsJson = shot.shotJson?.getField("previs_json");
-    
+
     if (!previsJson) {
         return undefined;
     }

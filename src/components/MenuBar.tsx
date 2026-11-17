@@ -1,10 +1,13 @@
 // MenuBar.tsx
-import React from 'react';
-import { Navbar, Nav, Container } from 'react-bootstrap';
+import { Navbar, Nav, Container, NavDropdown } from 'react-bootstrap';
 import { MenuColumn } from './MenuColumn';
 import type { SubmenuItemProps } from './SubmenuItem';
 import { Project } from '../classes/Project';
 import { CostDisplay } from './CostDisplay';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faSquare } from '@fortawesome/free-regular-svg-icons';
+import { faSquareCheck } from '@fortawesome/free-solid-svg-icons';
+import { observer } from 'mobx-react-lite';
 
 interface MenuBarProps {
   onOpenFolder: () => void;
@@ -13,7 +16,12 @@ interface MenuBarProps {
   project: Project | null;
 }
 
-export const MenuBar: React.FC<MenuBarProps> = ({ onOpenFolder, recentFolders, onOpenRecent, project }) => {
+export const MenuBar = observer(({
+  onOpenFolder,
+  recentFolders,
+  onOpenRecent,
+  project,
+}: MenuBarProps) => {
 
   const fileMenuItems: Omit<SubmenuItemProps, 'parentKey'>[] = [
     { name: 'Open', onClick: onOpenFolder },
@@ -25,13 +33,6 @@ export const MenuBar: React.FC<MenuBarProps> = ({ onOpenFolder, recentFolders, o
     },
   ];
 
-  const editMenuItems: Omit<SubmenuItemProps, 'parentKey'>[] = [
-    { name: 'Undo' },
-    { name: 'Redo' },
-  ];
-
-  const helpMenuItems: Omit<SubmenuItemProps, 'parentKey'>[] = [{ name: 'About' }];
-
   return (
     <>
       <Navbar expand={true}>
@@ -41,34 +42,80 @@ export const MenuBar: React.FC<MenuBarProps> = ({ onOpenFolder, recentFolders, o
           {/* LEFT SIDE */}
           <Nav className="me-auto" style={{ userSelect: 'none' }}>
             <MenuColumn title="File" items={fileMenuItems} />
-            <MenuColumn title="Edit" items={editMenuItems} />
-            <MenuColumn title="Help" items={helpMenuItems} />
 
             {project && (
               <>
-                <MenuColumn title="Settings" onClick={() => project.setView({ type: "settings" })} />
-                <MenuColumn title="Script" onClick={() => project.setView({ type: "script" })} />
-                <MenuColumn title="TaskView" onClick={() => project.setView({ type: "taskview" })} />
-                <MenuColumn title="PromptView" onClick={() => project.setView({ type: "promptview" })} />
-                <MenuColumn title="Stats" onClick={() => project.setView({ type: "stats" })} />
+                <Nav.Link onClick={() => project.setView({ type: "script" })}> Script</Nav.Link>
+                <Nav.Link onClick={() => project.setView({ type: "settings" })}> Settings</Nav.Link>
+                <Nav.Link onClick={() => project.setView({ type: "taskview" })}> TaskView</Nav.Link>
+                <Nav.Link onClick={() => project.setView({ type: "promptview" })}> PromptView</Nav.Link>
+                <Nav.Link onClick={() => project.setView({ type: "stats" })}> Stats</Nav.Link>
+
+
+                <NavDropdown title="Options" id="basic-nav-dropdown">
+                  <NavProjectOptionToggle
+                    name="settings/ui/shot_strip_autoplay"
+                    label='Shot Strip Autoplay'
+                    project={project}
+                    defaultValue={true}
+                  />
+                  <NavProjectOptionToggle
+                    name="settings/ui/mediafolder_autoplay"
+                    label='Media Folder Autoplay'
+                    project={project}
+                    defaultValue={true}
+                  />
+                </NavDropdown>
               </>
             )}
-
-
-
-          </Nav>
-
-          {/* RIGHT SIDE */}
-          <Nav style={{ userSelect: 'none' }}>
-
           </Nav>
         </Container>
       </Navbar>
 
-
-
       {project && <CostDisplay project={project} />}
-
     </>
   );
-};
+});
+
+
+
+
+interface NavProjectOptionToggleProps {
+  project: Project;
+  name: string;
+  label?: string;
+  defaultValue?: boolean;
+}
+
+const NavProjectOptionToggle = observer(({
+  project,
+  label,
+  name,
+  defaultValue = false,
+}: NavProjectOptionToggleProps) => {
+
+  const value = project.projinfo?.getField(name);
+  const isEnabled = value !== undefined && value !== null
+    ? !!value
+    : defaultValue;
+
+  const toggle = () => {
+    project.projinfo?.updateField(name, !isEnabled);
+  };
+
+  return (
+    <NavDropdown.Item
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        toggle();
+      }}
+    >
+      <FontAwesomeIcon
+        icon={isEnabled ? faSquareCheck : faSquare}
+        className="me-2"
+      />
+      {label ?? name}
+    </NavDropdown.Item>
+  );
+});

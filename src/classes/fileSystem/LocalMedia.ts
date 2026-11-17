@@ -279,7 +279,6 @@ export class LocalMedia extends LocalFile {
     return response.Result.Id;
   }
 
-
   async getUrlObject(): Promise<string> {
     if (this.urlObject) return this.urlObject; // already loaded
     if (this._urlPromise) return this._urlPromise; // already loading
@@ -340,6 +339,7 @@ export class LocalMedia extends LocalFile {
     if (this.hasTag(tag)) { this.removeTag(tag); }
     else { this.addTag(tag); }
   }
+  
   async openInNewTab() {
     try {
       const url = await this.getUrlObject();

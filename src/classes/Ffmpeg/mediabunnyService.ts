@@ -37,7 +37,7 @@ export async function mb_trimLocalVideo(localVideo: LocalVideo) {
   await conversion.execute();
 
   const resultBuffer = output.target.buffer;
-  const blob = new Blob([resultBuffer!], { type: "video/webm" });
+  const blob = new Blob([resultBuffer!], { type: "video/mp4" });
   return blob;
   const url = URL.createObjectURL(blob);
   window.open(url, "_blank");

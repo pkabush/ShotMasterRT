@@ -51,7 +51,7 @@ const EditableJsonTextField: React.FC<EditableJsonTextFieldProps> = observer(({
     if (onSave) await (onSave(newValue));
   };
 
-  return (<>  
+  return (<>
     <GenericTextEditor
       label={label ?? field}
       initialText={localJson.getField(field) ?? default_value} // <-- use getField instead of direct access
@@ -186,6 +186,36 @@ export const EditableJsonBooleanSelect: React.FC<EditableJsonToggleFieldProps> =
   );
 });
 
+
+
+type EditableJsonOptionSelectProps = {
+  localJson: LocalJson | null;
+  field: string;
+  label?: string;
+  default_val?: string;
+  values: string[];
+};
+
+
+export const EditableJsonOptionSelect: React.FC<EditableJsonOptionSelectProps> = observer(({
+  localJson,
+  field,
+  label,
+  default_val,
+  values
+}) => {
+  if (!localJson) return;
+  const value = localJson.getField(field) ?? default_val;
+
+  return (
+    <SimpleSelect
+      value={value ?? values[0]}
+      options={values}
+      label={label}
+      onChange={(val) => { localJson.updateField(field, val); }}
+    />
+  );
+});
 
 
 

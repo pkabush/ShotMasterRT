@@ -39,6 +39,7 @@ export class KlingAI {
         v3: "kling-v3",
         vo1: "kling-video-o1",
         turbo: "kling-3.0-turbo",
+        v4: "kling-4.0",
       },
       sound: {
         on: "on",
@@ -100,6 +101,18 @@ export class KlingAI {
         },
       },
     },
+    kling4: {
+      resolution: {
+        p720: "720p",
+        p1080: "1080p",
+      },
+      duration: [3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30],
+      frameType: {
+        first: "first_frame",
+        middle: "middle_frame",
+        last: "last_frame",
+      },
+    },
   } as const;
 
   private static async postToKling(targetUrl: string, payload: any) {
@@ -112,7 +125,7 @@ export class KlingAI {
     payload.callback_url = callback.toString();
 
     return postToWorker(payload, "kling/generate", {
-      request_url: targetUrl,      
+      request_url: targetUrl,
     });
   }
 
@@ -355,6 +368,120 @@ export class KlingAI {
 
     return { id: data.data.id, workflow: "klingTurbo" };
   }
+
+  // ================= KLING 4.0 IMAGE TO VIDEO =================
+  // Kling 4.0 uses the contents/settings API rather than the legacy
+  // /v1/videos/image2video payload. Provide keyframes in the order they
+  // should appear: first_frame, middle_frame(s), then last_frame.
+  public static async kling4ImageToVideo(options: {
+    prompt: string;
+    frames: Array<{
+      type: "first_frame" | "middle_frame" | "last_frame";
+      url: string; // URL or base64 image data
+    }>;
+    resolution?: "720p" | "1080p" | string;
+    duration?: number; // Integer seconds, 3-30
+  }) {
+    const {
+      prompt,
+      frames,
+      resolution = KlingAI.options.kling4.resolution.p1080,
+      duration,
+    } = options;
+
+    if (!prompt?.trim()) {
+      throw new Error("Kling 4.0 requires a prompt");
+    }
+    if (!frames || frames.length === 0) {
+      throw new Error("Kling 4.0 requires at least one keyframe image");
+    }
+    if (frames.length > 10) {
+      throw new Error("Kling 4.0 supports a maximum of 10 keyframe images");
+    }
+    if (duration !== undefined && (!Number.isInteger(duration) || duration < 3 || duration > 30)) {
+      throw new Error("Kling 4.0 duration must be an integer between 3 and 30 seconds");
+    }
+    if (resolution !== "720p" && resolution !== "1080p") {
+      throw new Error("Kling 4.0 resolution must be 720p or 1080p");
+    }
+
+    const payload: any = {
+      contents: [
+        { type: "prompt", text: prompt },
+        ...frames.map(({ type, url }) => ({
+          type,
+          url,
+        })),
+      ],
+      settings: { resolution },
+    };
+
+    // If omitted, Kling uses a duration stated in the prompt, or 10 seconds.
+    if (duration !== undefined) payload.settings.duration = duration;
+
+
+    payload.options = {};
+    payload.options.watermark_info = false;
+
+    console.log("KLING V4 Payload", payload);
+    //const targetUrl = "https://api-singapore.klingai.com/image-to-video/kling-4.0";    
+    //const data = await this.postToKling(targetUrl, payload);
+
+    // Kling 4.0 returns data.id; older workflows commonly return data.task_id.
+    //return { id: data.data.id ?? data.data.task_id, workflow: "kling-4.0-image2video" };
+  }
+
+  // ================= KLING 4.0 TEXT TO VIDEO =================
+  public static async kling4TextToVideo(options: {
+    prompt: string;
+    resolution?: "720p" | "1080p" | string;
+    aspect_ratio?: "21:9" | "16:9" | "9:16" | "1:1";
+    duration?: number;
+    callback_url?: string;
+    external_task_id?: string;
+    watermark?: boolean;
+  }) {
+    const {
+      prompt,
+      resolution = "720p",
+      aspect_ratio = "9:16",
+      duration
+    } = options;
+
+    if (!prompt?.trim()) {
+      throw new Error("Kling 4.0 Text-to-Video requires a prompt");
+    }
+
+    if (
+      duration !== undefined &&
+      (!Number.isInteger(duration) || duration < 3 || duration > 30)
+    ) {
+      throw new Error("Duration must be an integer between 3 and 30 seconds");
+    }
+
+    const payload: any = {
+      prompt,
+      settings: {
+        resolution,
+        aspect_ratio,
+      },
+      options: {
+        watermark_info: { enabled: false, },
+      },
+    };
+
+    if (duration !== undefined) {
+      payload.settings.duration = duration;
+    }
+
+    const targetUrl = "https://api-singapore.klingai.com/text-to-video/kling-4.0";
+
+    console.log("KLING V4 Txt2Video Payload", payload);
+    const data = await this.postToKling(targetUrl, payload);
+
+    return {      id: data.data.id,      workflow: "kling4-text-to-video",    };
+  }
+
 }
 
 export interface LipSyncFaceChoose {
@@ -369,3 +496,5 @@ export interface LipSyncFaceChoose {
   original_audio_volume?: number; // Optional, default 1, range [0,2]
 
 }
+
+

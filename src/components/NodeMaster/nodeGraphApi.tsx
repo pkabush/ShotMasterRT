@@ -516,9 +516,11 @@ export function useNodeGraphApi() {
 
     // Save AI Image/Text Response
     const saveAiTextImageResponse = useCallback(
-        async (nodeId: string, res: any, local_file: LocalFile,index?: number) => {
+        async (nodeId: string, res: any, local_file: LocalFile, index?: number) => {
             // IMAGE RESPONSE            
             if (typeof res !== "string") {
+                //console.log("[NODEGRAPH] Save Image Result", res);
+
                 // Image Response                
                 const outImageNode = getOutputNodes(nodeId, "out_image", "localImageNode")[0];
                 if (!outImageNode) {
@@ -527,12 +529,18 @@ export function useNodeGraphApi() {
                     if (!savedImage) return;
                     const newId = addNode("localImageNode", nodeId, { path: savedImage.path, });
                     connect(nodeId, newId, "out_image", "path");
+
+                    if (res.geninfo) savedImage.mediaJson?.updateField("geninfo", res.geninfo)
                 } else {
                     // Have Image Node
                     const resImage = local_file.getByAbsPath(outImageNode.data.path as string) ?? local_file;
                     const savedImage = await GoogleAI.saveResultImage(res, resImage.parentFolder!);
-                    if (savedImage) { setNodeData(outImageNode.id, { path: savedImage.path, }); }
+                    if (!savedImage) return;
+                    setNodeData(outImageNode.id, { path: savedImage.path, });
+                    
+                    if (res.geninfo) savedImage.mediaJson?.updateField("geninfo", res.geninfo)
                 }
+
                 return;
             }
 

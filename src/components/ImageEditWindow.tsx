@@ -15,15 +15,17 @@ import { WorkflowOptionSelect, WorkflowTextField } from "./WorkflowOptionSelect"
 import { useProject } from "../contexts/ProjectContext";
 import { TagsFolderContainer } from "./FolderTags/FolderTagsContainer";
 import { Project } from "../classes/Project";
-import { Button, Stack } from "react-bootstrap";
+import { Button, Form, Stack } from "react-bootstrap";
 import FullPageOverlay from "./Containers/FullPageOverlay";
 import DrawingCanvas from "./DrawingCanvas/DrawingCanvas";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faBrush } from "@fortawesome/free-solid-svg-icons";
 import { AI } from "../classes/AiProviders/AI_Generic";
 import { WorkflowImageModelSelect } from "../classes/AiProviders/AI_Generic_Components";
-import { flipImageBlobHorizontally } from "./Scene/Shot/Actions/Previs/ImageSplitUtils";
+import { flipImageBlobHorizontally, resizeImageToFit } from "./Scene/Shot/Actions/Previs/ImageSplitUtils";
 import SimpleSelect from "./Atomic/SimpleSelect";
+import type { LocalMedia } from "../classes/fileSystem/LocalMedia";
+import type { LocalFile } from "../classes/fileSystem/LocalFile";
 
 interface ImageEditWindowProps {
   localImage: LocalImage;
@@ -290,50 +292,22 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
                   </div>
 
                 </>,
-
-                /*
-              CensorImage: <>
-                <SettingsButton buttons={
-                  <>
-                    <Button size="sm" variant="outline-success"
-                      onClick={async () => {
-                        const res_image = await WF_Image_censor.run(localImage);
-                        console.log("Censored Image", res_image);
-                      }}
-                    > Censor Image </Button>
-
-                    <WorkflowImageModelSelect workflowName={WF_Image_censor.name} />
-                  </>
-                }
-                  content={
-                    <>
-                      <WorkflowTextField workflowName={WF_Image_censor.name} optionName={"prompt"} />
-                    </>
-                  }
-                />
-              </>,
-              */
                 Image_Description: <>
-                  <Button size="sm" variant="outline-warning">Rename</Button>
-                  {localImage.name}
-                  <br/>
-                  <SimpleSelect
-                    value= {localImage.mediaJson?.getField("storyboard_index") ?? "none" }
-                    options={["none", "0", "1", "2", "3","4","5","6","7","8","9","10","11","12","13","14","15"]}
-                    label="Storyboard_Index"
-                    onChange={(val) => { 
-                      if( val === "none" ){
-                        localImage.mediaJson?.updateField("storyboard_index",undefined);
-                      }
-                      else {
-                        localImage.mediaJson?.updateField("storyboard_index",Number(val));
-                      }
-                    }}
-                  />
-
+                  Name : {localImage.name}
+                  <br />
+                  Resolution: {localImage._width} x {localImage._height}
+                  <br />
+                  Size: {localImage.formattedSize}
+                  <br />
+                  Modified: {localImage.formattedLastModified} | {localImage.lastModifiedDays} days ago
+                  <br />
+                  <RenameFile localImage={localImage} />
+                  <FlipImageButton localImage={localImage} />
+                  <SetStoryboardIndex localImage={localImage} />
+                  <br />
+                  <ResizeToFit localImage={localImage} />
                   <EditableJsonTextField localJson={localImage.mediaJson} field="description" />
-                </>,
-                Utils: <ImageUtils localImage={localImage} />
+                </>
               }}
             />
           </div>
@@ -346,17 +320,16 @@ const ImageEditWindow: React.FC<ImageEditWindowProps> = observer(({
     </FullPageOverlay>
 
   </>);
-
 });
+
+
 
 
 interface ImageUtilsProps {
   localImage: LocalImage;
 }
 
-const ImageUtils: React.FC<ImageUtilsProps> = observer(({ localImage }) => {
-
-
+const FlipImageButton: React.FC<ImageUtilsProps> = observer(({ localImage }) => {
   return <>
     <Button
       size="sm"
@@ -370,9 +343,76 @@ const ImageUtils: React.FC<ImageUtilsProps> = observer(({ localImage }) => {
     >
       Flip Horisontal
     </Button>
-
-
   </>
+});
+
+
+const ResizeToFit: React.FC<ImageUtilsProps> = observer(({ localImage }) => {
+  const [res, setRes] = React.useState(512);
+
+  return (
+    <>
+      <Button
+        variant="outline-warning"
+        size="sm"
+        onClick={async () => {
+          const blob = await localImage.toBlob();
+          const flipped_blob = await resizeImageToFit(blob, res);
+          const image = await LocalImage.fromBlob(flipped_blob.blob, localImage.parentFolder!, `${localImage.name_no_extension}_${res}.png`);
+          if (image.parentFolder instanceof MediaFolder) { image.parentFolder.setSelectedMedia(image); }
+        }}
+      >
+        Resize To Fit
+      </Button>
+
+      <Form.Select
+        size="sm"
+        value={res}
+        onChange={(e) => setRes(Number(e.target.value))}
+        style={{ width: "100px", display: "inline-block", marginRight: "8px" }}
+      >
+        <option value={256}>256</option>
+        <option value={512}>512</option>
+        <option value={768}>768</option>
+        <option value={1024}>1024</option>
+        <option value={2048}>2048</option>
+      </Form.Select>
+    </>
+  );
+});
+
+
+interface RenameFileProps {
+  localImage: LocalFile;
+}
+
+const RenameFile: React.FC<RenameFileProps> = observer(({ localImage }) => {
+  return (
+    <Button size="sm" variant="outline-warning"
+      onClick={() => {
+        const name = window.prompt('Enter new name:', localImage.name);
+        if (!name?.trim()) return;
+        localImage.rename(name);
+      }}
+    >
+      Rename
+    </Button>
+  );
+});
+
+interface SetStoryboardIndexProps {
+  localImage: LocalMedia;
+}
+
+const SetStoryboardIndex: React.FC<SetStoryboardIndexProps> = observer(({ localImage }) => {
+  return (
+    <SimpleSelect
+      value={localImage.mediaJson?.getField("storyboard_index") ?? "none"}
+      options={["none", ...Array.from({ length: 16 }, (_, i) => String(i))]}
+      label="Storyboard_Index"
+      onChange={(val) => { localImage.mediaJson?.updateField("storyboard_index", val === "none" ? undefined : Number(val)); }}
+    />
+  );
 });
 
 

@@ -189,7 +189,7 @@ export class Project extends LocalFolder {
       selectedScene: observable,
       selectedPath: observable,
       selectedSubPath: observable,
-      costTracker : observable,
+      costTracker: observable,
       loadFromFolder: action,
       loadScenes: action,
       setView: action,
@@ -198,6 +198,9 @@ export class Project extends LocalFolder {
       scenes: computed,
       setSelectedPath: action,
       setSelectedSubPath: action,
+
+      settings_shot_strip_autoplay: computed,
+      settings_mdeiafolder_autoplay: computed,
     });
   }
 
@@ -323,7 +326,7 @@ export class Project extends LocalFolder {
   }
 
   async loadDB() {
-    await this.userSettingsDB.load();    
+    await this.userSettingsDB.load();
   }
 
   async createScene(sceneName: string) {
@@ -389,6 +392,16 @@ export class Project extends LocalFolder {
     link.click();
     document.body.removeChild(link);
   }
+
+
+  // Settings - should do better
+  get settings_shot_strip_autoplay() {
+    return this.projinfo?.getField("settings/ui/shot_strip_autoplay") ?? true;
+  }
+  get settings_mdeiafolder_autoplay() {
+    return this.projinfo?.getField("settings/ui/mediafolder_autoplay") ?? true;
+  }
+
 }
 
 
@@ -402,7 +415,7 @@ export type Workflow = {
   character_orientation?: string;
   keep_original_sound?: string;
   system_message?: string;
-  resolution?: string;  
-  voice?: string;  
+  resolution?: string;
+  voice?: string;
   speed?: string;
 };

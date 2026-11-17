@@ -8,6 +8,8 @@ export class LocalFile extends LocalItem {
   handle: FileSystemFileHandle;
   private _file: File | null = null;
   lastModified: number = 0;
+  size: number = 0;
+
 
   constructor(
     parentFolder: LocalFolder | null = null,
@@ -19,6 +21,7 @@ export class LocalFile extends LocalItem {
 
     makeObservable(this, {
       lastModified: observable,
+      size: observable,
       getFile: action.bound, // action.bound ensures proper this context
       delete: action.bound,
     });
@@ -36,6 +39,7 @@ export class LocalFile extends LocalItem {
       runInAction(() => {
         this._file = file;
         this.lastModified = file.lastModified;
+        this.size = file.size;
       });
 
     }
@@ -84,6 +88,33 @@ export class LocalFile extends LocalItem {
   async load(): Promise<void> {
 
   }
+
+  async rename(name: string): Promise<LocalFile | null> {
+    if (!this.parentFolder) return null;
+    const new_image = await this.copyToFolder(this.parentFolder, name);
+    await this.delete();
+    return new_image;
+  }
+
+
+  get formattedSize(): string {
+    if (this.size < 1024) return `${this.size} B`;
+    if (this.size < 1024 * 1024) return `${(this.size / 1024).toFixed(1)} KB`;
+    if (this.size < 1024 * 1024 * 1024) return `${(this.size / (1024 * 1024)).toFixed(1)} MB`;
+    return `${(this.size / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+  }
+
+  get formattedLastModified(): string {
+    if (!this.lastModified) return "Unknown";
+    return new Date(this.lastModified).toLocaleString();
+  }
+
+  get lastModifiedDays(): number {
+    if (!this.lastModified) return -1;
+    const diff = Date.now() - this.lastModified;
+    return Math.floor(diff / (1000 * 60 * 60 * 24));
+  }
+
 
 }
 

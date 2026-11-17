@@ -12,6 +12,8 @@ import { LocalMedia } from "../../classes/fileSystem/LocalMedia";
 import type { Tags } from "../../classes/Tags";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowDown, faArrowUp, faImages, faTrashCan } from "@fortawesome/free-solid-svg-icons";
+import { MediaContextMenu } from "../MediaComponents/LocalMedia/LocalMediaContextMenu";
+import { LocalMediaProvider } from "../MediaComponents/LocalMedia/LocalMediaContext";
 
 interface TagsContainerProps {
     tags: Tags | null;
@@ -65,8 +67,8 @@ export const TagsFolderContainer: React.FC<TagsContainerProps> = observer(({
                                 </Button>
                             </Stack>
                         </AccordionCard.Controls>
-
                     </AccordionCard.Header>
+
                     <AccordionCard.Body>
                         {tags.use_tags ?
                             <ListGroup>
@@ -113,7 +115,12 @@ export const TagsFolderContainer: React.FC<TagsContainerProps> = observer(({
                                                 }}
                                             />
                                             {
-                                                (!media) ? <>{tag}</> : <MediaPreviewSmall media={media} />
+                                                (!media) ? <>{tag}</> :
+                                                    <LocalMediaProvider mediaItem={media}>
+                                                        <MediaContextMenu showDelete={false} showTags={false}>
+                                                            <MediaPreviewSmall media={media} />
+                                                        </MediaContextMenu>
+                                                    </LocalMediaProvider>
                                             }
 
                                             <Button
@@ -164,7 +171,11 @@ export const TagsFolderContainer: React.FC<TagsContainerProps> = observer(({
                                                 {
                                                     (!media) ?
                                                         <>{tag}</> :
-                                                        <MediaPreviewSmall media={media} />
+                                                        <LocalMediaProvider mediaItem={media}>
+                                                            <MediaContextMenu showDelete={false} showTags={false}>
+                                                                <MediaPreviewSmall media={media} />
+                                                            </MediaContextMenu>
+                                                        </LocalMediaProvider>
                                                 }
 
                                                 <Button

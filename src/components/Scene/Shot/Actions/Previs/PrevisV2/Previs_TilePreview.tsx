@@ -203,9 +203,9 @@ export const Previs_ShotPreviewItem: React.FC<ShotPreviewItemProps> = observer((
                                         return;
                                     }
 
-                                    const tile = await extractImageTile(shot_image, 4, 4, shotIndex);
-                                    const extracted_image = await LocalImage.fromBlob(tile.blob, shot.MediaFolder_results!, `${shot_image.name_no_extension}.preview_tile_${shotIndex}.png`);
-                                    extracted_image.mediaJson!.updateField("storyboard_index", shotIndex);
+                                    const tile = await extractImageTile(shot_image, 4, 4, image_tile_index);
+                                    const extracted_image = await LocalImage.fromBlob(tile.blob, shot.MediaFolder_results!, `${shot_image.name_no_extension}.preview_tile_${image_tile_index}.png`);
+                                    extracted_image.mediaJson!.updateField("storyboard_index", image_tile_index);
                                 }}
                             >Extract Image</Button>
 
@@ -284,7 +284,7 @@ export const Previs_ShotPreviewItem: React.FC<ShotPreviewItemProps> = observer((
                                     onFinished={() => {
                                         if (!autoplay) return;
                                         const shots_order = Previs_GetShotsOrder(shot);
-                                        const next_index = shots_order[(shots_order.indexOf(shotIndex) + 1) % 16];
+                                        const next_index = shots_order[(shots_order.indexOf(shotIndex) + 1) % shots_order.length];
                                         setSelectedIndex(next_index);
                                     }}
                                     onPause={() => {

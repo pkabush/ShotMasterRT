@@ -41,6 +41,7 @@ import { LocalFileToPathNodeDefinition } from "./Nodes/LocalFileToPathNode";
 import { MultiTextNodeDefinition } from "./Nodes/MultiTextNode";
 import { RegexSplitNodeDefinition } from "./Nodes/RegexSplitNode";
 import { Shot } from "../../classes/Shot";
+import { CommentNodeDefinition } from "./Nodes/CommentNode";
 
 export const nodeDefinitions = {
     textNode: TextNodeDefinition,
@@ -57,6 +58,7 @@ export const nodeDefinitions = {
     localFileToPathNode: LocalFileToPathNodeDefinition,
     multiTextNode: MultiTextNodeDefinition,
     regexSplitNode: RegexSplitNodeDefinition,
+    commentNode: CommentNodeDefinition,
 } as const;
 
 export const nodeTypes = Object.fromEntries(

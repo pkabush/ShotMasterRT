@@ -69,7 +69,6 @@ export function UserCircle() {
   const logout = useUserStore((s) => s.logout);
   const [showLogin, setShowLogin] = useState(false);
 
-
   const debugLog = useDebugStore((s) => s.debug_log);
   const setDebugLog = useDebugStore((s) => s.setDebugLog);
 

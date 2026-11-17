@@ -89,7 +89,7 @@ export class SeedanceAI implements AIProvider {
 
         },
         image_models: [
-            //"dola-seedream-5-0-pro-260628",
+            "dola-seedream-5-0-pro-260628",
             //"dola-seedream-5-0-flash-260915",
             //"seedream-5-0-lite-260128",
             "bytedance/seedream-5-pro",
@@ -323,7 +323,14 @@ export class SeedanceAI implements AIProvider {
                 };
 
                 console.log("[Bytedance] Payload:", payload)
-                const response = await postToWorker(payload, "seedance/generate-image", { model, size });
+                const response = await postToWorker(
+                    payload,
+                    model == 'bytedance/seedream-5-pro'
+                        ? "seedance/generate-image"
+                        : "seedance/generate-image-old"
+                    ,
+                    { model, size }
+                );
                 console.log("[Bytedance] Response:", response);
 
 
@@ -332,7 +339,13 @@ export class SeedanceAI implements AIProvider {
                 const base64Obj = await imageUrlToBase64(imageUrl);
 
                 //return { base64Obj, id: AI_Utils.generateImageName(model, "generate"), };
-                return { base64Obj, id: AI_Utils.generateImageName("seedream_5_0_pro", "generate"), };
+                return {
+                    base64Obj,
+                    id: AI_Utils.generateImageName("seedream_5_0_pro", "generate"),
+                    geninfo: {
+                        response: response,
+                    }
+                };
 
                 return {
                     base64Obj: {
@@ -402,7 +415,7 @@ const resolutions: Record<Resolution, Partial<Record<Aspect, string>>> = {
         //"3:4": "1776x2368",
         //"3:4": "1770x2360",
         "4:3": "2304x1728",
-        "3:4": "1728x2304",        
+        "3:4": "1728x2304",
         //"16:9": "2816x1584",
         //"9:16": "1584x2816",
         "16:9": "2560x1440",

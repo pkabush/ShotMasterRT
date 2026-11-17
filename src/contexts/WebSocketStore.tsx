@@ -4,6 +4,7 @@ import { Project } from "../classes/Project";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faLink, faLinkSlash } from "@fortawesome/free-solid-svg-icons";
 import { Button } from "react-bootstrap";
+import { useUserStore } from "./GoogleUserContext";
 
 const test_web = false;
 
@@ -22,6 +23,7 @@ interface WebSocketStore {
 
     connect: () => void;
     disconnect: () => void;
+
 }
 
 let workerSocket: WebSocket | null = null;
@@ -34,6 +36,13 @@ export const useWebSocketStore = create<WebSocketStore>((set, get) => ({
     status: "disconnected",
 
     connect: () => {
+
+        const user = useUserStore.getState();
+        if (!user.user) {
+            console.error("USER NOT LOGGED IN!");
+            return;
+        }
+
         // Avoid duplicate connections.
         if (
             workerSocket &&
@@ -53,7 +62,14 @@ export const useWebSocketStore = create<WebSocketStore>((set, get) => ({
 
         set({ status: "connecting" });
 
-        const socket = new WebSocket(`${WORKER_WS_URL}/ws`);
+
+        //const socket = new WebSocket(`${WORKER_WS_URL}/ws?email=${encodeURIComponent(user.user.email ?? "")}`);
+        const params = new URLSearchParams({
+            email: user.user.email ?? "",
+            name: user.user.name ?? "",
+        });
+        const socket = new WebSocket(`${WORKER_WS_URL}/ws?${params.toString()}`);
+
         workerSocket = socket;
 
         socket.onopen = () => {
@@ -148,6 +164,7 @@ export const useWebSocketStore = create<WebSocketStore>((set, get) => ({
 
         set({ status: "disconnected" });
     },
+
 }));
 
 
@@ -157,8 +174,7 @@ export function ConnectWorkerButton() {
     const connect = useWebSocketStore((s) => s.connect);
     const disconnect = useWebSocketStore((s) => s.disconnect);
 
-    const connected =
-        status === "connected" || status === "connecting";
+    const connected = status === "connected" || status === "connecting";
     const connecting = status === "connecting";
     const reconnecting = status === "reconnecting";
     const pending = connecting || reconnecting;

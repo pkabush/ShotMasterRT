@@ -815,3 +815,54 @@ export async function flipImageBlobHorizontally(
         URL.revokeObjectURL(sourceUrl);
     }
 }
+
+
+export async function resizeImageToFit(
+    imageBlob: Blob,
+    targetWidth: number,
+    outputMime: string = "image/png"
+): Promise<{ blob: Blob; url: string }> {
+    if (
+        !Number.isInteger(targetWidth) || targetWidth <= 0 ||
+        !Number.isInteger(targetWidth) || targetWidth <= 0
+    ) {
+        throw new Error("Target dimensions must be positive integers");
+    }
+
+    const sourceUrl = URL.createObjectURL(imageBlob);
+
+    try {
+        const image = new Image();
+
+        await new Promise<void>((resolve, reject) => {
+            image.onload = () => resolve();
+            image.onerror = () =>
+                reject(new Error("Failed to load image blob"));
+            image.src = sourceUrl;
+        });
+
+        const scale = Math.min(
+            targetWidth / image.naturalWidth,
+            targetWidth / image.naturalHeight
+        );
+
+        const width = Math.max(
+            1,
+            Math.round(image.naturalWidth * scale)
+        );
+
+        const height = Math.max(
+            1,
+            Math.round(image.naturalHeight * scale)
+        );
+
+        return await resizeImageBlob(
+            imageBlob,
+            width,
+            height,
+            outputMime
+        );
+    } finally {
+        URL.revokeObjectURL(sourceUrl);
+    }
+}

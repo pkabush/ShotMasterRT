@@ -7,7 +7,7 @@ import LoadingSpinner from "../../../../Atomic/LoadingSpinner";
 import { LocalImage } from "../../../../../classes/fileSystem/LocalImage";
 import { GoogleAI } from "../../../../../classes/GoogleAI";
 import type { LocalFolder } from "../../../../../classes/fileSystem/LocalFolder";
-import EditableJsonTextField, { EditableJsonToggleButton } from "../../../../EditableJsonTextField";
+import EditableJsonTextField, { EditableJsonToggleButton} from "../../../../EditableJsonTextField";
 import { AI } from "../../../../../classes/AiProviders/AI_Generic";
 import { WorkflowImageModelSelect } from "../../../../../classes/AiProviders/AI_Generic_Components";
 import { Button } from "react-bootstrap";
@@ -44,6 +44,12 @@ const PromptField: React.FC<Props> = observer(({ shot }) => {
 const get_prompt = (shot: Shot): string => {
     return shot.scene.project.projinfo?.getField(get_use_prev_shot(shot) ? wf_prompt_field_prev : wf_prompt_field);
 }
+
+const storyboard_comment_field = `previs/storyboard_comment`
+const get_storyboard_comment = (shot: Shot): string => {
+    return shot.shotJson?.getField(storyboard_comment_field) ?? "";
+}
+
 
 
 
@@ -90,6 +96,8 @@ const component: React.FC<Props> = observer(({ shot }) => {
                         </Button>
                     }
 
+                    <EditableJsonToggleButton localJson={shot.shotJson} field="previs/show_storyboard_comment" label="Comment" default_val={false} />
+
 
                     <LoadingSpinner isLoading={loading} asButton />
 
@@ -98,9 +106,16 @@ const component: React.FC<Props> = observer(({ shot }) => {
             content={
                 <>
                     <PromptField shot={shot} />
+
+
                 </>
             }
         />
+
+        {shot.shotJson?.getField("previs/show_storyboard_comment") &&
+            <EditableJsonTextField localJson={shot.shotJson} field={storyboard_comment_field} collapsed />
+        }
+
     </div >
 })
 
@@ -115,7 +130,6 @@ export async function Action_Previs_Generate_Storyboard(shot: Shot) {
             .map((ref, index) => {
                 const description = ref.mediaJson?.getField("description")
                 if (!description) return null;
-
                 return `@Image${index + 1 + get_use_prev_shot(shot) ? 1 : 0} : 
 ${description}
 
@@ -134,7 +148,7 @@ ${description}
             "Описание шотов прошлой сцены сцены:",
             //shot.prevShot?.shotJson?.getField("previs_json") as string,
             //previsJsonCopy,
-            getPrevisJsonForStoryboard( shot.prevShot! )  ?? "",
+            getPrevisJsonForStoryboard(shot.prevShot!) ?? "",
 
             `@image1 - раскадровка прошлой сцены:           
 
@@ -150,18 +164,24 @@ ${description}
             
             Описания шотов для текущей сцены:`,
             //shot.shotJson?.data.previs_json as string
-            getPrevisJsonForStoryboard( shot )  ?? "",
+            getPrevisJsonForStoryboard(shot) ?? "",
+            get_storyboard_comment(shot) ?? "",
 
         ] : [
             ...refs,
             "Описания шотов:",
             //shot.shotJson?.data.previs_json as string,
-            getPrevisJsonForStoryboard( shot )  ?? "",
+            getPrevisJsonForStoryboard(shot) ?? "",
             get_prompt(shot) ?? "",
             //"Сценарий:",
             //shot.shotJson?.data.previs_script as string,
+            get_storyboard_comment(shot) ?? "",
         ]
         console.log("SPLIT MESSAGES:", messages);
+
+        const model = workflow.model;
+        const aspect_ratio = workflow.aspect_ratio;
+        const resolution = workflow.resolution;
 
         const res = await AI.sendMessages(
             messages,
@@ -175,6 +195,17 @@ ${description}
                 res,
                 shot.MediaFolder_results as LocalFolder,
             );
+
+        if (localImage) {
+            // Save Generation Info
+            localImage?.mediaJson?.updateField("geninfo", {
+                workflow: "generate_storyboard",
+                model,
+                aspect_ratio,
+                resolution,
+            })
+        }
+
 
         return localImage;
     } finally {

@@ -25,6 +25,7 @@ export type ImageResult = {
     mime: string;
   };
   id?: string;
+  geninfo?: any;
 };
 
 

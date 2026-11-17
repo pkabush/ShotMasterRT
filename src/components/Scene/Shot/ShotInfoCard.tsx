@@ -7,25 +7,14 @@ import SimpleSelect from '../../Atomic/SimpleSelect';
 import TabsContainer from '../../TabsContainer';
 import { Google_GenerateImageNode } from '../../GoogleNodes/Google_GenerateImageNode';
 import { MediaFolderGallery } from '../../MediaFolderGallery';
-import EditableJsonTextField, { EditableJsonToggleField } from '../../EditableJsonTextField';
 import { Kling_GenerateVideo } from '../../Kling/Kling_GenerateVideo';
 import { Kling_MotionControl } from '../../Kling/Kling_MotionControl';
-import { Google_GenerateKlingPrompt } from '../../GoogleNodes/Google_GenerateKlingPrompt';
 import { BytePlus_GenerateVideo } from '../../BytePlus/BP_generateVideo';
 import TaskContainer from '../../TaskContainer';
 import { Kling_LipSync } from '../../Kling/Kling_LipSync';
-import { TagsFolderContainer } from '../../FolderTags/FolderTagsContainer';
-import { Project } from '../../../classes/Project';
-import type { LocalFolder } from '../../../classes/fileSystem/LocalFolder';
-import { ShotFindReferencesButton } from './Actions/ShotFindReferences';
-import { ShotGenerateMissingReferencesButton } from './Actions/ShotGenerateMissingReferences';
-import { ShotGenerateVideoPrompt } from './Actions/ShotGenerateVideoPrompt';
-import { ShotGenerateShotlist } from './Actions/ShotGenerateShotList';
-import { ShotAddFramesFromPrevious } from './Actions/ShotAddFramesFromPrevious';
-import { WF_ShotGenerateStagingImage } from './Actions/ShotGenerateStageing';
-import { ShotAskGenerationDuration } from './Actions/ShotAskGenerationDuration';
 import PrevisV2 from './Actions/Previs/PrevisV2/PrevisV2_Component';
 import { ShotContextMenuWrapper } from './ShotContextMenu';
+import { Kling_GenerateVideoV4 } from '../../Kling/Kling_GenerateVideoV4';
 
 interface Props {
   shot: Shot;
@@ -106,24 +95,32 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
                 <TagsToggleList shot={shot} />
                 */}
 
+                <h5 className="me-4">Results</h5>
                 <MediaFolderGallery mediaFolder={shot.MediaFolder_results}></MediaFolderGallery>
 
               </div>
             </div>
           ,
-          Generate_VIDEO: <>
-            <EditableJsonToggleField localJson={shot.scene.project.projinfo} field={"auto_load_first_frame"} default_val={false} label="Auto Load First Frame" />
+          Seedance_Video: <>
 
-            <Kling_GenerateVideo shot={shot} />
-            <Kling_MotionControl shot={shot} />
-            {false && <Google_GenerateKlingPrompt shot={shot} />}
             <BytePlus_GenerateVideo shot={shot} />
 
             <TaskContainer tasksJson={shot.tasksJson!} />
             <MediaFolderGallery mediaFolder={shot.MediaFolder_genVideo} />
+
           </>
           ,
-          LipSync: <>
+          Kling_Video: <>
+            <Kling_GenerateVideoV4 shot={shot} />
+            <Kling_GenerateVideo shot={shot} />
+            <Kling_MotionControl shot={shot} />
+
+            <TaskContainer tasksJson={shot.tasksJson!} />
+            <MediaFolderGallery mediaFolder={shot.MediaFolder_genVideo} />
+
+          </>
+          ,
+          Kling_LipSync: <>
             <Kling_LipSync shot={shot} />
             <TaskContainer tasksJson={shot.tasksJson!} />
           </>
@@ -135,6 +132,8 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
             <MediaFolderGallery mediaFolder={shot.MediaFolder_refVideo} />
           </>,
 
+
+          /**
           "StoryCrush": <>
             <EditableJsonTextField localJson={shot.shotJson} field="description" fitHeight />
 
@@ -157,9 +156,9 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
             <BytePlus_GenerateVideo shot={shot} />
             <TaskContainer tasksJson={shot.tasksJson!} />
             <MediaFolderGallery mediaFolder={shot.MediaFolder_genVideo} defaultCollapsed={true} />
-
-
           </>,
+           */
+
           "PrevisUtil_V2": <PrevisV2 shot={shot} />
         }}
       />

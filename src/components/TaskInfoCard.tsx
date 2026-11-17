@@ -9,7 +9,7 @@ import { MenuItemIcon } from "./MediaFolderGallery";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faClipboard, faDownload, faTrashCan, faVideo } from "@fortawesome/free-solid-svg-icons";
 import { toJS } from "mobx";
-import { Badge, Button } from "react-bootstrap";
+import { Badge } from "react-bootstrap";
 import { SeedanceAI } from "../classes/AiProviders/Byteplus";
 import { ai_providers } from "../classes/AI_provider";
 
@@ -34,7 +34,6 @@ const TaskInfoCard: React.FC<Props> = observer(({ task, show_path = false }) => 
     const loading = ["running", "processing"].includes(status);
     const url = task.data?.url;
 
-
     const onDelete = useCallback(() => {
         if (window.confirm(`Delete task ${task.id}?`)) {
             task.delete();
@@ -45,7 +44,18 @@ const TaskInfoCard: React.FC<Props> = observer(({ task, show_path = false }) => 
         <ContextMenu.Root>
             <ContextMenu.Trigger>
 
-                <div className="card mb-0">
+                <div className="card mb-0"
+                    title={`
+${task.id}
+${task.data.provider} ${task.data.geninfo.draft ? "Draft Task" : ""}
+${task.data.cost ? `${task.data.cost.toFixed(2)}$` : "no cost"}
+
+  Status:
+${task.data.status}
+  Status Message:
+${task.data.status_message ?? "No status message"}                        
+                        `}
+                >
                     <div className="card-body d-flex align-items-center justify-content-between py-0">
                         {/* Left side: circle + id + status */}
                         <div className="d-flex align-items-center gap-2">
@@ -96,10 +106,11 @@ const TaskInfoCard: React.FC<Props> = observer(({ task, show_path = false }) => 
                             </>}
 
 
+                            {/**
                             {url && <Button size="sm" variant="outline-success" onClick={async () => {
                                 window.open(url, "_blank", "noopener,noreferrer")
                             }}><FontAwesomeIcon icon={faDownload} /></Button>}
-
+                            */}
 
                             <SimpleButton
                                 label="Check Status"
@@ -133,18 +144,20 @@ const TaskInfoCard: React.FC<Props> = observer(({ task, show_path = false }) => 
                         Log
                     </ContextMenu.Item>
 
-                    {url && <ContextMenu.Item className="ContextMenuItem success" onClick={() => {
+                    {/**
+                    { url && <ContextMenu.Item className="ContextMenuItem success" onClick={() => {
                         window.open(url, "_blank", "noopener,noreferrer")
                     }}>
                         <MenuItemIcon><FontAwesomeIcon icon={faDownload} /></MenuItemIcon>
                         Download 
                     </ContextMenu.Item>}
+                     */}
 
                     {url && <ContextMenu.Item className="ContextMenuItem success" onClick={() => {
                         task.downloadResults();
                     }}>
                         <MenuItemIcon><FontAwesomeIcon icon={faDownload} /></MenuItemIcon>
-                        Download to SM
+                        Download
                     </ContextMenu.Item>}
 
 

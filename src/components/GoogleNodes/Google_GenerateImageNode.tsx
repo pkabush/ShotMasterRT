@@ -20,48 +20,56 @@ export const Google_GenerateImageNode: React.FC<Google_GenerateImageNodeProps> =
     const project = shot.scene.project;
 
     return (
-        <SettingsButton
-            className="mb-2"
-            buttons={
-                <>
-                    {/* Stylize Image Button */}
-                    <button
-                        className="btn btn-sm btn-outline-success"
-                        onClick={async () => { action_shotGenerateImage(shot); }}
-                    >
-                        Generate Image
-                    </button>
+        <>
+            <h5 className="me-4">Reference Images</h5>            
+            <TagsFolderContainer tags={shot.references} folders={[Project.getProject(), Project.getProject().artbook as LocalFolder]} />
 
-                    <WorkflowImageModelSelect workflowName="generate_shot_image"/>
+            <h5 className="me-4">Prompt</h5>            
+            <EditableJsonTextField localJson={shot.shotJson} field="prompt" fitHeight />
+            
+            <h5 className="me-4">Generate</h5>            
+            <SettingsButton
+                className="mb-2"
+                buttons={
+                    <>
+                        {/* Stylize Image Button */}
+                        <button
+                            className="btn btn-sm btn-outline-success"
+                            onClick={async () => { action_shotGenerateImage(shot); }}
+                        >
+                            Generate Image
+                        </button>
 
-                    <WorkflowOptionSelect
-                        project={project}
-                        workflowName="generate_shot_image"
-                        optionName="aspect_ratio"
-                        values={Object.values(GoogleAI.options.aspect_ratios)}
-                        defaultValue={GoogleAI.options.aspect_ratios.r9x16}
-                    />                    
+                        <WorkflowImageModelSelect workflowName="generate_shot_image" />
 
-                    <WorkflowOptionSelect
-                        project={project}
-                        workflowName="generate_shot_image"
-                        optionName="resolution"
-                        values={Object.values(GoogleAI.options.resolution)}
-                        defaultValue={GoogleAI.options.resolution.none}
-                    />
+                        <WorkflowOptionSelect
+                            project={project}
+                            workflowName="generate_shot_image"
+                            optionName="aspect_ratio"
+                            values={Object.values(GoogleAI.options.aspect_ratios)}
+                            defaultValue={GoogleAI.options.aspect_ratios.r9x16}
+                        />
 
-                    {/* Loading Spinner */}
-                    <LoadingSpinner isLoading={shot.is_generating} asButton />
-                </>
-            }
-            content={
-                <>
-                    <EditableJsonTextField localJson={shot.shotJson} field="prompt" fitHeight />
-                    <TagsFolderContainer tags={shot.references} folders={[Project.getProject(), Project.getProject().artbook as LocalFolder]} />
+                        <WorkflowOptionSelect
+                            project={project}
+                            workflowName="generate_shot_image"
+                            optionName="resolution"
+                            values={Object.values(GoogleAI.options.resolution)}
+                            defaultValue={GoogleAI.options.resolution.none}
+                        />
 
-                </>
-            }
-        />
+                        {/* Loading Spinner */}
+                        <LoadingSpinner isLoading={shot.is_generating} asButton />
+                    </>
+                }
+                content={
+                    <>
+
+
+                    </>
+                }
+            />
+        </>
     );
 });
 

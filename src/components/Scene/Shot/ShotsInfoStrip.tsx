@@ -1,5 +1,5 @@
 // ShotsInfoStrip
-import React, { useState } from 'react';
+import React from 'react';
 import { Scene } from '../../../classes/Scene';
 import { observer } from 'mobx-react-lite';
 import ShotStripPreview from '../../ShotStripPreview';
@@ -17,7 +17,7 @@ interface Props {
 }
 
 const ShotsInfoStrip: React.FC<Props> = observer(({ scene }) => {
-  const [autoplay, setAutoplay] = useState(true);
+  const autoplay = scene.project.settings_shot_strip_autoplay;
 
   const handleAddShot = async (e: any) => {
     if (e.ctrlKey) {
@@ -39,21 +39,6 @@ const ShotsInfoStrip: React.FC<Props> = observer(({ scene }) => {
         <SceneContextMenuWrapper scene={scene}>
           <div className="d-flex overflow-auto gap-2 h-100">
             {scene.shots_ordered.map((shot) => (
-              /*
-              <div key={shot.name}>
-                <ContextMenu.Root>
-                  <ContextMenu.Trigger>
-                    <ShotStripPreview
-                      key={shot.name}
-                      shot={shot}
-                      isSelected={scene.selectedShot === shot}
-                      onClick={() => { scene.selectShot(shot) }}
-                      autoplay={autoplay}
-                    />
-                  </ContextMenu.Trigger>
-                  <ShotContextMenu shot={shot} />
-                </ContextMenu.Root>
-              </div>*/
               <ShotStripPreview
                 key={shot.name}
                 shot={shot}
@@ -80,9 +65,6 @@ const ShotsInfoStrip: React.FC<Props> = observer(({ scene }) => {
           tooltip='Creates New SHOT.
 Hold CTRL to auto Name Shot.'/>
 
-        <Button size='sm' variant={autoplay ? "success" : "outline-secondary"} onClick={() => {
-          setAutoplay((v) => { return !v });
-        }}> Autoplay</Button>
 
         {scene.selectedShot &&
           <>

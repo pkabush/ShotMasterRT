@@ -42,7 +42,8 @@ export class Script {
     }
 
     for (let i = 0; i < matches.length; i++) {
-      const header = matches[i][0];
+      //const header = matches[i][0];
+      const header = matches[i][0].trim();
       const headerStart = matches[i].index!;
 
       // Text before first header
@@ -85,6 +86,7 @@ export class Script {
     }
 
     for (const key of this.sortedSceneKeys) {
+      console.log("Creating Scene", key);
       // Skip the first empty scene
       if (key === "") continue;
 

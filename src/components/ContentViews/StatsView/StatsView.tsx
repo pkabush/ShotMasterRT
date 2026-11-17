@@ -67,6 +67,13 @@ export const StatsView: React.FC<StatsViewProps> = () => {
         {loading ? "Loading..." : "Get Stats"}
       </Button>
 
+      <Button
+        onClick={async () => {
+          const response = await getFromWorker("files/folders");
+          console.log(response);
+        }}
+      >Check R2</Button>
+
       <WeekPicker value={dateSpan} onChange={setDateSpan} />
       <br />
 
