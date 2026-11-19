@@ -1,4 +1,4 @@
-import React, {  useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { Form } from "react-bootstrap";
 
 export interface DateSpan {
@@ -30,15 +30,15 @@ const getSunday = (monday: Date) => {
 };
 
 export const getCurrentWeekSpan = (): DateSpan => {
-  const today = new Date();
+    const today = new Date();
 
-  const monday = getMonday(today);
-  const sunday = getSunday(monday);
+    const monday = getMonday(today);
+    const sunday = getSunday(monday);
 
-  return {
-    startDate: monday,
-    endDate: sunday,
-  };
+    return {
+        startDate: monday,
+        endDate: sunday,
+    };
 };
 
 const formatDate = (date: Date) =>
@@ -190,8 +190,9 @@ const WeekPicker: React.FC<WeekPickerProps> = ({
     };
 
     return (
-        <div className="d-flex gap-2">
+        <>
             <Form.Select
+                size="sm"
                 value={selectedYear}
                 onChange={(e) =>
                     handleYearChange(
@@ -208,6 +209,7 @@ const WeekPicker: React.FC<WeekPickerProps> = ({
             </Form.Select>
 
             <Form.Select
+                size="sm"
                 value={selectedMonth}
                 onChange={(e) =>
                     handleMonthChange(
@@ -227,6 +229,7 @@ const WeekPicker: React.FC<WeekPickerProps> = ({
             </Form.Select>
 
             <Form.Select
+                size="sm"
                 value={selectedWeek.toISOString()}
                 onChange={(e) =>
                     updateWeek(
@@ -244,7 +247,7 @@ const WeekPicker: React.FC<WeekPickerProps> = ({
                     </option>
                 ))}
             </Form.Select>
-        </div>
+        </>
     );
 };
 

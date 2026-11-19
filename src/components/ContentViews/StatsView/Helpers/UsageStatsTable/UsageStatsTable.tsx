@@ -1,6 +1,10 @@
-import React from "react";
-import { Table } from "react-bootstrap";
+import React, { useEffect, useState } from "react";
+import { Button, Spinner, Stack, Table } from "react-bootstrap";
 import { UsageCellPreview, type UsageSummary } from "./UsageCellPreview";
+import WeekPicker, { getCurrentWeekSpan, type DateSpan } from "../WeekPicker";
+import { getFromWorker } from "../../../../../classes/CloudflareWorker/WorkerUtils";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faCopy, faRefresh } from "@fortawesome/free-solid-svg-icons";
 
 export type DailyUsageStats = {
   user_email: string;
@@ -22,93 +26,246 @@ export type UserStats = {
 };
 
 interface UsageStatsTableProps {
-  stats: DailyUsageStats[];
-  dates: Date[];
+
 }
 
-export const UsageStatsTable: React.FC<UsageStatsTableProps> = ({ stats, dates }) => {
+function getDatesBetween(start: Date, end: Date): Date[] {
+  const dates: Date[] = [];
+  const current = new Date(start);
+  current.setHours(0, 0, 0, 0);
+
+  const last = new Date(end);
+  last.setHours(0, 0, 0, 0);
+
+  while (current <= last) {
+    dates.push(new Date(current));
+    current.setDate(current.getDate() + 1);
+  }
+
+  return dates;
+}
+
+function formatDate(date: Date): string {
+  return date.toISOString().split("T")[0];
+}
+
+
+export const UsageStatsTable: React.FC<UsageStatsTableProps> = ({ }) => {
+  const [dateSpan, setDateSpan] = useState<DateSpan>(getCurrentWeekSpan);
+  const [stats, setStats] = useState<DailyUsageStats[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const dates =
+    dateSpan?.startDate && dateSpan?.endDate
+      ? getDatesBetween(dateSpan.startDate, dateSpan.endDate)
+      : [];
+
   const userStats = buildUserStats(stats, dates);
   const { dailyTotals, overallTotal } = calculateGrandTotals(userStats, dates);
 
+  const refresh_datespan = async () => {
+    if (!dateSpan?.startDate || !dateSpan?.endDate) {
+      console.log("Date Not Picked");
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const response = await getFromWorker("stats", {
+        start_date: formatDate(dateSpan.startDate),
+        end_date: formatDate(dateSpan.endDate),
+      });
+
+      setStats(response.data);
+      console.log(response.data);
+    } catch (error) {
+      console.error("Failed to get stats:", error);
+      setStats([]);
+    } finally {
+      setLoading(false);
+    }
+
+  }
+
+  useEffect(() => { refresh_datespan(); }, [dateSpan])
+
   return (
-    <div>
-      <Table striped bordered hover responsive className="align-top">
-        <thead>
-          <tr>
-            <th>Username</th>
+    <>
+      <Stack direction="horizontal" gap={0}>
+        <WeekPicker value={dateSpan} onChange={setDateSpan} />
 
-            {dates.map((date) => (
-              <th key={formatDateKey(date)} className="text-center">
-                {date.toLocaleDateString("en-US", {
-                  weekday: "short",
-                  month: "numeric",
-                  day: "numeric",
-                })}
+        <Button
+          size="sm"
+          variant="outline-primary"
+          onClick={refresh_datespan}
+          disabled={loading}
+        >
+          {loading ? (
+            <Spinner
+              animation="border"
+              size="sm"
+              role="status"
+            />
+          ) : (
+            <FontAwesomeIcon icon={faRefresh} />
+          )}
+        </Button>
+
+        <Button
+          size="sm"
+          variant="outline-warning"
+          onClick={async () => {
+            try {
+              const markdown = await copyUsageStatsToSheets(stats);
+              console.log("Copied Markdown:", markdown);
+            } catch (error) {
+              console.error("Failed to copy:", error);
+            }
+          }}
+        >
+          <FontAwesomeIcon icon={faCopy} />
+        </Button>
+
+      </Stack>
+      <br />
+
+      <div
+        style={{
+          width: "100%",
+          overflowX: "auto",
+          position: "relative",
+        }}
+      >
+        <Table
+          striped
+          bordered
+          hover
+          className="align-top"
+          style={{
+            borderCollapse: "separate",
+            borderSpacing: 0,
+            minWidth: "max-content",
+            borderTop: "1px solid #545454",
+            borderBottom: "1px solid #545454",
+          }}
+        >
+          <thead>
+            <tr>
+              <th
+                style={{
+                  position: "sticky",
+                  left: 0,
+                  minWidth: 200,
+                  zIndex: 4,
+                }}
+              >
+                Username
               </th>
+
+              {dates.map((date) => (
+                <th key={formatDateKey(date)} className="text-center">
+                  {date.toLocaleDateString("en-US", {
+                    weekday: "short",
+                    month: "numeric",
+                    day: "numeric",
+                  })}
+                </th>
+              ))}
+
+              <th
+                className="text-center"
+                style={{
+                  position: "sticky",
+                  right: 0,
+                  minWidth: 200,
+                  zIndex: 4,
+                }}
+              >
+                Total
+              </th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {userStats.map((user) => (
+              <tr key={user.email}>
+                <td
+                  className="fw-bold align-middle"
+                  style={{
+                    position: "sticky",
+                    left: 0,
+                    minWidth: 200,
+                    zIndex: 2,
+                  }}
+                >
+                  {user.email}
+                </td>
+
+                {dates.map((date) => {
+                  const dateKey = formatDateKey(date);
+                  const daySummary = user.daily[dateKey];
+
+                  return (
+                    <td key={dateKey} className="p-0">
+                      <UsageCellPreview summary={daySummary} />
+                    </td>
+                  );
+                })}
+
+                <td
+                  className="p-0"
+                  style={{
+                    position: "sticky",
+                    right: 0,
+                    minWidth: 200,
+                    zIndex: 2,
+                  }}
+                >
+                  <UsageCellPreview summary={user.total} />
+                </td>
+              </tr>
             ))}
+          </tbody>
 
-            <th className="text-center">Total</th>
-          </tr>
-        </thead>
+          <tfoot>
+            <tr className="fw-bold">
+              <td
+                className="align-middle"
+                style={{
+                  position: "sticky",
+                  left: 0,
+                  zIndex: 3,
+                }}
+              >
+                Total
+              </td>
 
-        <tbody>
-          {userStats.map((user) => (
-            <tr key={user.email}>
-              <td className="fw-bold align-middle">{user.email}</td>
-
-              {/* User Daily Cells */}
               {dates.map((date) => {
                 const dateKey = formatDateKey(date);
-                const daySummary = user.daily[dateKey];
 
                 return (
                   <td key={dateKey} className="p-0">
-                    <UsageCellPreview
-                      summary={daySummary}
-                    />
+                    <UsageCellPreview summary={dailyTotals[dateKey]} />
                   </td>
                 );
               })}
 
-              {/* User Total Column */}
-              <td className="p-0">
-                <UsageCellPreview
-                  summary={user.total}
-                />
+              <td
+                className="p-0 table-dark"
+                style={{
+                  position: "sticky",
+                  right: 0,
+                  zIndex: 3,
+                }}
+              >
+                <UsageCellPreview summary={overallTotal} />
               </td>
             </tr>
-          ))}
-        </tbody>
-
-        {/* Grand Totals Footer */}
-        <tfoot>
-          <tr className="table fw-bold">
-            <td className="align-middle">Total</td>
-
-            {/* Daily Grand Totals Across All Users */}
-            {dates.map((date) => {
-              const dateKey = formatDateKey(date);
-              const dayGrandTotal = dailyTotals[dateKey];
-
-              return (
-                <td key={dateKey} className="p-0">
-                  <UsageCellPreview
-                    summary={dayGrandTotal}
-                  />
-                </td>
-              );
-            })}
-
-            {/* All-time Grand Total */}
-            <td className="p-0 table-dark">
-              <UsageCellPreview
-                summary={overallTotal}
-              />
-            </td>
-          </tr>
-        </tfoot>
-      </Table>
-    </div>
+          </tfoot>
+        </Table>
+      </div>
+    </>
   );
 };
 
@@ -297,4 +454,78 @@ export function calculateGrandTotals(
   }
 
   return { dailyTotals, overallTotal };
+}
+
+export async function copyUsageStatsToSheets(
+  stats: DailyUsageStats[]
+): Promise<string> {
+  const dates = [...new Set(stats.map((s) => s.date))].sort();
+  const firstDate = dates[0] || "";
+
+  const grouped = new Map<
+    string,
+    {
+      username: string;
+      project: string;
+      provider: string;
+      total: number;
+    }
+  >();
+
+  for (const row of stats) {
+    const username = row.user_email;
+    const project = row.project || "-";
+    const provider = row.provider;
+
+    const key = JSON.stringify([username, project, provider]);
+
+    if (!grouped.has(key)) {
+      grouped.set(key, {
+        username,
+        project,
+        provider,
+        total: 0,
+      });
+    }
+
+    const entry = grouped.get(key)!;
+    entry.total += row.total_cost || 0;
+  }
+
+  // Format cost using comma decimal separator and $ suffix
+  const formatCost = (value: number) =>
+    `${value.toLocaleString("pl-PL", {
+      useGrouping: false,
+      maximumFractionDigits: 10,
+    })}`;
+
+  // Prevent tabs/newlines from breaking the spreadsheet structure
+  const clean = (value: string) =>
+    value.replace(/[\t\r\n]/g, " ");
+
+  const headers = [
+    "user_email",
+    "project",
+    "provider",
+    firstDate,
+  ];
+
+  const lines = [headers.join("\t")];
+
+  for (const entry of grouped.values()) {
+    const row = [
+      clean(entry.username),
+      clean(entry.project),
+      clean(entry.provider),
+      formatCost(entry.total),
+    ];
+
+    lines.push(row.join("\t"));
+  }
+
+  const tsv = lines.join("\n");
+
+  await navigator.clipboard.writeText(tsv);
+
+  return tsv;
 }

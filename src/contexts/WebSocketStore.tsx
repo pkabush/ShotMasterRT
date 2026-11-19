@@ -31,6 +31,9 @@ let reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 let manuallyDisconnected = false;
 
 const RECONNECT_DELAY = 2000;
+const MAX_RECONNECT_ATTEMPTS = 5;
+
+let reconnectAttempts = 0;
 
 export const useWebSocketStore = create<WebSocketStore>((set, get) => ({
     status: "disconnected",
@@ -53,7 +56,7 @@ export const useWebSocketStore = create<WebSocketStore>((set, get) => ({
         }
 
         manuallyDisconnected = false;
-
+        
         // Clear any pending reconnect attempt.
         if (reconnectTimer) {
             clearTimeout(reconnectTimer);
@@ -77,6 +80,9 @@ export const useWebSocketStore = create<WebSocketStore>((set, get) => ({
             if (workerSocket !== socket) return;
 
             console.log("[WEBSOCKET] Worker websocket connected");
+
+            reconnectAttempts = 0; // Reset after successful connection
+
             set({ status: "connected" });
         };
 
@@ -127,8 +133,19 @@ export const useWebSocketStore = create<WebSocketStore>((set, get) => ({
 
             if (manuallyDisconnected) {
                 set({ status: "disconnected" });
+                reconnectAttempts = 0;
                 return;
             }
+
+            // Check If reconnect attempts reached
+            console.log("[WS] reconnecting number ",reconnectAttempts);
+            if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+                console.error("[WEBSOCKET] Maximum reconnect attempts reached.");
+                set({ status: "error" });
+                return;
+            }
+            reconnectAttempts++;
+
 
             set({ status: "reconnecting" });
 
@@ -148,6 +165,7 @@ export const useWebSocketStore = create<WebSocketStore>((set, get) => ({
 
     disconnect: () => {
         manuallyDisconnected = true;
+        reconnectAttempts = 0;
 
         // Prevent a scheduled reconnect.
         if (reconnectTimer) {
@@ -206,7 +224,9 @@ export function ConnectWorkerButton() {
                 onClick={() => {
                     if (connected || reconnecting) {
                         disconnect();
+                        reconnectAttempts = 0;
                     } else {
+                        reconnectAttempts = 0;
                         connect();
                     }
                 }}

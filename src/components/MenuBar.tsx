@@ -51,7 +51,6 @@ export const MenuBar = observer(({
                 <Nav.Link onClick={() => project.setView({ type: "promptview" })}> PromptView</Nav.Link>
                 <Nav.Link onClick={() => project.setView({ type: "stats" })}> Stats</Nav.Link>
 
-
                 <NavDropdown title="Options" id="basic-nav-dropdown">
                   <NavProjectOptionToggle
                     name="settings/ui/shot_strip_autoplay"
