@@ -49,7 +49,7 @@ export async function postToWorker(
         const headerProvider = res.headers.get("x-provider");
         const headerTaskId = res.headers.get("x-task-id");
         console.log("Headers", headerCost, headerProvider, headerTaskId);
-        
+
 
         // Return binary response when requested.
         if (responseType === "blob") {
@@ -141,4 +141,40 @@ export async function getWorkerUser() {
     if (!response.ok) { return null; }
     const data = await response.json();
     return data.user;
+}
+
+
+
+export async function patchToWorker(
+    payload: any,
+    subpath: string,
+    additional_url_params: Record<string, string> = {}
+) {
+    try {
+        const params = new URLSearchParams(additional_url_params);
+        const query = params.toString();
+
+        const url = query
+            ? `${WORKER_URL}/${subpath}?${query}`
+            : `${WORKER_URL}/${subpath}`;
+
+        const res = await fetch(url, {
+            method: "PATCH",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload),
+            credentials: "include"
+        });
+
+        if (!res.ok) {
+            throw new Error(await res.text());
+        }
+
+        return await res.json();
+
+    } catch (err) {
+        console.error(`Worker PATCH error (${subpath})`, err);
+        throw err;
+    }
 }

@@ -3,13 +3,14 @@ import { Button, Dropdown, Form, Stack, Table } from "react-bootstrap";
 import { getFromWorker } from "../../../../../classes/CloudflareWorker/WorkerUtils";
 import { StatsPopUp, UsageCellPreview, type UsageSummary } from "../UsageStatsTable/UsageCellPreview";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faPeopleGroup, faRefresh, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { faCheck, faCopy, faPeopleGroup, faRefresh, faTrash } from "@fortawesome/free-solid-svg-icons";
 
 export type TotalUsageStats = {
     user_email: string;
     project: string | null;
     provider: string;
     model: string | null;
+    date: string;
     number_of_requests: number;
     total_cost: number;
     average_cost: number;
@@ -38,12 +39,14 @@ export const ProjectStatsComponent = () => {
     const [totalStatsRaw, setTotalStats] = useState<TotalUsageStats[]>([]);
     const [selectedProject, setSelectedProject] = useState<string>("");
     const [loading, setLoading] = useState(true);
+    const [copied, setCopied] = useState(false);
 
     const refreshProjects = async (forceRefresh = false) => {
         setLoading(true);
 
         try {
             const data = await getProjectStats(forceRefresh) ?? [];
+            console.log(data);
 
             setTotalStats(data);
 
@@ -157,8 +160,92 @@ export const ProjectStatsComponent = () => {
             .sort((a, b) => a.email.localeCompare(b.email));
     }, [projectStats]);
 
+    const projectDateRange = useMemo(() => {
+        if (projectStats.length === 0) {
+            return null;
+        }
 
+        const dates = projectStats.map(stat => stat.date).sort();
 
+        return {
+            startDate: dates[0],
+            endDate: dates[dates.length - 1],
+        };
+    }, [projectStats]);
+
+    const weeklyCostTable = useMemo(() => {
+        const dates = Array.from(
+            new Set(projectStats.map(stat => stat.date))
+        ).sort();
+
+        const grouped = new Map<
+            string,
+            {
+                user_email: string;
+                provider: string;
+                costs: Record<string, number>;
+            }
+        >();
+
+        for (const stat of projectStats) {
+            const key = `${stat.user_email}|${stat.provider}`;
+
+            if (!grouped.has(key)) {
+                grouped.set(key, {
+                    user_email: stat.user_email,
+                    provider: stat.provider,
+                    costs: {},
+                });
+            }
+
+            const row = grouped.get(key)!;
+
+            row.costs[stat.date] =
+                (row.costs[stat.date] || 0) + (stat.total_cost || 0);
+        }
+
+        return {
+            dates,
+            rows: Array.from(grouped.values()).sort(
+                (a, b) =>
+                    a.user_email.localeCompare(b.user_email) ||
+                    a.provider.localeCompare(b.provider)
+            ),
+        };
+    }, [projectStats]);
+
+    const copyWeeklyStats = async () => {
+        const headers = [
+            "Username",
+            "Project",
+            "Provider",
+            ...weeklyCostTable.dates.map((_, index) => `W${index + 1}`),
+        ];
+
+        const dateHeaders = ["", "", "", ...weeklyCostTable.dates];
+
+        const rows = weeklyCostTable.rows.map(row => [
+            row.user_email,
+            selectedProject || "",
+            row.provider,
+            ...weeklyCostTable.dates.map(date => {
+                const cost = row.costs[date] || 0;
+                return cost === 0 ? "" : cost.toFixed(2);
+            }),
+        ]);
+
+        const tsv = [headers, dateHeaders, ...rows]
+            .map(row => row.join("\t"))
+            .join("\n");
+
+        try {
+            await navigator.clipboard.writeText(tsv);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        } catch (error) {
+            console.error("Failed to copy weekly stats:", error);
+        }
+    };
 
     return <>
         <Stack direction="horizontal" gap={0}>
@@ -238,6 +325,12 @@ export const ProjectStatsComponent = () => {
                     <FontAwesomeIcon icon={faPeopleGroup} />
                     <strong>{projectMetrics.numberOfUsers}</strong>
                 </span>
+
+                {projectDateRange && (
+                    <span className="text-muted small">
+                        {projectDateRange.startDate} – {projectDateRange.endDate}
+                    </span>
+                )}
             </Stack>
         )}
 
@@ -246,6 +339,9 @@ export const ProjectStatsComponent = () => {
             <StatsPopUp id={"test"} summary={projectSummary} />
         )}
 
+        {selectedProject && (
+            <h4 className="mt-3">User Stats</h4>
+        )}
 
         {selectedProject && (
             <Table striped bordered hover size="sm" className="mt-3">
@@ -262,6 +358,93 @@ export const ProjectStatsComponent = () => {
                             </td>
                         </tr>
                     ))}
+                </tbody>
+            </Table>
+        )}
+
+        {selectedProject && (
+            <Stack
+                direction="horizontal"
+                gap={2}
+                className="mt-3 align-items-center"
+            >
+                <h4 className="mb-0">Weekly Stats</h4>
+
+                <Button
+                    size="sm"
+                    variant="outline-secondary"
+                    onClick={copyWeeklyStats}
+                    disabled={weeklyCostTable.rows.length === 0}
+                >
+                    <FontAwesomeIcon
+                        icon={copied ? faCheck : faCopy}
+                        className="me-2"
+                    />
+                    {copied ? "Copied!" : "Copy to Sheets"}
+                </Button>
+            </Stack>
+        )}
+
+        {selectedProject && (
+            <Table striped bordered hover size="sm" className="mt-4">
+                <thead>
+                    <tr>
+                        <th rowSpan={2}>User</th>
+                        <th rowSpan={2}>Provider</th>
+
+                        {weeklyCostTable.dates.map((date, index) => (
+                            <th
+                                key={date}
+                                className="text-center"
+                            >
+                                W{index + 1}
+                            </th>
+                        ))}
+
+                        <th rowSpan={2} className="text-end align-middle">
+                            Total
+                        </th>
+                    </tr>
+
+                    <tr>
+                        {weeklyCostTable.dates.map(date => (
+                            <th
+                                key={date}
+                                className="text-end text-nowrap"
+                            >
+                                {date}
+                            </th>
+                        ))}
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {weeklyCostTable.rows.map((row, index) => {
+                        const total = Object.values(row.costs).reduce(
+                            (sum, cost) => sum + cost,
+                            0
+                        );
+
+                        return (
+                            <tr key={`${row.user_email}-${row.provider}-${index}`}>
+                                <td className="text-nowrap">
+                                    {row.user_email}
+                                </td>
+
+                                <td>{row.provider}</td>
+
+                                {weeklyCostTable.dates.map(date => (
+                                    <td key={date} className="text-end text-nowrap">
+                                        {row.costs[date] ? `$${row.costs[date].toFixed(2)}` : ""}
+                                    </td>
+                                ))}
+
+                                <td className="text-end text-success fw-bold">
+                                    ${total.toFixed(2)}
+                                </td>
+                            </tr>
+                        );
+                    })}
                 </tbody>
             </Table>
         )}

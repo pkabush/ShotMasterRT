@@ -187,6 +187,7 @@ export class SeedanceAI implements AIProvider {
         watermark?: boolean;
         resolution?: string;
         draft?: boolean;
+        seed? : number;
     }) {
         const {
             content,
@@ -197,6 +198,7 @@ export class SeedanceAI implements AIProvider {
             watermark = false,
             resolution,
             draft = false,
+            seed = -1,
         } = options;
 
         if (!content || content.length === 0) {
@@ -208,7 +210,8 @@ export class SeedanceAI implements AIProvider {
             content,
             generate_audio,
             ratio,
-            watermark,
+            watermark,     
+            seed,       
         };
 
         if (duration !== undefined) { payload.duration = duration; }

@@ -17,6 +17,7 @@ import { TasksJson } from "../../../classes/Task";
 import type { LocalJson } from "../../../classes/LocalJson";
 import type { NodeDefinition } from "../NodeDefinition/NodeDefinition";
 import { faFish } from "@fortawesome/free-solid-svg-icons";
+import { SimpleNumberInput } from "../../Atomic/NumberINput";
 
 
 export type SeedanceNodeModelData = {
@@ -26,6 +27,7 @@ export type SeedanceNodeModelData = {
     model?: string;
     sound?: boolean;
     draft?: boolean;
+    seed?: number;
 };
 
 export type SeedanceNodeType = Node<SeedanceNodeModelData, "seedanceNode">;
@@ -128,6 +130,7 @@ export const SeedanceNode = memo(
                     ratio: data.ratio ?? SeedanceAI.options.video.ration.adaptive,
                     model: data.model ? data.model : undefined,
                     draft: data.draft ?? false,
+                    seed: data.seed ?? -1,
                 });
 
                 if (!result) return;
@@ -142,6 +145,7 @@ export const SeedanceNode = memo(
                         ratio: data.ratio ?? SeedanceAI.options.video.ration.adaptive,
                         model: data.model ? data.model : undefined,
                         draft: data.draft ?? false,
+                        seed: data.seed ?? -1,
                         has_video,
                     }
                 })
@@ -250,8 +254,16 @@ export const SeedanceNode = memo(
                             {(data.draft ?? false) ? "Draft:ON" : "Draft:OFF"}
                         </Button>
 
-
-
+                        <SimpleNumberInput
+                            label="seed"
+                            value={data.seed ?? -1}
+                            onChange={(val: number) => {
+                                nodegraph_api.setNodeData(id, {
+                                    ...nodegraph_api.getNodeData(id),
+                                    ...{ seed: val }
+                                });
+                            }}
+                        />
 
                     </Stack>
 

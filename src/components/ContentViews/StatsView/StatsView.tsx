@@ -4,6 +4,7 @@ import { UsageStatsTable } from "./Helpers/UsageStatsTable/UsageStatsTable";
 import { ProjectStatsComponent } from "./Helpers/ProjectStats/ProjectStatsComponent";
 import { Button } from "react-bootstrap";
 import { getFromWorker } from "../../../classes/CloudflareWorker/WorkerUtils";
+import { TotalUserStatsComponent } from "./Helpers/UserStats/UserStats";
 
 
 export const StatsView: React.FC = () => {
@@ -19,6 +20,9 @@ export const StatsView: React.FC = () => {
           ),
           Project_Stats: <>
             <ProjectStatsComponent />
+          </>,
+          User_Stats: <>
+            <TotalUserStatsComponent />
           </>,
           Storage_Data: <>
             <Button
