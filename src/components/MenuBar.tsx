@@ -8,6 +8,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faSquare } from '@fortawesome/free-regular-svg-icons';
 import { faSquareCheck } from '@fortawesome/free-solid-svg-icons';
 import { observer } from 'mobx-react-lite';
+import { useUserStore } from '../contexts/GoogleUserContext';
 
 interface MenuBarProps {
   onOpenFolder: () => void;
@@ -33,6 +34,8 @@ export const MenuBar = observer(({
     },
   ];
 
+  const user = useUserStore((s) => s.user);
+
   return (
     <>
       <Navbar expand={true}>
@@ -49,7 +52,6 @@ export const MenuBar = observer(({
                 <Nav.Link onClick={() => project.setView({ type: "settings" })}> Settings</Nav.Link>
                 <Nav.Link onClick={() => project.setView({ type: "taskview" })}> TaskView</Nav.Link>
                 <Nav.Link onClick={() => project.setView({ type: "promptview" })}> PromptView</Nav.Link>
-                <Nav.Link onClick={() => project.setView({ type: "stats" })}> Stats</Nav.Link>
 
                 <NavDropdown title="Options" id="basic-nav-dropdown">
                   <NavProjectOptionToggle
@@ -65,6 +67,10 @@ export const MenuBar = observer(({
                     defaultValue={true}
                   />
                 </NavDropdown>
+
+                {user?.admin &&
+                  <Nav.Link onClick={() => project.setView({ type: "stats" })}> Admin</Nav.Link>
+                }
               </>
             )}
           </Nav>

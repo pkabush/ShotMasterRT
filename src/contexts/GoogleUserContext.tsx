@@ -21,6 +21,7 @@ interface GoogleUser {
   email: string;
   picture?: string;
   sub: string;
+  admin?: boolean;
 }
 
 interface UserStore {
@@ -154,6 +155,13 @@ export function UserCircle() {
               >
                 Logout
               </Button>
+
+              <Button onClick={() => {
+                console.log(user);
+              }}
+                size="sm"
+                variant="outline-secondary"
+              >?</Button>
 
               <div
                 style={{

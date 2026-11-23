@@ -47,7 +47,7 @@ const TaskInfoCard: React.FC<Props> = observer(({ task, show_path = false }) => 
                 <div className="card mb-0"
                     title={`
 ${task.id}
-${task.data.provider} ${task.data.geninfo.draft ? "Draft Task" : ""}
+${task.data.provider} ${task.data?.geninfo?.draft ? "Draft Task" : ""}
 ${task.data.cost ? `${task.data.cost.toFixed(2)}$` : "no cost"}
 
   Status:

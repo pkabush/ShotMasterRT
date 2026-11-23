@@ -91,6 +91,8 @@ export class Shot extends LocalFolder {
       const audio = await MediaFolder.create(this, "audio");
       audio.tags = ["ID-0", "ID-1", "ID-2", "ID--1"];
 
+      await this.load_files();
+
       runInAction(() => {
         this.shotJson = shotJson;
         this.references = references;
