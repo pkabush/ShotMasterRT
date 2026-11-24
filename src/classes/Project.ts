@@ -223,30 +223,31 @@ export class Project extends LocalFolder {
     //await this.handle.getDirectoryHandle('Timelines', { create: true });
 
     // Update database (recent folders, last opened)
+    const isAlreadyRecent = await Promise.all(
+      this.userSettingsDB.data.recentFolders.map(async (h) => {
+        try { return await h.isSameEntry(handle); } catch { return false; }
+      })
+    );
+
+
     runInAction(async () => {
       this.userSettingsDB.data.lastOpenedFolder = handle;
 
-      const isAlreadyRecent = await Promise.all(
-        this.userSettingsDB.data.recentFolders.map(async (h) => {
-          try {
-            return await h.isSameEntry(handle);
-          } catch {
-            return false;
-          }
-        })
-      );
-
       if (!isAlreadyRecent.includes(true)) {
         this.userSettingsDB.data.recentFolders.push(handle);
-        this.userSettingsDB.data.recentFolders =
-          this.userSettingsDB.data.recentFolders.slice(-5);
+        this.userSettingsDB.data.recentFolders = this.userSettingsDB.data.recentFolders.slice(-5);
       }
+    });
 
-      await this.userSettingsDB.save();
+    await this.userSettingsDB.save();
 
-      this.projinfo = await LocalJson.create(this, 'projinfo.json', default_projinfo);
-      this.costTracker = new CostTracker(this.projinfo);
-      this.promptinfo = await LocalJson.create(this, 'promps.json');
+    const projinfo = await LocalJson.create(this, 'projinfo.json', default_projinfo);    
+    const promptinfo = await LocalJson.create(this, 'promps.json');
+
+    runInAction(() => {
+      this.projinfo = projinfo;
+      this.costTracker = new CostTracker(projinfo);
+      this.promptinfo = promptinfo;
     });
 
     // Load all project content

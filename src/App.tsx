@@ -32,15 +32,26 @@ const App: React.FC = observer(() => {
   };
 
   const handleOpenRecent = async (handle: FileSystemDirectoryHandle) => {
+    console.log("[OPEN Project] Open Recent Project", handle);
     let permission = await handle.queryPermission({ mode: 'readwrite' });
+    console.log("[OPEN Project] permission", permission);
     if (permission !== 'granted') {
+      console.log("[OPEN Project] permission not granted, requesting");
       permission = await handle.requestPermission({ mode: 'readwrite' });
     }
     if (permission === 'granted') {
+      console.log("[OPEN Project] permission granted, opening");
       const newProject = new Project(handle, userSettingsDB.current);
       await newProject!.loadFromFolder(handle);
       setProject(newProject);
     }
+  };
+
+  const handleClearRecents = async () => {
+    userSettingsDB.current.data.recentFolders = [];
+    userSettingsDB.current.data.lastOpenedFolder = null;
+    await userSettingsDB.current.save();
+    console.log("[PROJECTS] Recent projects cleared");
   };
 
   // On app load, open last recent project if available
@@ -81,6 +92,7 @@ const App: React.FC = observer(() => {
             onOpenFolder={handleOpenFolder}
             recentFolders={userSettingsDB.current.data.recentFolders}
             onOpenRecent={handleOpenRecent}
+            onClearRecents={handleClearRecents}
             project={project}
           />
 

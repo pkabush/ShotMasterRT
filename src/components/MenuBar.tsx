@@ -14,6 +14,7 @@ interface MenuBarProps {
   onOpenFolder: () => void;
   recentFolders: FileSystemDirectoryHandle[];
   onOpenRecent: (handle: FileSystemDirectoryHandle) => void;
+  onClearRecents: () => void;
   project: Project | null;
 }
 
@@ -21,16 +22,27 @@ export const MenuBar = observer(({
   onOpenFolder,
   recentFolders,
   onOpenRecent,
+  onClearRecents,
   project,
 }: MenuBarProps) => {
 
   const fileMenuItems: Omit<SubmenuItemProps, 'parentKey'>[] = [
-    { name: 'Open', onClick: onOpenFolder },
+    {
+      name: 'Open',
+      onClick: onOpenFolder,
+    },
     {
       name: 'Recent',
       subItems: recentFolders.length
-        ? recentFolders.map((handle) => ({ name: handle.name, onClick: () => onOpenRecent(handle) }))
+        ? recentFolders.map((handle) => ({
+          name: handle.name,
+          onClick: () => onOpenRecent(handle),
+        }))
         : [{ name: 'No Recent' }],
+    },
+    {
+      name: 'Clear Recent',
+      onClick: onClearRecents,
     },
   ];
 
