@@ -1,3 +1,4 @@
+
 import React, { useId } from "react";
 import { Table, OverlayTrigger, Popover } from "react-bootstrap";
 
@@ -26,6 +27,7 @@ export type UsageSummary = {
 interface UsageCellPreviewProps {
     summary?: UsageSummary;
     emptyLabel?: React.ReactNode;
+    show_requests_number?: boolean;
 }
 
 export function formatCost(cost: number): string {
@@ -41,10 +43,21 @@ export function formatDuration(totalDuration: number, totalRequests: number): st
 interface SummaryCellProps extends React.HTMLAttributes<HTMLDivElement> {
     summary: UsageSummary;
     hasProviders: boolean;
+    show_requests_number?: boolean;
 }
 
 export const SummaryCell = React.forwardRef<HTMLDivElement, SummaryCellProps>(
-    ({ summary, hasProviders, className = "", style, ...props }, ref) => {
+    (
+        {
+            summary,
+            hasProviders,
+            show_requests_number = true,
+            className = "",
+            style,
+            ...props
+        },
+        ref
+    ) => {
         return (
             <div
                 ref={ref}
@@ -55,12 +68,15 @@ export const SummaryCell = React.forwardRef<HTMLDivElement, SummaryCellProps>(
                 style={{
                     cursor: hasProviders ? "pointer" : "default",
                     boxSizing: "border-box",
+                    minWidth:50,
                     ...style,
                 }}
             >
-                <span className="text-nowrap text-warning fw-bold small">
-                    {summary.totalRequests} reqs
-                </span>
+                {show_requests_number && (
+                    <span className="text-nowrap text-warning fw-bold small">
+                        {summary.totalRequests} reqs
+                    </span>
+                )}
                 <span className="text-nowrap text-success fw-bold small">
                     {formatCost(summary.totalCost)}
                 </span>
@@ -75,10 +91,6 @@ interface StatsPopUpProps extends React.ComponentPropsWithoutRef<typeof Popover>
     summary: UsageSummary;
 }
 
-/**
- * Floating Popover showing detailed provider and model breakdown.
- * Uses forwardRef so OverlayTrigger can directly inject position styles & refs.
- */
 export const StatsPopUp = React.forwardRef<HTMLDivElement, StatsPopUpProps>(
     ({ summary, id, className = "", style, ...props }, ref) => {
         const metadataLabel = [summary.userEmail, summary.date]
@@ -91,8 +103,8 @@ export const StatsPopUp = React.forwardRef<HTMLDivElement, StatsPopUpProps>(
                 ref={ref}
                 className={`shadow-lg border-secondary-subtle ${className}`}
                 style={{
-                    maxWidth: "fit-content", // Overrides default 276px Bootstrap limit
-                    ...style,                // Preserves Popper positioning styles passed by OverlayTrigger
+                    maxWidth: "fit-content",
+                    ...style,
                 }}
                 {...props}
             >
@@ -138,7 +150,6 @@ export const StatsPopUp = React.forwardRef<HTMLDivElement, StatsPopUpProps>(
                                             </td>
                                         </tr>
 
-                                        {/* Models Breakdown */}
                                         {hasModels &&
                                             Object.entries(providerStat.models).map(([model, modelStat]) => (
                                                 <tr key={`${provider}-${model}`}>
@@ -169,11 +180,10 @@ export const StatsPopUp = React.forwardRef<HTMLDivElement, StatsPopUpProps>(
 
 StatsPopUp.displayName = "StatsPopUp";
 
-
-
 export const UsageCellPreview: React.FC<UsageCellPreviewProps> = ({
     summary,
     emptyLabel = <span className="text-muted">-</span>,
+    show_requests_number = true,
 }) => {
     const popoverId = useId();
 
@@ -182,7 +192,14 @@ export const UsageCellPreview: React.FC<UsageCellPreviewProps> = ({
     }
 
     const hasProviders = summary.providers && Object.keys(summary.providers).length > 0;
-    const summaryCell = <SummaryCell summary={summary} hasProviders={hasProviders} />;
+
+    const summaryCell = (
+        <SummaryCell
+            summary={summary}
+            hasProviders={hasProviders}
+            show_requests_number={show_requests_number}
+        />
+    );
 
     if (hasProviders) {
         return (

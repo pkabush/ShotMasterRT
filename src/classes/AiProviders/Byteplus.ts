@@ -170,7 +170,18 @@ export class SeedanceAI implements AIProvider {
         callback.searchParams.set("user", useUserStore.getState().user?.sub ?? "");
         callback.searchParams.set("email", useUserStore.getState().user?.email ?? "");
 
+        //set is_draft
+        const isDraft = payload.content?.some((item: any) => item.type === "draft_task");
+        if (isDraft) {
+            callback.searchParams.set("draft", "true");
+            if (payload.generate_audio !== undefined) {
+                callback.searchParams.set("generate_audio", String(payload.generate_audio));
+            }
+            delete payload.generate_audio;
+        }
+
         payload.callback_url = callback.toString();
+        console.log("[SEEDANCE] Seedance request with callback:", payload);
 
         const data = await postToWorker(payload, "seedance/generate", { model: payload.model, });
         console.log("[SEEDANCE] Seedance response:", data);
@@ -187,7 +198,7 @@ export class SeedanceAI implements AIProvider {
         watermark?: boolean;
         resolution?: string;
         draft?: boolean;
-        seed? : number;
+        seed?: number;
     }) {
         const {
             content,
@@ -210,8 +221,8 @@ export class SeedanceAI implements AIProvider {
             content,
             generate_audio,
             ratio,
-            watermark,     
-            seed,       
+            watermark,
+            seed,
         };
 
         if (duration !== undefined) { payload.duration = duration; }
@@ -232,9 +243,10 @@ export class SeedanceAI implements AIProvider {
 
     public static async renderDraft(options: {
         model: string;
-        draft_id: boolean;
+        draft_id: number;
+        generate_audio: boolean;
     }) {
-        const { model, draft_id } = options;
+        const { model, draft_id, generate_audio } = options;
 
         const payload: any = {
             model,
@@ -244,7 +256,8 @@ export class SeedanceAI implements AIProvider {
                 draft_task: {
                     "id": draft_id,
                 }
-            }]
+            }],
+            generate_audio,
         };
 
         const data = await this.postToSeedance(payload);

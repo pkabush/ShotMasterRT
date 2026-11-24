@@ -176,7 +176,8 @@ ${task.data.status_message ?? "No status message"}
                             // Generate Video
                             const result = await SeedanceAI.renderDraft({
                                 draft_id: task.data.id,
-                                model: task.data.geninfo.model,
+                                model: task.data.geninfo.model,      
+                                generate_audio: task.data.geninfo.generate_audio ,                          
                             });
 
                             if (!result) return;
