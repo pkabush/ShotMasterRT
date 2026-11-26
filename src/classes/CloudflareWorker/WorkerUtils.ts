@@ -16,11 +16,12 @@ export async function postToWorker(
         const project = Project.getProject();
 
         const params = new URLSearchParams({
-            project_name: project.name,
+            project_name: project.project_name,
+            folder: project.name,
             username,
             debug_log,
             ...additional_url_params,
-        });
+        });               
 
         const headers: Record<string, string> = {};
 

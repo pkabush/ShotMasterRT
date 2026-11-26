@@ -204,9 +204,16 @@ export class Project extends LocalFolder {
     });
   }
 
-  get scenes() {
-    //console.log("Get Scenes",this.scenesLocalFolder?.getType(Scene));
+  get scenes() {    
     return this.scenesLocalFolder?.getType(Scene);
+  }
+
+  get project_name() {
+    return this.projinfo?.getField("canoe_project_name") ?? "";
+  }
+
+  set project_name(name:string) {
+    this.projinfo?.updateField("canoe_project_name",name);
   }
 
   get scriptmaster() {

@@ -9,6 +9,7 @@ import { faSquare } from '@fortawesome/free-regular-svg-icons';
 import { faSquareCheck } from '@fortawesome/free-solid-svg-icons';
 import { observer } from 'mobx-react-lite';
 import { useUserStore } from '../contexts/GoogleUserContext';
+import { ProjectPicker } from './MenuBar/ProjectPicker/ProjectPicker';
 
 interface MenuBarProps {
   onOpenFolder: () => void;
@@ -86,6 +87,14 @@ export const MenuBar = observer(({
               </>
             )}
           </Nav>
+
+          {/** END portion */}
+          <Nav className="ms-auto" style={{ marginRight: '220px' }}>
+            {project &&
+              <ProjectPicker project={project} />
+            }
+          </Nav>
+
         </Container>
       </Navbar>
 
