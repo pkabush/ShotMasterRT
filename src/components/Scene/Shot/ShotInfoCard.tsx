@@ -108,8 +108,8 @@ const ShotInfoCard: React.FC<Props> = observer(({ shot }) => {
             <TaskContainer tasksJson={shot.tasksJson!} />
             <MediaFolderGallery mediaFolder={shot.MediaFolder_genVideo} />
 
-          </>
-          ,
+          </>,
+          
           Kling_Video: <>
             <Kling_GenerateVideoV4 shot={shot} />
             <Kling_GenerateVideo shot={shot} />

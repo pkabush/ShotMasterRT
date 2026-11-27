@@ -110,6 +110,7 @@ export async function getFromWorker(
 }
 
 
+
 export async function loginToWorker(
     googleIdToken: string
 ) {
@@ -176,6 +177,42 @@ export async function patchToWorker(
 
     } catch (err) {
         console.error(`Worker PATCH error (${subpath})`, err);
+        throw err;
+    }
+}
+
+
+export async function deleteFromWorker(
+    subpath: string,
+    additional_url_params: Record<string, string> = {}
+) {
+    try {
+        const params = new URLSearchParams(additional_url_params);
+        const query = params.toString();
+
+        const url = query
+            ? `${WORKER_URL}/${subpath}?${query}`
+            : `${WORKER_URL}/${subpath}`;
+
+        const res = await fetch(url, {
+            method: "DELETE",
+            credentials: "include",
+        });
+
+        if (!res.ok) {
+            throw new Error(await res.text());
+        }
+
+        const contentType = res.headers.get("content-type") ?? "";
+
+        if (contentType.includes("application/json")) {
+            return await res.json();
+        }
+
+        return await res.text();
+
+    } catch (err) {
+        console.error(`Worker DELETE error (${subpath})`, err);
         throw err;
     }
 }

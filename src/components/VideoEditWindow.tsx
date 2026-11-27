@@ -25,6 +25,7 @@ import { trimVideo } from "../classes/Ffmpeg/FFmpegService";
 import { MiniVideoEditor } from "./MediaComponents/MiniVideoEditor";
 import { faScissors } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { BytePlus_MediaKitVideo } from "./BytePlus/BP_MediaKitVideo";
 
 
 
@@ -390,9 +391,9 @@ const VideoEditWindow: React.FC<VideoEditWindowProps> = ({
                                     </div>
 
                                 </>,
-
-
-
+                                MediaKit: <>
+                                    <BytePlus_MediaKitVideo localVideo={localVideo}/>
+                                </>
                             }} />
                     </div>
                 </Panel>

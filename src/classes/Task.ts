@@ -5,6 +5,7 @@ import { notificationManager } from "./NotificationManager";
 import type { LocalMedia } from "./fileSystem/LocalMedia";
 import type { LocalJson } from "./LocalJson";
 import { getFromWorker } from "./CloudflareWorker/WorkerUtils";
+//import { MediaKitAI } from "./AiProviders/Mediakit";
 
 
 
@@ -133,6 +134,14 @@ export class Task {
 
     async check_status() {
         console.log("[TASK] CHECK STATUS", this);
+        /*
+        if(this.data.provider === "MediaKit") {
+            console.log("[TASK] Check mediakit status");
+            const status_res = await MediaKitAI.getTaskStatus( this.id);
+            console.log(status_res);
+        }
+        */
+
         const response = await getFromWorker(`seedance/status/${this.id}`);
         console.log("Seedance check status:", response);
         return response;
